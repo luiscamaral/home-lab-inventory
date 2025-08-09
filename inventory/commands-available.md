@@ -1,0 +1,242 @@
+# Commands Available
+
+## Proxmox Server
+
+### System Commands
+- `uname`: Linux proxmox 6.11.0-1-pve #1 SMP PREEMPT_DYNAMIC PMX 6.11.0-1 (2024-12-06T10:48Z) x86_64 GNU/Linux
+- `lsb_release`: Debian 12 (bookworm)
+- `proxmox-ve`: 8.3.5
+- `pve-manager`: 8.3.5/12137cbd681fe7c7
+- `pve-kernel-6.11`: 6.11.0-1
+- `libpve-access-control`: 8.3.0
+- `libpve-apiclient-perl`: 3.3.2
+- `python3`: 3.11.2-1+b1
+- `pip3`: 23.0.1
+- `docker`: 27.5.0
+- `docker-compose`: 2.32.2
+- `git`: 2.39.5
+- `gcc`: 12.2.0
+- `g++`: 12.2.0
+- `make`: 4.3
+- `cmake`: 3.25.1
+- `curl`: 7.88.1
+- `wget`: 1.21.3
+- `rsync`: 3.2.7
+- `htop`: 3.2.2
+- `btop`: 1.2.13
+- `ncdu`: 2.2.1
+- `tmux`: 3.3a
+- `vim`: 9.0
+- `nano`: 7.2
+- `systemctl`: 252
+- `journalctl`: 252
+- `ssh`: OpenSSH_9.2p1 Debian-2+deb12u4
+- `scp`: OpenSSH_9.2p1
+- `nfs-common`: 2.6.2
+- `mount.nfs`: 2.6.2
+- `iptables`: 1.8.9
+- `ip`: iproute2-6.1.0
+- `netstat`: net-tools 2.10
+- `ss`: iproute2-6.1.0
+- `lsof`: 4.95.0
+- `strace`: 6.1
+- `tcpdump`: 4.99.3
+- `dig`: 9.18.28
+- `nslookup`: 9.18.28
+- `host`: 9.18.28
+- `ping`: iputils-20221126
+- `traceroute`: 2.1.2
+- `mtr`: 0.95
+- `nmap`: 7.93
+- `openssl`: 3.0.15
+- `tar`: 1.34
+- `gzip`: 1.12
+- `bzip2`: 1.0.8
+- `zip`: 3.0
+- `unzip`: 6.0
+- `7z`: 22.01
+- `df`: coreutils 9.1
+- `du`: coreutils 9.1
+- `free`: procps-ng 4.0.2
+- `ps`: procps-ng 4.0.2
+- `top`: procps-ng 4.0.2
+- `kill`: util-linux 2.38.1
+- `systemd`: 252
+- `cron`: 3.0pl1
+- `at`: 3.2.5
+- `sed`: 4.9
+- `awk`: gawk 5.2.1
+- `grep`: 3.8
+- `find`: findutils 4.9.0
+- `locate`: plocate 1.1.18
+- `which`: debianutils 5.7
+- `whereis`: util-linux 2.38.1
+- `bash`: 5.2.15
+- `sh`: dash 0.5.12
+- `zsh`: 5.9
+- `perl`: 5.36.0
+- `ruby`: 3.1.2p20
+- `node`: Not installed
+- `npm`: Not installed
+- `cargo`: Not installed
+- `rustc`: Not installed
+- `go`: Not installed
+- `java`: Not installed
+- `php`: Not installed
+- `mysql`: Not installed
+- `postgresql`: Not installed
+- `redis-cli`: Not installed
+- `mongodb`: Not installed
+- `nginx`: Not installed
+- `apache2`: Not installed
+- `certbot`: Not installed
+- `fail2ban`: Not installed
+- `ufw`: Not installed
+- `ansible`: Not installed
+- `terraform`: Not installed
+- `kubectl`: Not installed
+- `helm`: Not installed
+- `podman`: Not installed
+- `buildah`: Not installed
+- `skopeo`: Not installed
+- `containerd`: Not installed
+- `runc`: Not installed
+- `qemu`: 9.0.2+ds-2~bpo12+1
+- `kvm`: QEMU 9.0.2
+- `virsh`: Not installed
+- `virt-manager`: Not installed
+- `zfs`: 2.2.7-pve2
+- `zpool`: 2.2.7-pve2
+- `btrfs`: 6.2
+- `mdadm`: 4.2
+- `lvm`: 2.03.16
+- `smartctl`: 7.3
+- `hdparm`: 9.65
+- `iostat`: sysstat 12.6.1
+- `iotop`: 0.6
+- `iftop`: 1.0~pre4
+- `nethogs`: 0.8.7
+- `vnstat`: 2.10
+- `speedtest-cli`: Not installed
+- `iperf3`: 3.12
+- `ethtool`: 6.1
+- `bridge`: iproute2-6.1.0
+- `tc`: iproute2-6.1.0
+
+## Docker Master Server
+
+### System Commands
+- `uname`: Linux dockermaster 6.8.0-64-generic #64-Ubuntu SMP Wed Jan 22 11:58:10 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+- `lsb_release`: Ubuntu 24.04.2 LTS (Noble Numbat)
+- `python3`: 3.12.3
+- `pip3`: 24.0
+- `docker`: 28.3.2
+- `docker-compose`: 2.32.2
+- `git`: 2.43.0
+- `gcc`: 13.3.0
+- `g++`: 13.3.0
+- `make`: 4.3
+- `cmake`: 3.28.3
+- `curl`: 8.5.0
+- `wget`: 1.21.4
+- `rsync`: 3.2.7
+- `htop`: 3.3.0
+- `btop`: Not installed
+- `ncdu`: 2.3
+- `tmux`: 3.4
+- `vim`: 9.1
+- `nano`: 7.2
+- `systemctl`: 255
+- `journalctl`: 255
+- `ssh`: OpenSSH_9.6p1 Ubuntu-3ubuntu13.5
+- `scp`: OpenSSH_9.6p1
+- `nfs-common`: 2.6.4
+- `mount.nfs`: 2.6.4
+- `iptables`: 1.8.10
+- `ip`: iproute2-6.1.0
+- `netstat`: net-tools 2.10
+- `ss`: iproute2-6.1.0
+- `lsof`: 4.95.0
+- `strace`: 6.8
+- `tcpdump`: 4.99.4
+- `dig`: 9.18.28
+- `nslookup`: 9.18.28
+- `host`: 9.18.28
+- `ping`: iputils-20240117
+- `traceroute`: 2.1.5
+- `mtr`: 0.95
+- `nmap`: Not installed
+- `openssl`: 3.0.13
+- `tar`: 1.35
+- `gzip`: 1.12
+- `bzip2`: 1.0.8
+- `zip`: 3.0
+- `unzip`: 6.0
+- `7z`: Not installed
+- `df`: coreutils 9.4
+- `du`: coreutils 9.4
+- `free`: procps-ng 4.0.4
+- `ps`: procps-ng 4.0.4
+- `top`: procps-ng 4.0.4
+- `kill`: util-linux 2.39.3
+- `systemd`: 255
+- `cron`: 3.0pl1
+- `at`: 3.2.5
+- `sed`: 4.9
+- `awk`: gawk 5.2.1
+- `grep`: 3.11
+- `find`: findutils 4.9.0
+- `locate`: plocate 1.1.22
+- `which`: debianutils 5.17
+- `whereis`: util-linux 2.39.3
+- `bash`: 5.2.21
+- `sh`: dash 0.5.12
+- `zsh`: Not installed
+- `perl`: 5.38.2
+- `ruby`: Not installed
+- `node`: Not installed
+- `npm`: Not installed
+- `cargo`: Not installed
+- `rustc`: Not installed
+- `go`: Not installed
+- `java`: Not installed
+- `php`: Not installed
+- `mysql`: Not installed
+- `postgresql-client`: 16+257
+- `redis-cli`: Not installed
+- `mongodb`: Not installed
+- `nginx`: Not installed
+- `apache2`: Not installed
+- `certbot`: Not installed
+- `fail2ban`: Not installed
+- `ufw`: 0.36.2
+- `ansible`: Not installed
+- `terraform`: Not installed
+- `kubectl`: Not installed
+- `helm`: Not installed
+- `podman`: Not installed
+- `buildah`: Not installed
+- `skopeo`: Not installed
+- `containerd`: 1.7.12
+- `runc`: 1.1.12
+- `qemu`: Not installed
+- `kvm`: Not installed
+- `virsh`: Not installed
+- `virt-manager`: Not installed
+- `zfs`: Not installed
+- `zpool`: Not installed
+- `btrfs`: Not installed
+- `mdadm`: Not installed
+- `lvm`: Not installed
+- `smartctl`: Not installed
+- `hdparm`: Not installed
+- `iostat`: sysstat 12.6.2
+- `iotop`: 0.6
+- `iftop`: Not installed
+- `nethogs`: Not installed
+- `vnstat`: Not installed
+- `speedtest-cli`: Not installed
+- `iperf3`: Not installed
+- `ethtool`: 6.7
+- `bridge`: iproute2-6.1.0
+- `tc`: iproute2-6.1.0
