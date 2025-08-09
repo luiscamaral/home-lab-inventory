@@ -20,3 +20,5 @@
 
 
 
+
+- Docker compose use `docker compose` command. Always use the latest docker ce version.
