@@ -1,0 +1,313 @@
+name: Build Multi-Type Docker Images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/Dockerfile'
+      - '**/*.dockerfile'
+      - '.github/workflows/build-multi-type-images.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/Dockerfile'
+      - '**/*.dockerfile'
+  workflow_dispatch:
+    inputs:
+      image_type:
+        description: 'Image type to build'
+        required: false
+        type: choice
+        options:
+          - all
+          - docker-services
+          - applications
+          - monitoring
+          - utilities
+          - databases
+          - web-servers
+      specific_image:
+        description: 'Specific image to build (e.g., calibre-server)'
+        required: false
+
+env:
+  REGISTRY: ghcr.io
+  DOCKER_HUB_REGISTRY: docker.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}
+
+jobs:
+  detect-images:
+    name: Detect Images to Build
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has-images: ${{ steps.set-matrix.outputs.has-images }}
+      image-list: ${{ steps.set-matrix.outputs.image-list }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect and categorize images
+        id: set-matrix
+        run: |
+          #!/bin/bash
+          set -e
+          
+          # Function to get image type based on path
+          get_image_type() {
+            local path=$1
+            case "$path" in
+              dockermaster/docker/compose/*) echo "docker-service" ;;
+              applications/*) echo "application" ;;
+              monitoring/*) echo "monitoring" ;;
+              utilities/*) echo "utility" ;;
+              databases/*) echo "database" ;;
+              web-servers/*) echo "web-server" ;;
+              *) echo "misc" ;;
+            esac
+          }
+          
+          # Function to get image tags based on type
+          get_image_tags() {
+            local type=$1
+            local name=$2
+            case "$type" in
+              docker-service) echo "service" ;;
+              application) echo "app" ;;
+              monitoring) echo "monitor" ;;
+              utility) echo "util" ;;
+              database) echo "db" ;;
+              web-server) echo "web" ;;
+              *) echo "misc" ;;
+            esac
+          }
+          
+          # Initialize arrays
+          declare -A IMAGES
+          
+          # Handle workflow dispatch inputs
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "${{ github.event.inputs.specific_image }}" ]; then
+              # Build specific image only
+              DOCKERFILES=$(find . -path "*/${{ github.event.inputs.specific_image }}/Dockerfile" -o -path "*/${{ github.event.inputs.specific_image }}.dockerfile")
+            elif [ "${{ github.event.inputs.image_type }}" != "all" ] && [ -n "${{ github.event.inputs.image_type }}" ]; then
+              # Build specific type
+              case "${{ github.event.inputs.image_type }}" in
+                docker-services) DOCKERFILES=$(find dockermaster/docker/compose -name "Dockerfile" -o -name "*.dockerfile") ;;
+                applications) DOCKERFILES=$(find applications -name "Dockerfile" -o -name "*.dockerfile" 2>/dev/null || true) ;;
+                monitoring) DOCKERFILES=$(find monitoring -name "Dockerfile" -o -name "*.dockerfile" 2>/dev/null || true) ;;
+                utilities) DOCKERFILES=$(find utilities -name "Dockerfile" -o -name "*.dockerfile" 2>/dev/null || true) ;;
+                databases) DOCKERFILES=$(find databases -name "Dockerfile" -o -name "*.dockerfile" 2>/dev/null || true) ;;
+                web-servers) DOCKERFILES=$(find web-servers -name "Dockerfile" -o -name "*.dockerfile" 2>/dev/null || true) ;;
+              esac
+            else
+              # Build all
+              DOCKERFILES=$(find . -name "Dockerfile" -o -name "*.dockerfile" | grep -v node_modules | grep -v .git)
+            fi
+          else
+            # For push/PR events, detect changed files
+            if [ "${{ github.event_name }}" = "push" ]; then
+              # Get changed files in the last commit
+              CHANGED_FILES=$(git diff --name-only HEAD HEAD~1 || true)
+              DOCKERFILES=""
+              for file in $CHANGED_FILES; do
+                if [[ "$file" == *"Dockerfile"* ]]; then
+                  DOCKERFILES="$DOCKERFILES ./$file"
+                fi
+              done
+              # If no Dockerfiles changed, check if we should rebuild due to dependency changes
+              if [ -z "$DOCKERFILES" ]; then
+                # Check if package files changed that might affect builds
+                if echo "$CHANGED_FILES" | grep -E "(package\.json|requirements\.txt|go\.mod|Gemfile|pom\.xml|build\.gradle)"; then
+                  # Rebuild all images in affected directories
+                  DOCKERFILES=$(find . -name "Dockerfile" -o -name "*.dockerfile" | grep -v node_modules | grep -v .git)
+                fi
+              fi
+            else
+              # For PR or manual trigger without specific inputs
+              DOCKERFILES=$(find . -name "Dockerfile" -o -name "*.dockerfile" | grep -v node_modules | grep -v .git)
+            fi
+          fi
+          
+          # Process found Dockerfiles
+          JSON_ARRAY='[]'
+          IMAGE_LIST=""
+          
+          if [ -n "$DOCKERFILES" ]; then
+            for dockerfile in $DOCKERFILES; do
+              # Get directory and image name
+              DIR=$(dirname "$dockerfile")
+              IMAGE_NAME=$(basename "$DIR")
+              
+              # Skip if it's the current directory
+              if [ "$IMAGE_NAME" = "." ]; then
+                IMAGE_NAME=$(basename "$dockerfile" .dockerfile)
+                if [ "$IMAGE_NAME" = "Dockerfile" ]; then
+                  continue
+                fi
+              fi
+              
+              # Get image type and category
+              IMAGE_TYPE=$(get_image_type "$DIR")
+              IMAGE_CATEGORY=$(get_image_tags "$IMAGE_TYPE" "$IMAGE_NAME")
+              
+              # Create JSON object for this image
+              IMAGE_JSON=$(cat <<EOF
+          {
+            "name": "$IMAGE_NAME",
+            "context": "$DIR",
+            "dockerfile": "$dockerfile",
+            "type": "$IMAGE_TYPE",
+            "category": "$IMAGE_CATEGORY",
+            "registry": "ghcr.io"
+          }
+          EOF
+              )
+              
+              # Add to array
+              if [ "$JSON_ARRAY" = "[]" ]; then
+                JSON_ARRAY="[$IMAGE_JSON]"
+              else
+                JSON_ARRAY="${JSON_ARRAY%]}, $IMAGE_JSON]"
+              fi
+              
+              IMAGE_LIST="$IMAGE_LIST $IMAGE_NAME"
+            done
+          fi
+          
+          echo "Images to build: $IMAGE_LIST"
+          echo "matrix={\"include\":$JSON_ARRAY}" >> $GITHUB_OUTPUT
+          echo "image-list=$IMAGE_LIST" >> $GITHUB_OUTPUT
+          
+          if [ "$JSON_ARRAY" = "[]" ]; then
+            echo "has-images=false" >> $GITHUB_OUTPUT
+          else
+            echo "has-images=true" >> $GITHUB_OUTPUT
+          fi
+
+  build-images:
+    name: Build ${{ matrix.name }} (${{ matrix.type }})
+    needs: detect-images
+    if: needs.detect-images.outputs.has-images == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{fromJson(needs.detect-images.outputs.matrix)}}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request' && secrets.DOCKER_HUB_USERNAME != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ env.IMAGE_PREFIX }}/${{ matrix.name }}
+            ${{ secrets.DOCKER_HUB_USERNAME && format('docker.io/{0}/{1}', secrets.DOCKER_HUB_USERNAME, matrix.name) || '' }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ matrix.category }},enable={{is_default_branch}}
+            type=sha,prefix={{branch}}-
+            type=raw,value={{date 'YYYYMMDD'}}-{{sha}}
+
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ matrix.name }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ matrix.name }}-
+            ${{ runner.os }}-buildx-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            org.opencontainers.image.title=${{ matrix.name }}
+            org.opencontainers.image.description=${{ matrix.type }} image for ${{ matrix.name }}
+            com.docker.image.type=${{ matrix.type }}
+            com.docker.image.category=${{ matrix.category }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      - name: Generate build summary
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "### 🐳 Image Built: ${{ matrix.name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Type:** ${{ matrix.type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Category:** ${{ matrix.category }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** ghcr.io & docker.io" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Pull Commands:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "# GitHub Container Registry" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ env.IMAGE_PREFIX }}/${{ matrix.name }}:latest" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ secrets.DOCKER_HUB_USERNAME }}" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "# Docker Hub" >> $GITHUB_STEP_SUMMARY
+            echo "docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/${{ matrix.name }}:latest" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  create-manifest:
+    name: Create Multi-Registry Manifest
+    needs: [detect-images, build-images]
+    if: github.event_name != 'pull_request' && needs.detect-images.outputs.has-images == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create combined manifest
+        run: |
+          echo "### 📦 Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total Images Built:** ${{ needs.detect-images.outputs.image-list }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All images are available in:" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub Container Registry (ghcr.io)" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker Hub (if configured)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Images support both AMD64 and ARM64 architectures." >> $GITHUB_STEP_SUMMARY
