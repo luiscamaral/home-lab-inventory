@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run pre-commit hooks if available
+if command -v pre-commit >/dev/null 2>&1; then
+  echo "🔍 Running pre-commit hooks..."
+  pre-commit run --files $(git diff --cached --name-only)
+  
+  if [ $? -eq 0 ]; then
+    echo "✅ Pre-commit hooks passed"
+  else
+    echo "❌ Pre-commit hooks failed"
+    echo ""
+    echo "💡 Fix the issues above and try again"
+    echo "💡 Use 'pre-commit run --all-files' to run all hooks"
+    echo "💡 Use 'pre-commit run <hook-id>' to run a specific hook"
+    exit 1
+  fi
+else
+  echo "⚠️  pre-commit not found, skipping pre-commit hooks"
+  echo "💡 Install pre-commit: pip install pre-commit"
+  echo "💡 Set up hooks: pre-commit install"
+fi
+
+echo "🚀 Ready to commit!"

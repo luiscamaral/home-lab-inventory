@@ -1,0 +1,88 @@
+# yamllint configuration for infrastructure/DevOps repository
+# Optimized for GitHub workflows, docker-compose files, and configuration files
+
+extends: default
+
+rules:
+  # Line length - allow longer lines for URLs and commands
+  line-length:
+    max: 120
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+
+  # Indentation - consistent with project standard (2 spaces)
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  # Comments - allow comments without space after # for inline disable comments
+  comments:
+    min-spaces-from-content: 1
+    require-starting-space: false  # Allow yamllint disable comments
+
+  # Trailing spaces - handled by pre-commit trailing-whitespace hook
+  trailing-spaces: disable
+
+  # Empty lines
+  empty-lines:
+    max: 2
+    max-start: 1
+    max-end: 1
+
+  # Document boundaries
+  document-start:
+    present: false  # Don't require --- at start of documents
+
+  # Brackets and braces - allow single line for simple cases
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+    min-spaces-inside-empty: 0
+    max-spaces-inside-empty: 0
+
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+    min-spaces-inside-empty: 0
+    max-spaces-inside-empty: 0
+
+  # Colons - Docker and GitHub Actions often need flexible spacing
+  colons:
+    max-spaces-before: 0
+    min-spaces-after: 1
+    max-spaces-after: 1
+
+  # Commas
+  commas:
+    max-spaces-before: 0
+    min-spaces-after: 1
+    max-spaces-after: 1
+
+  # Hyphens - important for YAML lists
+  hyphens:
+    max-spaces-after: 1
+
+  # Key duplicates - critical error
+  key-duplicates: enable
+
+  # Octal values - GitHub Actions and docker-compose don't use these typically
+  octal-values: disable
+
+  # Quoted strings - be flexible for different use cases
+  quoted-strings:
+    quote-type: any
+    required: false
+
+  # Truthy values - allow yes/no, on/off for docker-compose
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+
+# File patterns to ignore
+ignore: |
+  .history/
+  .claude/
+  .vscode/
+  .devcontainer/
+  node_modules/
+  __pycache__/
