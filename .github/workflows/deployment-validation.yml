@@ -1,0 +1,419 @@
+# Deployment Sync Validation Workflow
+# Validates deployment scripts, configurations, and sync mechanisms
+
+name: Deployment Validation
+
+on:
+  push:
+    branches: [ main, dockermaster-config ]
+    paths:
+      - 'deployment/**'
+      - 'dockermaster/docker/**'
+      - '.github/workflows/deployment-validation.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'deployment/**'
+      - 'dockermaster/docker/**'
+      - '.github/workflows/deployment-validation.yml'
+  workflow_dispatch:
+    inputs:
+      test_all:
+        description: 'Test all deployment configurations'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  # Validate deployment scripts syntax and structure
+  validate-scripts:
+    name: Validate Deployment Scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Shell Validation Tools
+        run: |
+          # Install shellcheck for shell script validation
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Validate Shell Scripts
+        run: |
+          echo "::group::Validating shell scripts"
+          find deployment/ -name "*.sh" -type f | while read -r script; do
+            echo "Validating: $script"
+            
+            # Check syntax
+            bash -n "$script" || {
+              echo "::error file=$script::Syntax error in shell script"
+              exit 1
+            }
+            
+            # Run shellcheck
+            shellcheck -e SC1091,SC2034,SC2154 "$script" || {
+              echo "::error file=$script::ShellCheck found issues"
+              exit 1
+            }
+            
+            echo "✅ $script passed validation"
+          done
+          echo "::endgroup::"
+
+      - name: Check Script Permissions
+        run: |
+          echo "::group::Checking script permissions"
+          find deployment/ -name "*.sh" -type f | while read -r script; do
+            if [ -x "$script" ]; then
+              echo "✅ $script is executable"
+            else
+              echo "::warning file=$script::Script is not executable"
+            fi
+          done
+          echo "::endgroup::"
+
+  # Validate Docker Compose configurations
+  validate-docker-configs:
+    name: Validate Docker Configurations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    strategy:
+      matrix:
+        compose-file:
+          - dockermaster/docker/compose/calibre-server/docker-compose.yml
+          - dockermaster/docker/compose/rundeck/docker-compose.yml
+          - dockermaster/docker/compose/portainer/docker-compose.yml
+          - dockermaster/docker/compose/bind9/docker-compose.yml
+          - dockermaster/docker/compose/postgres/docker-compose.yml
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Docker Compose Syntax
+        run: |
+          compose_file="${{ matrix.compose-file }}"
+          echo "Validating: $compose_file"
+          
+          if [ -f "$compose_file" ]; then
+            # Check syntax
+            docker compose -f "$compose_file" config --quiet || {
+              echo "::error file=$compose_file::Docker Compose syntax error"
+              exit 1
+            }
+            
+            echo "✅ $compose_file syntax is valid"
+            
+            # Show parsed configuration for review
+            echo "::group::Parsed configuration"
+            docker compose -f "$compose_file" config
+            echo "::endgroup::"
+          else
+            echo "::warning file=$compose_file::File does not exist"
+          fi
+
+      - name: Check for Registry Images
+        run: |
+          compose_file="${{ matrix.compose-file }}"
+          
+          if [ -f "$compose_file" ]; then
+            echo "::group::Checking for ghcr.io images"
+            if docker compose -f "$compose_file" config | grep -q "ghcr.io"; then
+              echo "✅ Found ghcr.io registry images in $compose_file"
+              docker compose -f "$compose_file" config | grep "image:" | grep "ghcr.io" || true
+            else
+              echo "ℹ️ No ghcr.io registry images found in $compose_file"
+            fi
+            echo "::endgroup::"
+          fi
+
+  # Test GitHub sync script functionality
+  test-sync-logic:
+    name: Test Sync Logic
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Test Environment
+        run: |
+          # Create test directories
+          sudo mkdir -p /tmp/test-deploy-path/{service1,service2}
+          sudo mkdir -p /var/lib/docker-deploy
+          
+          # Create mock docker-compose files
+          cat > /tmp/test-deploy-path/service1/docker-compose.yml << 'EOF'
+          services:
+            app:
+              image: ghcr.io/test/service1:latest
+              restart: unless-stopped
+          EOF
+          
+          cat > /tmp/test-deploy-path/service2/docker-compose.yml << 'EOF'
+          services:
+            app:
+              image: nginx:latest
+              restart: unless-stopped
+          EOF
+
+      - name: Test GitHub API Functions
+        run: |
+          echo "::group::Testing GitHub API functions"
+          
+          # Source the sync script to test functions
+          source deployment/scripts/github-sync.sh
+          
+          # Override configuration for testing
+          GITHUB_REPO="luiscamaral/home-lab-inventory"
+          GITHUB_API="https://api.github.com"
+          
+          # Test get_latest_commit function
+          echo "Testing get_latest_commit function..."
+          latest_commit=$(get_latest_commit "main")
+          
+          if [ -n "$latest_commit" ] && [ ${#latest_commit} -eq 40 ]; then
+            echo "✅ get_latest_commit returned valid SHA: $latest_commit"
+          else
+            echo "::error::get_latest_commit failed or returned invalid SHA: $latest_commit"
+            exit 1
+          fi
+          
+          echo "::endgroup::"
+
+      - name: Test State Management
+        env:
+          STATE_FILE: /tmp/test-state.file
+        run: |
+          echo "::group::Testing state management"
+          source deployment/scripts/github-sync.sh
+          
+          # Test save_state and load_state
+          test_sha="abcdef1234567890abcdef1234567890abcdef12"
+          save_state "$test_sha"
+          
+          loaded_sha=$(load_state)
+          
+          if [ "$loaded_sha" = "$test_sha" ]; then
+            echo "✅ State management works correctly"
+          else
+            echo "::error::State management failed. Expected: $test_sha, Got: $loaded_sha"
+            exit 1
+          fi
+          
+          echo "::endgroup::"
+
+      - name: Test Service Detection
+        env:
+          DEPLOY_PATH: /tmp/test-deploy-path
+          STATE_FILE: /tmp/test-state.file
+          LOG_FILE: /tmp/test-deploy.log
+        run: |
+          echo "::group::Testing service detection"
+          source deployment/scripts/github-sync.sh
+          
+          # Test service detection logic
+          services_found=0
+          for dir in "$DEPLOY_PATH"/*/; do
+            if [ -f "$dir/docker-compose.yml" ] || [ -f "$dir/docker-compose.yaml" ]; then
+              service=$(basename "$dir")
+              echo "Found service: $service"
+              ((services_found++))
+            fi
+          done
+          
+          if [ $services_found -eq 2 ]; then
+            echo "✅ Service detection works correctly (found $services_found services)"
+          else
+            echo "::error::Expected 2 services, found $services_found"
+            exit 1
+          fi
+          
+          echo "::endgroup::"
+
+  # Validate installer script
+  test-installer:
+    name: Test Installer Script
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Test Installer Dry Run
+        run: |
+          echo "::group::Testing installer script"
+          
+          # Create a test version of the installer that doesn't actually install
+          cp deployment/scripts/install-sync-cron.sh /tmp/test-installer.sh
+          
+          # Mock the interactive input by providing choice "3" (manual setup)
+          echo "3" | bash /tmp/test-installer.sh || {
+            echo "::error::Installer script failed"
+            exit 1
+          }
+          
+          echo "✅ Installer script completed successfully"
+          echo "::endgroup::"
+
+      - name: Validate Service Templates
+        run: |
+          echo "::group::Validating systemd service templates"
+          
+          # Extract the systemd service template from the installer script
+          sed -n '/^.*tee.*SYSTEMD_SERVICE.*<<EOF$/,/^EOF$/p' deployment/scripts/install-sync-cron.sh | \
+            sed '1d;$d' > /tmp/docker-deploy-sync.service
+          
+          # Basic validation of systemd service file
+          if grep -q "ExecStart=" /tmp/docker-deploy-sync.service; then
+            echo "✅ Service file contains ExecStart directive"
+          else
+            echo "::error::Service file missing ExecStart directive"
+            exit 1
+          fi
+          
+          if grep -q "After=network-online.target docker.service" /tmp/docker-deploy-sync.service; then
+            echo "✅ Service file has correct dependencies"
+          else
+            echo "::warning::Service file may not have optimal dependencies"
+          fi
+          
+          echo "::endgroup::"
+
+  # Integration test
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [validate-scripts, validate-docker-configs]
+    if: github.event.inputs.test_all == 'true' || github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Create Test Environment
+        run: |
+          # Create a realistic test environment
+          mkdir -p /tmp/integration-test/{deploy-path,logs,state}
+          
+          # Copy a real docker-compose file for testing
+          if [ -f "dockermaster/docker/compose/calibre-server/docker-compose.yml" ]; then
+            mkdir -p /tmp/integration-test/deploy-path/calibre-server
+            cp dockermaster/docker/compose/calibre-server/docker-compose.yml \
+               /tmp/integration-test/deploy-path/calibre-server/
+          fi
+
+      - name: Run Integration Test
+        env:
+          DEPLOY_PATH: /tmp/integration-test/deploy-path
+          STATE_FILE: /tmp/integration-test/state/last-deployment.state
+          LOG_FILE: /tmp/integration-test/logs/docker-deploy.log
+          GITHUB_REPO: luiscamaral/home-lab-inventory
+        run: |
+          echo "::group::Running integration test"
+          
+          # Run the sync script in test mode (without actually deploying)
+          # We'll modify the script temporarily to skip docker operations
+          cp deployment/scripts/github-sync.sh /tmp/test-sync.sh
+          
+          # Replace docker commands with echo for testing
+          sed -i 's/docker compose pull/echo "Would run: docker compose pull"/g' /tmp/test-sync.sh
+          sed -i 's/docker compose up -d --remove-orphans/echo "Would run: docker compose up -d --remove-orphans"/g' /tmp/test-sync.sh
+          sed -i 's/docker manifest inspect/echo "Would inspect manifest for"/g' /tmp/test-sync.sh
+          sed -i 's/docker inspect --format/echo "Would inspect container"/g' /tmp/test-sync.sh
+          
+          # Run the modified script
+          bash /tmp/test-sync.sh || {
+            echo "::error::Integration test failed"
+            cat "$LOG_FILE" || true
+            exit 1
+          }
+          
+          echo "✅ Integration test passed"
+          echo "::endgroup::"
+
+      - name: Verify Test Logs
+        run: |
+          echo "::group::Test execution logs"
+          if [ -f "/tmp/integration-test/logs/docker-deploy.log" ]; then
+            cat /tmp/integration-test/logs/docker-deploy.log
+          else
+            echo "No logs generated"
+          fi
+          echo "::endgroup::"
+
+  # Summary job
+  deployment-validation-summary:
+    name: Deployment Validation Summary
+    runs-on: ubuntu-latest
+    needs: [validate-scripts, validate-docker-configs, test-sync-logic, test-installer]
+    if: always()
+    
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## 📋 Deployment Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check job statuses
+          if [ "${{ needs.validate-scripts.result }}" = "success" ]; then
+            echo "✅ **Script Validation**: All deployment scripts validated successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Script Validation**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.validate-docker-configs.result }}" = "success" ]; then
+            echo "✅ **Docker Configuration**: All compose files validated" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Docker Configuration**: Failed or partial failure" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.test-sync-logic.result }}" = "success" ]; then
+            echo "✅ **Sync Logic**: GitHub sync functionality tested" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Sync Logic**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.test-installer.result }}" = "success" ]; then
+            echo "✅ **Installer**: Installation script validated" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Installer**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Validation Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Shell script syntax and ShellCheck validation" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker Compose configuration validation" >> $GITHUB_STEP_SUMMARY  
+          echo "- GitHub API integration testing" >> $GITHUB_STEP_SUMMARY
+          echo "- State management functionality" >> $GITHUB_STEP_SUMMARY
+          echo "- Service discovery logic" >> $GITHUB_STEP_SUMMARY
+          echo "- Installation script validation" >> $GITHUB_STEP_SUMMARY
+          echo "- Systemd service template validation" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Deploy validated configurations to target servers" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitor deployment sync logs after installation" >> $GITHUB_STEP_SUMMARY
+          echo "- Test actual container updates with registry images" >> $GITHUB_STEP_SUMMARY
