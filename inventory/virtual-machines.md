@@ -1,172 +1,175 @@
-# Virtual Machines Inventory
+# 🖥️ Virtual Machine Inventory
 
-## Running VMs
+## Proxmox Virtual Machines
 
-### Docker Master (VM 120)
-- **OS**: Ubuntu 24.04.2 LTS
-- **CPU**: 20 cores
-- **RAM**: 64 GB
-- **Storage**: 196 GB on thin-pool-ssd
-- **Network**: vmbr28
-- **Boot Order**: 2 (30s startup delay)
-- **Status**: Running
-- **Purpose**: Main Docker container host
-- **Key Services**: Docker, Portainer, various containerized applications
+### Infrastructure Services
 
-### Home Assistant (VM 121)
-- **OS**: Home Assistant OS
-- **CPU**: 4 cores
-- **RAM**: 16 GB
-- **Storage**: 32 GB on local-zfs
-- **Network**: vmbr205
-- **Boot Order**: 1 (first to start)
-- **Status**: Running
-- **Purpose**: Home automation platform
-
-### k8s-ctrl-1 (VM 210)
-- **OS**: Linux (Kubernetes control plane)
-- **CPU**: 8 cores
-- **RAM**: 16 GB
-- **Storage**: 100 GB on thin-pool-ssd
-- **Network**: vmbr7
-- **Status**: Running
-- **Purpose**: Kubernetes control plane node 1
-
-### k8s-worker-1 (VM 211)
-- **OS**: Linux (Kubernetes worker)
-- **CPU**: 16 cores
-- **RAM**: 32 GB
-- **Storage**: 200 GB on thin-pool-ssd
-- **Network**: vmbr7
-- **Status**: Running
-- **Purpose**: Kubernetes worker node 1
-
-### k8s-worker-2 (VM 212)
-- **OS**: Linux (Kubernetes worker)
-- **CPU**: 16 cores
-- **RAM**: 32 GB
-- **Storage**: 200 GB on thin-pool-ssd
-- **Network**: vmbr7
-- **Status**: Running
-- **Purpose**: Kubernetes worker node 2
-
-### k8s-worker-3 (VM 213)
-- **OS**: Linux (Kubernetes worker)
-- **CPU**: 16 cores
-- **RAM**: 32 GB
-- **Storage**: 200 GB on thin-pool-ssd
-- **Network**: vmbr7
-- **Status**: Running
-- **Purpose**: Kubernetes worker node 3
-
-### Windows 11 Pro (VM 201)
-- **OS**: Windows 11 Professional
-- **CPU**: 8 cores
-- **RAM**: 16 GB
-- **Storage**: 250 GB on thin-pool-ssd
-- **Network**: vmbr7
-- **Boot**: OVMF (UEFI)
-- **Display**: VirtIO-GPU
-- **Status**: Running
-- **Purpose**: Windows development/testing environment
-
-## Stopped VMs
-
-### Ubuntu 22.04 Template (VM 100)
-- **OS**: Ubuntu 22.04 LTS
-- **CPU**: 2 cores
+#### VM 100 - Omada Controller
+- **Status**: ✅ Running
+- **CPU**: 2 cores (host)
 - **RAM**: 2 GB
-- **Storage**: 20 GB on thin-pool-ssd
-- **Status**: Stopped
-- **Purpose**: Template for Ubuntu VMs
+- **Storage**: 30 GB SSD
+- **Network**: vmbr01 (Management network)
+- **OS**: Linux
+- **Purpose**: TP-Link Omada SDN Controller
+- **Auto-start**: Yes (startup delay: 180s)
 
-### Ubuntu Desktop (VM 101)
-- **OS**: Ubuntu Desktop
-- **CPU**: 4 cores
-- **RAM**: 8 GB
-- **Storage**: 50 GB on thin-pool-ssd
-- **Status**: Stopped
-- **Purpose**: Desktop Linux environment
-
-### Plex Media Server (VM 102)
-- **OS**: Ubuntu Server
-- **CPU**: 8 cores
+#### VM 110 - Laorion
+- **Status**: ✅ Running  
+- **CPU**: 4 cores (host)
 - **RAM**: 16 GB
-- **Storage**: 50 GB system + NFS media storage
-- **Status**: Stopped
-- **Purpose**: Media streaming server
+- **Storage**: 
+  - 90 GB SSD (System)
+  - 320 GB (Data, write-through cache)
+- **Network**: 
+  - vmbr1 (Management)
+  - vmbr10 (VLAN 10)
+- **OS**: Linux
+- **Auto-start**: Yes
 
-### pfSense (VM 103)
-- **OS**: pfSense
-- **CPU**: 2 cores
+#### VM 111 - Rootmaster
+- **Status**: ✅ Running
+- **CPU**: 2 cores (host)
+- **RAM**: 2 GB
+- **Storage**: 
+  - 80 GB SSD (System)
+  - 16 GB SSD (Additional)
+- **Network**: vmbr10 (VLAN 10)
+- **OS**: Linux
+- **Auto-start**: Yes
+
+#### VM 120 - Docker Master
+- **Status**: ✅ Running
+- **CPU**: 20 cores (2 sockets × 10 cores, host)
+- **RAM**: 64 GB
+- **Storage**: 196 GB SSD
+- **Network**: vmbr28
+- **OS**: Linux
+- **Purpose**: Main Docker container host
+- **Auto-start**: Yes (startup delay: 30s)
+
+#### VM 121 - Home Assistant
+- **Status**: ✅ Running
+- **CPU**: 4 cores (SandyBridge)
+- **RAM**: 16 GB
+- **Storage**: 32 GB
+- **Network**: vmbr205
+- **OS**: Linux (UEFI/OVMF)
+- **Purpose**: Home automation platform
+- **Auto-start**: Yes (startup order: 1)
+
+#### VM 122 - UniFi Controller
+- **Status**: ✅ Running
+- **CPU**: 2 cores (host)
+- **RAM**: 2 GB
+- **Storage**: 128 GB (write-through cache)
+- **Network**: 
+  - vmbr010 (disabled)
+  - vmbr1 (Management)
+- **OS**: Linux
+- **Purpose**: UniFi network management
+- **Auto-start**: Yes (startup delay: 120s)
+
+#### VM 1000 - Lamint
+- **Status**: ✅ Running
+- **CPU**: 12 cores (host)
+- **RAM**: 32 GB
+- **Storage**: 64 GB SSD
+- **Network**: vmbr10 (MTU 9000)
+- **OS**: Linux
+- **Auto-start**: Yes
+
+### Container Orchestration (Stopped)
+
+#### Docker Swarm Cluster
+- **VM 230 - Swarm Manager 1**
+  - Status: 🔴 Stopped
+  - CPU: 4 cores
+  - RAM: 4 GB
+  - Storage: 21 GB HDD
+  - Network: vmbr28
+
+- **VM 231 - Swarm Worker 1**
+  - Status: 🔴 Stopped
+  - CPU: 4 cores
+  - RAM: 4 GB
+  - Storage: 21 GB SSD
+  - Network: vmbr28
+
+- **VM 232 - Swarm Worker 2**
+  - Status: 🔴 Stopped
+  - CPU: 4 cores
+  - RAM: 4 GB
+  - Storage: 21 GB SSD
+  - Network: vmbr28
+
+#### Kubernetes Cluster
+- **VM 240 - Kubernetes Master 1**
+  - Status: 🔴 Stopped
+  - CPU: 4 cores
+  - RAM: 7 GB
+  - Storage: 21 GB SSD
+  - Network: vmbr28
+
+- **VM 241 - Kubernetes Worker 1**
+  - Status: 🔴 Stopped
+  - CPU: 6 cores
+  - RAM: 18 GB
+  - Storage: 21 GB SSD
+  - Network: vmbr28
+
+- **VM 242 - Kubernetes Worker 2**
+  - Status: 🔴 Stopped
+  - CPU: 6 cores
+  - RAM: 18 GB
+  - Storage: 21 GB SSD
+  - Network: vmbr28
+
+#### Talos Kubernetes Cluster
+- **VM 250 - TKMaster 1**
+  - Status: 🔴 Stopped
+  - CPU: 4 cores
+  - RAM: 8 GB (4 GB balloon)
+  - Storage: 96 GB SSD
+  - Network: vmbr28
+
+- **VM 251 - TKWorker 1**
+  - Status: 🔴 Stopped
+  - CPU: 4 cores
+  - RAM: 8 GB
+  - Storage: 96 GB SSD
+  - Network: vmbr28
+
+- **VM 252 - TKWorker 2**
+  - Status: 🔴 Stopped
+  - CPU: 4 cores
+  - RAM: 8 GB
+  - Storage: 96 GB SSD
+  - Network: vmbr28
+
+### Templates & Testing
+
+#### VM 101 - Tiny
+- **Status**: 🔴 Stopped
+- **CPU**: 4 cores
 - **RAM**: 4 GB
-- **Storage**: 20 GB on local-zfs
-- **Network**: Multiple interfaces for routing
-- **Status**: Stopped
-- **Purpose**: Firewall/Router (testing)
+- **Storage**: 120 GB SSD
+- **Network**: vmbr10
+- **OS**: Linux
 
-### TrueNAS (VM 104)
-- **OS**: TrueNAS CORE
+#### VM 10001 - Ubuntu Server 22.04 Template
+- **Status**: 📋 Template
 - **CPU**: 4 cores
-- **RAM**: 16 GB
-- **Storage**: 32 GB system + additional storage pools
-- **Status**: Stopped
-- **Purpose**: Storage/NAS testing
-
-### OpenWrt (VM 105)
-- **OS**: OpenWrt
-- **CPU**: 1 core
-- **RAM**: 512 MB
-- **Storage**: 4 GB on local-zfs
-- **Status**: Stopped
-- **Purpose**: Router/Network testing
-
-### Kali Linux (VM 106)
-- **OS**: Kali Linux
-- **CPU**: 4 cores
-- **RAM**: 8 GB
-- **Storage**: 40 GB on thin-pool-ssd
-- **Status**: Stopped
-- **Purpose**: Security testing/penetration testing
-
-### Debian 12 (VM 107)
-- **OS**: Debian 12 Bookworm
-- **CPU**: 2 cores
 - **RAM**: 4 GB
-- **Storage**: 32 GB on thin-pool-ssd
-- **Status**: Stopped
-- **Purpose**: General purpose Linux server
+- **Storage**: 21 GB HDD
+- **Network**: vmbr28
+- **OS**: Ubuntu Server 22.04
+- **Purpose**: VM template for cloning
 
-### Rocky Linux (VM 108)
-- **OS**: Rocky Linux 9
-- **CPU**: 4 cores
-- **RAM**: 8 GB
-- **Storage**: 40 GB on thin-pool-ssd
-- **Status**: Stopped
-- **Purpose**: RHEL-compatible testing
-
-### AlmaLinux (VM 109)
-- **OS**: AlmaLinux 9
-- **CPU**: 4 cores
-- **RAM**: 8 GB
-- **Storage**: 40 GB on thin-pool-ssd
-- **Status**: Stopped
-- **Purpose**: RHEL-compatible testing
-
-### Windows Server 2022 (VM 200)
-- **OS**: Windows Server 2022
-- **CPU**: 8 cores
-- **RAM**: 16 GB
-- **Storage**: 100 GB on thin-pool-ssd
-- **Boot**: OVMF (UEFI)
-- **Status**: Stopped
-- **Purpose**: Windows Server testing/AD lab
-
-## VM Summary Statistics
+## Summary
 - **Total VMs**: 18
 - **Running**: 7
-- **Stopped**: 11
-- **Total Allocated CPU Cores**: 110
-- **Total Allocated RAM**: 292 GB
-- **Primary Storage Pool**: thin-pool-ssd (SSD)
-- **Secondary Storage**: local-zfs, NFS mounts
+- **Stopped**: 10
+- **Templates**: 1
+- **Total Allocated RAM**: ~195 GB
+- **Total Allocated Storage**: ~1.5 TB

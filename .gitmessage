@@ -1,0 +1,59 @@
+# <type>(<scope>): <subject> (max 100 chars)
+# |<----  Using a Maximum Of 100 Characters  ---->|
+
+# Explain why this change is being made
+# |<----   Try To Limit Each Line to a Maximum Of 72 Characters   ---->|
+
+# Provide links or keys to any relevant tickets, articles or other resources
+# Example: Github issue #23
+
+# --- COMMIT END ---
+# Type can be 
+#    feat     (new feature)
+#    fix      (bug fix)
+#    docs     (changes to documentation)
+#    style    (formatting, missing semi colons, etc; no code change)
+#    refactor (refactoring production code)
+#    test     (adding tests, refactoring test; no production code change)
+#    chore    (updating build tasks, package manager configs, etc; no production code change)
+#    build    (changes to build system or external dependencies)
+#    ci       (changes to CI configuration files and scripts)
+#    perf     (performance improvements)
+#    revert   (reverts a previous commit)
+#    config   (configuration changes for infrastructure)
+#    deploy   (deployment related changes)
+#    security (security improvements and fixes)
+# --------------------
+# Scope can be (choose one):
+#    servers     (physical server configurations)
+#    docker      (Docker containers and compose files)
+#    security    (security configurations, gitleaks, etc.)
+#    docs        (documentation updates)
+#    ci          (GitHub workflows and CI/CD)
+#    deploy      (deployment configurations)
+#    inventory   (inventory documentation updates)
+#    proxmox     (Proxmox specific configurations)
+#    nas         (NAS/Synology specific configurations)
+#    dockermaster (Docker master server configurations)
+#    containers   (container specific changes)
+#    workflows    (GitHub workflow changes)
+#    monitoring   (monitoring and alerting)
+#    backup       (backup configurations)
+#    network      (network configurations)
+#    storage      (storage configurations)
+# --------------------
+# Remember to:
+#   - Capitalize the subject line
+#   - Use the imperative mood in the subject line
+#   - Do not end the subject line with a period
+#   - Separate subject from body with a blank line
+#   - Use the body to explain what and why vs. how
+#   - Can use multiple lines with "-" for multiple paragraphs
+# --------------------
+# Examples:
+# feat(docker): add nginx reverse proxy configuration
+# fix(security): update gitleaks config to ignore test files  
+# docs(inventory): add new server documentation for node-03
+# ci(workflows): add automated Docker image builds
+# config(proxmox): update VM resource allocations
+# chore(deps): update commitlint to latest version

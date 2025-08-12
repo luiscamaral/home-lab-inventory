@@ -1,0 +1,16 @@
+name: bind-dns
+
+services:
+  bind9:
+    image: ubuntu/bind9:9.20-24.10_edge
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    environment:
+      - BIND9_USER=root
+      - TZ=America/Denver
+    volumes:
+      - ./config:/etc/bind
+      - ./cache:/var/cache/bind
+      - ./records:/var/lib/bind
+    restart: always

@@ -1,0 +1,51 @@
+name: calibre
+
+services:
+
+  # Calibre Content Server
+  calibre:
+    build:
+      context: .
+    hostname: calibre
+    container_name: calibre
+    ports:
+      - 58080:8080
+      - 58181:8181
+      - 58081:8081
+      - 58090:9090
+    volumes:
+      - /nfs/calibre/Library:/Library
+      - /nfs/calibre/config:/config
+      - /nfs/calibre/upload:/upload
+      - /nfs/calibre/plugins:/plugins
+      - ./10-keyboard.conf:/etc/X11/xorg.conf.d/10-keyboard.conf
+      - /dev/dri:/dev/dri
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      PUID: 1027
+      PGID: 65539
+      CUSTOM_USER: 'admin'
+      PASSWORD: 'REDACTED'  # Password redacted for security
+      TZ: 'America/Denver'
+      DISABLE_IPV6: true
+      LANG: en_US.UTF-8
+    restart: always
+
+  # Calibre Web
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:latest
+    container_name: calibre-web
+    hostname: calibre-web
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - DOCKER_MODS=linuxserver/mods:universal-calibre #optional
+      - OAUTHLIB_RELAX_TOKEN_SCOPE=1 #optional
+    volumes:
+      - /nfs/calibre/calibre-web/config:/config
+      - /nfs/calibre/calibre-web/Library:/books
+    ports:
+      - 58083:8083
+    restart: unless-stopped

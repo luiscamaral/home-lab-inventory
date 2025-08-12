@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Validate commit message format with commitlint
+echo "🔍 Validating commit message format..."
+npx --no -- commitlint --edit ${1}
+
+if [ $? -eq 0 ]; then
+  echo "✅ Commit message format is valid"
+else
+  echo "❌ Commit message format validation failed"
+  echo ""
+  echo "📋 Expected format: type(scope): subject"
+  echo ""
+  echo "Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert, config, deploy, security"
+  echo "Valid scopes: servers, docker, security, docs, ci, deploy, inventory, proxmox, nas, dockermaster, containers, workflows, monitoring, backup, network, storage"
+  echo ""
+  echo "Example: feat(docker): add nginx container configuration"
+  echo "Example: fix(security): update gitleaks configuration"
+  echo "Example: docs(inventory): update server documentation"
+  echo ""
+  echo "💡 Use 'git config commit.template .gitmessage' to use the commit template"
+  echo "💡 Use 'npm run commit' for interactive commit message creation"
+  exit 1
+fi

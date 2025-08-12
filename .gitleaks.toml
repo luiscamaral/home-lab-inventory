@@ -1,0 +1,333 @@
+# Gitleaks Configuration for Home Lab Inventory Project
+# This configuration file customizes Gitleaks secret detection for the specific needs
+# of a home lab infrastructure project while maintaining security best practices.
+
+title = "Gitleaks Configuration for Home Lab Infrastructure"
+
+# Include all default rules for comprehensive secret detection
+[extend]
+useDefault = true
+
+# Custom rules specific to home lab infrastructure
+[[rules]]
+id = "home-lab-ssh-key"
+description = "Detects SSH private keys that might be accidentally committed"
+regex = '''-----BEGIN [A-Z]+ PRIVATE KEY-----'''
+tags = ["key", "ssh"]
+severity = "critical"
+keywords = [
+    "private key",
+    "rsa private key",
+    "ed25519 private key"
+]
+
+[[rules]]
+id = "home-lab-api-key"
+description = "Detects API keys with common patterns used in home lab services"
+regex = '''(?i)(api[_-]?key|apikey|access[_-]?key)\s*[:=]\s*['\"]?[a-z0-9]{20,}['\"]?'''
+tags = ["api", "key"]
+severity = "high"
+keywords = [
+    "api_key",
+    "apikey",
+    "access_key"
+]
+
+[[rules]]
+id = "home-lab-docker-registry-token"
+description = "Detects Docker registry authentication tokens"
+regex = '''(?i)(docker[_-]?(registry|hub)[_-]?(token|password|auth))\s*[:=]\s*['\"]?[a-zA-Z0-9+/]{20,}={0,2}['\"]?'''
+tags = ["docker", "token", "registry"]
+severity = "high"
+keywords = [
+    "docker_token",
+    "registry_password",
+    "dockerhub"
+]
+
+[[rules]]
+id = "home-lab-basic-auth"
+description = "Detects basic authentication credentials in URLs"
+regex = '''https?://[a-zA-Z0-9_.+-]+:[a-zA-Z0-9_.+-]+@[a-zA-Z0-9.-]+'''
+tags = ["auth", "url", "credentials"]
+severity = "medium"
+keywords = [
+    "http://",
+    "https://"
+]
+
+# Allow certain files that typically contain example or template configurations
+[allowlist]
+description = "Allowlist for home lab project files"
+files = [
+    '''^\.git/''',
+    '''^\.github/workflows/.*\.yml$''',  # GitHub Actions workflows (this file itself)
+    '''.*\.md$''',                        # Markdown files often contain examples
+    '''.*\.example$''',                   # Template/example files
+    '''.*\.template$''',                  # Template files
+    '''.*\.sample$''',                    # Sample configuration files
+    '''inventory/.*\.md$''',              # Inventory documentation
+    '''.*TEST.*''',                       # Test files
+    '''.*test.*''',                       # Test files (case insensitive)
+]
+
+# Allow certain regexes that are known to be safe in this context
+regexes = [
+    '''example\.com''',                   # Example domain in documentation
+    '''localhost''',                      # Localhost references
+    '''127\.0\.0\.1''',                   # Localhost IP
+    '''192\.168\.\d+\.\d+''',             # Private network IPs (common in home labs)
+    '''10\.\d+\.\d+\.\d+''',              # Private network IPs (common in home labs)
+    '''172\.1[6-9]\.\d+\.\d+''',          # Private network IPs (common in home labs)
+    '''172\.2[0-9]\.\d+\.\d+''',          # Private network IPs (common in home labs)
+    '''172\.3[0-1]\.\d+\.\d+''',          # Private network IPs (common in home labs)
+    '''password.*example''',              # Example passwords in documentation
+    '''secret.*example''',                # Example secrets in documentation
+    '''token.*example''',                 # Example tokens in documentation
+    '''key.*example''',                   # Example keys in documentation
+    '''YOUR_.*_HERE''',                   # Placeholder values
+    '''REPLACE_WITH_.*''',                # Placeholder values
+    '''<.*>''',                           # Placeholder values in angle brackets
+    '''\{.*\}''',                         # Placeholder values in curly braces
+    '''\$\{.*\}''',                       # Environment variable placeholders
+]
+
+# Allow certain paths that commonly have false positives
+paths = [
+    '''inventory/commands-available\.md''',  # Commands documentation might contain example tokens
+    '''dockermaster/.*\.md''',              # Docker configuration documentation
+    '''CLAUDE\.md''',                       # Project instructions file
+    '''.*README.*''',                       # README files with examples
+    '''.*\.example\..*''',                  # Example configuration files
+]
+
+# Global configuration
+[gitleaks]
+# Enable verbose output for better debugging
+verbose = false
+
+# Stop after finding N secrets (0 = unlimited)
+max-target-megabytes = 100
+
+# Exclude certain commit SHAs if needed (can be added when specific commits need to be ignored)
+# exclude-commits = ["commit-sha-here"]
+
+# Report format (json, csv, sarif)
+report-format = "sarif"
+
+# Custom stopwords to reduce false positives in home lab context
+stopwords = [
+    "example",
+    "test",
+    "demo",
+    "sample",
+    "placeholder",
+    "template",
+    "your_key_here",
+    "replace_with",
+    "change_me",
+    "update_this",
+    "fix_me",
+    "todo",
+    "documentation",
+    "readme"
+]
+
+# Enable deep scanning for thorough detection
+# but might be slower on large repositories
+[scan]
+# Scan all refs (branches and tags)
+no-git = false
+
+# Maximum file size to scan (in MB)
+max-file-size = 10
+
+# Follow symbolic links
+follow-symlinks = true
+
+# Scan uncommitted changes
+staged = true
+uncommitted = true
+
+# Performance settings
+[performance]
+# Number of goroutines to use for scanning
+workers = 4
+
+# Memory limit for scanning (in MB)
+memory-limit = 512
+
+# Timeout settings
+[timeout]
+# Overall scan timeout (in seconds)
+scan = 300
+
+# Per-file scan timeout (in seconds)
+file = 30
+
+# Custom entropy thresholds for better detection
+[entropy]
+# Enable entropy detection
+enabled = true
+
+# Minimum entropy threshold (lower = more sensitive)
+threshold = 3.5
+
+# Custom entropy groups for specific patterns
+[[entropy.groups]]
+name = "base64"
+regex = '''[A-Za-z0-9+/]{20,}={0,2}'''
+threshold = 4.0
+
+[[entropy.groups]]
+name = "hex"
+regex = '''[a-fA-F0-9]{20,}'''
+threshold = 3.0
+
+# Severity mapping for different types of findings
+[severity]
+critical = ["private-key", "secret-key", "password", "token"]
+high = ["api-key", "access-token", "auth-token"]
+medium = ["hash", "id", "username"]
+low = ["email", "url"]
+
+# Custom tags for better categorization
+[tags]
+infrastructure = ["docker", "kubernetes", "terraform", "ansible"]
+authentication = ["auth", "login", "password", "token", "key"]
+networking = ["ip", "domain", "url", "endpoint"]
+cloud = ["aws", "gcp", "azure", "cloudflare"]
+database = ["db", "sql", "mongo", "redis"]
+monitoring = ["grafana", "prometheus", "influx"]
+
+# Reporting configuration
+[report]
+# Include metadata in reports
+include-commit-info = true
+include-file-info = true
+include-line-numbers = true
+
+# Output formatting
+format = "detailed"
+sort-by = "severity"
+
+# Enable statistics in report
+include-stats = true
+
+# Custom output templates (optional)
+# template = "custom-template.tmpl"
+
+# Integration settings for CI/CD
+[ci]
+# Exit codes
+exit-code-on-findings = 1
+exit-code-on-error = 2
+
+# Quiet mode for CI environments
+quiet = false
+
+# Enable colored output even in CI
+force-color = false
+
+# File handling
+[files]
+# Skip binary files
+skip-binary = true
+
+# Skip files larger than threshold (in bytes)
+max-size = 10485760  # 10MB
+
+# Include hidden files
+include-hidden = false
+
+# File patterns to always scan
+force-scan = [
+    "*.env.example",
+    "*.env.template"
+]
+
+# Additional metadata for reporting
+[metadata]
+project = "Home Lab Infrastructure Inventory"
+team = "Infrastructure Team"
+contact = "security@homelab.local"
+description = "Security scanning configuration for home lab infrastructure management"
+version = "1.0.0"
+last-updated = "2024-11-01"
+
+# Custom notification settings (can be extended)
+[notifications]
+# Enable notifications on findings
+enabled = false
+
+# Notification channels (can be configured with webhooks)
+# slack = "webhook-url"
+# teams = "webhook-url"
+# email = "security@homelab.local"
+
+# Webhook configuration for external integrations
+[webhooks]
+# Enable webhook notifications
+enabled = false
+
+# Webhook endpoints
+# on-finding = "https://your-security-dashboard/webhook/gitleaks"
+# on-completion = "https://your-metrics-system/webhook/scan-complete"
+
+# Custom headers for webhook requests
+# headers = [
+#     "Authorization: Bearer your-token",
+#     "Content-Type: application/json"
+# ]
+
+# Retry configuration
+# retry-count = 3
+# retry-delay = 5  # seconds
+
+# Advanced configuration for specific use cases
+[advanced]
+# Enable experimental features
+experimental = false
+
+# Custom pattern libraries
+pattern-libraries = [
+    # "custom-patterns.toml"  # Additional pattern files if needed
+]
+
+# Machine learning enhanced detection (if available)
+ml-enhanced = false
+
+# Custom dictionaries for context-aware scanning
+dictionaries = [
+    # "homelab-terms.dict"  # Custom dictionary for home lab terminology
+]
+
+# Contextual analysis settings
+[context]
+# Enable context-aware analysis
+enabled = true
+
+# Context window size (lines before/after a match)
+window-size = 5
+
+# Minimum confidence threshold for context analysis
+confidence-threshold = 0.7
+
+# Context rules for reducing false positives
+[[context.rules]]
+name = "documentation-context"
+description = "Reduce sensitivity in documentation contexts"
+patterns = ["README", "docs/", "*.md"]
+confidence-multiplier = 0.5
+
+[[context.rules]]
+name = "example-context"
+description = "Reduce sensitivity in example contexts"
+patterns = ["example", "sample", "template", "demo"]
+confidence-multiplier = 0.3
+
+[[context.rules]]
+name = "test-context"
+description = "Reduce sensitivity in test contexts"
+patterns = ["test/", "_test", "spec/", "*.test.*"]
+confidence-multiplier = 0.4

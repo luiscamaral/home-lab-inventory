@@ -1,0 +1,26 @@
+name: dockermaster-portainer
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    driver: macvlan
+    external: true
+
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    hostname: portainer
+    restart: always
+    expose:
+      - 9000
+      - 9443
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.2
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+      
+volumes:
+  portainer_data:
