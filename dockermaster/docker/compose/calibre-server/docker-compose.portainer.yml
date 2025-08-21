@@ -1,0 +1,70 @@
+name: calibre
+
+services:
+
+  # Calibre Content Server - Portainer Optimized
+  calibre:
+    image: ghcr.io/luiscamaral/calibre-server:latest
+    hostname: calibre
+    container_name: calibre
+    ports:
+      - 58080:8080
+      - 58181:8181
+      - 58081:8081
+      - 58090:9090
+    volumes:
+      - /nfs/calibre/Library:/Library
+      - /nfs/calibre/config:/config
+      - /nfs/calibre/upload:/upload
+      - /nfs/calibre/plugins:/plugins
+      - ./10-keyboard.conf:/etc/X11/xorg.conf.d/10-keyboard.conf
+      - /dev/dri:/dev/dri
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      PUID: ${PUID:-1027}
+      PGID: ${PGID:-65539}
+      CUSTOM_USER: 'admin'
+      PASSWORD: ${CALIBRE_PASSWORD}
+      TZ: ${TZ:-America/Denver}
+      DISABLE_IPV6: true
+      LANG: en_US.UTF-8
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "calibre"
+      com.docker.service: "calibre-server"
+      portainer.autodeploy: "true"
+
+  # Calibre Web - Portainer Optimized
+  calibre-web:
+    image: lscr.io/linuxserver/calibre-web:latest
+    container_name: calibre-web
+    hostname: calibre-web
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
+      - DOCKER_MODS=linuxserver/mods:universal-calibre
+      - OAUTHLIB_RELAX_TOKEN_SCOPE=1
+    volumes:
+      - /nfs/calibre/calibre-web/config:/config
+      - /nfs/calibre/calibre-web/Library:/books
+    ports:
+      - 58083:8083
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "calibre"
+      com.docker.service: "calibre-web"
+      portainer.autodeploy: "true"
