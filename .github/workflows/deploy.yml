@@ -39,7 +39,10 @@ jobs:
     if: |
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.deployment_method == 'webhook')
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: [ubuntu-latest]  # Can be updated to include [self-hosted, dockermaster] when ready
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -94,7 +97,10 @@ jobs:
   deploy-ssh:
     name: Deploy via SSH
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.deployment_method == 'ssh'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: [ubuntu-latest]  # Can be updated to include [self-hosted, dockermaster] when ready
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -159,7 +165,10 @@ jobs:
   notify-watchtower:
     name: Notify Watchtower
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.deployment_method == 'watchtower'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: [ubuntu-latest]  # Can be updated to include [self-hosted, dockermaster] when ready
     steps:
       - name: Trigger Watchtower HTTP API
         env:

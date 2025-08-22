@@ -21,7 +21,7 @@
 
 ---
 
-## 🟢 Running Containers (7)
+## 🟢 Running Containers (8)
 
 ### 📚 Calibre Server
 - **Image**: calibre-calibre
@@ -70,6 +70,24 @@
 - **Resources**: 0.01% CPU, 62MB RAM (0.10%)
 - **Volumes**: `/nfs/dockermaster/docker/rundeck/dbdata`
 - **Purpose**: Database backend for Rundeck
+
+### 🤖 GitHub Actions Runner
+- **Image**: myoung34/github-runner:latest
+- **Container**: github-runner-homelab
+- **Status**: Pending deployment
+- **Network**: docker-servers-net
+- **Resources**: 
+  - Limits: 2 CPU, 4GB RAM
+  - Reservations: 0.5 CPU, 512MB RAM
+- **Volumes**:
+  - `/var/run/docker.sock` → `/var/run/docker.sock` (Docker access)
+  - `./work` → `/tmp/runner/work` (Job workspace)
+  - `./cache` → `/tmp/runner/_work/_tool` (Build cache)
+  - `./config` → `/actions-runner` (Configuration)
+  - `/nfs/dockermaster/docker` → `/deployment:ro` (Read-only deployment path)
+- **Labels**: self-hosted, linux, x64, dockermaster, docker
+- **Purpose**: Self-hosted CI/CD runner for GitHub Actions
+- **Compose Stack**: Yes
 
 ### 🖥️ Portainer
 - **Image**: portainer/portainer-ce:latest
