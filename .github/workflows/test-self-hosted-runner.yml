@@ -1,0 +1,28 @@
+name: Test Self-hosted Runner
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: [self-hosted, dockermaster]
+    steps:
+      - name: Check runner info
+        run: |
+          echo "🎉 Runner is working!"
+          echo "Hostname: $(hostname)"
+          echo "Runner name: ${{ runner.name }}"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "Working directory: $(pwd)"
+
+      - name: Check Docker access
+        run: |
+          echo "Docker version:"
+          docker version
+          echo ""
+          echo "Docker containers running:"
+          docker ps | head -5
+
+      - name: Check deployment path access
+        run: |
+          echo "Checking /deployment access:"
+          ls -la /deployment/ | head -10
