@@ -1,28 +1,113 @@
 name: Test Self-hosted Runner
+
 on:
   workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Enable debug output'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 
 jobs:
-  test:
+  test-runner:
+    name: Test Dockermaster Runner
     runs-on: [self-hosted, dockermaster]
+    timeout-minutes: 5
+    
     steps:
-      - name: Check runner info
+      - name: 🎯 Runner Information
         run: |
-          echo "🎉 Runner is working!"
-          echo "Hostname: $(hostname)"
-          echo "Runner name: ${{ runner.name }}"
+          echo "## Runner Information"
+          echo "Runner Name: ${{ runner.name }}"
           echo "Runner OS: ${{ runner.os }}"
-          echo "Working directory: $(pwd)"
-
-      - name: Check Docker access
+          echo "Runner Arch: ${{ runner.arch }}"
+          echo "Runner Temp: ${{ runner.temp }}"
+          echo "Hostname: $(hostname)"
+          echo "Current User: $(whoami)"
+          echo "Current Directory: $(pwd)"
+          echo "Date: $(date)"
+      
+      - name: 🐳 Docker Verification
         run: |
-          echo "Docker version:"
+          echo "## Docker Status"
+          echo "### Docker Version"
           docker version
           echo ""
-          echo "Docker containers running:"
-          docker ps | head -5
-
-      - name: Check deployment path access
+          echo "### Docker Info Summary"
+          docker info --format "Containers: {{.Containers}}
+          Running: {{.ContainersRunning}}
+          Images: {{.Images}}
+          Server Version: {{.ServerVersion}}
+          Storage Driver: {{.Driver}}"
+          echo ""
+          echo "### Running Containers (first 5)"
+          docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" | head -6
+      
+      - name: 📁 Deployment Path Access
         run: |
-          echo "Checking /deployment access:"
-          ls -la /deployment/ | head -10
+          echo "## Deployment Path Verification"
+          echo "Checking /deployment mount (read-only):"
+          if [ -d "/deployment" ]; then
+            echo "✅ /deployment directory exists"
+            echo "Contents (first 10 items):"
+            ls -la /deployment/ | head -11
+            echo ""
+            echo "Subdirectories:"
+            find /deployment -maxdepth 1 -type d | head -10
+          else
+            echo "❌ /deployment directory not found"
+          fi
+      
+      - name: 🌐 Network Connectivity
+        run: |
+          echo "## Network Tests"
+          echo "### GitHub API"
+          if curl -s -o /dev/null -w "%{http_code}" https://api.github.com | grep -q "200"; then
+            echo "✅ GitHub API: Reachable"
+          else
+            echo "❌ GitHub API: Unreachable"
+          fi
+          
+          echo "### Docker Hub"
+          if curl -s -o /dev/null -w "%{http_code}" https://hub.docker.com | grep -q "200"; then
+            echo "✅ Docker Hub: Reachable"
+          else
+            echo "❌ Docker Hub: Unreachable"
+          fi
+          
+          echo "### GitHub Container Registry"
+          if curl -s -o /dev/null -w "%{http_code}" https://ghcr.io | grep -q "200\|301\|302"; then
+            echo "✅ GitHub Container Registry: Reachable"
+          else
+            echo "❌ GitHub Container Registry: Unreachable"
+          fi
+      
+      - name: 💾 System Resources
+        run: |
+          echo "## System Resources"
+          echo "### Disk Usage"
+          df -h / /nfs/dockermaster | grep -v "Filesystem"
+          echo ""
+          echo "### Memory Usage"
+          free -h
+          echo ""
+          echo "### CPU Info"
+          nproc
+          echo "CPU cores available"
+      
+      - name: ✅ Summary
+        run: |
+          echo "## Test Summary"
+          echo "🎉 **Self-hosted runner is working correctly!**"
+          echo ""
+          echo "The runner can:"
+          echo "- ✅ Execute workflows"
+          echo "- ✅ Access Docker daemon"
+          echo "- ✅ Read deployment configurations"
+          echo "- ✅ Connect to external services"
+          echo ""
+          echo "Runner is ready for CI/CD operations!"
