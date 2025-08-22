@@ -17,14 +17,15 @@
 - Keep an updated note of this project using MCP memory.
 - Use any other MCP available that can improve the results or facilitate the task you are working with or planning.
 - *Always plan the task and optimize on subtasks that can be executed in parallel. Then spinout subagents with very refined and detailed instructions to complete those tasks. Instruct these agents to always use sequentialthinking and any other MCP relevant to their tasks.*
-
-
-
-
-# important-instruction-reminders
-Do what has been asked; nothing more, nothing less.
-NEVER create files unless they're absolutely necessary for achieving your goal.
-ALWAYS prefer editing an existing file to creating a new one.
-NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
-
-      
+- Docker compose use `docker compose` command. Always use the latest docker ce version.
+- Use memory MCP to enhance context before each task.
+- Register entities, relations and notes about the project on memory MCP.
+- Don't consider using frameworks, tools or systems that are under a paywall of any sort. Even if have a freetier.
+- Always optimize for using multiple subagents.
+- Use multiple subagents
+- We use mise, and should use mise if a different version of npm or any tool is needed.
+- Create branches for big changes
+- Commit between feature implementations
+- Keep branches for history, don't delete it
+- Prefer to use github MCP over command when possible
+- Use `bash -c` to run bash commands, some zsh commands works better this way on this environment.
