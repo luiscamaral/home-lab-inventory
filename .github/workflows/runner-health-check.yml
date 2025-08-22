@@ -1,0 +1,248 @@
+name: Runner Health Check
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Enable debug logging'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  RUNNER_NAME: dockermaster-runner
+
+jobs:
+  check-runner-status:
+    name: Check Self-hosted Runner Status
+    runs-on: ubuntu-latest
+    outputs:
+      runner-status: ${{ steps.check.outputs.status }}
+      runner-busy: ${{ steps.check.outputs.busy }}
+    steps:
+      - name: Check runner status
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const { data: runners } = await github.rest.actions.listSelfHostedRunnersForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
+              
+              const dockermasterRunner = runners.runners.find(r => 
+                r.name === '${{ env.RUNNER_NAME }}'
+              );
+              
+              if (!dockermasterRunner) {
+                core.setOutput('status', 'not_found');
+                core.setOutput('busy', 'false');
+                core.setFailed('Runner not found in repository');
+                return;
+              }
+              
+              core.setOutput('status', dockermasterRunner.status);
+              core.setOutput('busy', dockermasterRunner.busy.toString());
+              
+              console.log(`Runner Status: ${dockermasterRunner.status}`);
+              console.log(`Runner Busy: ${dockermasterRunner.busy}`);
+              console.log(`Runner Labels: ${dockermasterRunner.labels.map(l => l.name).join(', ')}`);
+              
+              if (dockermasterRunner.status !== 'online') {
+                core.setFailed(`Runner is ${dockermasterRunner.status}`);
+              }
+            } catch (error) {
+              core.setOutput('status', 'error');
+              core.setOutput('busy', 'false');
+              core.setFailed(`Error checking runner: ${error.message}`);
+            }
+      
+      - name: Generate status report
+        if: always()
+        run: |
+          echo "## 🤖 GitHub Runner Health Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Runner Name:** ${{ env.RUNNER_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ steps.check.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Busy:** ${{ steps.check.outputs.busy }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Check Time:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ steps.check.outputs.status }}" == "online" ]]; then
+            echo "✅ Runner is healthy and ready to accept jobs" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ steps.check.outputs.status }}" == "offline" ]]; then
+            echo "⚠️ Runner is offline - needs attention" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Troubleshooting Steps:" >> $GITHUB_STEP_SUMMARY
+            echo "1. SSH to dockermaster server" >> $GITHUB_STEP_SUMMARY
+            echo "2. Navigate to: \`dockermaster/github-runner\`" >> $GITHUB_STEP_SUMMARY
+            echo "3. Check status: \`docker compose ps\`" >> $GITHUB_STEP_SUMMARY
+            echo "4. View logs: \`docker compose logs runner\`" >> $GITHUB_STEP_SUMMARY
+            echo "5. Restart if needed: \`docker compose restart runner\`" >> $GITHUB_STEP_SUMMARY
+          elif [[ "${{ steps.check.outputs.status }}" == "not_found" ]]; then
+            echo "❌ Runner not registered with repository" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Setup Steps:" >> $GITHUB_STEP_SUMMARY
+            echo "1. SSH to dockermaster server" >> $GITHUB_STEP_SUMMARY
+            echo "2. Navigate to: \`dockermaster/github-runner\`" >> $GITHUB_STEP_SUMMARY
+            echo "3. Run setup: \`./setup-runner.sh\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  test-runner-execution:
+    name: Test Runner Execution
+    needs: check-runner-status
+    if: needs.check-runner-status.outputs.runner-status == 'online' && needs.check-runner-status.outputs.runner-busy != 'true'
+    runs-on: [self-hosted, dockermaster]
+    timeout-minutes: 5
+    steps:
+      - name: Runner environment check
+        run: |
+          echo "## 🔍 Runner Environment Test" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Hostname:** $(hostname)" >> $GITHUB_STEP_SUMMARY
+          echo "**Operating System:** $(uname -a)" >> $GITHUB_STEP_SUMMARY
+          echo "**Current Directory:** $(pwd)" >> $GITHUB_STEP_SUMMARY
+          echo "**User:** $(whoami)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Docker availability check
+        run: |
+          echo "### Docker Status" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          docker version >> $GITHUB_STEP_SUMMARY 2>&1 || echo "Docker not available" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Network connectivity check
+        run: |
+          echo "### Network Connectivity" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check GitHub API
+          if curl -s -o /dev/null -w "%{http_code}" https://api.github.com | grep -q "200"; then
+            echo "✅ GitHub API: Reachable" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ GitHub API: Unreachable" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check Docker Hub
+          if curl -s -o /dev/null -w "%{http_code}" https://hub.docker.com | grep -q "200"; then
+            echo "✅ Docker Hub: Reachable" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Docker Hub: Unreachable" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Check GitHub Container Registry
+          if curl -s -o /dev/null -w "%{http_code}" https://ghcr.io | grep -q "200\|301"; then
+            echo "✅ GitHub Container Registry: Reachable" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ GitHub Container Registry: Unreachable" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Resource usage check
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Resource Usage" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          df -h / | head -2 >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          free -h | head -2 >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  notify-if-unhealthy:
+    name: Notify on Issues
+    needs: [check-runner-status, test-runner-execution]
+    if: always() && (needs.check-runner-status.result == 'failure' || needs.test-runner-execution.result == 'failure')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create issue for runner problems
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runnerStatus = '${{ needs.check-runner-status.outputs.runner-status }}';
+            const checkResult = '${{ needs.check-runner-status.result }}';
+            const testResult = '${{ needs.test-runner-execution.result }}';
+            
+            // Check if there's already an open issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'runner-health',
+              state: 'open'
+            });
+            
+            if (issues.length > 0) {
+              console.log('Issue already exists, skipping creation');
+              return;
+            }
+            
+            let issueBody = `## 🚨 Self-hosted Runner Health Check Failed\n\n`;
+            issueBody += `**Runner Name:** ${{ env.RUNNER_NAME }}\n`;
+            issueBody += `**Status:** ${runnerStatus}\n`;
+            issueBody += `**Check Result:** ${checkResult}\n`;
+            issueBody += `**Test Result:** ${testResult}\n`;
+            issueBody += `**Time:** ${new Date().toISOString()}\n\n`;
+            
+            issueBody += `### Required Actions\n\n`;
+            
+            if (runnerStatus === 'offline' || runnerStatus === 'error') {
+              issueBody += `1. SSH to dockermaster server\n`;
+              issueBody += `2. Check runner status: \`cd dockermaster/github-runner && docker compose ps\`\n`;
+              issueBody += `3. View logs: \`docker compose logs --tail 100 runner\`\n`;
+              issueBody += `4. Restart if needed: \`docker compose restart runner\`\n\n`;
+            } else if (runnerStatus === 'not_found') {
+              issueBody += `1. SSH to dockermaster server\n`;
+              issueBody += `2. Navigate to runner directory: \`cd dockermaster/github-runner\`\n`;
+              issueBody += `3. Run setup script: \`./setup-runner.sh\`\n\n`;
+            }
+            
+            issueBody += `### Workflow Run\n`;
+            issueBody += `[View workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 GitHub Runner Health Check Failed - ${runnerStatus}`,
+              body: issueBody,
+              labels: ['runner-health', 'infrastructure', 'automated']
+            });
+
+  close-resolved-issues:
+    name: Close Resolved Issues
+    needs: [check-runner-status, test-runner-execution]
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close health check issues if runner is healthy
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Find open runner health issues
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'runner-health',
+              state: 'open'
+            });
+            
+            for (const issue of issues) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ Runner health check passed. Runner is back online and healthy.\n\nClosing this issue automatically.`
+              });
+              
+              console.log(`Closed issue #${issue.number}`);
+            }
