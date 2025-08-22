@@ -1,0 +1,36 @@
+=== CALIBRE SERVICE ENVIRONMENT VARIABLES ===
+PUID: 1027
+PGID: 65539
+CUSTOM_USER: 'admin'
+PASSWORD: '[REDACTED]'  # Password removed for security
+TZ: 'America/Denver'
+DISABLE_IPV6: true
+LANG: en_US.UTF-8
+
+=== CALIBRE-WEB SERVICE ENVIRONMENT VARIABLES ===
+PUID: 1000
+PGID: 1000
+TZ: Etc/UTC
+DOCKER_MODS: linuxserver/mods:universal-calibre #optional
+OAUTHLIB_RELAX_TOKEN_SCOPE: 1 #optional
+
+=== PORTS CONFIGURATION ===
+Calibre service:
+  - 58080:8080
+  - 58181:8181
+  - 58081:8081
+  - 58090:9090
+
+Calibre-web service:
+  - 58083:8083
+
+=== ADDITIONAL CONFIGURATION ===
+Calibre service:
+  - security_opt: seccomp:unconfined
+  - restart: always
+  - Custom X11 keyboard config: ./10-keyboard.conf
+  - Device mapping: /dev/dri:/dev/dri
+
+Calibre-web service:
+  - restart: unless-stopped
+  - Image: lscr.io/linuxserver/calibre-web:latest
