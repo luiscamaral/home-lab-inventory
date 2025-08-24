@@ -96,13 +96,13 @@ jobs:
           path: gitleaks.sarif
           retention-days: 30
 
-# Workflow-level cleanup job
-cleanup:
-  name: Cleanup Resources
-  runs-on: ubuntu-latest
-  needs: [performance-monitoring, notification]
-  if: always()
-  steps:
+  # Workflow-level cleanup job
+  cleanup:
+    name: Cleanup Resources
+    runs-on: ubuntu-latest
+    needs: [performance-monitoring, notification]
+    if: always()
+    steps:
     - name: Summary
       run: |
         echo "🏁 Security scanning workflow completed"
