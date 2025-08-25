@@ -57,3 +57,4 @@
 - Prefer to use github MCP over gh command when possible
 - Never commit with a validation issue. Suggest and offer to fix it.
 - Never push with a pre-push validation issue. Suggest and offer to fix it.
+- When using tempo
