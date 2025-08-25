@@ -55,6 +55,11 @@
 - Commit between feature implementations
 - Keep branches for history, don't delete them unless commanded to do it
 - Prefer to use github MCP over gh command when possible
+
+## Testing, Validation or Errors
+
 - Never commit with a validation issue. Suggest and offer to fix it.
 - Never push with a pre-push validation issue. Suggest and offer to fix it.
-- When using tempo
+- When using temporary scripts for tests or partial tests, remember the files and clean then out when all tasks from todo list are completed.
+- Use grep to classify and troubleshoot errors before start working on then. E.g. Use something like `git push -n origin github-runner-cicd | grep -B2 -A2 -i -E "(error|warn|style)"`. Don't check only the first lines, be smart on filtering, e.g. `git push -n origin github-runner-cicd 2>&1 | grep -i -E "(error|warn|style)" | wc -l` count the number of issues or errors.
+- Only use `head` or `tail` commands to verify if "any" line exists on the return. It doesn't eliminate specific contents like errors or occurencies. For those use `grep` or `grep` + `wc -l` if too many.

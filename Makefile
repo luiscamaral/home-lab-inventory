@@ -31,19 +31,19 @@ RESET := \033[0m
 
 # Helper function to print colored output
 define print_section
-	@printf "$(CYAN)$(BOLD)▶ $(1)$(RESET)\n"
+	printf "$(CYAN)$(BOLD)▶ $(1)$(RESET)\n"
 endef
 
 define print_success
-	@printf "$(GREEN)✅ $(1)$(RESET)\n"
+	printf "$(GREEN)✅ $(1)$(RESET)\n"
 endef
 
 define print_warning
-	@printf "$(YELLOW)⚠️  $(1)$(RESET)\n"
+	printf "$(YELLOW)⚠️  $(1)$(RESET)\n"
 endef
 
 define print_error
-	@printf "$(RED)❌ $(1)$(RESET)\n"
+	printf "$(RED)❌ $(1)$(RESET)\n"
 endef
 
 # Help target with organized sections
@@ -88,7 +88,7 @@ help: ## 📚 Show available commands with descriptions
 
 # Prerequisites check
 check-prerequisites: ## 🔧 Check if all prerequisites are installed
-	$(call print_section,"Checking Prerequisites")
+	@$(call print_section,"Checking Prerequisites")
 	@echo "Checking required tools..."
 	@command -v node >/dev/null 2>&1 || ($(call print_error,"Node.js is required but not installed") && exit 1)
 	@command -v npm >/dev/null 2>&1 || ($(call print_error,"npm is required but not installed") && exit 1)
@@ -99,7 +99,7 @@ check-prerequisites: ## 🔧 Check if all prerequisites are installed
 	@echo "Checking versions..."
 	@NODE_VERSION=$$(node --version | cut -d'v' -f2 | cut -d'.' -f1); \
 	if [ $$NODE_VERSION -lt $(NODE_VERSION_MIN) ]; then \
-		$(call print_warning,"Node.js version $$NODE_VERSION is below recommended $(NODE_VERSION_MIN)"); \
+		@$(call print_warning,"Node.js version $$NODE_VERSION is below recommended $(NODE_VERSION_MIN)"); \
 	else \
 		echo "  ✅ Node.js: $$(node --version)"; \
 	fi
@@ -109,7 +109,7 @@ check-prerequisites: ## 🔧 Check if all prerequisites are installed
 
 # Development Environment Setup
 setup: check-prerequisites ## 🚀 Setup complete development environment
-	$(call print_section,"Setting Up Development Environment")
+	@$(call print_section,"Setting Up Development Environment")
 	@echo "Installing Node.js dependencies..."
 	@npm install
 	@echo "Installing Python dependencies..."
@@ -132,7 +132,7 @@ setup: check-prerequisites ## 🚀 Setup complete development environment
 
 # Cleanup
 clean: ## 🧹 Clean build artifacts and caches
-	$(call print_section,"Cleaning Up")
+	@$(call print_section,"Cleaning Up")
 	@echo "Removing Node.js artifacts..."
 	@rm -rf node_modules/.cache
 	@rm -rf ~/.npm/_cacache 2>/dev/null || true
@@ -154,46 +154,46 @@ clean: ## 🧹 Clean build artifacts and caches
 lint: lint-yaml lint-markdown lint-shell lint-docker lint-json lint-actions lint-python ## 🔍 Run all linting checks
 
 lint-yaml: ## 📄 Lint YAML files with yamllint
-	$(call print_section,"YAML Linting")
+	@$(call print_section,"YAML Linting")
 	@yamllint -c .yamllint.yml . || ($(call print_error,"YAML linting failed") && exit 1)
 	@$(call print_success,"YAML linting passed")
 
 lint-markdown: ## 📝 Lint Markdown files with markdownlint
-	$(call print_section,"Markdown Linting")
+	@$(call print_section,"Markdown Linting")
 	@markdownlint --config .markdownlint.json **/*.md --ignore .history --ignore node_modules || \
 		($(call print_error,"Markdown linting failed") && exit 1)
 	@$(call print_success,"Markdown linting passed")
 
 lint-shell: ## 🐚 Lint shell scripts with shellcheck
-	$(call print_section,"Shell Script Linting")
+	@$(call print_section,"Shell Script Linting")
 	@SHELL_FILES=$$(find . -name "*.sh" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.history/*"); \
 	if [ -n "$$SHELL_FILES" ]; then \
 		echo "$$SHELL_FILES" | xargs shellcheck -e SC1091 -e SC2034 -e SC2154 || \
 			($(call print_error,"Shell script linting failed") && exit 1); \
-		$(call print_success,"Shell script linting passed"); \
+		@$(call print_success,"Shell script linting passed"); \
 	else \
 		echo "ℹ️  No shell scripts found to lint"; \
 	fi
 
 lint-docker: ## 🐳 Lint Dockerfiles with hadolint
-	$(call print_section,"Dockerfile Linting")
+	@$(call print_section,"Dockerfile Linting")
 	@DOCKER_FILES=$$(find . -name "Dockerfile" -o -name "*.dockerfile" | grep -v node_modules | grep -v .git); \
 	if [ -n "$$DOCKER_FILES" ]; then \
 		echo "$$DOCKER_FILES" | xargs docker run --rm -i hadolint/hadolint:latest \
 			--ignore DL3008 --ignore DL3009 --ignore DL3015 || \
 			($(call print_error,"Dockerfile linting failed") && exit 1); \
-		$(call print_success,"Dockerfile linting passed"); \
+		@$(call print_success,"Dockerfile linting passed"); \
 	else \
 		echo "ℹ️  No Dockerfiles found to lint"; \
 	fi
 
 lint-json: ## 📋 Validate JSON files
-	$(call print_section,"JSON Validation")
+	@$(call print_section,"JSON Validation")
 	@JSON_FILES=$$(find . -name "*.json" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.history/*"); \
 	FAILED=false; \
 	for file in $$JSON_FILES; do \
 		if ! python3 -m json.tool "$$file" > /dev/null 2>&1; then \
-			$(call print_error,"Invalid JSON: $$file"); \
+			@$(call print_error,"Invalid JSON: $$file"); \
 			FAILED=true; \
 		else \
 			echo "✅ Valid JSON: $$file"; \
@@ -205,27 +205,27 @@ lint-json: ## 📋 Validate JSON files
 	@$(call print_success,"JSON validation passed")
 
 lint-actions: ## ⚡ Lint GitHub Actions workflows
-	$(call print_section,"GitHub Actions Linting")
+	@$(call print_section,"GitHub Actions Linting")
 	@if command -v actionlint >/dev/null 2>&1; then \
 		actionlint .github/workflows/*.yml || \
 			($(call print_error,"GitHub Actions linting failed") && exit 1); \
-		$(call print_success,"GitHub Actions linting passed"); \
+		@$(call print_success,"GitHub Actions linting passed"); \
 	else \
-		$(call print_warning,"actionlint not installed, installing..."); \
+		@$(call print_warning,"actionlint not installed, installing..."); \
 		bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash); \
 		./actionlint .github/workflows/*.yml || \
 			($(call print_error,"GitHub Actions linting failed") && exit 1); \
-		$(call print_success,"GitHub Actions linting passed"); \
+		@$(call print_success,"GitHub Actions linting passed"); \
 	fi
 
 lint-python: ## 🐍 Lint Python files (if any)
-	$(call print_section,"Python Code Linting")
+	@$(call print_section,"Python Code Linting")
 	@PYTHON_FILES=$$(find . -name "*.py" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.history/*"); \
 	if [ -n "$$PYTHON_FILES" ]; then \
 		echo "Running flake8 on Python files..."; \
 		python3 -m flake8 $$PYTHON_FILES --max-line-length=88 --ignore=E203,W503 || \
 			($(call print_warning,"Python linting failed (non-critical)") && true); \
-		$(call print_success,"Python linting completed"); \
+		@$(call print_success,"Python linting completed"); \
 	else \
 		echo "ℹ️  No Python files found to lint"; \
 	fi
@@ -234,18 +234,18 @@ lint-python: ## 🐍 Lint Python files (if any)
 validate: validate-pre-commit validate-commits validate-structure ## ✅ Run all validation checks
 
 validate-pre-commit: ## 🔨 Run pre-commit hooks on all files
-	$(call print_section,"Pre-commit Validation")
+	@$(call print_section,"Pre-commit Validation")
 	@pre-commit run --all-files || ($(call print_error,"Pre-commit validation failed") && exit 1)
 	@$(call print_success,"Pre-commit validation passed")
 
 validate-commits: ## 📝 Validate recent commit messages
-	$(call print_section,"Commit Message Validation")
+	@$(call print_section,"Commit Message Validation")
 	@echo "Validating last 5 commits..."
 	@npm run lint:commits || ($(call print_error,"Commit message validation failed") && exit 1)
 	@$(call print_success,"Commit message validation passed")
 
 validate-structure: ## 📁 Validate repository file structure
-	$(call print_section,"Repository Structure Validation")
+	@$(call print_section,"Repository Structure Validation")
 	@echo "Checking required files and directories..."
 	@MISSING_FILES=""; \
 	REQUIRED_FILES=(".gitignore" ".commitlintrc.json" ".pre-commit-config.yaml" ".markdownlint.json" ".yamllint.yml" "package.json"); \
@@ -261,7 +261,7 @@ validate-structure: ## 📁 Validate repository file structure
 		fi; \
 	done; \
 	if [ -n "$$MISSING_FILES" ]; then \
-		$(call print_error,"Missing required files/directories:$$MISSING_FILES"); \
+		@$(call print_error,"Missing required files/directories:$$MISSING_FILES"); \
 		exit 1; \
 	fi
 	@$(call print_success,"Repository structure validation passed")
@@ -270,7 +270,7 @@ validate-structure: ## 📁 Validate repository file structure
 build: build-changed ## 🏗️  Build Docker images locally (without pushing)
 
 build-changed: ## 🔄 Build only Docker images with recent changes
-	$(call print_section,"Building Changed Docker Images")
+	@$(call print_section,"Building Changed Docker Images")
 	@CHANGED_DOCKERFILES=$$(git diff --name-only HEAD~1 | grep -E "(Dockerfile|docker-compose\.ya?ml)" || true); \
 	if [ -n "$$CHANGED_DOCKERFILES" ]; then \
 		echo "Found changed Docker files:"; \
@@ -284,7 +284,7 @@ build-changed: ## 🔄 Build only Docker images with recent changes
 				$(DOCKER_COMPOSE_CMD) -f "$$CONTEXT_DIR/docker-compose.yml" build 2>/dev/null || \
 				docker build -t "home-lab/$$IMAGE_NAME:local" -f "$$dockerfile" "$$CONTEXT_DIR" || \
 					($(call print_error,"Failed to build $$IMAGE_NAME") && continue); \
-				$(call print_success,"Built $$IMAGE_NAME"); \
+				@$(call print_success,"Built $$IMAGE_NAME"); \
 			fi; \
 		done; \
 	else \
@@ -292,33 +292,33 @@ build-changed: ## 🔄 Build only Docker images with recent changes
 	fi
 
 build-all: ## 🏗️  Build all Docker images
-	$(call print_section,"Building All Docker Images")
+	@$(call print_section,"Building All Docker Images")
 	@find dockermaster/docker/compose -name "docker-compose.yml" -o -name "docker-compose.yaml" | while read compose_file; do \
 		COMPOSE_DIR=$$(dirname "$$compose_file"); \
 		SERVICE_NAME=$$(basename "$$COMPOSE_DIR"); \
 		echo "Building $$SERVICE_NAME from $$compose_file..."; \
 		cd "$$COMPOSE_DIR" && $(DOCKER_COMPOSE_CMD) build && cd - >/dev/null || \
 			($(call print_warning,"Failed to build $$SERVICE_NAME") && continue); \
-		$(call print_success,"Built $$SERVICE_NAME"); \
+		@$(call print_success,"Built $$SERVICE_NAME"); \
 	done
 
 # Test Commands
 test: validate lint test-docker-configs ## 🧪 Run all tests and validations
 
 test-docker-configs: ## 🐳 Test Docker Compose configurations
-	$(call print_section,"Testing Docker Compose Configurations")
+	@$(call print_section,"Testing Docker Compose Configurations")
 	@find . -name "docker-compose.yml" -o -name "docker-compose.yaml" | grep -v node_modules | while read compose_file; do \
 		echo "Testing $$compose_file..."; \
 		$(DOCKER_COMPOSE_CMD) -f "$$compose_file" config --quiet || \
 			($(call print_error,"Docker Compose config validation failed for $$compose_file") && exit 1); \
-		$(call print_success,"$$compose_file is valid"); \
+		@$(call print_success,"$$compose_file is valid"); \
 	done
 
 # Security Commands
 security: security-scan security-audit security-secrets ## 🔒 Run all security scans locally
 
 security-scan: ## 🔍 Run security vulnerability scans
-	$(call print_section,"Security Vulnerability Scanning")
+	@$(call print_section,"Security Vulnerability Scanning")
 	@echo "Scanning Node.js dependencies..."
 	@npm audit --audit-level=moderate || $(call print_warning,"Node.js security issues found")
 	@echo "Scanning Python dependencies..."
@@ -326,7 +326,7 @@ security-scan: ## 🔍 Run security vulnerability scans
 	@$(call print_success,"Security scanning completed")
 
 security-audit: ## 🔒 Audit dependencies for known vulnerabilities
-	$(call print_section,"Dependency Security Audit")
+	@$(call print_section,"Dependency Security Audit")
 	@echo "Running npm audit..."
 	@npm audit --production || $(call print_warning,"npm audit found issues")
 	@echo "Checking for Python vulnerabilities with bandit..."
@@ -340,32 +340,32 @@ security-audit: ## 🔒 Audit dependencies for known vulnerabilities
 	@$(call print_success,"Security audit completed")
 
 security-secrets: ## 🔐 Scan for secrets and sensitive data
-	$(call print_section,"Secrets Scanning")
+	@$(call print_section,"Secrets Scanning")
 	@echo "Running gitleaks scan..."
 	@if command -v gitleaks >/dev/null 2>&1; then \
 		gitleaks detect --verbose --source . || $(call print_warning,"Potential secrets found"); \
 	else \
-		$(call print_warning,"gitleaks not installed, running pre-commit gitleaks instead..."); \
+		@$(call print_warning,"gitleaks not installed, running pre-commit gitleaks instead..."); \
 		pre-commit run gitleaks --all-files || $(call print_warning,"Potential secrets found"); \
 	fi
 	@$(call print_success,"Secrets scanning completed")
 
 # Git Commands
 commit: ## 📝 Interactive commit with conventional format
-	$(call print_section,"Interactive Commit")
+	@$(call print_section,"Interactive Commit")
 	@echo "Starting interactive commit process..."
 	@echo "This will guide you through creating a conventional commit."
 	@echo ""
 	@npm run commit
 
 commit-validate: ## ✅ Validate the last commit message
-	$(call print_section,"Validating Last Commit")
+	@$(call print_section,"Validating Last Commit")
 	@npm run commitlint:last || ($(call print_error,"Last commit message is invalid") && exit 1)
 	@$(call print_success,"Last commit message is valid")
 
 # Deployment Commands
 deploy-test: build test ## 🚀 Test deployment locally
-	$(call print_section,"Local Deployment Testing")
+	@$(call print_section,"Local Deployment Testing")
 	@echo "Testing deployment readiness..."
 	@echo "✅ All builds completed successfully"
 	@echo "✅ All tests passed"
@@ -381,7 +381,7 @@ deploy-test: build test ## 🚀 Test deployment locally
 
 # Development Utilities
 format: ## 🎨 Format code using available formatters
-	$(call print_section,"Code Formatting")
+	@$(call print_section,"Code Formatting")
 	@echo "Formatting JSON files..."
 	@find . -name "*.json" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.history/*" | \
 		xargs -I {} sh -c 'python3 -m json.tool {} > {}.tmp && mv {}.tmp {}'
@@ -390,7 +390,7 @@ format: ## 🎨 Format code using available formatters
 	@$(call print_success,"Code formatting completed")
 
 status: ## 📊 Show development environment status
-	$(call print_section,"Development Environment Status")
+	@$(call print_section,"Development Environment Status")
 	@echo -e "$(BOLD)Repository Status:$(RESET)"
 	@echo "  Branch: $(YELLOW)$$(git branch --show-current)$(RESET)"
 	@echo "  Status: $$(git status --porcelain | wc -l) modified files"
@@ -407,7 +407,7 @@ status: ## 📊 Show development environment status
 	@docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null || echo "  Docker not running"
 
 install-tools: ## 🔧 Install additional development tools
-	$(call print_section,"Installing Additional Development Tools")
+	@$(call print_section,"Installing Additional Development Tools")
 	@echo "Installing actionlint for GitHub Actions validation..."
 	@bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) || true
 	@echo "Installing gitleaks for secret scanning..."
@@ -422,7 +422,7 @@ install-tools: ## 🔧 Install additional development tools
 
 # Documentation
 docs-serve: ## 📖 Serve documentation locally (if available)
-	$(call print_section,"Serving Documentation")
+	@$(call print_section,"Serving Documentation")
 	@if [ -f "mkdocs.yml" ]; then \
 		mkdocs serve; \
 	else \
@@ -433,7 +433,7 @@ docs-serve: ## 📖 Serve documentation locally (if available)
 
 # CI/CD Integration
 ci-local: ## 🔄 Run CI pipeline locally
-	$(call print_section,"Running CI Pipeline Locally")
+	@$(call print_section,"Running CI Pipeline Locally")
 	@echo "Simulating CI pipeline..."
 	@$(MAKE) validate
 	@$(MAKE) lint
@@ -443,7 +443,7 @@ ci-local: ## 🔄 Run CI pipeline locally
 	@$(call print_success,"Local CI pipeline completed successfully")
 
 pre-push: validate lint security ## 🚀 Run pre-push validations
-	$(call print_section,"Pre-push Validation")
+	@$(call print_section,"Pre-push Validation")
 	@$(call print_success,"All pre-push validations passed")
 	@echo -e "$(BOLD)Ready to push!$(RESET)"
 
@@ -452,7 +452,7 @@ quick-check: lint-yaml lint-markdown lint-json ## ⚡ Quick code quality check
 	@$(call print_success,"Quick check completed")
 
 fix: format validate-pre-commit ## 🔧 Auto-fix common issues
-	$(call print_section,"Auto-fixing Common Issues")
+	@$(call print_section,"Auto-fixing Common Issues")
 	@$(call print_success,"Auto-fix completed")
 
 # Version and Information
