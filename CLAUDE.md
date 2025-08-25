@@ -55,3 +55,5 @@
 - Commit between feature implementations
 - Keep branches for history, don't delete them unless commanded to do it
 - Prefer to use github MCP over gh command when possible
+- Never commit with a validation issue. Suggest and offer to fix it.
+- Never push with a pre-push validation issue. Suggest and offer to fix it.

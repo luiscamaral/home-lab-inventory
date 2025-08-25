@@ -22,7 +22,7 @@ services:
     container_name: grafana
     hostname: grafana
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=[REDACTED]
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
     networks:
       servers-net:
         ipv4_address: 192.168.59.21
