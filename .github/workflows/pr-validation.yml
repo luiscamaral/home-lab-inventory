@@ -146,7 +146,7 @@ jobs:
           echo "Validating JSON files..."
           JSON_FILES=$(find . -name "*.json" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.history/*")
           VALIDATION_FAILED=false
-          
+
           for file in $JSON_FILES; do
             if ! python -m json.tool "$file" > /dev/null 2>&1; then
               echo "❌ Invalid JSON: $file"
@@ -155,7 +155,7 @@ jobs:
               echo "✅ Valid JSON: $file"
             fi
           done
-          
+
           if [ "$VALIDATION_FAILED" = false ]; then
             echo "result=success" >> $GITHUB_OUTPUT
             echo "✅ JSON validation passed"
@@ -172,7 +172,7 @@ jobs:
         run: |
           # Install actionlint
           bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          
+
           echo "Running actionlint on GitHub workflows..."
           if ./actionlint .github/workflows/*.yml; then
             echo "result=success" >> $GITHUB_OUTPUT
@@ -296,33 +296,33 @@ jobs:
         id: commitlint
         run: |
           echo "Validating commit messages in PR..."
-          
+
           # Get the base branch commit
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          
+
           echo "Checking commits from $BASE_SHA to $HEAD_SHA"
-          
+
           # Get commit messages
           COMMITS=$(git log --format="%H %s" "$BASE_SHA".."$HEAD_SHA")
-          
+
           if [ -z "$COMMITS" ]; then
             echo "No commits found to validate"
             echo "result=skipped" >> $GITHUB_OUTPUT
             exit 0
           fi
-          
+
           FAILED_COMMITS=""
           TOTAL_COMMITS=0
           FAILED_COUNT=0
-          
+
           while IFS= read -r commit_line; do
             if [ -n "$commit_line" ]; then
               COMMIT_SHA=$(echo "$commit_line" | cut -d' ' -f1)
               TOTAL_COMMITS=$((TOTAL_COMMITS + 1))
-              
+
               echo "Validating commit: $COMMIT_SHA"
-              
+
               if ! git log --format="%s%n%n%b" -n 1 "$COMMIT_SHA" | npx commitlint; then
                 FAILED_COUNT=$((FAILED_COUNT + 1))
                 COMMIT_MSG=$(git log --format="%s" -n 1 "$COMMIT_SHA")
@@ -333,10 +333,10 @@ jobs:
               fi
             fi
           done <<< "$COMMITS"
-          
+
           echo "total_commits=$TOTAL_COMMITS" >> $GITHUB_OUTPUT
           echo "failed_count=$FAILED_COUNT" >> $GITHUB_OUTPUT
-          
+
           if [ $FAILED_COUNT -eq 0 ]; then
             echo "✅ All $TOTAL_COMMITS commit messages are valid"
             echo "result=success" >> $GITHUB_OUTPUT
@@ -355,7 +355,7 @@ jobs:
         run: |
           echo "### 📝 Commit Message Validation" > commit-report.md
           echo "" >> commit-report.md
-          
+
           if [ "${{ steps.commitlint.outputs.result }}" = "success" ]; then
             echo "✅ **All commit messages follow conventional format**" >> commit-report.md
             echo "" >> commit-report.md
@@ -414,25 +414,25 @@ jobs:
           # Get changed files in the PR
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          
+
           # Find changed Dockerfiles
           CHANGED_DOCKERFILES=$(git diff --name-only "$BASE_SHA".."$HEAD_SHA" | grep -E "(Dockerfile|\.dockerfile)$" || true)
-          
+
           # Also find all Dockerfiles if docker-compose or workflow files changed
           OTHER_CHANGES=$(git diff --name-only "$BASE_SHA".."$HEAD_SHA" | grep -E "(docker-compose\.ya?ml|\.github/workflows/)" || true)
-          
+
           if [ -n "$OTHER_CHANGES" ]; then
             echo "Docker-related files changed, checking all Dockerfiles"
             ALL_DOCKERFILES=$(find . -name "Dockerfile" -o -name "*.dockerfile" | grep -v node_modules | grep -v .git || true)
             CHANGED_DOCKERFILES="$CHANGED_DOCKERFILES $ALL_DOCKERFILES"
           fi
-          
+
           # Remove duplicates and empty lines
           DOCKERFILES=$(echo "$CHANGED_DOCKERFILES" | tr ' ' '\n' | sort -u | grep -v '^$' || true)
-          
+
           echo "Found Dockerfiles to validate:"
           echo "$DOCKERFILES"
-          
+
           if [ -n "$DOCKERFILES" ]; then
             echo "has_dockerfiles=true" >> $GITHUB_OUTPUT
             echo "dockerfiles<<EOF" >> $GITHUB_OUTPUT
@@ -449,21 +449,21 @@ jobs:
         run: |
           echo "### Docker Build Validation Results" > docker-report.md
           echo "" >> docker-report.md
-          
+
           BUILD_FAILED=false
           TOTAL_BUILDS=0
           FAILED_BUILDS=0
           SUCCESSFUL_BUILDS=""
           FAILED_BUILDS_LIST=""
-          
+
           while IFS= read -r dockerfile; do
             if [ -n "$dockerfile" ] && [ -f "$dockerfile" ]; then
               TOTAL_BUILDS=$((TOTAL_BUILDS + 1))
-              
+
               echo "Validating build for: $dockerfile"
               CONTEXT_DIR=$(dirname "$dockerfile")
               IMAGE_NAME=$(basename "$CONTEXT_DIR")
-              
+
               # Build without pushing, just validate
               if docker buildx build \
                 --cache-from type=local,src=/tmp/.buildx-cache \
@@ -472,7 +472,7 @@ jobs:
                 --tag "validation-$IMAGE_NAME:test" \
                 --file "$dockerfile" \
                 "$CONTEXT_DIR"; then
-                  
+
                 echo "✅ Build successful: $dockerfile"
                 SUCCESSFUL_BUILDS="$SUCCESSFUL_BUILDS\n- ✅ $dockerfile"
               else
@@ -483,11 +483,11 @@ jobs:
               fi
             fi
           done <<< "${{ steps.find-dockerfiles.outputs.dockerfiles }}"
-          
+
           # Move cache
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache || true
-          
+
           # Generate report
           if [ $FAILED_BUILDS -eq 0 ]; then
             echo "✅ **All Docker builds passed validation**" >> docker-report.md
@@ -512,10 +512,10 @@ jobs:
             echo "result=failure" >> $GITHUB_OUTPUT
             BUILD_FAILED=true
           fi
-          
+
           echo "total_builds=$TOTAL_BUILDS" >> $GITHUB_OUTPUT
           echo "failed_builds=$FAILED_BUILDS" >> $GITHUB_OUTPUT
-          
+
           if [ "$BUILD_FAILED" = true ]; then
             exit 1
           fi
@@ -552,7 +552,7 @@ jobs:
         id: docs-check
         run: |
           echo "Checking documentation requirements..."
-          
+
           # Check if README exists
           if [ ! -f "README.md" ]; then
             echo "❌ README.md is missing"
@@ -561,7 +561,7 @@ jobs:
             echo "✅ README.md exists"
             echo "readme_exists=true" >> $GITHUB_OUTPUT
           fi
-          
+
           # Check if CLAUDE.md is properly maintained
           if [ ! -f "CLAUDE.md" ]; then
             echo "❌ CLAUDE.md is missing"
@@ -570,7 +570,7 @@ jobs:
             echo "✅ CLAUDE.md exists"
             echo "claude_docs_exists=true" >> $GITHUB_OUTPUT
           fi
-          
+
           # Check if commit conventions are documented
           if [ ! -f "COMMIT_CONVENTIONS.md" ]; then
             echo "❌ COMMIT_CONVENTIONS.md is missing"
@@ -579,11 +579,11 @@ jobs:
             echo "✅ COMMIT_CONVENTIONS.md exists"
             echo "commit_docs_exists=true" >> $GITHUB_OUTPUT
           fi
-          
+
           # Check inventory files
           INVENTORY_FILES="inventory/servers.md inventory/virtual-machines.md inventory/docker-containers.md inventory/commands-available.md"
           MISSING_INVENTORY=""
-          
+
           for file in $INVENTORY_FILES; do
             if [ ! -f "$file" ]; then
               echo "❌ Missing inventory file: $file"
@@ -592,24 +592,24 @@ jobs:
               echo "✅ Inventory file exists: $file"
             fi
           done
-          
+
           if [ -n "$MISSING_INVENTORY" ]; then
             echo "missing_inventory=$MISSING_INVENTORY" >> $GITHUB_OUTPUT
             echo "inventory_complete=false" >> $GITHUB_OUTPUT
           else
             echo "inventory_complete=true" >> $GITHUB_OUTPUT
           fi
-          
+
           # Check if documentation is up to date (basic check)
           DOCS_OUTDATED=""
-          
+
           # Check if any configuration files were changed without updating docs
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          
+
           CONFIG_CHANGES=$(git diff --name-only "$BASE_SHA".."$HEAD_SHA" | grep -E "\.(json|ya?ml|toml|conf|ini)$" | grep -v node_modules || true)
           DOC_CHANGES=$(git diff --name-only "$BASE_SHA".."$HEAD_SHA" | grep -E "\.md$" || true)
-          
+
           if [ -n "$CONFIG_CHANGES" ] && [ -z "$DOC_CHANGES" ]; then
             echo "⚠️ Configuration files changed but no documentation updates found"
             echo "docs_may_need_update=true" >> $GITHUB_OUTPUT
@@ -617,7 +617,7 @@ jobs:
           else
             echo "docs_may_need_update=false" >> $GITHUB_OUTPUT
           fi
-          
+
           echo "outdated_reason=$DOCS_OUTDATED" >> $GITHUB_OUTPUT
 
       - name: Generate documentation report
@@ -625,9 +625,9 @@ jobs:
         run: |
           echo "### 📚 Documentation Validation" > docs-report.md
           echo "" >> docs-report.md
-          
+
           ISSUES_FOUND=false
-          
+
           # README check
           if [ "${{ steps.docs-check.outputs.readme_exists }}" = "false" ]; then
             echo "❌ **README.md is missing**" >> docs-report.md
@@ -637,7 +637,7 @@ jobs:
           else
             echo "✅ README.md exists" >> docs-report.md
           fi
-          
+
           # CLAUDE.md check
           if [ "${{ steps.docs-check.outputs.claude_docs_exists }}" = "false" ]; then
             echo "❌ **CLAUDE.md is missing**" >> docs-report.md
@@ -647,7 +647,7 @@ jobs:
           else
             echo "✅ CLAUDE.md exists" >> docs-report.md
           fi
-          
+
           # Commit conventions check
           if [ "${{ steps.docs-check.outputs.commit_docs_exists }}" = "false" ]; then
             echo "❌ **COMMIT_CONVENTIONS.md is missing**" >> docs-report.md
@@ -657,7 +657,7 @@ jobs:
           else
             echo "✅ COMMIT_CONVENTIONS.md exists" >> docs-report.md
           fi
-          
+
           # Inventory files check
           if [ "${{ steps.docs-check.outputs.inventory_complete }}" = "false" ]; then
             echo "❌ **Some inventory files are missing**" >> docs-report.md
@@ -667,7 +667,7 @@ jobs:
           else
             echo "✅ All inventory documentation files exist" >> docs-report.md
           fi
-          
+
           # Documentation currency check
           if [ "${{ steps.docs-check.outputs.docs_may_need_update }}" = "true" ]; then
             echo "⚠️ **Documentation may need updates**" >> docs-report.md
@@ -675,7 +675,7 @@ jobs:
             echo "Consider updating relevant documentation when configuration changes." >> docs-report.md
             echo "" >> docs-report.md
           fi
-          
+
           if [ "$ISSUES_FOUND" = false ]; then
             echo "" >> docs-report.md
             echo "🎉 **All documentation requirements are met!**" >> docs-report.md
@@ -702,10 +702,10 @@ jobs:
         id: structure-check
         run: |
           echo "Validating repository file structure..."
-          
+
           ISSUES=""
           STRUCTURE_VALID=true
-          
+
           # Check required configuration files
           REQUIRED_CONFIG_FILES=(
             ".gitignore"
@@ -716,7 +716,7 @@ jobs:
             ".gitleaks.toml"
             "package.json"
           )
-          
+
           for file in "${REQUIRED_CONFIG_FILES[@]}"; do
             if [ ! -f "$file" ]; then
               echo "❌ Missing required config file: $file"
@@ -726,13 +726,13 @@ jobs:
               echo "✅ Found: $file"
             fi
           done
-          
+
           # Check required directories
           REQUIRED_DIRS=(
             ".github/workflows"
             "inventory"
           )
-          
+
           for dir in "${REQUIRED_DIRS[@]}"; do
             if [ ! -d "$dir" ]; then
               echo "❌ Missing required directory: $dir"
@@ -742,7 +742,7 @@ jobs:
               echo "✅ Found directory: $dir"
             fi
           done
-          
+
           # Check GitHub workflows
           WORKFLOW_FILES=$(find .github/workflows -name "*.yml" -o -name "*.yaml" 2>/dev/null || true)
           if [ -z "$WORKFLOW_FILES" ]; then
@@ -753,7 +753,7 @@ jobs:
             WORKFLOW_COUNT=$(echo "$WORKFLOW_FILES" | wc -l)
             echo "✅ Found $WORKFLOW_COUNT GitHub workflows"
           fi
-          
+
           # Check for common problematic files
           PROBLEMATIC_PATTERNS=(
             "*.tmp"
@@ -763,7 +763,7 @@ jobs:
             "*.swp"
             "*.swo"
           )
-          
+
           for pattern in "${PROBLEMATIC_PATTERNS[@]}"; do
             FOUND_FILES=$(find . -name "$pattern" -not -path "./.git/*" 2>/dev/null || true)
             if [ -n "$FOUND_FILES" ]; then
@@ -771,7 +771,7 @@ jobs:
               ISSUES="$ISSUES\n- Found $pattern files (should be in .gitignore)"
             fi
           done
-          
+
           # Check for large files
           LARGE_FILES=$(find . -type f -size +1M -not -path "./.git/*" -not -path "./node_modules/*" 2>/dev/null || true)
           if [ -n "$LARGE_FILES" ]; then
@@ -782,7 +782,7 @@ jobs:
             done
             ISSUES="$ISSUES\n- Large files found (consider Git LFS)"
           fi
-          
+
           if [ "$STRUCTURE_VALID" = true ]; then
             echo "✅ File structure validation passed"
             echo "result=success" >> $GITHUB_OUTPUT
@@ -790,7 +790,7 @@ jobs:
             echo "❌ File structure validation failed"
             echo "result=failure" >> $GITHUB_OUTPUT
           fi
-          
+
           echo "issues<<EOF" >> $GITHUB_OUTPUT
           echo -e "$ISSUES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -800,7 +800,7 @@ jobs:
         run: |
           echo "### 📁 File Structure Validation" > structure-report.md
           echo "" >> structure-report.md
-          
+
           if [ "${{ steps.structure-check.outputs.result }}" = "success" ]; then
             echo "✅ **File structure validation passed**" >> structure-report.md
             echo "" >> structure-report.md
@@ -852,18 +852,18 @@ jobs:
           echo "" >> pr-summary.md
           echo "*Validation completed on $(date -u +'%Y-%m-%d %H:%M:%S UTC')*" >> pr-summary.md
           echo "" >> pr-summary.md
-          
+
           # Initialize counters
           TOTAL_CHECKS=0
           PASSED_CHECKS=0
           FAILED_CHECKS=0
           SKIPPED_CHECKS=0
           CRITICAL_FAILURES=0
-          
+
           # Status badges
           echo "### 📊 Status Overview" >> pr-summary.md
           echo "" >> pr-summary.md
-          
+
           # Check lint validation results
           LINT_STATUS="❓"
           if [ "${{ needs.lint-validation.result }}" = "success" ]; then
@@ -878,7 +878,7 @@ jobs:
             SKIPPED_CHECKS=$((SKIPPED_CHECKS + 1))
           fi
           TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
-          
+
           # Check pre-commit validation
           PRECOMMIT_STATUS="❓"
           if [ "${{ needs.pre-commit-validation.result }}" = "success" ]; then
@@ -893,7 +893,7 @@ jobs:
             SKIPPED_CHECKS=$((SKIPPED_CHECKS + 1))
           fi
           TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
-          
+
           # Check commit validation
           COMMIT_STATUS="❓"
           if [ "${{ needs.commit-validation.result }}" = "success" ]; then
@@ -908,7 +908,7 @@ jobs:
             SKIPPED_CHECKS=$((SKIPPED_CHECKS + 1))
           fi
           TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
-          
+
           # Check Docker validation
           DOCKER_STATUS="❓"
           if [ "${{ needs.docker-build-validation.result }}" = "success" ]; then
@@ -923,7 +923,7 @@ jobs:
             SKIPPED_CHECKS=$((SKIPPED_CHECKS + 1))
           fi
           TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
-          
+
           # Check documentation validation
           DOCS_STATUS="❓"
           if [ "${{ needs.documentation-validation.result }}" = "success" ]; then
@@ -937,7 +937,7 @@ jobs:
             SKIPPED_CHECKS=$((SKIPPED_CHECKS + 1))
           fi
           TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
-          
+
           # Check file structure validation
           STRUCTURE_STATUS="❓"
           if [ "${{ needs.file-structure-validation.result }}" = "success" ]; then
@@ -952,7 +952,7 @@ jobs:
             SKIPPED_CHECKS=$((SKIPPED_CHECKS + 1))
           fi
           TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
-          
+
           # Create status table
           echo "| Check | Status | Description |" >> pr-summary.md
           echo "|-------|--------|-------------|" >> pr-summary.md
@@ -963,7 +963,7 @@ jobs:
           echo "| **Documentation** | $DOCS_STATUS | Documentation completeness check |" >> pr-summary.md
           echo "| **File Structure** | $STRUCTURE_STATUS | Required files and directories |" >> pr-summary.md
           echo "" >> pr-summary.md
-          
+
           # Overall status
           if [ $CRITICAL_FAILURES -gt 0 ]; then
             echo "### 🚨 Overall Status: **BLOCKED**" >> pr-summary.md
@@ -981,15 +981,15 @@ jobs:
             echo "🎉 All validation checks passed successfully!" >> pr-summary.md
             OVERALL_STATUS="passed"
           fi
-          
+
           echo "" >> pr-summary.md
           echo "**Summary:** $PASSED_CHECKS passed, $FAILED_CHECKS failed, $SKIPPED_CHECKS skipped out of $TOTAL_CHECKS total checks" >> pr-summary.md
           echo "" >> pr-summary.md
-          
+
           # Add detailed sections from individual reports
           echo "### 📋 Detailed Results" >> pr-summary.md
           echo "" >> pr-summary.md
-          
+
           # Include individual reports
           for report_dir in validation-reports/*; do
             if [ -d "$report_dir" ]; then
@@ -1006,11 +1006,11 @@ jobs:
               done
             fi
           done
-          
+
           # Add links and resources
           echo "### 🔗 Resources & Next Steps" >> pr-summary.md
           echo "" >> pr-summary.md
-          
+
           if [ "$OVERALL_STATUS" = "blocked" ]; then
             echo "**🚨 Action Required:**" >> pr-summary.md
             echo "1. Review failed checks above" >> pr-summary.md
@@ -1019,7 +1019,7 @@ jobs:
             echo "4. Commit and push fixes" >> pr-summary.md
             echo "" >> pr-summary.md
           fi
-          
+
           echo "**📚 Helpful Links:**" >> pr-summary.md
           echo "- [Pre-commit Hooks Guide](https://pre-commit.com/)" >> pr-summary.md
           echo "- [Conventional Commits](https://conventionalcommits.org/)" >> pr-summary.md
@@ -1027,18 +1027,18 @@ jobs:
           echo "- [YAML Linting Guide](https://yamllint.readthedocs.io/)" >> pr-summary.md
           echo "- [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)" >> pr-summary.md
           echo "" >> pr-summary.md
-          
+
           echo "**🔒 Security Note:** This validation focuses on code quality and standards. Security scanning is handled by the [Security Workflow](https://github.com/${{ github.repository }}/actions/workflows/security.yml)." >> pr-summary.md
           echo "" >> pr-summary.md
-          
+
           echo "---" >> pr-summary.md
           echo "*Validation powered by GitHub Actions | Generated at $(date -u +'%Y-%m-%d %H:%M:%S UTC')*" >> pr-summary.md
-          
+
           # Set outputs
           echo "overall_status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
           echo "critical_failures=$CRITICAL_FAILURES" >> $GITHUB_OUTPUT
           echo "total_failed=$FAILED_CHECKS" >> $GITHUB_OUTPUT
-          
+
           {
             echo 'pr_comment<<EOF'
             cat pr-summary.md
@@ -1051,19 +1051,19 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const prComment = `${{ steps.summary.outputs.pr_comment }}`;
-            
+
             // Find existing validation comment
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const botComment = comments.data.find(comment =>
-              comment.user.type === 'Bot' && 
+              comment.user.type === 'Bot' &&
               comment.body.includes('🔍 Pull Request Validation Results')
             );
-            
+
             if (botComment) {
               // Update existing comment
               await github.rest.issues.updateComment({
@@ -1091,9 +1091,9 @@ jobs:
           script: |
             const overallStatus = '${{ steps.summary.outputs.overall_status }}';
             const criticalFailures = parseInt('${{ steps.summary.outputs.critical_failures }}') || 0;
-            
+
             let state, description;
-            
+
             if (overallStatus === 'blocked') {
               state = 'failure';
               description = `${criticalFailures} critical issue(s) must be resolved`;
@@ -1104,7 +1104,7 @@ jobs:
               state = 'success';
               description = 'All validation checks passed';
             }
-            
+
             await github.rest.repos.createCommitStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,

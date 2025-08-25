@@ -25,7 +25,7 @@ Before setting up the GitHub runner on dockermaster, ensure you have:
 2. Create a new Personal Access Token with:
    - **Name**: `dockermaster-runner`
    - **Expiration**: 90 days (or as per your policy)
-   - **Scopes**: 
+   - **Scopes**:
      - `repo` (Full control of private repositories)
      - `workflow` (Update GitHub Actions workflows)
      - `admin:repo_hook` (For webhook management)
@@ -75,7 +75,7 @@ cd /path/to/home-lab-inventory
    name: Test Self-hosted Runner
    on:
      workflow_dispatch:
-   
+
    jobs:
      test:
        runs-on: [self-hosted, dockermaster]
@@ -85,7 +85,7 @@ cd /path/to/home-lab-inventory
              echo "Running on: $(hostname)"
              echo "Runner name: ${{ runner.name }}"
              echo "Runner OS: ${{ runner.os }}"
-         
+
          - name: Check Docker
            run: docker version
    ```

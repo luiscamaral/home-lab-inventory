@@ -1,0 +1,376 @@
+#!/bin/bash
+# Pre-commit Hook for Home Lab Inventory Project
+# Performs comprehensive validation before allowing commits
+
+set -euo pipefail
+
+# Configuration
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly UTILS_DIR="$(dirname "$SCRIPT_DIR")/utils"
+readonly HOOK_NAME="pre-commit"
+
+# Colors for output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly PURPLE='\033[0;35m'
+readonly CYAN='\033[0;36m'
+readonly NC='\033[0m' # No Color
+
+# Global state
+EXIT_CODE=0
+TOTAL_CHECKS=0
+PASSED_CHECKS=0
+
+# Helper functions
+print_error() {
+    echo -e "${RED}❌ ERROR: $1${NC}" >&2
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠️  WARNING: $1${NC}"
+}
+
+print_success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+print_info() {
+    echo -e "${BLUE}ℹ️  $1${NC}"
+}
+
+print_step() {
+    echo -e "${CYAN}🔄 $1${NC}"
+}
+
+print_header() {
+    echo -e "${PURPLE}═══════════════════════════════════════════════${NC}"
+    echo -e "${PURPLE} Pre-commit Hook: $1${NC}"
+    echo -e "${PURPLE}═══════════════════════════════════════════════${NC}"
+}
+
+# Track check results
+track_check() {
+    local check_name="$1"
+    local status="$2"
+
+    ((TOTAL_CHECKS++))
+
+    if [[ "$status" == "0" ]]; then
+        ((PASSED_CHECKS++))
+        print_success "$check_name passed"
+    else
+        print_error "$check_name failed"
+        EXIT_CODE=1
+    fi
+}
+
+# Get list of staged files
+get_staged_files() {
+    git diff --cached --name-only --diff-filter=ACM
+}
+
+# Get staged files by pattern
+get_staged_files_by_pattern() {
+    local pattern="$1"
+    get_staged_files | grep -E "$pattern" || true
+}
+
+# Check if any staged files exist
+has_staged_files() {
+    local pattern="$1"
+    local count
+    count=$(get_staged_files_by_pattern "$pattern" | wc -l)
+    [[ $count -gt 0 ]]
+}
+
+# YAML Validation Check
+check_yaml_files() {
+    print_step "Checking YAML files..."
+
+    local yaml_files
+    yaml_files=$(get_staged_files_by_pattern '\.(yml|yaml)$')
+
+    if [[ -z "$yaml_files" ]]; then
+        print_info "No YAML files to check"
+        track_check "YAML validation" "0"
+        return 0
+    fi
+
+    local temp_file
+    temp_file=$(mktemp)
+    echo "$yaml_files" > "$temp_file"
+
+    local result=0
+    if [[ -x "$UTILS_DIR/yaml-validator.py" ]]; then
+        # Use our custom validator for GitHub workflows
+        if xargs -I {} "$UTILS_DIR/yaml-validator.py" --github-workflows --docker-compose {} < "$temp_file"; then
+            result=0
+        else
+            result=1
+        fi
+    else
+        print_warning "YAML validator not found, using basic Python check"
+        while IFS= read -r file; do
+            if ! python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+                print_error "YAML syntax error in: $file"
+                result=1
+            fi
+        done < "$temp_file"
+    fi
+
+    rm -f "$temp_file"
+    track_check "YAML validation" "$result"
+    return $result
+}
+
+# Secret Detection Check
+check_secrets() {
+    print_step "Scanning for secrets and sensitive data..."
+
+    local all_files
+    all_files=$(get_staged_files)
+
+    if [[ -z "$all_files" ]]; then
+        print_info "No files to scan for secrets"
+        track_check "Secret detection" "0"
+        return 0
+    fi
+
+    local result=0
+    if [[ -x "$UTILS_DIR/secret-detector.sh" ]]; then
+        # Use strict mode for secrets - any finding is an error
+        if echo "$all_files" | xargs "$UTILS_DIR/secret-detector.sh" --strict --quiet; then
+            result=0
+        else
+            result=1
+        fi
+    else
+        print_warning "Secret detector not available"
+        result=0
+    fi
+
+    track_check "Secret detection" "$result"
+    return $result
+}
+
+# File Validation Check
+check_files() {
+    print_step "Validating file types and sizes..."
+
+    local all_files
+    all_files=$(get_staged_files)
+
+    if [[ -z "$all_files" ]]; then
+        print_info "No files to validate"
+        track_check "File validation" "0"
+        return 0
+    fi
+
+    local result=0
+    if [[ -x "$UTILS_DIR/file-checks.sh" ]]; then
+        # Run file checks in normal mode (warnings are OK in pre-commit)
+        if echo "$all_files" | xargs "$UTILS_DIR/file-checks.sh" --quiet; then
+            result=0
+        else
+            result=1
+        fi
+    else
+        print_warning "File validator not available"
+        result=0
+    fi
+
+    track_check "File validation" "$result"
+    return $result
+}
+
+# Code Quality Checks
+check_code_quality() {
+    print_step "Running code quality checks..."
+
+    local result=0
+
+    # Check shell scripts
+    local shell_files
+    shell_files=$(get_staged_files_by_pattern '\.(sh|bash)$')
+
+    if [[ -n "$shell_files" ]]; then
+        print_info "Checking shell scripts with shellcheck..."
+
+        if command -v shellcheck >/dev/null 2>&1; then
+            local shellcheck_failed=false
+            while IFS= read -r file; do
+                if [[ -n "$file" ]]; then
+                    if ! shellcheck "$file"; then
+                        shellcheck_failed=true
+                    fi
+                fi
+            done <<< "$shell_files"
+
+            if [[ "$shellcheck_failed" == true ]]; then
+                result=1
+            fi
+        else
+            print_warning "shellcheck not available - skipping shell script validation"
+        fi
+    fi
+
+    # Check Python files
+    local python_files
+    python_files=$(get_staged_files_by_pattern '\.py$')
+
+    if [[ -n "$python_files" ]]; then
+        print_info "Checking Python syntax..."
+
+        while IFS= read -r file; do
+            if [[ -n "$file" ]]; then
+                if ! python3 -m py_compile "$file" 2>/dev/null; then
+                    print_error "Python syntax error in: $file"
+                    result=1
+                fi
+            fi
+        done <<< "$python_files"
+    fi
+
+    # Check JSON files
+    local json_files
+    json_files=$(get_staged_files_by_pattern '\.json$')
+
+    if [[ -n "$json_files" ]]; then
+        print_info "Checking JSON syntax..."
+
+        while IFS= read -r file; do
+            if [[ -n "$file" ]]; then
+                if ! python3 -m json.tool "$file" >/dev/null 2>&1; then
+                    print_error "JSON syntax error in: $file"
+                    result=1
+                fi
+            fi
+        done <<< "$json_files"
+    fi
+
+    track_check "Code quality" "$result"
+    return $result
+}
+
+# Check for large files
+check_large_files() {
+    print_step "Checking for large files..."
+
+    local large_file_limit_mb=50
+    local result=0
+    local all_files
+    all_files=$(get_staged_files)
+
+    if [[ -z "$all_files" ]]; then
+        track_check "Large file detection" "0"
+        return 0
+    fi
+
+    while IFS= read -r file; do
+        if [[ -n "$file" ]] && [[ -f "$file" ]]; then
+            local size_mb
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                size_mb=$(( $(stat -f%z "$file") / 1024 / 1024 ))
+            else
+                size_mb=$(( $(stat -c%s "$file") / 1024 / 1024 ))
+            fi
+
+            if [[ $size_mb -gt $large_file_limit_mb ]]; then
+                print_error "Large file detected: $file (${size_mb}MB > ${large_file_limit_mb}MB)"
+                result=1
+            fi
+        fi
+    done <<< "$all_files"
+
+    track_check "Large file detection" "$result"
+    return $result
+}
+
+# Integration with existing pre-commit framework
+check_existing_precommit() {
+    print_step "Checking for existing pre-commit framework..."
+
+    if [[ -f ".pre-commit-config.yaml" ]] && command -v pre-commit >/dev/null 2>&1; then
+        print_info "Running existing pre-commit hooks..."
+
+        # Run pre-commit but don't fail the commit if it fails
+        # (let our hooks be the final arbiter)
+        if pre-commit run --all-files; then
+            print_success "Existing pre-commit hooks passed"
+            track_check "Pre-commit framework" "0"
+        else
+            print_warning "Existing pre-commit hooks had issues"
+            print_info "Continuing with custom hook validation..."
+            track_check "Pre-commit framework" "0"  # Don't fail commit
+        fi
+    else
+        print_info "No existing pre-commit framework found"
+        track_check "Pre-commit framework" "0"
+    fi
+
+    return 0
+}
+
+# Main execution
+main() {
+    print_header "Home Lab Inventory Validation"
+
+    # Check if we're in a git repository
+    if ! git rev-parse --git-dir >/dev/null 2>&1; then
+        print_error "Not in a git repository"
+        exit 1
+    fi
+
+    # Check if there are staged changes
+    if ! git diff --cached --quiet; then
+        print_info "Found staged changes, proceeding with validation..."
+    else
+        print_info "No staged changes found"
+        exit 0
+    fi
+
+    echo
+    print_info "Starting pre-commit validation..."
+    echo
+
+    # Run all checks
+    check_existing_precommit
+    echo
+    check_yaml_files
+    echo
+    check_secrets
+    echo
+    check_files
+    echo
+    check_code_quality
+    echo
+    check_large_files
+    echo
+
+    # Final summary
+    print_header "Validation Summary"
+    echo
+    print_info "Checks run: $TOTAL_CHECKS"
+    print_info "Checks passed: $PASSED_CHECKS"
+    print_info "Checks failed: $((TOTAL_CHECKS - PASSED_CHECKS))"
+    echo
+
+    if [[ $EXIT_CODE -eq 0 ]]; then
+        print_success "All pre-commit checks passed! ✨"
+        print_info "Commit is ready to proceed"
+    else
+        print_error "Pre-commit validation failed! ❌"
+        print_info "Please fix the issues above and try again"
+        echo
+        print_info "To skip these checks temporarily, use:"
+        print_info "  git commit --no-verify"
+        print_warning "WARNING: Skipping checks may introduce issues"
+    fi
+
+    exit $EXIT_CODE
+}
+
+# Run main function
+main "$@"

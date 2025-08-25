@@ -31,10 +31,10 @@ case $choice in
         echo "Cron job installed. Check 'crontab -l' to verify."
         echo "Logs will be written to /var/log/docker-deploy.log"
         ;;
-        
+
     2)
         echo "Installing systemd timer..."
-        
+
         # Create systemd service
         sudo tee "$SYSTEMD_SERVICE" > /dev/null <<EOF
 [Unit]
@@ -72,12 +72,12 @@ EOF
         sudo systemctl daemon-reload
         sudo systemctl enable docker-deploy-sync.timer
         sudo systemctl start docker-deploy-sync.timer
-        
+
         echo "Systemd timer installed and started."
         echo "Check status with: systemctl status docker-deploy-sync.timer"
         echo "View logs with: journalctl -u docker-deploy-sync.service -f"
         ;;
-        
+
     3)
         echo "Manual setup selected."
         echo ""
@@ -91,7 +91,7 @@ EOF
         echo ""
         echo "To use with systemd, create service and timer files as shown in the script."
         ;;
-        
+
     *)
         echo "Invalid choice. Script installed but not scheduled."
         echo "Run manually: $SCRIPT_PATH"

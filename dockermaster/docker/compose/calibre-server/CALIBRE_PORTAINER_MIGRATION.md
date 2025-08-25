@@ -46,10 +46,10 @@
   ```bash
   # Create backup directory
   sudo mkdir -p /backup/calibre-migration-$(date +%Y%m%d)
-  
+
   # Backup library data
   sudo cp -r /data/docker-volumes/calibre-library /backup/calibre-migration-$(date +%Y%m%d)/
-  
+
   # Backup configuration
   sudo cp -r /data/docker-volumes/calibre-config /backup/calibre-migration-$(date +%Y%m%d)/
   ```
@@ -162,7 +162,7 @@ If issues occur during migration:
    # Restore library data
    sudo rm -rf /data/docker-volumes/calibre-library
    sudo cp -r /backup/calibre-migration-$(date +%Y%m%d)/calibre-library /data/docker-volumes/
-   
+
    # Restore configuration
    sudo rm -rf /data/docker-volumes/calibre-config
    sudo cp -r /backup/calibre-migration-$(date +%Y%m%d)/calibre-config /data/docker-volumes/

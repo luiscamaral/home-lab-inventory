@@ -53,10 +53,10 @@ jobs:
                 SERVICES+=("$SERVICE_DIR")
               fi
             done
-            
+
             # Remove duplicates
             UNIQUE_SERVICES=($(printf '%s\n' "${SERVICES[@]}" | sort -u))
-            
+
             if [ ${#UNIQUE_SERVICES[@]} -eq 0 ]; then
               echo "No services with Dockerfiles found"
               JSON_ARRAY='[]'
@@ -64,10 +64,10 @@ jobs:
               JSON_ARRAY=$(printf '%s\n' "${UNIQUE_SERVICES[@]}" | jq -R . | jq -s .)
             fi
           fi
-          
+
           echo "Services to build: $JSON_ARRAY"
           echo "matrix={\"service\":$JSON_ARRAY}" >> $GITHUB_OUTPUT
-          
+
           if [ "$JSON_ARRAY" = "[]" ]; then
             echo "has-services=false" >> $GITHUB_OUTPUT
           else

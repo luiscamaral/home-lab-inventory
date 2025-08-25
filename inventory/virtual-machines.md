@@ -18,10 +18,10 @@
 - **Status**: ✅ Running  
 - **CPU**: 4 cores (host)
 - **RAM**: 16 GB
-- **Storage**: 
+- **Storage**:
   - 90 GB SSD (System)
   - 320 GB (Data, write-through cache)
-- **Network**: 
+- **Network**:
   - vmbr1 (Management)
   - vmbr10 (VLAN 10)
 - **OS**: Linux
@@ -31,7 +31,7 @@
 - **Status**: ✅ Running
 - **CPU**: 2 cores (host)
 - **RAM**: 2 GB
-- **Storage**: 
+- **Storage**:
   - 80 GB SSD (System)
   - 16 GB SSD (Additional)
 - **Network**: vmbr10 (VLAN 10)
@@ -63,7 +63,7 @@
 - **CPU**: 2 cores (host)
 - **RAM**: 2 GB
 - **Storage**: 128 GB (write-through cache)
-- **Network**: 
+- **Network**:
   - vmbr010 (disabled)
   - vmbr1 (Management)
 - **OS**: Linux

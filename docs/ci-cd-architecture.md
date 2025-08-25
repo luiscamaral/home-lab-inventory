@@ -6,12 +6,35 @@ The Home Lab Inventory repository uses a hybrid CI/CD architecture that combines
 
 ## Architecture Components
 
-### 1. GitHub Actions Runners
+### 1. Local CI with Git Hooks
+
+The repository includes a comprehensive git hooks system that provides local CI validation before code reaches the remote repository:
+
+#### Pre-commit Hook
+- **YAML Validation**: Validates GitHub Actions workflows and Docker Compose files
+- **Secret Detection**: Scans for hardcoded secrets, API keys, and sensitive data
+- **File Validation**: Checks file types, sizes, and enforces repository policies
+- **Code Quality**: Syntax checking for shell scripts, Python, and JSON files
+- **Integration**: Works alongside existing pre-commit framework
+
+#### Commit-msg Hook
+- **Conventional Commits**: Validates commit messages against conventional commits specification
+- **Integration**: Seamlessly integrates with existing commitlint/Husky setup
+- **Flexible**: Falls back to custom validation if commitlint unavailable
+
+#### Pre-push Hook
+- **Comprehensive Validation**: Runs all pre-commit checks plus additional validations
+- **Commit History**: Validates all commit messages being pushed
+- **Secret Scanning**: Deep scan of all changed files in pushed commits
+- **Testing**: Optionally runs available test suites
+- **Workflow Validation**: Comprehensive GitHub Actions workflow validation
+
+### 2. GitHub Actions Runners
 
 #### GitHub-Hosted Runners
 - **Purpose**: Fallback and public-facing workflows
 - **Specs**: Ubuntu latest, 2-core CPU, 7GB RAM
-- **Use Cases**: 
+- **Use Cases**:
   - PR validation
   - Security scanning
   - Documentation builds
@@ -20,27 +43,61 @@ The Home Lab Inventory repository uses a hybrid CI/CD architecture that combines
 #### Self-Hosted Runner (Dockermaster)
 - **Purpose**: Internal deployments and private operations
 - **Location**: Dockermaster server (`192.168.59.x`)
-- **Specs**: Configurable (2 CPU, 4GB RAM default)
+- **Container**: `github-runner-homelab`
+- **Image**: `myoung34/github-runner:latest`
+- **Network**: docker-servers-net (macvlan)
+- **Specs**: 2 CPU limit, 4GB RAM limit, 512MB minimum
+- **Labels**: `self-hosted`, `linux`, `x64`, `dockermaster`, `docker`
 - **Use Cases**:
   - Direct deployment to local services
   - Building private Docker images
-  - Access to internal networks
-  - Integration with Portainer
+  - Access to internal networks via macvlan
+  - Integration with Portainer and local Docker services
+  - Read-only access to deployment paths
 
-### 2. Workflow Strategy
+### 3. Workflow Strategy
 
 ```mermaid
 graph TD
-    A[Workflow Triggered] --> B{Runner Selection}
-    B -->|Self-hosted Available| C[Use Dockermaster Runner]
-    B -->|Self-hosted Unavailable| D[Use GitHub Runner]
-    C --> E[Execute on Local Infrastructure]
-    D --> F[Execute on GitHub Infrastructure]
-    E --> G[Deploy to Services]
-    F --> H[Webhook/API Deployment]
+    A[Developer Commits] --> B[Local Git Hooks]
+    B -->|Pre-commit| C[YAML, Secret, File Validation]
+    B -->|Commit-msg| D[Conventional Commits Check]
+    B -->|Pre-push| E[Comprehensive Pre-push Validation]
+    C --> F{Validation Passed?}
+    D --> F
+    E --> F
+    F -->|No| G[Block Commit/Push]
+    F -->|Yes| H[Push to GitHub]
+    H --> I[GitHub Actions Triggered]
+    I --> J{Runner Selection}
+    J -->|Self-hosted Available| K[Use Dockermaster Runner]
+    J -->|Self-hosted Unavailable| L[Use GitHub Runner]
+    K --> M[Execute on Local Infrastructure]
+    L --> N[Execute on GitHub Infrastructure]
+    M --> O[Deploy to Services]
+    N --> P[Webhook/API Deployment]
 ```
 
-### 3. Deployment Methods
+### 4. Local CI Integration
+
+The git hooks system integrates seamlessly with GitHub Actions:
+
+- **Early Detection**: Catches issues locally before they reach CI/CD pipeline
+- **Reduced Pipeline Failures**: Pre-validation reduces GitHub Actions failures
+- **Faster Feedback**: Immediate validation during development
+- **Cost Optimization**: Fewer failed GitHub Actions runs
+- **Security**: Secrets never leave local environment during scanning
+
+#### Hook-to-Actions Mapping
+
+| Git Hook | Equivalent GitHub Actions Check |
+|----------|--------------------------------|
+| pre-commit YAML validation | `.github/workflows/validate.yml` |
+| pre-commit secret detection | `.github/workflows/security.yml` |
+| commit-msg validation | Commitlint action in workflows |
+| pre-push testing | Test workflows in GitHub Actions |
+
+### 5. Deployment Methods
 
 #### Direct Deployment (Self-hosted)
 - Runner has direct access to Docker socket
@@ -100,7 +157,7 @@ jobs:
         run: docker build -t app:latest .
       - name: Push to registry
         run: docker push app:latest
-  
+
   deploy:
     needs: build
     runs-on: [self-hosted, dockermaster]  # Private deploy
@@ -136,7 +193,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
-        runner: 
+        runner:
           - ubuntu-latest
           - [self-hosted, dockermaster]
       fail-fast: false  # Continue if one runner fails

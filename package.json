@@ -1,33 +1,14 @@
 {
-  "name": "home-lab-inventory",
-  "version": "1.0.0",
-  "description": "Home lab infrastructure inventory and management system",
-  "private": true,
-  "scripts": {
-    "prepare": "husky",
-    "setup": "npm run setup:husky && npm run setup:git-template",
-    "setup:husky": "husky install && husky add .husky/commit-msg 'npx --no -- commitlint --edit ${1}'",
-    "setup:git-template": "git config commit.template .gitmessage",
-    "commit": "cz",
-    "commitlint": "commitlint --from HEAD~1 --to HEAD --verbose",
-    "commitlint:last": "commitlint --from HEAD~1 --to HEAD --verbose",
-    "commitlint:edit": "commitlint --edit",
-    "validate:commit": "commitlint --from HEAD~1 --to HEAD --verbose",
-    "validate:commits": "commitlint --from HEAD~10 --to HEAD --verbose",
-    "lint:commits": "commitlint --from HEAD~5 --to HEAD --verbose",
-    "check:commit-format": "echo 'Checking last 5 commits for conventional format...' && npm run lint:commits",
-    "precommit": "echo 'Running pre-commit validation...' && pre-commit run --all-files"
-  },
-  "keywords": [
-    "home-lab",
-    "infrastructure",
-    "inventory",
-    "docker",
-    "proxmox",
-    "devops"
-  ],
   "author": "Home Lab Administrator",
-  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/username/home-lab-inventory/issues"
+  },
+  "config": {
+    "commitizen": {
+      "path": "@commitlint/cz-commitlint"
+    }
+  },
+  "description": "Home lab infrastructure inventory and management system",
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
@@ -36,21 +17,40 @@
     "commitizen": "^4.3.1",
     "husky": "^9.1.6"
   },
-  "config": {
-    "commitizen": {
-      "path": "@commitlint/cz-commitlint"
-    }
-  },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
   },
+  "homepage": "https://github.com/username/home-lab-inventory#readme",
+  "keywords": [
+    "home-lab",
+    "infrastructure",
+    "inventory",
+    "docker",
+    "proxmox",
+    "devops"
+  ],
+  "license": "MIT",
+  "name": "home-lab-inventory",
+  "private": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/username/home-lab-inventory.git"
   },
-  "bugs": {
-    "url": "https://github.com/username/home-lab-inventory/issues"
+  "scripts": {
+    "check:commit-format": "echo 'Checking last 5 commits for conventional format...' && npm run lint:commits",
+    "commit": "cz",
+    "commitlint": "commitlint --from HEAD~1 --to HEAD --verbose",
+    "commitlint:edit": "commitlint --edit",
+    "commitlint:last": "commitlint --from HEAD~1 --to HEAD --verbose",
+    "lint:commits": "commitlint --from HEAD~5 --to HEAD --verbose",
+    "precommit": "echo 'Running pre-commit validation...' && pre-commit run --all-files",
+    "prepare": "husky",
+    "setup": "npm run setup:husky && npm run setup:git-template",
+    "setup:git-template": "git config commit.template .gitmessage",
+    "setup:husky": "husky install && husky add .husky/commit-msg 'npx --no -- commitlint --edit ${1}'",
+    "validate:commit": "commitlint --from HEAD~1 --to HEAD --verbose",
+    "validate:commits": "commitlint --from HEAD~10 --to HEAD --verbose"
   },
-  "homepage": "https://github.com/username/home-lab-inventory#readme"
+  "version": "1.0.0"
 }

@@ -140,7 +140,7 @@ git checkout -b docs/documentation-update
    ```bash
    # Run quick checks during development
    make quick-check
-   
+
    # Run full validation before committing
    make test
    ```
@@ -149,7 +149,7 @@ git checkout -b docs/documentation-update
    ```bash
    # Use our interactive commit tool
    make commit
-   
+
    # Or commit manually following conventional format
    git add .
    git commit -m "feat(inventory): add new docker container documentation"
@@ -239,7 +239,7 @@ When adding or modifying Docker services:
    ```yaml
    # Use consistent formatting
    version: '3.8'
-   
+
    services:
      service-name:
        image: image:tag
@@ -253,7 +253,7 @@ When adding or modifying Docker services:
          - "8080:8080"
        networks:
          - proxy-network
-   
+
    networks:
      proxy-network:
        external: true
@@ -263,13 +263,13 @@ When adding or modifying Docker services:
    ```dockerfile
    # Use specific tags, not 'latest'
    FROM ubuntu:22.04
-   
+
    # Combine RUN commands
    RUN apt-get update && \
        apt-get install -y package && \
        apt-get clean && \
        rm -rf /var/lib/apt/lists/*
-   
+
    # Use non-root user
    USER 1000:1000
    ```
@@ -278,10 +278,10 @@ When adding or modifying Docker services:
    ```bash
    # Validate configurations
    make test-docker-configs
-   
+
    # Build changed containers
    make build-changed
-   
+
    # Full build (if needed)
    make build-all
    ```

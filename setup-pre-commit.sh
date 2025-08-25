@@ -55,7 +55,7 @@ detect_package_manager() {
 # Function to install pre-commit
 install_pre_commit() {
     print_status "Installing pre-commit..."
-    
+
     if command_exists pip3; then
         pip3 install --user pre-commit
     elif command_exists pip; then
@@ -66,16 +66,16 @@ install_pre_commit() {
         print_error "Cannot install pre-commit. Please install pip or brew first."
         exit 1
     fi
-    
+
     print_success "pre-commit installed successfully"
 }
 
 # Function to install additional tools
 install_additional_tools() {
     local pkg_manager=$(detect_package_manager)
-    
+
     print_status "Installing additional linting tools..."
-    
+
     case "$pkg_manager" in
         "brew")
             # macOS with Homebrew
@@ -130,19 +130,19 @@ install_actionlint_manual() {
         print_status "Installing actionlint manually..."
         local os=$(uname -s | tr '[:upper:]' '[:lower:]')
         local arch=$(uname -m)
-        
+
         case "$arch" in
             x86_64) arch="amd64" ;;
             arm64|aarch64) arch="arm64" ;;
-            *) 
+            *)
                 print_warning "Unsupported architecture: $arch. Skipping actionlint installation."
                 return
                 ;;
         esac
-        
+
         local download_url="https://github.com/rhymond/actionlint/releases/latest/download/actionlint_1.6.26_${os}_${arch}.tar.gz"
         local temp_dir=$(mktemp -d)
-        
+
         if curl -sL "$download_url" | tar xz -C "$temp_dir"; then
             sudo mv "$temp_dir/actionlint" /usr/local/bin/
             chmod +x /usr/local/bin/actionlint
@@ -150,7 +150,7 @@ install_actionlint_manual() {
         else
             print_warning "Failed to install actionlint. You may need to install it manually."
         fi
-        
+
         rm -rf "$temp_dir"
     fi
 }
@@ -161,12 +161,12 @@ install_hadolint_manual() {
         print_status "Installing hadolint manually..."
         local os=$(uname -s)
         local arch=$(uname -m)
-        
+
         case "$os" in
             Linux)
                 case "$arch" in
                     x86_64) binary="hadolint-Linux-x86_64" ;;
-                    *) 
+                    *)
                         print_warning "Unsupported architecture: $arch. Skipping hadolint installation."
                         return
                         ;;
@@ -180,9 +180,9 @@ install_hadolint_manual() {
                 return
                 ;;
         esac
-        
+
         local download_url="https://github.com/hadolint/hadolint/releases/latest/download/$binary"
-        
+
         if curl -sL "$download_url" -o /tmp/hadolint; then
             sudo mv /tmp/hadolint /usr/local/bin/hadolint
             chmod +x /usr/local/bin/hadolint
@@ -199,12 +199,12 @@ check_docker() {
         print_warning "Docker is not installed. Docker Compose validation will be skipped."
         return 1
     fi
-    
+
     if ! docker info >/dev/null 2>&1; then
         print_warning "Docker daemon is not running. Docker Compose validation may fail."
         return 1
     fi
-    
+
     print_success "Docker is available and running"
     return 0
 }
@@ -213,35 +213,35 @@ check_docker() {
 main() {
     print_status "Setting up pre-commit hooks for home-lab-inventory repository"
     echo
-    
+
     # Check if we're in the right directory
     if [ ! -f ".pre-commit-config.yaml" ]; then
         print_error "This script must be run from the repository root directory"
         exit 1
     fi
-    
+
     # Install pre-commit if not already installed
     if ! command_exists pre-commit; then
         install_pre_commit
     else
         print_success "pre-commit is already installed"
     fi
-    
+
     # Install additional tools
     install_additional_tools
-    
+
     # Check Docker (optional)
     check_docker || true
-    
+
     # Install pre-commit hooks
     print_status "Installing pre-commit hooks..."
     pre-commit install
-    
+
     # Install hooks for commit messages (optional)
     if [ -f ".gitmessage" ] || [ -f ".gitmessage.txt" ]; then
         pre-commit install --hook-type commit-msg
     fi
-    
+
     # Run pre-commit on all files to test the setup
     print_status "Running pre-commit on all files to test the setup..."
     if pre-commit run --all-files; then
@@ -250,7 +250,7 @@ main() {
         print_warning "Some pre-commit hooks failed. This is normal for the first run."
         print_status "You can fix the issues and run 'pre-commit run --all-files' again."
     fi
-    
+
     echo
     print_success "Pre-commit setup completed successfully!"
     echo

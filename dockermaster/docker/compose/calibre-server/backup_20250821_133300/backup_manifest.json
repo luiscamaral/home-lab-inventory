@@ -1,23 +1,37 @@
 {
-  "timestamp": "2025-08-21_13:33:00",
-  "service": "calibre",
-  "backup_directory": "backup_20250821_133300",
   "backed_up_files": [
     "calibre-compose-20250821_133300.yaml",
-    "calibre-portainer-compose-20250821_133300.yaml", 
+    "calibre-portainer-compose-20250821_133300.yaml",
     "calibre-cicd-compose-20250821_133300.yaml",
     "Dockerfile-20250821_133300",
     "container_state.json",
     "volumes_info.txt",
     "environment_config.txt"
   ],
-  "volumes_documented": true,
+  "backup_directory": "backup_20250821_133300",
+  "backup_status": "SUCCESS",
   "container_state_captured": true,
   "containers_running": false,
+  "nfs_status": "/nfs/calibre directory not found on local system",
+  "notes": "Pre-Portainer migration backup - Complete configuration backup including all compose variants, Dockerfile, and environment documentation. No running containers found at backup time.",
+  "ports_documented": {
+    "calibre": [
+      "58080:8080",
+      "58181:8181",
+      "58081:8081",
+      "58090:9090"
+    ],
+    "calibre_web": [
+      "58083:8083"
+    ]
+  },
+  "sensitive_data_handling": "Passwords and sensitive environment variables have been redacted",
+  "service": "calibre",
+  "timestamp": "2025-08-21_13:33:00",
   "volume_mappings": {
     "calibre_service": [
       "/nfs/calibre/Library:/Library",
-      "/nfs/calibre/config:/config", 
+      "/nfs/calibre/config:/config",
       "/nfs/calibre/upload:/upload",
       "/nfs/calibre/plugins:/plugins"
     ],
@@ -26,12 +40,5 @@
       "/nfs/calibre/calibre-web/Library:/books"
     ]
   },
-  "ports_documented": {
-    "calibre": ["58080:8080", "58181:8181", "58081:8081", "58090:9090"],
-    "calibre_web": ["58083:8083"]
-  },
-  "sensitive_data_handling": "Passwords and sensitive environment variables have been redacted",
-  "nfs_status": "/nfs/calibre directory not found on local system",
-  "notes": "Pre-Portainer migration backup - Complete configuration backup including all compose variants, Dockerfile, and environment documentation. No running containers found at backup time.",
-  "backup_status": "SUCCESS"
+  "volumes_documented": true
 }
