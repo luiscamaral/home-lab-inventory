@@ -11,6 +11,7 @@ The Home Lab Inventory repository uses a hybrid CI/CD architecture that combines
 The repository includes a comprehensive git hooks system that provides local CI validation before code reaches the remote repository:
 
 #### Pre-commit Hook
+
 - **YAML Validation**: Validates GitHub Actions workflows and Docker Compose files
 - **Secret Detection**: Scans for hardcoded secrets, API keys, and sensitive data
 - **File Validation**: Checks file types, sizes, and enforces repository policies
@@ -18,11 +19,13 @@ The repository includes a comprehensive git hooks system that provides local CI 
 - **Integration**: Works alongside existing pre-commit framework
 
 #### Commit-msg Hook
+
 - **Conventional Commits**: Validates commit messages against conventional commits specification
 - **Integration**: Seamlessly integrates with existing commitlint/Husky setup
 - **Flexible**: Falls back to custom validation if commitlint unavailable
 
 #### Pre-push Hook
+
 - **Comprehensive Validation**: Runs all pre-commit checks plus additional validations
 - **Commit History**: Validates all commit messages being pushed
 - **Secret Scanning**: Deep scan of all changed files in pushed commits
@@ -32,6 +35,7 @@ The repository includes a comprehensive git hooks system that provides local CI 
 ### 2. GitHub Actions Runners
 
 #### GitHub-Hosted Runners
+
 - **Purpose**: Fallback and public-facing workflows
 - **Specs**: Ubuntu latest, 2-core CPU, 7GB RAM
 - **Use Cases**:
@@ -41,11 +45,12 @@ The repository includes a comprehensive git hooks system that provides local CI 
   - Public artifact generation
 
 #### Self-Hosted Runner (Dockermaster)
+
 - **Purpose**: Internal deployments and private operations
 - **Location**: Dockermaster server (`192.168.59.x`)
 - **Container**: `github-runner-homelab`
 - **Image**: `myoung34/github-runner:latest`
-- **Network**: docker-servers-net (macvlan)
+- **Network**: Docker-servers-net (macvlan)
 - **Specs**: 2 CPU limit, 4GB RAM limit, 512MB minimum
 - **Labels**: `self-hosted`, `linux`, `x64`, `dockermaster`, `docker`
 - **Use Cases**:
@@ -100,17 +105,20 @@ The git hooks system integrates seamlessly with GitHub Actions:
 ### 5. Deployment Methods
 
 #### Direct Deployment (Self-hosted)
+
 - Runner has direct access to Docker socket
 - Can manage local containers directly
 - No network hops required
 - Instant deployment capability
 
 #### Webhook Deployment (GitHub-hosted)
+
 - Triggers deployment via webhook
 - Requires webhook receiver on dockermaster
 - Adds security layer between GitHub and infrastructure
 
 #### SSH Deployment (Both)
+
 - Uses SSH keys for remote deployment
 - Works from any runner type
 - Requires SSH access configuration
@@ -118,6 +126,7 @@ The git hooks system integrates seamlessly with GitHub Actions:
 ## Security Architecture
 
 ### Token Management
+
 ```yaml
 Secrets:
   GITHUB_TOKEN: Personal Access Token or App Token
@@ -128,12 +137,14 @@ Secrets:
 ```
 
 ### Network Security
+
 - Self-hosted runner in isolated Docker network
 - Read-only mount for deployment paths
 - No direct internet exposure
 - Outbound only to GitHub API
 
 ### Access Control
+
 - Runner operates with limited permissions
 - Repository-scoped tokens only
 - Deployment paths mounted read-only
@@ -142,6 +153,7 @@ Secrets:
 ## Workflow Patterns
 
 ### Pattern 1: Build and Deploy
+
 ```yaml
 name: Build and Deploy
 on:
@@ -167,6 +179,7 @@ jobs:
 ```
 
 ### Pattern 2: PR Validation
+
 ```yaml
 name: PR Validation
 on:
@@ -183,6 +196,7 @@ jobs:
 ```
 
 ### Pattern 3: Hybrid Deployment
+
 ```yaml
 name: Hybrid Deploy
 on:
@@ -205,18 +219,21 @@ jobs:
 ## Monitoring and Observability
 
 ### Runner Health Monitoring
+
 - Health check every 30 seconds
 - Automatic restart on failure
 - Logs shipped to central logging
 - Metrics exported to Prometheus
 
 ### Workflow Metrics
+
 - Success/failure rates
 - Deployment frequency
 - Build times
 - Resource usage
 
 ### Alerting
+
 - Runner offline alerts
 - Deployment failure notifications
 - Resource limit warnings
@@ -225,12 +242,14 @@ jobs:
 ## Disaster Recovery
 
 ### Runner Failure
+
 1. Workflows automatically fallback to GitHub runners
 2. Manual intervention to restart self-hosted runner
 3. Investigate logs for root cause
 4. Apply fixes and restore service
 
 ### Deployment Rollback
+
 1. Keep previous deployment configs
 2. Version all Docker images
 3. Automated rollback on health check failure
@@ -239,24 +258,28 @@ jobs:
 ## Best Practices
 
 ### 1. Runner Selection
+
 - Use self-hosted for internal operations
 - Use GitHub-hosted for public operations
 - Always provide fallback options
 - Monitor runner availability
 
 ### 2. Secret Management
+
 - Never commit secrets
 - Rotate tokens regularly
 - Use repository secrets for sensitive data
 - Limit token scopes
 
 ### 3. Workflow Design
+
 - Keep workflows simple and focused
 - Use reusable workflows
 - Implement proper error handling
 - Add comprehensive logging
 
 ### 4. Resource Management
+
 - Set appropriate resource limits
 - Clean up old artifacts
 - Monitor disk usage
@@ -265,12 +288,14 @@ jobs:
 ## Scaling Considerations
 
 ### Horizontal Scaling
+
 - Add more self-hosted runners
 - Use runner groups for organization
 - Implement load balancing
 - Auto-scaling based on queue depth
 
 ### Vertical Scaling
+
 - Increase runner resources as needed
 - Optimize Docker layer caching
 - Use build caches effectively
@@ -279,12 +304,14 @@ jobs:
 ## Future Enhancements
 
 ### Short Term
+
 - [ ] Add Kubernetes runner for container orchestration
 - [ ] Implement GitOps with ArgoCD
 - [ ] Add more comprehensive monitoring
 - [ ] Implement automatic runner updates
 
 ### Long Term
+
 - [ ] Multi-region runner deployment
 - [ ] Advanced deployment strategies (blue-green, canary)
 - [ ] Cost optimization analytics

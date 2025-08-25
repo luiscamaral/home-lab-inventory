@@ -3,6 +3,7 @@
 ## Docker Master Server
 
 ### System Information
+
 - **Host**: dockermaster (VM 120)
 - **OS**: Ubuntu 24.04.2 LTS (Noble Numbat)
 - **Kernel**: Linux 6.8.0-64-generic
@@ -16,6 +17,7 @@
 - **Docker Compose**: Multiple stacks deployed
 
 ### NFS Mounts
+
 - `/nfs/calibre` - Calibre library storage (from NAS)
 - `/nfs/dockermaster` - Docker persistent data (from NAS)
 
@@ -24,6 +26,7 @@
 ## 🟢 Running Containers (8)
 
 ### 📚 Calibre Server
+
 - **Image**: calibre-calibre
 - **Status**: Up 7 days
 - **Ports**:
@@ -40,6 +43,7 @@
 - **Purpose**: E-book library management server
 
 ### 📖 Calibre Web
+
 - **Image**: lscr.io/linuxserver/calibre-web:latest
 - **Status**: Up 7 days
 - **Ports**: 58083:8083
@@ -50,6 +54,7 @@
 - **Purpose**: Web-based e-book reader interface
 
 ### 🔧 Rundeck
+
 - **Image**: la-rundeck-rundeck (custom build)
 - **Status**: Up 12 days
 - **Network**: 192.168.59.22 (macvlan)
@@ -63,6 +68,7 @@
 - **Compose Stack**: Yes
 
 ### 🗄️ PostgreSQL for Rundeck
+
 - **Image**: postgres
 - **Container**: postgres-rundeck
 - **Status**: Up 12 days
@@ -72,10 +78,11 @@
 - **Purpose**: Database backend for Rundeck
 
 ### 🤖 GitHub Actions Runner
-- **Image**: myoung34/github-runner:latest
-- **Container**: github-runner-homelab
+
+- **Image**: myoung34/GitHub-runner:latest
+- **Container**: GitHub-runner-homelab
 - **Status**: Ready for deployment
-- **Network**: docker-servers-net (macvlan)
+- **Network**: Docker-servers-net (macvlan)
 - **Resources**:
   - Limits: 2 CPU, 4GB RAM
   - Reservations: 0.5 CPU, 512MB RAM
@@ -87,7 +94,7 @@
   - `./config` → `/actions-runner` (Configuration)
   - `/nfs/dockermaster/docker` → `/deployment:ro` (Read-only deployment path)
 - **Environment**:
-  - **Labels**: self-hosted, linux, x64, dockermaster, docker
+  - **Labels**: self-hosted, Linux, x64, dockermaster, Docker
   - **Ephemeral**: false (persistent environment)
   - **Auto-update**: enabled
 - **Features**:
@@ -99,6 +106,7 @@
 - **Compose Stack**: Yes (`dockermaster/github-runner/docker-compose.yml`)
 
 ### 🖥️ Portainer
+
 - **Image**: portainer/portainer-ce:latest
 - **Status**: Up 12 days
 - **Network**: 192.168.59.2 (macvlan)
@@ -110,7 +118,8 @@
 - **Compose Stack**: Yes
 
 ### 🌐 Bind9 DNS
-- **Image**: ubuntu/bind9:9.20-24.10_edge
+
+- **Image**: Ubuntu/bind9:9.20-24.10_edge
 - **Status**: Up 12 days
 - **Ports**:
   - 53:53/tcp
@@ -124,7 +133,8 @@
 - **Compose Stack**: Yes
 
 ### 🔀 Nginx Reverse Proxy
-- **Image**: nginx:1.27
+
+- **Image**: Nginx:1.27
 - **Container**: rproxy
 - **Status**: Up 12 days
 - **Resources**: 0.00% CPU, 3.6MB RAM (0.01%)
@@ -137,6 +147,7 @@
 ## 🔴 Stopped Containers (6)
 
 ### 🤖 Ollama
+
 - **Image**: ollama/ollama
 - **Status**: Exited 2 weeks ago
 - **Purpose**: Local LLM runtime
@@ -144,13 +155,15 @@
 - **Compose Stack**: Yes
 
 ### 🕷️ Crawl4AI
+
 - **Image**: unclecode/crawl4ai:latest
 - **Status**: Exited 3 weeks ago
 - **Purpose**: Web crawling AI tool
 
 ### 🧠 LiteLLM Stack
+
 - **LiteLLM Service**: ghcr.io/berriai/litellm:main-stable (Exited 3 weeks ago)
-- **Prometheus**: prom/prometheus (Exited 2 weeks ago)
+- **Prometheus**: prom/Prometheus (Exited 2 weeks ago)
 - **PostgreSQL**: postgres:16 (Exited 2 weeks ago)
 - **Volumes**:
   - `litellm_postgres_data`
@@ -159,6 +172,7 @@
 - **Compose Stack**: Yes
 
 ### 👋 Hello World Test
+
 - **Image**: hello-world
 - **Container**: relaxed_elion
 - **Status**: Exited 4 months ago
@@ -169,13 +183,15 @@
 ## 🌐 Docker Networks
 
 ### Active Networks
+
 - **bridge**: Default bridge network
-- **docker-servers-net**: Macvlan network for server IPs (192.168.59.0/26)
+- **Docker-servers-net**: Macvlan network for server IPs (192.168.59.0/26)
 - **bind-dns_default**: Bind9 DNS service network
 - **calibre_default**: Calibre services network
 - **rproxy-test_default**: Nginx proxy network
 
 ### Inactive Networks
+
 - **litellm_default**: LiteLLM stack network
 - **ollama_default**: Ollama service network
 
@@ -184,12 +200,14 @@
 ## 💾 Docker Volumes
 
 ### Named Volumes
+
 - `dockermaster-portainer_portainer_data` - Portainer configuration
 - `litellm_postgres_data` - LiteLLM PostgreSQL data
 - `litellm_prometheus_data` - Prometheus metrics data
 - `ollama_ollama` - Ollama models and data
 
 ### NFS-backed Storage
+
 - All persistent data stored on NAS via NFS mounts
 - Configuration files in `/nfs/dockermaster/docker/`
 - Calibre library in `/nfs/calibre/`
@@ -199,12 +217,14 @@
 ## 📁 Docker Compose Stacks
 
 ### Active Stacks
+
 1. **Rundeck** (`/rundeck/docker-compose.yml`)
 2. **Portainer** (`/portainer/docker-compose.yml`)
 3. **Bind9 DNS** (`/bind9/docker-compose.yml`)
 4. **Nginx Reverse Proxy** (`/nginx-rproxy/docker-compose.yml`)
 
 ### Available but Inactive
+
 1. **Ollama** (`/ollama/docker-compose.yml`)
 2. **LiteLLM** (`/litellm/docker-compose.yml`)
 3. **N8N** (`/n8n-stack/docker-compose.yml`)
@@ -216,6 +236,7 @@
 ---
 
 ## 📊 Resource Summary
+
 - **Total Containers**: 13 (7 running, 6 stopped)
 - **Memory Usage**: ~3.1 GB of 62 GB (5%)
 - **CPU Usage**: ~3% average
@@ -227,11 +248,13 @@
 ## Container Orchestration Platforms (VMs - Stopped)
 
 ### Docker Swarm Cluster
+
 - Manager: VM 230
 - Workers: VM 231, 232
 - Status: 🔴 Stopped
 
 ### Kubernetes Clusters
+
 - Standard K8s: VMs 240-242
 - Talos K8s: VMs 250-252
 - Status: 🔴 Stopped

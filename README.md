@@ -155,12 +155,14 @@ Currently deployed containers on dockermaster:
 ### Making Changes
 
 1. **Clone and Setup**:
+
    ```bash
    git clone <repository>
    ./.githooks/setup.sh
    ```
 
 2. **Create Feature Branch**:
+
    ```bash
    git checkout -b feature/new-service
    ```
@@ -170,6 +172,7 @@ Currently deployed containers on dockermaster:
 4. **Local Validation**: Git hooks automatically validate on commit/push
 
 5. **Push and Deploy**:
+
    ```bash
    git push origin feature/new-service
    # Creates PR, triggers GitHub Actions
@@ -258,6 +261,6 @@ docker-compose logs -f
 
 ---
 
-*Last updated: 2025-08-25*
-*Repository: Home Lab Infrastructure Management*
-*License: Private use only*
+_Last updated: 2025-08-25_
+_Repository: Home Lab Infrastructure Management_
+_License: Private use only_

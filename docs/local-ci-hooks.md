@@ -28,6 +28,7 @@ graph LR
 **Purpose**: Validates changes before they are committed locally.
 
 **Validations**:
+
 - **YAML Syntax**: Validates `.yml` and `.yaml` files including GitHub Actions workflows and Docker Compose files
 - **Secret Detection**: Scans for hardcoded secrets, API keys, tokens, and sensitive data using pattern matching
 - **File Validation**: Checks file types, sizes, and enforces repository policies
@@ -41,12 +42,14 @@ graph LR
 **Purpose**: Validates commit messages against conventional commits specification.
 
 **Features**:
+
 - **Conventional Commits**: Enforces format like `feat(scope): description`
 - **Integration**: Seamlessly integrates with existing commitlint/Husky setup
 - **Flexible**: Falls back to custom validation if commitlint unavailable
 - **Helpful**: Provides clear guidance when validation fails
 
 **Examples**:
+
 ```bash
 # ✅ Valid commit messages
 feat(docker): add nginx reverse proxy container
@@ -70,6 +73,7 @@ wip: work in progress
 **Purpose**: Comprehensive validation before code is pushed to remote repository.
 
 **Validations**:
+
 - **All Pre-commit Checks**: Runs complete pre-commit validation suite
 - **Commit History**: Validates all commit messages being pushed
 - **Deep Secret Scanning**: Thorough scan of all changed files in pushed commits
@@ -231,6 +235,7 @@ SKIP_TESTS=true git push origin main
 ### Common Issues
 
 #### Hook Not Running
+
 ```bash
 # Check if hooks are executable
 ls -la .git/hooks/pre-commit .git/hooks/commit-msg .git/hooks/pre-push
@@ -243,12 +248,14 @@ git config core.hooksPath
 ```
 
 #### Permission Denied
+
 ```bash
 # Fix permissions on all hook utilities
 chmod +x .githooks/utils/*.sh .githooks/utils/*.py
 ```
 
 #### Python YAML Module Missing
+
 ```bash
 # Install PyYAML
 pip3 install PyYAML
@@ -259,6 +266,7 @@ sudo apt-get install python3-yaml  # Ubuntu
 ```
 
 #### False Positive Secret Detection
+
 ```bash
 # Review and update secret patterns
 nano .githooks/config/secret-patterns.txt
@@ -338,6 +346,7 @@ cp .git/hooks.backup.YYYYMMDD_HHMMSS/* .git/hooks/
 ### IDE Integration
 
 Most IDEs can be configured to run git hooks:
+
 - **VS Code**: Install git hooks extensions
 - **IntelliJ**: Enable git hooks in VCS settings
 - **Vim/Neovim**: Configure git integration plugins
@@ -367,5 +376,5 @@ Most IDEs can be configured to run git hooks:
 
 ---
 
-*Last updated: 2025-08-25*
-*Compatible with: Git 2.0+, Python 3.6+, Bash 4.0+*
+_Last updated: 2025-08-25_
+_Compatible with: Git 2.0+, Python 3.6+, Bash 4.0+_

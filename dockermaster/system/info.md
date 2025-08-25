@@ -78,4 +78,4 @@
 | Spectre v1 | Mitigation; usercopy/swapgs barriers and __user pointer sanitization |
 | Spectre v2 | Mitigation; Retpolines; IBPB conditional; IBRS_FW; STIBP disabled; RSB filling |
 
-*Last updated: 2025-08-09*
+_Last updated: 2025-08-09_

@@ -3,6 +3,7 @@
 ## Physical Servers
 
 ### Proxmox Hypervisor
+
 - **Hostname**: proxmox
 - **OS**: Debian GNU/Linux 12 (bookworm)
 - **Kernel**: Linux 6.8.12-9-pve
@@ -29,6 +30,7 @@
 - **Access**: SSH via `ssh proxmox`
 
 ### NAS Server
+
 - **Type**: Synology NAS
 - **Services**:
   - NFS shares for VM storage and backups
@@ -38,6 +40,7 @@
 ## Virtual Servers
 
 ### Docker Master Server (VM 120)
+
 - **Hostname**: dockermaster
 - **Type**: Virtual Machine on Proxmox (VMID 120)
 - **OS**: Ubuntu 24.04.2 LTS (Noble Numbat)

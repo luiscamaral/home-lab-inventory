@@ -1,6 +1,6 @@
+---
 # Pre-commit hooks configuration for home-lab-inventory repository
 # Run 'pre-commit install' to set up the hooks
-
 repos:
   # Built-in pre-commit hooks for general file hygiene
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -74,7 +74,8 @@ repos:
     hooks:
       - id: docker-compose-check
         name: Docker Compose Check
-        entry: bash -c 'for file in "$@"; do docker compose -f "$file" config --quiet || exit 1; done'
+        entry: bash -c 'for file in "$@"; do docker compose -f "$file" config --quiet
+          || exit 1; done'
         language: system
         files: docker-compose\.ya?ml$
         require_serial: false
@@ -84,18 +85,18 @@ repos:
     hooks:
       - id: actionlint
         name: GitHub Actions Lint
-        entry: bash -c 'command -v actionlint >/dev/null 2>&1 && actionlint "$@" || echo "actionlint not installed"'
+        entry: bash -c 'command -v actionlint >/dev/null 2>&1 && actionlint "$@" ||
+          echo "actionlint not installed"'
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
         require_serial: false
-
 # Global configuration
 default_stages: [commit]
 fail_fast: false
 minimum_pre_commit_version: 3.0.0
 
 # Files to exclude from all hooks
-exclude: |
+exclude: |-
   (?x)^(
     \.git/.*|
     \.history/.*|

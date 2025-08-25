@@ -1,8 +1,7 @@
+---
 name: ollama
-
 # Docker Compose file for running the Ollama service.
 # The top-level 'version' key is no longer required in modern Docker Compose.
-
 services:
   ollama:
     # Specifies the official Ollama image from Docker Hub.
@@ -14,7 +13,7 @@ services:
     # Maps port 11434 on the host machine to port 11434 in the container.
     # This allows you to interact with the Ollama API from your host.
     ports:
-      - "11434:11434"
+      - 11434:11434
 
     # Mounts the 'ollama' named volume to the /root/.ollama directory inside the container.
     # This ensures that your downloaded models and data persist even if the container is removed or recreated.
@@ -24,7 +23,6 @@ services:
     # Sets the restart policy. 'unless-stopped' ensures the container restarts automatically
     # after a reboot or if it crashes, unless you manually stop it.
     restart: unless-stopped
-
 # Defines the named volume used by the service.
 # This configuration uses the 'local' driver to bind the volume to a specific path on the host machine,
 # in this case, an NFS mount point. This ensures the data is stored in your desired location.
@@ -32,6 +30,6 @@ volumes:
   ollama:
     driver: local
     driver_opts:
-      type: 'none'
-      o: 'bind'
-      device: '/nfs/dockermaster/volumes/ollama.ollama'
+      type: none
+      o: bind
+      device: /nfs/dockermaster/volumes/ollama.ollama

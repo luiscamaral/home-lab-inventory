@@ -1,13 +1,11 @@
+---
 version: '3.9'
-
 networks:
   docker-net:
     name: docker-servers-net
     external: true
-
 services:
   dns:
     image: phensley/docker-dns
     command: --domain example.com
-    volumes:
-     - "/var/run/docker.sock:/docker.sock"
+    volumes: [/var/run/docker.sock:/docker.sock]

@@ -5,6 +5,7 @@
 ### Infrastructure Services
 
 #### VM 100 - Omada Controller
+
 - **Status**: ✅ Running
 - **CPU**: 2 cores (host)
 - **RAM**: 2 GB
@@ -15,6 +16,7 @@
 - **Auto-start**: Yes (startup delay: 180s)
 
 #### VM 110 - Laorion
+
 - **Status**: ✅ Running  
 - **CPU**: 4 cores (host)
 - **RAM**: 16 GB
@@ -28,6 +30,7 @@
 - **Auto-start**: Yes
 
 #### VM 111 - Rootmaster
+
 - **Status**: ✅ Running
 - **CPU**: 2 cores (host)
 - **RAM**: 2 GB
@@ -39,6 +42,7 @@
 - **Auto-start**: Yes
 
 #### VM 120 - Docker Master
+
 - **Status**: ✅ Running
 - **CPU**: 20 cores (2 sockets × 10 cores, host)
 - **RAM**: 64 GB
@@ -49,6 +53,7 @@
 - **Auto-start**: Yes (startup delay: 30s)
 
 #### VM 121 - Home Assistant
+
 - **Status**: ✅ Running
 - **CPU**: 4 cores (SandyBridge)
 - **RAM**: 16 GB
@@ -59,6 +64,7 @@
 - **Auto-start**: Yes (startup order: 1)
 
 #### VM 122 - UniFi Controller
+
 - **Status**: ✅ Running
 - **CPU**: 2 cores (host)
 - **RAM**: 2 GB
@@ -71,6 +77,7 @@
 - **Auto-start**: Yes (startup delay: 120s)
 
 #### VM 1000 - Lamint
+
 - **Status**: ✅ Running
 - **CPU**: 12 cores (host)
 - **RAM**: 32 GB
@@ -82,6 +89,7 @@
 ### Container Orchestration (Stopped)
 
 #### Docker Swarm Cluster
+
 - **VM 230 - Swarm Manager 1**
   - Status: 🔴 Stopped
   - CPU: 4 cores
@@ -104,6 +112,7 @@
   - Network: vmbr28
 
 #### Kubernetes Cluster
+
 - **VM 240 - Kubernetes Master 1**
   - Status: 🔴 Stopped
   - CPU: 4 cores
@@ -126,6 +135,7 @@
   - Network: vmbr28
 
 #### Talos Kubernetes Cluster
+
 - **VM 250 - TKMaster 1**
   - Status: 🔴 Stopped
   - CPU: 4 cores
@@ -150,6 +160,7 @@
 ### Templates & Testing
 
 #### VM 101 - Tiny
+
 - **Status**: 🔴 Stopped
 - **CPU**: 4 cores
 - **RAM**: 4 GB
@@ -158,6 +169,7 @@
 - **OS**: Linux
 
 #### VM 10001 - Ubuntu Server 22.04 Template
+
 - **Status**: 📋 Template
 - **CPU**: 4 cores
 - **RAM**: 4 GB
@@ -167,6 +179,7 @@
 - **Purpose**: VM template for cloning
 
 ## Summary
+
 - **Total VMs**: 18
 - **Running**: 7
 - **Stopped**: 10

@@ -31,6 +31,7 @@ Before contributing, ensure you have the following installed:
 ### First-Time Setup
 
 1. **Fork and Clone**
+
    ```bash
    # Fork the repository on GitHub, then:
    git clone https://github.com/YOUR-USERNAME/home-lab-inventory.git
@@ -38,18 +39,21 @@ Before contributing, ensure you have the following installed:
    ```
 
 2. **Setup Development Environment**
+
    ```bash
    # One-command setup for everything
    make setup
    ```
 
 3. **Verify Setup**
+
    ```bash
    # Run all validations to ensure everything works
    make test
    ```
 
 4. **Start Contributing**
+
    ```bash
    # Check available commands
    make help
@@ -131,12 +135,14 @@ git checkout -b docs/documentation-update
 ### 2. Development Process
 
 1. **Make Your Changes**
+
    ```bash
    # Edit files as needed
    # Add new inventory entries, update configurations, etc.
    ```
 
 2. **Test Locally**
+
    ```bash
    # Run quick checks during development
    make quick-check
@@ -146,6 +152,7 @@ git checkout -b docs/documentation-update
    ```
 
 3. **Commit Changes**
+
    ```bash
    # Use our interactive commit tool
    make commit
@@ -156,6 +163,7 @@ git checkout -b docs/documentation-update
    ```
 
 4. **Push and Create PR**
+
    ```bash
    git push origin feature/your-feature-name
    # Then create a pull request on GitHub
@@ -172,6 +180,7 @@ Use descriptive branch names with prefixes:
 - `security/` - Security-related changes
 
 **Examples:**
+
 - `feature/add-prometheus-monitoring`
 - `fix/docker-compose-validation`
 - `docs/update-server-inventory`
@@ -215,6 +224,7 @@ Pre-commit hooks run automatically on `git commit`:
 - Docker Compose validation
 
 **Bypass hooks only in emergencies:**
+
 ```bash
 git commit -m "emergency fix" --no-verify
 ```
@@ -226,6 +236,7 @@ git commit -m "emergency fix" --no-verify
 When adding or modifying Docker services:
 
 1. **Service Documentation**
+
    ```markdown
    # Add to inventory/docker-containers.md
    ## Service Name
@@ -236,6 +247,7 @@ When adding or modifying Docker services:
    ```
 
 2. **Docker Compose Standards**
+
    ```yaml
    # Use consistent formatting
    version: '3.8'
@@ -260,6 +272,7 @@ When adding or modifying Docker services:
    ```
 
 3. **Dockerfile Best Practices**
+
    ```dockerfile
    # Use specific tags, not 'latest'
    FROM ubuntu:22.04
@@ -275,6 +288,7 @@ When adding or modifying Docker services:
    ```
 
 4. **Testing Docker Changes**
+
    ```bash
    # Validate configurations
    make test-docker-configs
@@ -321,23 +335,27 @@ When updating server information:
 All contributions must pass:
 
 1. **Validation Tests**
+
    ```bash
    make validate          # Pre-commit hooks and structure
    make validate-commits  # Commit message format
    ```
 
 2. **Linting Tests**
+
    ```bash
    make lint             # All linting checks
    ```
 
 3. **Docker Tests**
+
    ```bash
    make test-docker-configs  # Docker Compose validation
    make build-changed        # Build affected containers
    ```
 
 4. **Security Tests**
+
    ```bash
    make security         # Vulnerability and secret scans
    ```
@@ -376,6 +394,7 @@ We follow [Conventional Commits](https://conventionalcommits.org/). See [`COMMIT
 **Format:** `type(scope): description`
 
 **Types:**
+
 - `feat` - New features
 - `fix` - Bug fixes
 - `docs` - Documentation changes
@@ -386,6 +405,7 @@ We follow [Conventional Commits](https://conventionalcommits.org/). See [`COMMIT
 - `security` - Security improvements
 
 **Examples:**
+
 ```
 feat(inventory): add monitoring stack documentation
 fix(docker): correct nginx proxy configuration
@@ -402,6 +422,7 @@ make commit
 ```
 
 This guides you through:
+
 1. Selecting commit type
 2. Choosing scope
 3. Writing description
@@ -413,11 +434,13 @@ This guides you through:
 ### Before Creating a PR
 
 1. **Run Full Validation**
+
    ```bash
    make test
    ```
 
 2. **Check Commit Messages**
+
    ```bash
    make validate-commits
    ```
@@ -518,12 +541,14 @@ env_file:
 ### Sensitive Information
 
 **Do NOT commit:**
+
 - Passwords, API keys, tokens
 - Private IP addresses (document in separate secure location)
 - SSL certificates or private keys
 - Personal information
 
 **DO commit:**
+
 - Example configurations
 - Public documentation
 - Network topology (without sensitive details)
@@ -557,12 +582,14 @@ make security-secrets # Secret detection
 ### Adding a New Docker Service
 
 1. **Create service directory**
+
    ```bash
    mkdir -p dockermaster/docker/compose/new-service
    cd dockermaster/docker/compose/new-service
    ```
 
-2. **Create docker-compose.yml**
+2. **Create Docker-compose.yml**
+
    ```yaml
    version: '3.8'
    services:
@@ -571,17 +598,20 @@ make security-secrets # Secret detection
    ```
 
 3. **Test configuration**
+
    ```bash
    make test-docker-configs
    ```
 
 4. **Update documentation**
+
    ```bash
    # Edit inventory/docker-containers.md
    # Add service details, access info, etc.
    ```
 
 5. **Commit changes**
+
    ```bash
    make commit
    ```
@@ -589,6 +619,7 @@ make security-secrets # Secret detection
 ### Updating Server Documentation
 
 1. **Edit inventory files**
+
    ```bash
    # inventory/servers.md - Physical servers
    # inventory/virtual-machines.md - VMs
@@ -596,11 +627,13 @@ make security-secrets # Secret detection
    ```
 
 2. **Validate changes**
+
    ```bash
    make lint-markdown
    ```
 
 3. **Update related documentation**
+
    ```bash
    # Update network diagrams
    # Update access procedures
@@ -609,16 +642,19 @@ make security-secrets # Secret detection
 ### Adding GitHub Workflows
 
 1. **Create workflow file**
+
    ```bash
    touch .github/workflows/new-workflow.yml
    ```
 
 2. **Validate workflow**
+
    ```bash
    make lint-actions
    ```
 
 3. **Test locally if possible**
+
    ```bash
    # Use act or similar tools for local testing
    ```
@@ -626,6 +662,7 @@ make security-secrets # Secret detection
 ### Updating Dependencies
 
 1. **Update package files**
+
    ```bash
    # package.json for Node.js deps
    # pyproject.toml for Python deps
@@ -633,11 +670,13 @@ make security-secrets # Secret detection
    ```
 
 2. **Test changes**
+
    ```bash
    make test
    ```
 
 3. **Check security**
+
    ```bash
    make security-audit
    ```
@@ -713,12 +752,14 @@ python3 --version  # Should be >= 3.8
 ### Getting Unstuck
 
 1. **Clean everything**
+
    ```bash
    make clean
    make setup
    ```
 
 2. **Reset to known good state**
+
    ```bash
    git stash
    git checkout main
@@ -726,11 +767,13 @@ python3 --version  # Should be >= 3.8
    ```
 
 3. **Check tool versions**
+
    ```bash
    make status
    ```
 
 4. **Run minimal validation**
+
    ```bash
    make quick-check
    ```

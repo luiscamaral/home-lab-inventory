@@ -1,33 +1,28 @@
+---
 # Comprehensive Pull Request Validation Workflow
 # This workflow provides thorough validation of pull requests including linting,
 # pre-commit hooks, commit message validation, Docker builds, documentation,
 # and file structure validation with detailed PR comments and status reporting
-
 name: PR Validation
-
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
-
 # Cancel in-progress runs for the same PR
 concurrency:
   group: pr-validation-${{ github.event.pull_request.number }}
   cancel-in-progress: true
-
 # Environment variables
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NODE_VERSION: "18"
-  PYTHON_VERSION: "3.11"
-
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
 # Define permissions for the workflow
 permissions:
   contents: read
   pull-requests: write
   checks: write
   statuses: write
-
 jobs:
   # Job 1: Lint Validation - Matrix job for parallel execution
   lint-validation:
@@ -37,12 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        linter:
-          - markdown
-          - yaml
-          - shell
-          - json
-          - actionlint
+        linter: [markdown, yaml, shell, json, actionlint]
     outputs:
       markdown-result: ${{ steps.markdown.outputs.result }}
       yaml-result: ${{ steps.yaml.outputs.result }}
@@ -64,7 +54,8 @@ jobs:
             ~/.cache/yamllint
             ~/.cache/shellcheck
             ~/.cache/actionlint
-          key: lint-tools-${{ runner.os }}-${{ matrix.linter }}-${{ hashFiles('**/.markdownlint.json', '**/.yamllint.yml') }}
+          key: lint-tools-${{ runner.os }}-${{ matrix.linter }}-${{ hashFiles('**/.markdownlint.json',
+            '**/.yamllint.yml') }}
           restore-keys: |
             lint-tools-${{ runner.os }}-${{ matrix.linter }}-
 
@@ -74,7 +65,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+          cache: pip
 
       # Install Node.js for markdownlint
       - name: Set up Node.js
@@ -82,7 +73,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: npm
 
       # Markdown linting
       - name: Run markdownlint
@@ -146,7 +137,6 @@ jobs:
           echo "Validating JSON files..."
           JSON_FILES=$(find . -name "*.json" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.history/*")
           VALIDATION_FAILED=false
-
           for file in $JSON_FILES; do
             if ! python -m json.tool "$file" > /dev/null 2>&1; then
               echo "❌ Invalid JSON: $file"
@@ -155,7 +145,6 @@ jobs:
               echo "✅ Valid JSON: $file"
             fi
           done
-
           if [ "$VALIDATION_FAILED" = false ]; then
             echo "result=success" >> $GITHUB_OUTPUT
             echo "✅ JSON validation passed"
@@ -172,7 +161,6 @@ jobs:
         run: |
           # Install actionlint
           bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-
           echo "Running actionlint on GitHub workflows..."
           if ./actionlint .github/workflows/*.yml; then
             echo "result=success" >> $GITHUB_OUTPUT
@@ -193,33 +181,30 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-
+          cache: pip
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: npm
 
       # Cache pre-commit environments
       - name: Cache pre-commit
         uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ hashFiles('**/.pre-commit-config.yaml') }}
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('**/.pre-commit-config.yaml')
+            }}
           restore-keys: |
             pre-commit-${{ runner.os }}-
-
       - name: Install pre-commit
         run: |
           pip install pre-commit
           pre-commit install
-
       - name: Run pre-commit hooks
         id: pre-commit
         run: |
@@ -232,7 +217,6 @@ jobs:
             echo "result=failure" >> $GITHUB_OUTPUT
             exit 1
           fi
-
       - name: Generate pre-commit report
         if: always()
         run: |
@@ -254,7 +238,6 @@ jobs:
             echo "" >> pre-commit-report.md
             echo "Please run \`pre-commit run --all-files\` locally to fix issues." >> pre-commit-report.md
           fi
-
       - name: Upload pre-commit report
         if: always()
         uses: actions/upload-artifact@v4
@@ -273,25 +256,22 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
+          cache: npm
       - name: Install dependencies
         run: |
           npm install -g @commitlint/cli @commitlint/config-conventional
-
       - name: Cache commitlint
         uses: actions/cache@v4
         with:
           path: ~/.npm/_cacache
-          key: commitlint-${{ runner.os }}-${{ hashFiles('**/.commitlintrc.json', '**/package.json') }}
+          key: commitlint-${{ runner.os }}-${{ hashFiles('**/.commitlintrc.json',
+            '**/package.json') }}
           restore-keys: |
             commitlint-${{ runner.os }}-
-
       - name: Validate commit messages
         id: commitlint
         run: |
@@ -300,29 +280,23 @@ jobs:
           # Get the base branch commit
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-
           echo "Checking commits from $BASE_SHA to $HEAD_SHA"
 
           # Get commit messages
           COMMITS=$(git log --format="%H %s" "$BASE_SHA".."$HEAD_SHA")
-
           if [ -z "$COMMITS" ]; then
             echo "No commits found to validate"
             echo "result=skipped" >> $GITHUB_OUTPUT
             exit 0
           fi
-
           FAILED_COMMITS=""
           TOTAL_COMMITS=0
           FAILED_COUNT=0
-
           while IFS= read -r commit_line; do
             if [ -n "$commit_line" ]; then
               COMMIT_SHA=$(echo "$commit_line" | cut -d' ' -f1)
               TOTAL_COMMITS=$((TOTAL_COMMITS + 1))
-
               echo "Validating commit: $COMMIT_SHA"
-
               if ! git log --format="%s%n%n%b" -n 1 "$COMMIT_SHA" | npx commitlint; then
                 FAILED_COUNT=$((FAILED_COUNT + 1))
                 COMMIT_MSG=$(git log --format="%s" -n 1 "$COMMIT_SHA")
@@ -333,10 +307,8 @@ jobs:
               fi
             fi
           done <<< "$COMMITS"
-
           echo "total_commits=$TOTAL_COMMITS" >> $GITHUB_OUTPUT
           echo "failed_count=$FAILED_COUNT" >> $GITHUB_OUTPUT
-
           if [ $FAILED_COUNT -eq 0 ]; then
             echo "✅ All $TOTAL_COMMITS commit messages are valid"
             echo "result=success" >> $GITHUB_OUTPUT
@@ -349,13 +321,11 @@ jobs:
             echo "EOF" >> $GITHUB_OUTPUT
             exit 1
           fi
-
       - name: Generate commit validation report
         if: always()
         run: |
           echo "### 📝 Commit Message Validation" > commit-report.md
           echo "" >> commit-report.md
-
           if [ "${{ steps.commitlint.outputs.result }}" = "success" ]; then
             echo "✅ **All commit messages follow conventional format**" >> commit-report.md
             echo "" >> commit-report.md
@@ -376,7 +346,6 @@ jobs:
             echo "3. Use \`git commit --amend\` to fix the last commit or \`git rebase -i\` for older commits" >> commit-report.md
             echo "4. See [Conventional Commits](https://conventionalcommits.org/) for details" >> commit-report.md
           fi
-
       - name: Upload commit validation report
         if: always()
         uses: actions/upload-artifact@v4
@@ -395,7 +364,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -407,7 +375,6 @@ jobs:
           key: docker-validation-${{ runner.os }}-${{ github.sha }}
           restore-keys: |
             docker-validation-${{ runner.os }}-
-
       - name: Find changed Dockerfiles
         id: find-dockerfiles
         run: |
@@ -420,7 +387,6 @@ jobs:
 
           # Also find all Dockerfiles if docker-compose or workflow files changed
           OTHER_CHANGES=$(git diff --name-only "$BASE_SHA".."$HEAD_SHA" | grep -E "(docker-compose\.ya?ml|\.github/workflows/)" || true)
-
           if [ -n "$OTHER_CHANGES" ]; then
             echo "Docker-related files changed, checking all Dockerfiles"
             ALL_DOCKERFILES=$(find . -name "Dockerfile" -o -name "*.dockerfile" | grep -v node_modules | grep -v .git || true)
@@ -429,10 +395,8 @@ jobs:
 
           # Remove duplicates and empty lines
           DOCKERFILES=$(echo "$CHANGED_DOCKERFILES" | tr ' ' '\n' | sort -u | grep -v '^$' || true)
-
           echo "Found Dockerfiles to validate:"
           echo "$DOCKERFILES"
-
           if [ -n "$DOCKERFILES" ]; then
             echo "has_dockerfiles=true" >> $GITHUB_OUTPUT
             echo "dockerfiles<<EOF" >> $GITHUB_OUTPUT
@@ -442,24 +406,20 @@ jobs:
             echo "has_dockerfiles=false" >> $GITHUB_OUTPUT
             echo "No Dockerfiles found to validate"
           fi
-
       - name: Validate Docker builds
         if: steps.find-dockerfiles.outputs.has_dockerfiles == 'true'
         id: docker-validation
         run: |
           echo "### Docker Build Validation Results" > docker-report.md
           echo "" >> docker-report.md
-
           BUILD_FAILED=false
           TOTAL_BUILDS=0
           FAILED_BUILDS=0
           SUCCESSFUL_BUILDS=""
           FAILED_BUILDS_LIST=""
-
           while IFS= read -r dockerfile; do
             if [ -n "$dockerfile" ] && [ -f "$dockerfile" ]; then
               TOTAL_BUILDS=$((TOTAL_BUILDS + 1))
-
               echo "Validating build for: $dockerfile"
               CONTEXT_DIR=$(dirname "$dockerfile")
               IMAGE_NAME=$(basename "$CONTEXT_DIR")
@@ -472,7 +432,6 @@ jobs:
                 --tag "validation-$IMAGE_NAME:test" \
                 --file "$dockerfile" \
                 "$CONTEXT_DIR"; then
-
                 echo "✅ Build successful: $dockerfile"
                 SUCCESSFUL_BUILDS="$SUCCESSFUL_BUILDS\n- ✅ $dockerfile"
               else
@@ -512,14 +471,11 @@ jobs:
             echo "result=failure" >> $GITHUB_OUTPUT
             BUILD_FAILED=true
           fi
-
           echo "total_builds=$TOTAL_BUILDS" >> $GITHUB_OUTPUT
           echo "failed_builds=$FAILED_BUILDS" >> $GITHUB_OUTPUT
-
           if [ "$BUILD_FAILED" = true ]; then
             exit 1
           fi
-
       - name: Generate Docker validation report
         if: steps.find-dockerfiles.outputs.has_dockerfiles == 'false'
         run: |
@@ -528,7 +484,6 @@ jobs:
           echo "ℹ️ **No Dockerfiles changed in this PR**" >> docker-report.md
           echo "" >> docker-report.md
           echo "Docker build validation was skipped as no Dockerfile changes were detected." >> docker-report.md
-
       - name: Upload Docker validation report
         if: always()
         uses: actions/upload-artifact@v4
@@ -547,7 +502,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Check documentation requirements
         id: docs-check
         run: |
@@ -583,7 +537,6 @@ jobs:
           # Check inventory files
           INVENTORY_FILES="inventory/servers.md inventory/virtual-machines.md inventory/docker-containers.md inventory/commands-available.md"
           MISSING_INVENTORY=""
-
           for file in $INVENTORY_FILES; do
             if [ ! -f "$file" ]; then
               echo "❌ Missing inventory file: $file"
@@ -592,7 +545,6 @@ jobs:
               echo "✅ Inventory file exists: $file"
             fi
           done
-
           if [ -n "$MISSING_INVENTORY" ]; then
             echo "missing_inventory=$MISSING_INVENTORY" >> $GITHUB_OUTPUT
             echo "inventory_complete=false" >> $GITHUB_OUTPUT
@@ -606,10 +558,8 @@ jobs:
           # Check if any configuration files were changed without updating docs
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-
           CONFIG_CHANGES=$(git diff --name-only "$BASE_SHA".."$HEAD_SHA" | grep -E "\.(json|ya?ml|toml|conf|ini)$" | grep -v node_modules || true)
           DOC_CHANGES=$(git diff --name-only "$BASE_SHA".."$HEAD_SHA" | grep -E "\.md$" || true)
-
           if [ -n "$CONFIG_CHANGES" ] && [ -z "$DOC_CHANGES" ]; then
             echo "⚠️ Configuration files changed but no documentation updates found"
             echo "docs_may_need_update=true" >> $GITHUB_OUTPUT
@@ -617,15 +567,12 @@ jobs:
           else
             echo "docs_may_need_update=false" >> $GITHUB_OUTPUT
           fi
-
           echo "outdated_reason=$DOCS_OUTDATED" >> $GITHUB_OUTPUT
-
       - name: Generate documentation report
         if: always()
         run: |
           echo "### 📚 Documentation Validation" > docs-report.md
           echo "" >> docs-report.md
-
           ISSUES_FOUND=false
 
           # README check
@@ -675,12 +622,10 @@ jobs:
             echo "Consider updating relevant documentation when configuration changes." >> docs-report.md
             echo "" >> docs-report.md
           fi
-
           if [ "$ISSUES_FOUND" = false ]; then
             echo "" >> docs-report.md
             echo "🎉 **All documentation requirements are met!**" >> docs-report.md
           fi
-
       - name: Upload documentation report
         if: always()
         uses: actions/upload-artifact@v4
@@ -697,12 +642,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Validate file structure
         id: structure-check
         run: |
           echo "Validating repository file structure..."
-
           ISSUES=""
           STRUCTURE_VALID=true
 
@@ -716,7 +659,6 @@ jobs:
             ".gitleaks.toml"
             "package.json"
           )
-
           for file in "${REQUIRED_CONFIG_FILES[@]}"; do
             if [ ! -f "$file" ]; then
               echo "❌ Missing required config file: $file"
@@ -732,7 +674,6 @@ jobs:
             ".github/workflows"
             "inventory"
           )
-
           for dir in "${REQUIRED_DIRS[@]}"; do
             if [ ! -d "$dir" ]; then
               echo "❌ Missing required directory: $dir"
@@ -763,7 +704,6 @@ jobs:
             "*.swp"
             "*.swo"
           )
-
           for pattern in "${PROBLEMATIC_PATTERNS[@]}"; do
             FOUND_FILES=$(find . -name "$pattern" -not -path "./.git/*" 2>/dev/null || true)
             if [ -n "$FOUND_FILES" ]; then
@@ -782,7 +722,6 @@ jobs:
             done
             ISSUES="$ISSUES\n- Large files found (consider Git LFS)"
           fi
-
           if [ "$STRUCTURE_VALID" = true ]; then
             echo "✅ File structure validation passed"
             echo "result=success" >> $GITHUB_OUTPUT
@@ -790,17 +729,14 @@ jobs:
             echo "❌ File structure validation failed"
             echo "result=failure" >> $GITHUB_OUTPUT
           fi
-
           echo "issues<<EOF" >> $GITHUB_OUTPUT
           echo -e "$ISSUES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
       - name: Generate file structure report
         if: always()
         run: |
           echo "### 📁 File Structure Validation" > structure-report.md
           echo "" >> structure-report.md
-
           if [ "${{ steps.structure-check.outputs.result }}" = "success" ]; then
             echo "✅ **File structure validation passed**" >> structure-report.md
             echo "" >> structure-report.md
@@ -821,7 +757,6 @@ jobs:
             echo "3. Add problematic files to .gitignore" >> structure-report.md
             echo "4. Consider using Git LFS for large files" >> structure-report.md
           fi
-
       - name: Upload file structure report
         if: always()
         uses: actions/upload-artifact@v4
@@ -834,17 +769,21 @@ jobs:
   pr-summary:
     name: Generate PR Summary
     runs-on: ubuntu-latest
-    needs: [lint-validation, pre-commit-validation, commit-validation, docker-build-validation, documentation-validation, file-structure-validation]
+    needs:
+      - lint-validation
+      - pre-commit-validation
+      - commit-validation
+      - docker-build-validation
+      - documentation-validation
+      - file-structure-validation
     if: always() && github.event.pull_request.draft == false
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Download all reports
         uses: actions/download-artifact@v4
         with:
           path: validation-reports
-
       - name: Generate comprehensive summary
         id: summary
         run: |
@@ -981,7 +920,6 @@ jobs:
             echo "🎉 All validation checks passed successfully!" >> pr-summary.md
             OVERALL_STATUS="passed"
           fi
-
           echo "" >> pr-summary.md
           echo "**Summary:** $PASSED_CHECKS passed, $FAILED_CHECKS failed, $SKIPPED_CHECKS skipped out of $TOTAL_CHECKS total checks" >> pr-summary.md
           echo "" >> pr-summary.md
@@ -1010,7 +948,6 @@ jobs:
           # Add links and resources
           echo "### 🔗 Resources & Next Steps" >> pr-summary.md
           echo "" >> pr-summary.md
-
           if [ "$OVERALL_STATUS" = "blocked" ]; then
             echo "**🚨 Action Required:**" >> pr-summary.md
             echo "1. Review failed checks above" >> pr-summary.md
@@ -1019,7 +956,6 @@ jobs:
             echo "4. Commit and push fixes" >> pr-summary.md
             echo "" >> pr-summary.md
           fi
-
           echo "**📚 Helpful Links:**" >> pr-summary.md
           echo "- [Pre-commit Hooks Guide](https://pre-commit.com/)" >> pr-summary.md
           echo "- [Conventional Commits](https://conventionalcommits.org/)" >> pr-summary.md
@@ -1027,10 +963,8 @@ jobs:
           echo "- [YAML Linting Guide](https://yamllint.readthedocs.io/)" >> pr-summary.md
           echo "- [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)" >> pr-summary.md
           echo "" >> pr-summary.md
-
           echo "**🔒 Security Note:** This validation focuses on code quality and standards. Security scanning is handled by the [Security Workflow](https://github.com/${{ github.repository }}/actions/workflows/security.yml)." >> pr-summary.md
           echo "" >> pr-summary.md
-
           echo "---" >> pr-summary.md
           echo "*Validation powered by GitHub Actions | Generated at $(date -u +'%Y-%m-%d %H:%M:%S UTC')*" >> pr-summary.md
 
@@ -1038,32 +972,27 @@ jobs:
           echo "overall_status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
           echo "critical_failures=$CRITICAL_FAILURES" >> $GITHUB_OUTPUT
           echo "total_failed=$FAILED_CHECKS" >> $GITHUB_OUTPUT
-
           {
             echo 'pr_comment<<EOF'
             cat pr-summary.md
             echo 'EOF'
           } >> $GITHUB_OUTPUT
-
       - name: Comment on PR
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const prComment = `${{ steps.summary.outputs.pr_comment }}`;
-
             // Find existing validation comment
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-
             const botComment = comments.data.find(comment =>
               comment.user.type === 'Bot' &&
               comment.body.includes('🔍 Pull Request Validation Results')
             );
-
             if (botComment) {
               // Update existing comment
               await github.rest.issues.updateComment({
@@ -1083,7 +1012,6 @@ jobs:
               });
               console.log('Created new PR validation comment');
             }
-
       - name: Set PR status check
         uses: actions/github-script@v7
         with:
@@ -1091,9 +1019,7 @@ jobs:
           script: |
             const overallStatus = '${{ steps.summary.outputs.overall_status }}';
             const criticalFailures = parseInt('${{ steps.summary.outputs.critical_failures }}') || 0;
-
             let state, description;
-
             if (overallStatus === 'blocked') {
               state = 'failure';
               description = `${criticalFailures} critical issue(s) must be resolved`;
@@ -1104,7 +1030,6 @@ jobs:
               state = 'success';
               description = 'All validation checks passed';
             }
-
             await github.rest.repos.createCommitStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -1114,7 +1039,6 @@ jobs:
               description: description,
               context: 'PR Validation'
             });
-
       - name: Upload comprehensive summary
         if: always()
         uses: actions/upload-artifact@v4
@@ -1127,7 +1051,14 @@ jobs:
   cleanup-and-monitoring:
     name: Cleanup & Performance Monitoring
     runs-on: ubuntu-latest
-    needs: [lint-validation, pre-commit-validation, commit-validation, docker-build-validation, documentation-validation, file-structure-validation, pr-summary]
+    needs:
+      - lint-validation
+      - pre-commit-validation
+      - commit-validation
+      - docker-build-validation
+      - documentation-validation
+      - file-structure-validation
+      - pr-summary
     if: always()
     steps:
       - name: Performance summary
@@ -1153,9 +1084,8 @@ jobs:
           echo "- **Caching Strategy:** ✅ npm, pip, Docker, and tool caches enabled" >> $GITHUB_STEP_SUMMARY
           echo "- **Resource Optimization:** ✅ Fail-fast for critical issues" >> $GITHUB_STEP_SUMMARY
           echo "- **Integration:** ✅ Complements security workflow without duplication" >> $GITHUB_STEP_SUMMARY
-
       - name: Cleanup temporary resources
-        run: |
+        run: |-
           echo "🧹 Performing cleanup..."
           echo "Temporary Docker images and cache cleanup would happen here in a real environment"
           echo "This job serves as a monitoring and cleanup hook"

@@ -1,20 +1,18 @@
+---
 name: Runner Health Check
-
 on:
   schedule:
     # Run every 6 hours
-    - cron: '0 */6 * * *'
+    - cron: 0 */6 * * *
   workflow_dispatch:
     inputs:
       debug:
-        description: 'Enable debug logging'
+        description: Enable debug logging
         required: false
         type: boolean
         default: false
-
 env:
   RUNNER_NAME: dockermaster-runner
-
 jobs:
   check-runner-status:
     name: Check Self-hosted Runner Status
@@ -33,25 +31,20 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo
               });
-
               const dockermasterRunner = runners.runners.find(r =>
                 r.name === '${{ env.RUNNER_NAME }}'
               );
-
               if (!dockermasterRunner) {
                 core.setOutput('status', 'not_found');
                 core.setOutput('busy', 'false');
                 core.setFailed('Runner not found in repository');
                 return;
               }
-
               core.setOutput('status', dockermasterRunner.status);
               core.setOutput('busy', dockermasterRunner.busy.toString());
-
               console.log(`Runner Status: ${dockermasterRunner.status}`);
               console.log(`Runner Busy: ${dockermasterRunner.busy}`);
               console.log(`Runner Labels: ${dockermasterRunner.labels.map(l => l.name).join(', ')}`);
-
               if (dockermasterRunner.status !== 'online') {
                 core.setFailed(`Runner is ${dockermasterRunner.status}`);
               }
@@ -60,7 +53,6 @@ jobs:
               core.setOutput('busy', 'false');
               core.setFailed(`Error checking runner: ${error.message}`);
             }
-
       - name: Generate status report
         if: always()
         run: |
@@ -71,7 +63,6 @@ jobs:
           echo "**Busy:** ${{ steps.check.outputs.busy }}" >> $GITHUB_STEP_SUMMARY
           echo "**Check Time:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
           if [[ "${{ steps.check.outputs.status }}" == "online" ]]; then
             echo "✅ Runner is healthy and ready to accept jobs" >> $GITHUB_STEP_SUMMARY
           elif [[ "${{ steps.check.outputs.status }}" == "offline" ]]; then
@@ -91,11 +82,11 @@ jobs:
             echo "2. Navigate to: \`dockermaster/github-runner\`" >> $GITHUB_STEP_SUMMARY
             echo "3. Run setup: \`./setup-runner.sh\`" >> $GITHUB_STEP_SUMMARY
           fi
-
   test-runner-execution:
     name: Test Runner Execution
     needs: check-runner-status
-    if: needs.check-runner-status.outputs.runner-status == 'online' && needs.check-runner-status.outputs.runner-busy != 'true'
+    if: needs.check-runner-status.outputs.runner-status == 'online' && needs.check-runner-status.outputs.runner-busy
+      != 'true'
     runs-on: [self-hosted, dockermaster]
     timeout-minutes: 5
     steps:
@@ -108,7 +99,6 @@ jobs:
           echo "**Current Directory:** $(pwd)" >> $GITHUB_STEP_SUMMARY
           echo "**User:** $(whoami)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
       - name: Docker availability check
         run: |
           echo "### Docker Status" >> $GITHUB_STEP_SUMMARY
@@ -116,7 +106,6 @@ jobs:
           docker version >> $GITHUB_STEP_SUMMARY 2>&1 || echo "Docker not available" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
       - name: Network connectivity check
         run: |
           echo "### Network Connectivity" >> $GITHUB_STEP_SUMMARY
@@ -142,7 +131,6 @@ jobs:
           else
             echo "❌ GitHub Container Registry: Unreachable" >> $GITHUB_STEP_SUMMARY
           fi
-
       - name: Resource usage check
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -152,11 +140,11 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           free -h | head -2 >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-
   notify-if-unhealthy:
     name: Notify on Issues
     needs: [check-runner-status, test-runner-execution]
-    if: always() && (needs.check-runner-status.result == 'failure' || needs.test-runner-execution.result == 'failure')
+    if: always() && (needs.check-runner-status.result == 'failure' || needs.test-runner-execution.result
+      == 'failure')
     runs-on: ubuntu-latest
     steps:
       - name: Create issue for runner problems
@@ -166,7 +154,6 @@ jobs:
             const runnerStatus = '${{ needs.check-runner-status.outputs.runner-status }}';
             const checkResult = '${{ needs.check-runner-status.result }}';
             const testResult = '${{ needs.test-runner-execution.result }}';
-
             // Check if there's already an open issue
             const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -174,21 +161,17 @@ jobs:
               labels: 'runner-health',
               state: 'open'
             });
-
             if (issues.length > 0) {
               console.log('Issue already exists, skipping creation');
               return;
             }
-
             let issueBody = `## 🚨 Self-hosted Runner Health Check Failed\n\n`;
             issueBody += `**Runner Name:** ${{ env.RUNNER_NAME }}\n`;
             issueBody += `**Status:** ${runnerStatus}\n`;
             issueBody += `**Check Result:** ${checkResult}\n`;
             issueBody += `**Test Result:** ${testResult}\n`;
             issueBody += `**Time:** ${new Date().toISOString()}\n\n`;
-
             issueBody += `### Required Actions\n\n`;
-
             if (runnerStatus === 'offline' || runnerStatus === 'error') {
               issueBody += `1. SSH to dockermaster server\n`;
               issueBody += `2. Check runner status: \`cd dockermaster/github-runner && docker compose ps\`\n`;
@@ -199,10 +182,8 @@ jobs:
               issueBody += `2. Navigate to runner directory: \`cd dockermaster/github-runner\`\n`;
               issueBody += `3. Run setup script: \`./setup-runner.sh\`\n\n`;
             }
-
             issueBody += `### Workflow Run\n`;
             issueBody += `[View workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n`;
-
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -210,7 +191,6 @@ jobs:
               body: issueBody,
               labels: ['runner-health', 'infrastructure', 'automated']
             });
-
   close-resolved-issues:
     name: Close Resolved Issues
     needs: [check-runner-status, test-runner-execution]
@@ -220,7 +200,7 @@ jobs:
       - name: Close health check issues if runner is healthy
         uses: actions/github-script@v7
         with:
-          script: |
+          script: |-
             // Find open runner health issues
             const { data: issues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -228,7 +208,6 @@ jobs:
               labels: 'runner-health',
               state: 'open'
             });
-
             for (const issue of issues) {
               await github.rest.issues.update({
                 owner: context.repo.owner,
@@ -236,13 +215,11 @@ jobs:
                 issue_number: issue.number,
                 state: 'closed'
               });
-
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
                 body: `✅ Runner health check passed. Runner is back online and healthy.\n\nClosing this issue automatically.`
               });
-
-              console.log(`Closed issue #${issue.number}`);
+              console.log(`Closed issue  #${issue.number}`);
             }

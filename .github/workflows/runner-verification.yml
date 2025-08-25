@@ -1,23 +1,19 @@
+---
 name: Runner Verification
-
 on:
   workflow_dispatch:
     inputs:
       debug:
-        description: 'Enable debug output'
+        description: Enable debug output
         required: false
         default: 'false'
         type: choice
-        options:
-          - 'true'
-          - 'false'
-
+        options: ['true', 'false']
 jobs:
   test-runner:
     name: Test Dockermaster Runner
     runs-on: [self-hosted, dockermaster]
     timeout-minutes: 5
-
     steps:
       - name: 🎯 Runner Information
         run: |
@@ -30,7 +26,6 @@ jobs:
           echo "Current User: $(whoami)"
           echo "Current Directory: $(pwd)"
           echo "Date: $(date)"
-
       - name: 🐳 Docker Verification
         run: |
           echo "## Docker Status"
@@ -46,7 +41,6 @@ jobs:
           echo ""
           echo "### Running Containers (first 5)"
           docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" | head -6
-
       - name: 📁 Deployment Path Access
         run: |
           echo "## Deployment Path Verification"
@@ -61,7 +55,6 @@ jobs:
           else
             echo "❌ /deployment directory not found"
           fi
-
       - name: 🌐 Network Connectivity
         run: |
           echo "## Network Tests"
@@ -71,21 +64,18 @@ jobs:
           else
             echo "❌ GitHub API: Unreachable"
           fi
-
           echo "### Docker Hub"
           if curl -s -o /dev/null -w "%{http_code}" https://hub.docker.com | grep -q "200"; then
             echo "✅ Docker Hub: Reachable"
           else
             echo "❌ Docker Hub: Unreachable"
           fi
-
           echo "### GitHub Container Registry"
           if curl -s -o /dev/null -w "%{http_code}" https://ghcr.io | grep -q "200\|301\|302"; then
             echo "✅ GitHub Container Registry: Reachable"
           else
             echo "❌ GitHub Container Registry: Unreachable"
           fi
-
       - name: 💾 System Resources
         run: |
           echo "## System Resources"
@@ -98,9 +88,8 @@ jobs:
           echo "### CPU Info"
           nproc
           echo "CPU cores available"
-
       - name: ✅ Summary
-        run: |
+        run: |-
           echo "## Test Summary"
           echo "🎉 **Self-hosted runner is working correctly!**"
           echo ""

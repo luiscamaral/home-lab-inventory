@@ -90,8 +90,4 @@ command | grep -B2 -A2 -i -E "(error|warn)"
 - **Edit > Create** - modify existing files when possible
 - **No proactive docs** - create *.md only when explicitly requested
 - **Use multiple sub-agents** for organized todos with detailed instructions
-- **Always add a LINE at the end** of every *.md file
-- **Respect style and lint**, run autoformat or respect the lint and style rules from config
-  - For YAML: Always use `yamlfix -c .yamllint.yml` (with config file)
-  - For Markdown: Use `markdownlint --fix` if available
-  - Check that all lint configs (.yamllint.yml, .markdownlint.JSON, etc) are in project
+- Always add a LINE at the end of every *.md file
