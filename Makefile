@@ -31,19 +31,19 @@ RESET := \033[0m
 
 # Helper function to print colored output
 define print_section
-	@echo -e "$(CYAN)$(BOLD)▶ $(1)$(RESET)"
+	@printf "$(CYAN)$(BOLD)▶ $(1)$(RESET)\n"
 endef
 
 define print_success
-	@echo -e "$(GREEN)✅ $(1)$(RESET)"
+	@printf "$(GREEN)✅ $(1)$(RESET)\n"
 endef
 
 define print_warning
-	@echo -e "$(YELLOW)⚠️  $(1)$(RESET)"
+	@printf "$(YELLOW)⚠️  $(1)$(RESET)\n"
 endef
 
 define print_error
-	@echo -e "$(RED)❌ $(1)$(RESET)"
+	@printf "$(RED)❌ $(1)$(RESET)\n"
 endef
 
 # Help target with organized sections
