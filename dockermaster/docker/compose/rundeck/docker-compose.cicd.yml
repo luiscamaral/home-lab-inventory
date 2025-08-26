@@ -1,11 +1,10 @@
+---
 name: la-RunDeck
-
 networks:
   servers-net:
     name: docker-servers-net
     driver: macvlan
     external: true
-
 services:
   rundeck:
     # Using official Rundeck image from Docker Hub
@@ -25,8 +24,7 @@ services:
       RUNDECK_CONFIG_STORAGE_CONVERTER_1_CONFIG_PASSWORD: ${RUNDECK_CONFIG_PASSWORD}
       RUNDECK_PASSWORD_RESET_ENABLED: true
     restart: always
-    expose:
-      - 4440
+    expose: [4440]
     networks:
       servers-net:
         ipv4_address: 192.168.59.22
@@ -34,13 +32,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /nfs/dockermaster/docker/rundeck/data:/home/rundeck/server/data
       - /nfs/dockermaster/docker/rundeck/container-plugins:/home/rundeck/container-plugins
-    depends_on:
-      - postgres
+    depends_on: [postgres]
     labels:
       # Watchtower labels for automatic updates
-      com.centurylinklabs.watchtower.enable: "true"
-      com.centurylinklabs.watchtower.monitor-only: "false"
-      
+      com.centurylinklabs.watchtower.enable: 'true'
+      com.centurylinklabs.watchtower.monitor-only: 'false'
   postgres:
     image: postgres:16-alpine
     container_name: postgres-rundeck
@@ -49,8 +45,7 @@ services:
       servers-net:
         ipv4_address: 192.168.59.23
     restart: always
-    expose:
-      - 5432
+    expose: [5432]
     environment:
       - POSTGRES_DB=rundeck
       - POSTGRES_USER=rundeck
@@ -58,7 +53,7 @@ services:
     volumes:
       - /nfs/dockermaster/docker/rundeck/dbdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rundeck"]
+      test: [CMD-SHELL, pg_isready -U rundeck]
       interval: 30s
       timeout: 10s
       retries: 3

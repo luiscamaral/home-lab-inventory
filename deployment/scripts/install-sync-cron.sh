@@ -24,19 +24,22 @@ sudo cp ./github-sync.sh "$SCRIPT_PATH"
 sudo chmod +x "$SCRIPT_PATH"
 
 case $choice in
-    1)
-        echo "Installing cron job..."
-        # Add cron job for every 5 minutes
-        (crontab -l 2>/dev/null | grep -v "$SCRIPT_PATH" ; echo "*/5 * * * * $SCRIPT_PATH >> /var/log/docker-deploy-cron.log 2>&1") | crontab -
-        echo "Cron job installed. Check 'crontab -l' to verify."
-        echo "Logs will be written to /var/log/docker-deploy.log"
-        ;;
-        
-    2)
-        echo "Installing systemd timer..."
-        
-        # Create systemd service
-        sudo tee "$SYSTEMD_SERVICE" > /dev/null <<EOF
+  1)
+    echo "Installing cron job..."
+    # Add cron job for every 5 minutes
+    (
+      crontab -l 2> /dev/null | grep -v "$SCRIPT_PATH"
+      echo "*/5 * * * * $SCRIPT_PATH >> /var/log/docker-deploy-cron.log 2>&1"
+    ) | crontab -
+    echo "Cron job installed. Check 'crontab -l' to verify."
+    echo "Logs will be written to /var/log/docker-deploy.log"
+    ;;
+
+  2)
+    echo "Installing systemd timer..."
+
+    # Create systemd service
+    sudo tee "$SYSTEMD_SERVICE" > /dev/null << EOF
 [Unit]
 Description=Docker Deployment Sync from GitHub
 After=network-online.target docker.service
@@ -53,8 +56,8 @@ StandardError=journal
 WantedBy=multi-user.target
 EOF
 
-        # Create systemd timer
-        sudo tee "$SYSTEMD_TIMER" > /dev/null <<EOF
+    # Create systemd timer
+    sudo tee "$SYSTEMD_TIMER" > /dev/null << EOF
 [Unit]
 Description=Run Docker Deployment Sync every 5 minutes
 Requires=docker-deploy-sync.service
@@ -68,34 +71,34 @@ Persistent=true
 WantedBy=timers.target
 EOF
 
-        # Enable and start timer
-        sudo systemctl daemon-reload
-        sudo systemctl enable docker-deploy-sync.timer
-        sudo systemctl start docker-deploy-sync.timer
-        
-        echo "Systemd timer installed and started."
-        echo "Check status with: systemctl status docker-deploy-sync.timer"
-        echo "View logs with: journalctl -u docker-deploy-sync.service -f"
-        ;;
-        
-    3)
-        echo "Manual setup selected."
-        echo ""
-        echo "The sync script has been installed to: $SCRIPT_PATH"
-        echo ""
-        echo "To run manually:"
-        echo "  $SCRIPT_PATH"
-        echo ""
-        echo "To add to cron manually, add this line to crontab:"
-        echo "  */5 * * * * $SCRIPT_PATH"
-        echo ""
-        echo "To use with systemd, create service and timer files as shown in the script."
-        ;;
-        
-    *)
-        echo "Invalid choice. Script installed but not scheduled."
-        echo "Run manually: $SCRIPT_PATH"
-        ;;
+    # Enable and start timer
+    sudo systemctl daemon-reload
+    sudo systemctl enable docker-deploy-sync.timer
+    sudo systemctl start docker-deploy-sync.timer
+
+    echo "Systemd timer installed and started."
+    echo "Check status with: systemctl status docker-deploy-sync.timer"
+    echo "View logs with: journalctl -u docker-deploy-sync.service -f"
+    ;;
+
+  3)
+    echo "Manual setup selected."
+    echo ""
+    echo "The sync script has been installed to: $SCRIPT_PATH"
+    echo ""
+    echo "To run manually:"
+    echo "  $SCRIPT_PATH"
+    echo ""
+    echo "To add to cron manually, add this line to crontab:"
+    echo "  */5 * * * * $SCRIPT_PATH"
+    echo ""
+    echo "To use with systemd, create service and timer files as shown in the script."
+    ;;
+
+  *)
+    echo "Invalid choice. Script installed but not scheduled."
+    echo "Run manually: $SCRIPT_PATH"
+    ;;
 esac
 
 echo ""

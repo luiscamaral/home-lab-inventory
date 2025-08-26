@@ -51,7 +51,7 @@ dockermaster/
 
 1. **Bind9 DNS** - DNS server for local network resolution
    - Container: bind-dns-bind9-1
-   - Network: docker-servers-net
+   - Network: Docker-servers-net
 
 2. **Calibre Server** - E-book library management
    - Containers: calibre, calibre-web
@@ -75,9 +75,9 @@ dockermaster/
 
 ## Inactive Projects Available
 
-- ansible-observability (Prometheus + Grafana monitoring)
-- docker-dns (Dynamic DNS for containers)
-- docker-vault (HashiCorp Vault)
+- Ansible-observability (Prometheus + Grafana monitoring)
+- Docker-dns (Dynamic DNS for containers)
+- Docker-vault (HashiCorp Vault)
 - litellm (LLM proxy service)
 - n8n-stack (Workflow automation)
 - ollama (Local LLM inference)
@@ -85,7 +85,7 @@ dockermaster/
 
 ## Network Configuration
 
-- **Primary Network**: docker-servers-net (macvlan)
+- **Primary Network**: Docker-servers-net (macvlan)
 - **IP Range**: 192.168.59.0/26
 - **Gateway**: 192.168.7.1
 - **DNS**: Local Bind9 at 192.168.59.53
@@ -100,8 +100,8 @@ dockermaster/
 ## Security Notes
 
 - All passwords and API keys have been redacted from configuration files
-- SSH keys present in some projects (nginx-rproxy, rundeck)
-- SSL certificates managed by nginx-rproxy
+- SSH keys present in some projects (Nginx-rproxy, rundeck)
+- SSL certificates managed by Nginx-rproxy
 - Firewall managed via iptables/Docker
 
 ## Quick Commands
@@ -133,15 +133,15 @@ htop
 
 1. **Uptime**: Services show 8-12 days uptime indicating stable operation
 2. **Updates**: Ubuntu 24.04 LTS with regular security updates
-3. **Monitoring**: Consider reactivating ansible-observability for better visibility
+3. **Monitoring**: Consider reactivating Ansible-observability for better visibility
 4. **Backup**: NFS volumes should be included in Synology backup strategy
 5. **Security**: Rotate credentials periodically, especially for inactive services
 
 ## Additional Documentation
 
-- See `STATUS.md` in docker/compose/ for detailed project status
-- Individual project folders contain docker-compose.yml and related configs
+- See `STATUS.md` in Docker/compose/ for detailed project status
+- Individual project folders contain Docker-compose.yml and related configs
 - System configuration details in respective subdirectories
 
 ---
-*Last Updated: 2025-08-09*
+_Last Updated: 2025-08-09_

@@ -1,57 +1,136 @@
-# Remote Servers
+# Inventory Project Configuration
 
-- Access proxmox (linux) server with `ssh proxmox`
-- For execute sudo on proxmox, set this first `SUDO_ASKPASS=$HOME/.config/bin/answer.sh`.
-- Access NAS server (synology) with `ssh nas`
-- Access dockermaster (ubuntu linux) server, repository of all home docker container, with command `ssh dockermaster`
-- For execute sudo on proxmox, set this first `SUDO_ASKPASS=$HOME/.config/bin/answer`.
-- Containers can run on internal LAN using docker-servers-net, and still have access to internet.
-    {
-        "Name": "docker-servers-net",
-        "Id": "42c3a8018724a236c20c1470c97a1aa7ddc8c69ff0a2c7f1a01cdedf8d428e3d",
-        "Created": "2025-03-31T11:26:54.534393079-06:00",
-        "Scope": "local",
-        "Driver": "macvlan",
-        "EnableIPv4": true,
-        "EnableIPv6": false,
-        "IPAM": {
-            "Driver": "default",
-            "Options": {},
-            "Config": [
-                {
-                    "Subnet": "192.168.48.0/20",
-                    "IPRange": "192.168.59.0/26",
-                    "Gateway": "192.168.48.1",
-                    "AuxiliaryAddresses": {
-                        "host": "192.168.59.1"
-                    }
-                }
-            ]
-        },...
-- We need to implement passive Continuous Deployment from dockermaster.
+## 🖥️ Infrastructure
 
-# Inventory
+| Server | Access | Sudo Setup | Notes |
+|--------|--------|------------|-------|
+| Proxmox | `ssh proxmox` | `SUDO_ASKPASS=$HOME/.config/bin/answer.sh` | Linux |
+| NAS | `ssh nas` | - | Synology |
+| Dockermaster | `ssh dockermaster` | `SUDO_ASKPASS=$HOME/.config/bin/answer` | Ubuntu, all containers |
 
-- Document all servers, VMs and Containers on the files: `inventory/servers.md`, `inventory/virtual-machines.md`, and `inventory/docker-containers.md`
-- Document all commands used and versions available, identifying the servers, on the file: `inventory/commands-available.md`
-- Current project status and documents must be stored at `docs` directory.
-    - Create documents for architecture, CI/CD, special scripts and or translations.
-- Inventory documentation should be on `inventory`
-- Use memory tool mcp to register documentation tips, keywords or indexes
+**Docker Network**: `docker-servers-net` (192.168.48.0/20, macvlan)
 
-# General Instructions
+- Containers run on internal LAN with internet access
+- **TODO**: Implement passive Continuous Deployment from dockermaster
 
-- Use the MCP think-tool, documentation, context7, and filesystem as preferences.
-- Keep an updated note of this project using MCP memory.
-- Use any other MCP available that can improve the results or facilitate the task you are working with or planning.
-- *Always plan the task and optimize on subtasks that can be executed in parallel. Then spinout subagents with very refined and detailed instructions to complete those tasks. Instruct these agents to always use sequentialthinking and any other MCP relevant to their tasks.*
-- Docker compose use `docker compose` command. Always use the latest docker ce version.
-- Use memory MCP to enhance context before each task.
-- Register entities, relations and notes about the project on memory MCP.
-- Don't consider using frameworks, tools or systems that are under a paywall of any sort. Even if have a freetier.
-- Use multiple sub-agents to perform tasks organized by to do. The agents must receive detailed instructions, use think-tool and Sonnet model.
-- We use mise, and should use mise if a different version of npm or any tool is needed.
-- Create branches for big changes
-- Commit between feature implementations
-- Keep branches for history, don't delete them unless commanded to do it
-- Prefer to use github MCP over gh command when possible
+## 📁 Project Structure
+
+```text
+inventory/          # Infrastructure documentation
+├── servers.md
+├── virtual-machines.md  
+├── docker-containers.md
+└── commands-available.md
+docs/              # Architecture, CI/CD, scripts
+.github/           # GitHub workflows and templates
+.githooks/         # Git hooks
+deployment/        # Deployment configurations
+dockermaster/      # Docker container definitions
+README.md          # Project overview
+```
+
+## 🛠️ Development Workflow
+
+### Core Tools & MCP Priority
+
+1. **think-tool** → documentation → context7 → filesystem → **memory**
+2. **Version Management**: Use `mise` for ALL tool versions
+   - Tools installed via mise: shellcheck, shfmt, yamlfix, etc.
+   - Check tools: `mise list` or `mise which <tool>`
+   - Install new tools: `mise use -g <tool>@latest`
+3. **Docker**: Use `docker compose` (latest CE)
+4. **Git**: Prefer GitHub MCP over `gh` command
+
+### Memory MCP (Critical)
+
+- **Before each task**: Use memory MCP to enhance context
+- **Register**: entities, relations, and notes about the project
+- Keep project well-identified in memory
+
+### Task Management ⚠️ MANDATORY
+
+- **_Always_ plan tasks and optimize subtasks for parallel execution**
+- Deploy sub-agents with detailed instructions:
+  - **Must** use think-tool + sequentialthinking
+  - **Must** use Sonnet model
+  - Provide very refined and detailed instructions
+
+### Git Standards
+
+- Create branches for major changes
+- Commit between feature implementations  
+- Keep branches for history (don't delete unless commanded)
+
+## ✅ Quality Control
+
+### Pre-commit/Push (NEVER IGNORE)
+
+- Never commit/push with validation issues
+- **Always**: Test → Fix → Commit → Push
+
+### Linting & Formatting Workflow
+
+1. **Before committing, run autoformatters**:
+
+   ```bash
+   # YAML files
+   yamlfix -c .yamllint.yml .github/workflows/*.yml dockermaster/**/*.yml
+
+   # Markdown files  
+   markdownlint --fix --config .markdownlint.json **/*.md
+
+   # Shell scripts
+   shfmt -l -w .githooks/*.sh setup-*.sh deployment/**/*.sh dockermaster/**/*.sh
+   ```
+
+2. **Check for remaining issues**:
+
+   ```bash
+   # Run all pre-commit hooks
+   pre-commit run --all-files
+
+   # Or run specific checks
+   yamllint -c .yamllint.yml .
+   shellcheck .githooks/*.sh setup-*.sh
+   ```
+
+3. **All linting tools MUST use their config files** - this ensures consistency between local and CI/CD
+
+### Error Analysis & Commands
+
+```bash
+# Count issues (don't just check first lines)
+git push -n origin branch 2>&1 | grep -i -E "(error|warn|style)" | wc -l
+
+# Filter errors (use grep for content filtering, NOT head/tail)
+command | grep -B2 -A2 -i -E "(error|warn)"
+
+# head or tail only to verify "any" line exists, not to filter specific content, and never together
+```
+
+### Cleanup Standards
+
+- Remove temporary test scripts when ALL todo tasks completed
+- No paid tools/frameworks (even with free tier)
+- Use context7 to confirm documentation and latest versions
+- Use semgrep MCP when tasks can benefit from security analysis
+
+## 📌 Key Behavioral Rules
+
+- **Do exactly what's asked** - nothing more, nothing less
+- **Edit > Create** - modify existing files when possible
+- **No proactive docs** - create *.md only when explicitly requested
+- **Use multiple sub-agents** for organized todos with detailed instructions
+- **Always add a LINE at the end** of every *.md file
+- **Respect style and lint**, run autoformat or respect the lint and style rules from config
+  - **YAML**: Always use `yamlfix -c .yamllint.yml` (with config file)
+  - **Markdown**: Use `markdownlint --fix --config .markdownlint.json`
+  - **Shell scripts**: Use `shfmt -l -w` (uses .editorconfig) and `shellcheck` (uses .shellcheckrc)
+  - **All tools use configuration files** - never run without configs
+  - **Required config files in project**:
+    - `.yamllint.yml` - YAML linting rules
+    - `.markdownlint.json` - Markdown linting rules
+    - `.shellcheckrc` - Shell script validation rules
+    - `.editorconfig` - Universal editor/formatter settings (used by shfmt)
+    - `.commitlintrc.json` - Commit message validation
+    - `.pre-commit-config.yaml` - Pre-commit hooks configuration

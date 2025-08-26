@@ -16,9 +16,9 @@ Based on `docker ps` output:
 | calibre-web | lscr.io/linuxserver/calibre-web:latest | Up 8 days | calibre-server |
 | rundeck | la-rundeck-rundeck | Up 12 days | rundeck |
 | portainer | portainer/portainer-ce:latest | Up 12 days | portainer |
-| bind-dns-bind9-1 | ubuntu/bind9:9.20-24.10_edge | Up 12 days | bind9 |
+| bind-dns-bind9-1 | Ubuntu/bind9:9.20-24.10_edge | Up 12 days | bind9 |
 | postgres-rundeck | postgres | Up 12 days | rundeck |
-| rproxy | nginx:1.27 | Up 12 days | nginx-rproxy |
+| rproxy | Nginx:1.27 | Up 12 days | Nginx-rproxy |
 
 ## Project Status Summary
 
@@ -26,19 +26,19 @@ Based on `docker ps` output:
 
 | Project | Status | Containers | Description | Network | IP Address |
 |---|---|---|---|---|---|
-| **bind9** | ACTIVE | bind-dns-bind9-1 | DNS server with custom zones | docker-servers-net | 192.168.59.x |
+| **bind9** | ACTIVE | bind-dns-bind9-1 | DNS server with custom zones | Docker-servers-net | 192.168.59.x |
 | **calibre-server** | ACTIVE | calibre, calibre-web | E-book library management | bridge | ports 58080-58183 |
-| **nginx-rproxy** | ACTIVE | rproxy | Reverse proxy with SSL termination | docker-servers-net | 192.168.59.28 |
-| **portainer** | ACTIVE | portainer | Docker management UI | docker-servers-net | 192.168.59.2 |
-| **rundeck** | ACTIVE | rundeck, postgres-rundeck | Job scheduler with PostgreSQL | docker-servers-net | 192.168.59.22/23 |
+| **Nginx-rproxy** | ACTIVE | rproxy | Reverse proxy with SSL termination | Docker-servers-net | 192.168.59.28 |
+| **portainer** | ACTIVE | portainer | Docker management UI | Docker-servers-net | 192.168.59.2 |
+| **rundeck** | ACTIVE | rundeck, postgres-rundeck | Job scheduler with PostgreSQL | Docker-servers-net | 192.168.59.22/23 |
 
 ### 🔴 INACTIVE Projects (7)
 
 | Project | Status | Last Known Config | Description |
 |---|---|---|---|
-| **ansible-observability** | INACTIVE | Prometheus + Grafana | Monitoring for Ansible/AWX |
-| **docker-dns** | INACTIVE | phensley/docker-dns | Dynamic DNS for Docker containers |
-| **docker-vault** | INACTIVE | HashiCorp Vault 1.4.2 | Secret management |
+| **Ansible-observability** | INACTIVE | Prometheus + Grafana | Monitoring for Ansible/AWX |
+| **Docker-dns** | INACTIVE | phensley/Docker-dns | Dynamic DNS for Docker containers |
+| **Docker-vault** | INACTIVE | HashiCorp Vault 1.4.2 | Secret management |
 | **litellm** | INACTIVE | LiteLLM + PostgreSQL | LLM proxy with database |
 | **n8n-stack** | INACTIVE | n8n + PostgreSQL | Workflow automation platform |
 | **ollama** | INACTIVE | Ollama | Local LLM inference server |
@@ -58,7 +58,8 @@ Most projects use the external `docker-servers-net` macvlan network with static 
 ## Storage Configuration
 
 Several projects use NFS-mounted volumes under `/nfs/dockermaster/volumes/`:
-- litellm (prometheus_data, postgres_data)
+
+- litellm (Prometheus_data, postgres_data)
 - n8n-stack (pgdata, n8n_data)  
 - ollama (ollama)
 
@@ -66,13 +67,13 @@ Several projects use NFS-mounted volumes under `/nfs/dockermaster/volumes/`:
 
 - Sensitive data has been redacted from extracted configurations
 - Several projects contain passwords and API keys in environment variables
-- SSH keys are present in nginx-rproxy and rundeck projects
-- SSL certificates are managed by nginx-rproxy
+- SSH keys are present in Nginx-rproxy and rundeck projects
+- SSL certificates are managed by Nginx-rproxy
 
 ## Recommendations
 
 1. **Security**: Rotate passwords and API keys, especially for inactive services
 2. **Cleanup**: Consider removing unused volumes and containers from inactive projects  
 3. **Documentation**: Update project documentation for configuration changes
-4. **Monitoring**: Consider reactivating ansible-observability for better monitoring
+4. **Monitoring**: Consider reactivating Ansible-observability for better monitoring
 5. **Backup**: Ensure NFS-mounted volumes are included in backup strategy

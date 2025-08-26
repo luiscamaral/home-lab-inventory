@@ -5,6 +5,7 @@ This directory contains the configuration for a self-hosted GitHub Actions runne
 ## 🚀 Quick Start
 
 ### 1. Prerequisites
+
 - Docker and Docker Compose installed on dockermaster
 - GitHub Personal Access Token with `repo` scope
 - Access to the dockermaster server
@@ -12,30 +13,35 @@ This directory contains the configuration for a self-hosted GitHub Actions runne
 ### 2. Configuration
 
 1. Copy the environment template:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Edit `.env` and add your GitHub token:
+
    ```bash
    GITHUB_TOKEN=your_personal_access_token_here
    ```
 
 3. Start the runner:
+
    ```bash
    docker compose up -d
    ```
 
 ### 3. Verify Runner Registration
 
-1. Go to your repository settings: https://github.com/luiscamaral/home-lab-inventory/settings/actions/runners
+1. Go to your repository settings: <https://github.com/luiscamaral/home-lab-inventory/settings/actions/runners>
 2. You should see `dockermaster-runner` in the list of runners
 3. The runner should show as "Idle" when ready
 
 ## 📋 Configuration Options
 
 ### Runner Labels
+
 The runner is configured with the following labels:
+
 - `self-hosted` - Identifies as self-hosted runner
 - `linux` - Linux operating system
 - `x64` - 64-bit architecture
@@ -56,22 +62,26 @@ The runner is configured with the following labels:
 ## 🔧 Maintenance
 
 ### Viewing Logs
+
 ```bash
 docker compose logs -f runner
 ```
 
 ### Stopping the Runner
+
 ```bash
 docker compose down
 ```
 
 ### Updating the Runner
+
 ```bash
 docker compose pull
 docker compose up -d
 ```
 
 ### Cleaning Work Directory
+
 ```bash
 # Stop the runner first
 docker compose down
@@ -88,7 +98,7 @@ docker compose up -d
 1. **Token Security**: Never commit the `.env` file with tokens
 2. **Volume Mounts**: Deployment paths are mounted read-only
 3. **Resource Limits**: CPU and memory limits are configured
-4. **Network Isolation**: Uses the docker-servers-net network
+4. **Network Isolation**: Uses the Docker-servers-net network
 5. **No Auto-updates**: Watchtower is disabled for stability
 
 ## 📁 Directory Structure
@@ -107,22 +117,26 @@ github-runner/
 ## 🚨 Troubleshooting
 
 ### Runner Not Appearing in GitHub
+
 1. Check the logs: `docker compose logs runner`
 2. Verify the token has `repo` scope
 3. Ensure the repository URL is correct
 
 ### Runner Shows Offline
+
 1. Check container status: `docker compose ps`
 2. Verify network connectivity
 3. Check Docker socket permissions
 
 ### Permission Errors
+
 1. Ensure Docker socket is accessible
 2. Check volume mount permissions
 3. Verify the container user has necessary permissions
 
 ### High Resource Usage
-1. Adjust resource limits in docker-compose.yml
+
+1. Adjust resource limits in Docker-compose.yml
 2. Enable ephemeral mode for cleaner environments
 3. Regularly clean the work directory
 

@@ -1,16 +1,16 @@
+---
 name: Deploy to Server
-
 on:
   workflow_run:
-    workflows: ["Build and Push Docker Images"]
+    workflows: [Build and Push Docker Images]
     types: [completed]
     branches: [main]
   workflow_dispatch:
     inputs:
       service:
-        description: 'Service to deploy (or "all" for all services)'
+        description: Service to deploy (or "all" for all services)
         required: true
-        default: 'all'
+        default: all
         type: choice
         options:
           - all
@@ -20,19 +20,14 @@ on:
           - nginx-rproxy
           - bind9
       deployment_method:
-        description: 'Deployment method'
+        description: Deployment method
         required: true
-        default: 'webhook'
+        default: webhook
         type: choice
-        options:
-          - webhook
-          - watchtower
-          - ssh
-
+        options: [webhook, watchtower, ssh]
 env:
   DEPLOY_USER: deploy
   DEPLOY_PATH: /nfs/dockermaster/docker
-
 jobs:
   deploy-webhook:
     name: Deploy via Webhook
@@ -46,7 +41,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Determine services to deploy
         id: services
         run: |
@@ -63,7 +57,6 @@ jobs:
             SERVICES="all"
           fi
           echo "services=$SERVICES" >> $GITHUB_OUTPUT
-
       - name: Trigger deployment webhook
         env:
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
@@ -73,7 +66,6 @@ jobs:
             echo "::warning::WEBHOOK_URL secret not configured. Skipping webhook deployment."
             exit 0
           fi
-          
           curl -X POST "$WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -H "X-Github-Token: ${WEBHOOK_TOKEN}" \
@@ -84,7 +76,6 @@ jobs:
               \"repository\": \"${{ github.repository }}\",
               \"triggered_by\": \"${{ github.actor }}\"
             }"
-
       - name: Generate deployment summary
         run: |
           echo "### 🚀 Deployment Triggered" >> $GITHUB_STEP_SUMMARY
@@ -93,10 +84,10 @@ jobs:
           echo "**Services:** ${{ steps.services.outputs.services }}" >> $GITHUB_STEP_SUMMARY
           echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-
   deploy-ssh:
     name: Deploy via SSH
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.deployment_method == 'ssh'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.deployment_method
+      == 'ssh'
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
@@ -104,7 +95,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -114,32 +104,30 @@ jobs:
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
             set -e
-            
+
             # Function to deploy a service
             deploy_service() {
               local service=$1
               echo "Deploying $service..."
-              
               if [ ! -d "${{ env.DEPLOY_PATH }}/$service" ]; then
                 echo "Service directory not found: ${{ env.DEPLOY_PATH }}/$service"
                 return 1
               fi
-              
               cd "${{ env.DEPLOY_PATH }}/$service"
-              
+
               # Pull latest images
               docker compose pull
-              
+
               # Deploy with zero downtime
               docker compose up -d --remove-orphans
-              
+
               # Wait for health checks
               sleep 5
-              
+
               # Show status
               docker compose ps
             }
-            
+
             # Deploy services
             if [ "${{ github.event.inputs.service }}" = "all" ]; then
               for dir in ${{ env.DEPLOY_PATH }}/*/; do
@@ -151,9 +139,7 @@ jobs:
             else
               deploy_service "${{ github.event.inputs.service }}"
             fi
-            
             echo "Deployment completed!"
-
       - name: Generate deployment summary
         run: |
           echo "### 🚀 SSH Deployment Complete" >> $GITHUB_STEP_SUMMARY
@@ -161,10 +147,10 @@ jobs:
           echo "**Service:** ${{ github.event.inputs.service }}" >> $GITHUB_STEP_SUMMARY
           echo "**Server:** ${{ secrets.SERVER_HOST }}" >> $GITHUB_STEP_SUMMARY
           echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-
   notify-watchtower:
     name: Notify Watchtower
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.deployment_method == 'watchtower'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.deployment_method
+      == 'watchtower'
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
@@ -179,12 +165,10 @@ jobs:
             echo "::warning::WATCHTOWER_HTTP_API_URL not configured. Watchtower will pull on next scheduled run."
             exit 0
           fi
-          
           curl -H "Authorization: Bearer ${WATCHTOWER_HTTP_API_TOKEN}" \
                "${WATCHTOWER_HTTP_API_URL}/v1/update"
-
       - name: Generate deployment summary
-        run: |
+        run: |-
           echo "### 🚀 Watchtower Notified" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Watchtower will automatically pull and update containers with new images." >> $GITHUB_STEP_SUMMARY

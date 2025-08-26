@@ -1,10 +1,9 @@
+---
 name: ansible-observability
-
 networks:
   servers-net:
     name: docker-servers-net
     external: true
-
 services:
   prometheus:
     image: prom/prometheus
@@ -16,13 +15,11 @@ services:
       servers-net:
         ipv4_address: 192.168.59.20
     restart: unless-stopped
-
   grafana:
     image: grafana/grafana
     container_name: grafana
     hostname: grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=[REDACTED]
+    environment: ['GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}']
     networks:
       servers-net:
         ipv4_address: 192.168.59.21

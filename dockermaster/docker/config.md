@@ -11,7 +11,7 @@
 | Go Version | go1.24.5 |
 | Git Commit | 578ccf6 |
 | Built | Wed Jul 9 16:13:45 2025 |
-| OS/Arch | linux/amd64 |
+| OS/Arch | Linux/amd64 |
 | Context | default |
 
 ### Server
@@ -23,7 +23,7 @@
 | Go Version | go1.24.5 |
 | Git Commit | e77ff99 |
 | Built | Wed Jul 9 16:13:45 2025 |
-| OS/Arch | linux/amd64 |
+| OS/Arch | Linux/amd64 |
 | Experimental | false |
 
 ## Docker System Information
@@ -44,7 +44,7 @@
 |----------|-------|
 | Storage Driver | overlay2 |
 | Backing Filesystem | extfs |
-| Docker Root Dir | /var/lib/docker |
+| Docker Root Dir | /var/lib/Docker |
 | Supports d_type | true |
 | Using metacopy | false |
 | Native Overlay Diff | true |
@@ -56,9 +56,9 @@
 |----------|-------|
 | Cgroup Driver | systemd |
 | Cgroup Version | 2 |
-| Logging Driver | json-file |
+| Logging Driver | JSON-file |
 | Default Runtime | runc |
-| Init Binary | docker-init |
+| Init Binary | Docker-init |
 | Swarm | inactive |
 
 ### Component Versions
@@ -67,14 +67,16 @@
 |-----------|---------|------------|
 | containerd | 1.7.27 | 05044ec0a9a75232cad458027ca83437aae3f4da |
 | runc | 1.2.5 | v1.2.5-0-g59923ef |
-| docker-init | 0.19.0 | de40ad0 |
+| Docker-init | 0.19.0 | de40ad0 |
 
 ## Plugins
 
 ### Volume Plugins
+
 - local
 
 ### Network Plugins
+
 - bridge
 - host
 - ipvlan
@@ -83,12 +85,13 @@
 - overlay
 
 ### Log Plugins
+
 - awslogs
 - fluentd
 - gcplogs
 - gelf
 - journald
-- json-file
+- JSON-file
 - local
 - splunk
 - syslog
@@ -97,8 +100,8 @@
 
 | Plugin | Version | Path |
 |--------|---------|------|
-| buildx | v0.25.0 | /usr/libexec/docker/cli-plugins/docker-buildx |
-| compose | v2.38.2 | /usr/libexec/docker/cli-plugins/docker-compose |
+| buildx | v0.25.0 | /usr/libexec/Docker/cli-plugins/Docker-buildx |
+| compose | v2.38.2 | /usr/libexec/Docker/cli-plugins/Docker-compose |
 
 ## Security Options
 
@@ -119,4 +122,4 @@
 | Debug Mode | false |
 | Experimental | false |
 
-*Last updated: 2025-08-09*
+_Last updated: 2025-08-09_

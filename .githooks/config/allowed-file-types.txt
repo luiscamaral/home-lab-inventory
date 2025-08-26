@@ -1,0 +1,248 @@
+# File Type and Size Restrictions Configuration
+# This file defines allowed file types and size limits for commits
+# Format: <pattern>:<max_size_mb>:<allowed>
+# If allowed is 'false', the file type is forbidden
+# If max_size_mb is 0, no size limit is enforced
+# Size is in megabytes (MB)
+
+# Text and Configuration Files (small size limits)
+*.md:5:true
+*.txt:2:true
+*.json:10:true
+*.yaml:5:true
+*.yml:5:true
+*.toml:2:true
+*.ini:1:true
+*.conf:2:true
+*.cfg:2:true
+*.properties:1:true
+
+# Source Code Files
+*.sh:1:true
+*.py:2:true
+*.js:2:true
+*.ts:2:true
+*.go:2:true
+*.rs:2:true
+*.java:2:true
+*.c:2:true
+*.cpp:2:true
+*.h:1:true
+*.hpp:1:true
+
+# Web Files
+*.html:2:true
+*.css:1:true
+*.scss:1:true
+*.less:1:true
+*.xml:2:true
+
+# Docker and Container Files
+Dockerfile:1:true
+*.dockerfile:1:true
+docker-compose*.yml:5:true
+docker-compose*.yaml:5:true
+*.containerfile:1:true
+
+# Infrastructure as Code
+*.tf:2:true
+*.hcl:2:true
+*.pkr.hcl:2:true
+*.nomad:2:true
+*.consul:2:true
+*.vault:2:true
+
+# Git Files
+.gitignore:1:true
+.gitattributes:1:true
+.gitmodules:1:true
+.gitmessage:1:true
+.gitkeep:0:true
+
+# CI/CD Files
+*.github/workflows/*.yml:5:true
+*.github/workflows/*.yaml:5:true
+.gitlab-ci.yml:5:true
+Jenkinsfile:2:true
+*.jenkinsfile:2:true
+.travis.yml:2:true
+.circleci/*:2:true
+
+# Package Management Files
+package.json:2:true
+package-lock.json:10:true
+yarn.lock:10:true
+requirements.txt:2:true
+Pipfile:1:true
+Pipfile.lock:5:true
+pyproject.toml:2:true
+Cargo.toml:2:true
+Cargo.lock:10:true
+go.mod:1:true
+go.sum:5:true
+pom.xml:5:true
+build.gradle:2:true
+
+# Small Image Files (for documentation)
+*.png:2:true
+*.jpg:2:true
+*.jpeg:2:true
+*.gif:1:true
+*.svg:1:true
+*.ico:0.5:true
+
+# Archive Files (small sizes only)
+*.tar.gz:20:true
+*.tgz:20:true
+*.zip:20:true
+
+# FORBIDDEN FILE TYPES
+# Large binary files
+*.bin:0:false
+*.exe:0:false
+*.dll:0:false
+*.so:0:false
+*.dylib:0:false
+*.app:0:false
+*.dmg:0:false
+*.pkg:0:false
+*.msi:0:false
+*.deb:0:false
+*.rpm:0:false
+
+# Large media files
+*.mp4:0:false
+*.avi:0:false
+*.mov:0:false
+*.mkv:0:false
+*.wmv:0:false
+*.flv:0:false
+*.mp3:0:false
+*.wav:0:false
+*.flac:0:false
+*.aac:0:false
+
+# Large image files
+*.psd:0:false
+*.ai:0:false
+*.eps:0:false
+*.tiff:0:false
+*.tif:0:false
+*.bmp:0:false
+*.raw:0:false
+
+# Database files
+*.db:0:false
+*.sqlite:0:false
+*.sqlite3:0:false
+*.mdb:0:false
+*.accdb:0:false
+
+# VM and Container Images
+*.iso:0:false
+*.vmdk:0:false
+*.vdi:0:false
+*.qcow2:0:false
+*.ova:0:false
+*.ovf:0:false
+
+# Backup files
+*.bak:0:false
+*.backup:0:false
+*~:0:false
+*.orig:0:false
+*.rej:0:false
+
+# Log files
+*.log:0:false
+*.out:0:false
+
+# Temporary files
+*.tmp:0:false
+*.temp:0:false
+*.cache:0:false
+*.pid:0:false
+*.swp:0:false
+*.swo:0:false
+.DS_Store:0:false
+Thumbs.db:0:false
+desktop.ini:0:false
+
+# IDE files
+*.iml:0:false
+*.ipr:0:false
+*.iws:0:false
+.idea/*:0:false
+.vscode/settings.json:0:false
+.vscode/launch.json:0:false
+*.sublime-*:0:false
+
+# Compiled/Generated files
+*.class:0:false
+*.o:0:false
+*.obj:0:false
+*.pyc:0:false
+*.pyo:0:false
+__pycache__/*:0:false
+*.pdb:0:false
+node_modules/*:0:false
+target/*:0:false
+build/*:0:false
+dist/*:0:false
+*.egg-info/*:0:false
+
+# System files
+.Trash:0:false
+*.lnk:0:false
+
+# Certificate and key files (should be managed separately)
+*.pem:0:false
+*.key:0:false
+*.crt:0:false
+*.cer:0:false
+*.p12:0:false
+*.pfx:0:false
+*.jks:0:false
+*.keystore:0:false
+*.truststore:0:false
+
+# Environment files (potential secrets)
+.env:0:false
+.env.*:0:false
+*.env:0:false
+.envrc:0:false
+
+# SSH files
+id_rsa:0:false
+id_dsa:0:false
+id_ecdsa:0:false
+id_ed25519:0:false
+known_hosts:0:false
+authorized_keys:0:false
+
+# Docker secrets
+docker-compose.override.yml:0:false
+secrets/*:0:false
+
+# Kubernetes secrets
+*secret*.yaml:0:false
+*secret*.yml:0:false
+
+# Large archives
+*.tar:0:false
+*.gz:0:false
+*.bz2:0:false
+*.xz:0:false
+*.7z:0:false
+*.rar:0:false
+
+# SPECIAL SIZE LIMITS
+# Allow but with strict size limits
+*.csv:50:true
+*.json:50:true
+*.xml:50:true
+*.sql:10:true
+
+# Maximum file size for any file (in MB)
+# This is a fallback for files not matching specific patterns
+*:100:true

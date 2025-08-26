@@ -5,11 +5,13 @@ This repository uses [Conventional Commits](https://www.conventionalcommits.org/
 ## 🚀 Quick Start
 
 1. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 2. **Run setup script:**
+
    ```bash
    ./setup-commitlint.sh
    ```
@@ -18,7 +20,7 @@ This repository uses [Conventional Commits](https://www.conventionalcommits.org/
 
 ## 📝 Commit Message Format
 
-```
+```text
 <type>(<scope>): <subject>
 
 [optional body]
@@ -28,7 +30,7 @@ This repository uses [Conventional Commits](https://www.conventionalcommits.org/
 
 ### Examples
 
-```bash
+```text
 feat(docker): add nginx reverse proxy configuration
 fix(security): update gitleaks config to ignore test files
 docs(inventory): add documentation for new proxmox nodes
@@ -61,6 +63,7 @@ chore(deps): update commitlint to latest version
 Choose the most relevant scope for your change:
 
 ### Infrastructure Scopes
+
 - `servers` - Physical server configurations
 - `proxmox` - Proxmox hypervisor specific changes
 - `nas` - NAS/Synology specific configurations
@@ -69,12 +72,14 @@ Choose the most relevant scope for your change:
 - `storage` - Storage configurations
 
 ### Application Scopes
+
 - `docker` - Docker containers and compose files
 - `containers` - Container-specific changes
 - `monitoring` - Monitoring and alerting systems
 - `backup` - Backup configurations and scripts
 
 ### Development Scopes
+
 - `docs` - Documentation updates
 - `ci` - Continuous integration workflows
 - `deploy` - Deployment configurations
@@ -85,6 +90,7 @@ Choose the most relevant scope for your change:
 ## ✍️ Writing Good Commit Messages
 
 ### Subject Line Rules
+
 - **Maximum 100 characters**
 - **Use imperative mood** ("add" not "added" or "adds")
 - **Start with lowercase** (except proper nouns)
@@ -92,6 +98,7 @@ Choose the most relevant scope for your change:
 - **Be descriptive but concise**
 
 ### Good Examples
+
 ```bash
 ✅ feat(docker): add traefik reverse proxy with SSL
 ✅ fix(security): resolve gitleaks false positive for API keys
@@ -100,6 +107,7 @@ Choose the most relevant scope for your change:
 ```
 
 ### Bad Examples
+
 ```bash
 ❌ feat: stuff
 ❌ Fix bug
@@ -110,12 +118,14 @@ Choose the most relevant scope for your change:
 ## 🛠️ Tools and Commands
 
 ### Interactive Commit Creation
+
 ```bash
 # Use commitizen for guided commit creation
 npm run commit
 ```
 
 ### Validation Commands
+
 ```bash
 # Validate last commit
 npm run commitlint
@@ -128,7 +138,9 @@ npm run check:commit-format
 ```
 
 ### Git Template
+
 The repository includes a commit message template:
+
 ```bash
 # Template is automatically configured during setup
 git commit  # Opens editor with template
@@ -138,19 +150,22 @@ git commit  # Opens editor with template
 
 - `.commitlintrc.json` - Commitlint configuration
 - `.gitmessage` - Git commit message template
-- `package.json` - NPM dependencies and scripts
+- `package.json` - npm dependencies and scripts
 - `.husky/commit-msg` - Husky commit message hook
 - `.husky/pre-commit` - Husky pre-commit hook
 
 ## 🔀 Integration with Existing Tools
 
 ### Pre-commit Hooks
+
 The setup integrates seamlessly with existing pre-commit hooks:
+
 - Husky runs commitlint validation
 - Pre-commit runs code quality checks
 - Both must pass for successful commits
 
 ### Workflow
+
 1. **Stage changes:** `git add .`
 2. **Commit:** `git commit`
 3. **Pre-commit runs:** Code linting, formatting, security checks
@@ -162,6 +177,7 @@ The setup integrates seamlessly with existing pre-commit hooks:
 ### Common Issues
 
 **Commit message validation fails:**
+
 ```bash
 # Check your message format
 echo "your commit message" | npx commitlint
@@ -171,12 +187,14 @@ npm run commit
 ```
 
 **Husky hooks not running:**
+
 ```bash
 # Reinstall hooks
 npx husky install
 ```
 
 **Pre-commit integration issues:**
+
 ```bash
 # Check pre-commit status
 pre-commit --version
@@ -193,6 +211,7 @@ pre-commit run --all-files
 ## 🤝 Getting Help
 
 If you encounter issues or need clarification:
+
 1. Check this documentation
 2. Run `npm run check:commit-format` to validate recent commits
 3. Use `npm run commit` for guided commit creation

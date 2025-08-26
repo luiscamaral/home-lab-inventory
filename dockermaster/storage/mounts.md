@@ -45,6 +45,7 @@
 ### NFS Mount Options
 
 Both NFS mounts are configured with the following options:
+
 - **Version**: NFSv4.1
 - **Read Size**: 131072 bytes
 - **Write Size**: 131072 bytes
@@ -65,28 +66,31 @@ Docker containers are using overlay2 storage driver with multiple active overlay
 
 | Overlay ID | Mount Point | Size | Used | Available | Use% |
 |------------|-------------|------|------|-----------|------|
-| 1382bdf896e3... | /var/lib/docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
-| 90d2eeff28a6... | /var/lib/docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
-| 89ea73a8fab1... | /var/lib/docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
-| aeebf0f918d3... | /var/lib/docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
-| 1c51b3e12bd1... | /var/lib/docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
-| d08760c2ec48... | /var/lib/docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
-| e07b9e09053c... | /var/lib/docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
+| 1382bdf896e3... | /var/lib/Docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
+| 90d2eeff28a6... | /var/lib/Docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
+| 89ea73a8fab1... | /var/lib/Docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
+| aeebf0f918d3... | /var/lib/Docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
+| 1c51b3e12bd1... | /var/lib/Docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
+| d08760c2ec48... | /var/lib/Docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
+| e07b9e09053c... | /var/lib/Docker/overlay2/.../merged | 192G | 64G | 119G | 35% |
 
 ## Storage Summary
 
 ### Local Storage
+
 - **Root Partition**: 196GB total, 64GB used (35% utilization)
 - **Available Space**: 119GB free
 - **Filesystem**: ext4
 
 ### Network Storage (NFS)
+
 - **Calibre Library**: 6TB total, 5.7TB used (95% utilization) - read-only media storage
 - **Dockermaster Data**: 1TB total, 54GB used (6% utilization) - container persistent data
 
 ### Docker Storage
+
 - **Storage Driver**: overlay2 on ext4 backing filesystem
 - **Container Storage**: Shares root partition space
 - **Active Containers**: 7 containers with active overlay filesystems
 
-*Last updated: 2025-08-09*
+_Last updated: 2025-08-09_
