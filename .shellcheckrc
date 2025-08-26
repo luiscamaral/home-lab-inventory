@@ -1,0 +1,23 @@
+# ShellCheck configuration file for Home Lab Inventory project
+# This file configures shellcheck behavior for consistent shell script validation
+
+# Set shell dialect (bash is our standard)
+shell=bash
+
+# Enable all optional checks
+enable=all
+
+# Disable specific checks that don't apply to our use case
+# SC1090: Can't follow non-constant source (common in scripts)
+# SC1091: Not following sourced files
+# SC2034: Variable appears unused (often used in sourced scripts)
+# SC2154: Variable is referenced but not assigned (sourced variables)
+disable=SC1090,SC1091,SC2034,SC2154
+
+# External sources to consider
+# Tells shellcheck about files that are sourced
+external-sources=true
+
+# Set severity level for reporting
+# error, warning, info, style
+severity=warning

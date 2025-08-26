@@ -1,0 +1,277 @@
+#!/bin/bash
+# Commit Message Hook for Home Lab Inventory Project
+# Validates commit messages against Conventional Commits specification
+# Integrates with existing commitlint setup
+
+set -euo pipefail
+
+# Configuration
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly UTILS_DIR="$(dirname "$SCRIPT_DIR")/utils"
+readonly HOOK_NAME="commit-msg"
+
+# Colors for output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly PURPLE='\033[0;35m'
+readonly CYAN='\033[0;36m'
+readonly NC='\033[0m' # No Color
+
+# Global state
+EXIT_CODE=0
+
+# Helper functions
+print_error() {
+    echo -e "${RED}❌ ERROR: $1${NC}" >&2
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠️  WARNING: $1${NC}"
+}
+
+print_success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+print_info() {
+    echo -e "${BLUE}ℹ️  $1${NC}"
+}
+
+print_step() {
+    echo -e "${CYAN}🔄 $1${NC}"
+}
+
+print_header() {
+    echo -e "${PURPLE}═══════════════════════════════════════════════${NC}"
+    echo -e "${PURPLE} Commit Message Validation${NC}"
+    echo -e "${PURPLE}═══════════════════════════════════════════════${NC}"
+}
+
+print_example() {
+    echo -e "${PURPLE}💡 EXAMPLE: $1${NC}"
+}
+
+# Check for existing commitlint setup
+check_existing_commitlint() {
+    local commit_file="$1"
+
+    print_step "Checking for existing commitlint setup..."
+
+    # Check if commitlint is available via npm
+    if [[ -f "package.json" ]] && command -v npx >/dev/null 2>&1; then
+        if npx --quiet commitlint --version >/dev/null 2>&1; then
+            print_info "Found existing commitlint configuration"
+
+            # Run commitlint
+            if npx commitlint --edit "$commit_file"; then
+                print_success "Commitlint validation passed"
+                return 0
+            else
+                print_error "Commitlint validation failed"
+                return 1
+            fi
+        fi
+    fi
+
+    # Check if Husky commitlint hook exists
+    if [[ -f ".husky/commit-msg" ]]; then
+        print_info "Found Husky commit-msg hook"
+
+        # The Husky hook would have already run, so we just note it
+        print_info "Husky commitlint should have validated the message"
+        return 0
+    fi
+
+    print_info "No existing commitlint setup found"
+    return 1
+}
+
+# Fallback conventional commits validation
+validate_conventional_commits() {
+    local commit_file="$1"
+
+    print_step "Running custom conventional commits validation..."
+
+    if [[ -x "$UTILS_DIR/conventional-commits.sh" ]]; then
+        if "$UTILS_DIR/conventional-commits.sh" "$commit_file"; then
+            print_success "Custom conventional commits validation passed"
+            return 0
+        else
+            print_error "Custom conventional commits validation failed"
+            return 1
+        fi
+    else
+        print_warning "Custom conventional commits validator not available"
+        return 1
+    fi
+}
+
+# Basic commit message validation
+basic_validation() {
+    local commit_file="$1"
+
+    print_step "Running basic commit message validation..."
+
+    # Read commit message
+    local commit_msg
+    commit_msg=$(cat "$commit_file")
+
+    # Remove comments
+    commit_msg=$(echo "$commit_msg" | sed '/^#/d')
+
+    # Check if empty
+    if [[ -z "${commit_msg// /}" ]]; then
+        print_error "Commit message cannot be empty"
+        return 1
+    fi
+
+    # Get subject line
+    local subject_line
+    subject_line=$(echo "$commit_msg" | head -n1)
+
+    # Basic format check
+    if [[ ! "$subject_line" =~ ^[a-z]+(\([a-z0-9-]+\))?\!?:[[:space:]]*[a-z] ]]; then
+        print_error "Commit message does not follow conventional format"
+        echo
+        print_info "Expected format: type(scope): description"
+        print_example "feat(docker): add nginx container"
+        print_example "fix(security): update gitleaks config"
+        print_example "docs: update installation guide"
+        return 1
+    fi
+
+    # Check subject length
+    if [[ ${#subject_line} -gt 100 ]]; then
+        print_error "Subject line too long (${#subject_line} > 100 characters)"
+        return 1
+    fi
+
+    # Check for period at end
+    if [[ "$subject_line" =~ \.$  ]]; then
+        print_warning "Subject line should not end with a period"
+    fi
+
+    print_success "Basic commit message validation passed"
+    return 0
+}
+
+# Provide helpful guidance
+provide_guidance() {
+    echo
+    print_info "Commit Message Guidelines:"
+    echo
+    echo "📋 Format: type(scope): description"
+    echo
+    echo "🏷️  Valid Types:"
+    echo "   feat     - New feature"
+    echo "   fix      - Bug fix"
+    echo "   docs     - Documentation changes"
+    echo "   style    - Code style changes"
+    echo "   refactor - Code refactoring"
+    echo "   test     - Test changes"
+    echo "   chore    - Maintenance tasks"
+    echo "   ci       - CI/CD changes"
+    echo
+    echo "🎯 Valid Scopes (optional):"
+    echo "   docker, github, security, inventory, ci, docs"
+    echo "   hooks, deployment, monitoring, network, etc."
+    echo
+    echo "✨ Examples:"
+    print_example "feat(docker): add nginx reverse proxy container"
+    print_example "fix(security): resolve secret detection in workflows"
+    print_example "docs(inventory): update server documentation"
+    print_example "ci(github): add self-hosted runner support"
+    print_example "chore: update dependencies and cleanup"
+    echo
+    echo "💡 Tips:"
+    echo "   • Use imperative mood (add, fix, update)"
+    echo "   • Keep subject under 100 characters"
+    echo "   • Don't end subject with period"
+    echo "   • Use lowercase for type and description"
+    echo "   • Be descriptive but concise"
+}
+
+# Check if commit is a merge, revert, or other special commit
+is_special_commit() {
+    local commit_file="$1"
+    local commit_msg
+    commit_msg=$(cat "$commit_file")
+
+    # Check for merge commits
+    if [[ "$commit_msg" =~ ^Merge ]]; then
+        return 0
+    fi
+
+    # Check for revert commits
+    if [[ "$commit_msg" =~ ^Revert ]]; then
+        return 0
+    fi
+
+    # Check for GitHub-generated commits
+    if [[ "$commit_msg" =~ ^(Initial commit|Create|Update|Delete) ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
+# Main execution
+main() {
+    local commit_file="$1"
+
+    # Validate arguments
+    if [[ -z "$commit_file" ]]; then
+        print_error "Commit message file not provided"
+        exit 1
+    fi
+
+    if [[ ! -f "$commit_file" ]]; then
+        print_error "Commit message file not found: $commit_file"
+        exit 1
+    fi
+
+    print_header
+    echo
+
+    # Check if this is a special commit that should skip validation
+    if is_special_commit "$commit_file"; then
+        print_info "Special commit detected (merge/revert/GitHub), skipping validation"
+        exit 0
+    fi
+
+    print_info "Validating commit message..."
+    echo
+
+    # Try existing commitlint first
+    if check_existing_commitlint "$commit_file"; then
+        print_success "Commit message validation completed successfully! ✨"
+        exit 0
+    fi
+
+    # Fall back to custom validation
+    if validate_conventional_commits "$commit_file"; then
+        print_success "Commit message validation completed successfully! ✨"
+        exit 0
+    fi
+
+    # Final fallback to basic validation
+    if basic_validation "$commit_file"; then
+        print_success "Commit message validation completed successfully! ✨"
+        exit 0
+    fi
+
+    # All validations failed
+    print_error "Commit message validation failed! ❌"
+    provide_guidance
+    echo
+    print_info "To skip validation temporarily, use:"
+    print_info "  git commit --no-verify"
+    print_warning "WARNING: Skipping validation may introduce inconsistent commit history"
+
+    exit 1
+}
+
+# Run main function
+main "$@"

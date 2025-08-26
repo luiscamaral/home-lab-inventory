@@ -14,38 +14,38 @@ NC='\033[0m' # No Color
 
 # Helper functions
 print_step() {
-    echo -e "${BLUE}📋 $1${NC}"
+  echo -e "${BLUE}📋 $1${NC}"
 }
 
 print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+  echo -e "${GREEN}✅ $1${NC}"
 }
 
 print_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+  echo -e "${YELLOW}⚠️  $1${NC}"
 }
 
 print_error() {
-    echo -e "${RED}❌ $1${NC}"
+  echo -e "${RED}❌ $1${NC}"
 }
 
 # Check if we're in a git repository
 if [ ! -d ".git" ]; then
-    print_error "This script must be run from the root of the git repository"
-    exit 1
+  print_error "This script must be run from the root of the git repository"
+  exit 1
 fi
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
-    print_error "Node.js is not installed. Please install Node.js 18+ to continue."
-    exit 1
+  print_error "Node.js is not installed. Please install Node.js 18+ to continue."
+  exit 1
 fi
 
 # Check Node.js version
 NODE_VERSION=$(node -v | sed 's/v//' | cut -d. -f1)
 if [ "$NODE_VERSION" -lt 18 ]; then
-    print_error "Node.js version 18 or higher is required. Current version: $(node -v)"
-    exit 1
+  print_error "Node.js version 18 or higher is required. Current version: $(node -v)"
+  exit 1
 fi
 
 print_step "Setting up commitlint and Husky for conventional commits..."
@@ -75,19 +75,19 @@ print_success "Git commit template configured"
 # Test commitlint configuration
 print_step "Testing commitlint configuration..."
 echo "test: sample commit message" | npx commitlint || {
-    print_warning "Commitlint test failed - this is expected for the test message"
+  print_warning "Commitlint test failed - this is expected for the test message"
 }
 
 print_success "Commitlint configuration validated"
 
 # Check if pre-commit is available
 if command -v pre-commit &> /dev/null; then
-    print_step "Pre-commit is available and will work alongside Husky hooks"
-    print_success "Integration with pre-commit hooks confirmed"
+  print_step "Pre-commit is available and will work alongside Husky hooks"
+  print_success "Integration with pre-commit hooks confirmed"
 else
-    print_warning "pre-commit is not installed. Consider installing it for additional code quality checks:"
-    echo "  pip install pre-commit"
-    echo "  pre-commit install"
+  print_warning "pre-commit is not installed. Consider installing it for additional code quality checks:"
+  echo "  pip install pre-commit"
+  echo "  pre-commit install"
 fi
 
 echo ""

@@ -12,16 +12,16 @@ services:
     environment:
       # Check for updates every 5 minutes (300 seconds)
       WATCHTOWER_POLL_INTERVAL: 300
-      
+
       # Remove old images after updating
       WATCHTOWER_CLEANUP: "true"
-      
+
       # Only monitor running containers
       WATCHTOWER_INCLUDE_STOPPED: "false"
-      
+
       # Only update containers with com.centurylinklabs.watchtower.enable=true label
       WATCHTOWER_LABEL_ENABLE: "true"
-      
+
       # Send notifications (optional - configure as needed)
       # WATCHTOWER_NOTIFICATIONS: email
       # WATCHTOWER_NOTIFICATION_EMAIL_FROM: notifications@yourdomain.com
@@ -30,18 +30,18 @@ services:
       # WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT: 587
       # WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER: your-email@gmail.com
       # WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD: your-app-password
-      
+
       # Or use webhook notifications
       # WATCHTOWER_NOTIFICATIONS: webhook
       # WATCHTOWER_NOTIFICATION_URL: https://your-webhook-url.com/watchtower
-      
+
       # Enable HTTP API for manual triggers (optional)
       WATCHTOWER_HTTP_API_UPDATE: "true"
       WATCHTOWER_HTTP_API_TOKEN: ${WATCHTOWER_API_TOKEN:-changeme}
-      
+
       # Logging
       WATCHTOWER_LOG_LEVEL: info
-      
+
       # Timezone
       TZ: America/Denver
     ports:

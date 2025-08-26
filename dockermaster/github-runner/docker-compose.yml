@@ -1,0 +1,55 @@
+name: github-runner
+
+services:
+  runner:
+    image: myoung34/github-runner:latest
+    container_name: github-runner-homelab
+    hostname: dockermaster-runner
+    environment:
+      - RUNNER_NAME=${RUNNER_NAME:-dockermaster-runner}
+      - RUNNER_WORKDIR=/tmp/runner/work
+      - RUNNER_GROUP=${RUNNER_GROUP:-default}
+      - LABELS=${LABELS:-self-hosted,linux,x64,dockermaster,docker}
+      - REPO_URL=https://github.com/luiscamaral/home-lab-inventory
+      - ACCESS_TOKEN=${GITHUB_TOKEN}
+      - EPHEMERAL=${EPHEMERAL:-false}
+      - DISABLE_AUTO_UPDATE=${DISABLE_AUTO_UPDATE:-false}
+    volumes:
+      # Docker socket for Docker-in-Docker operations
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Runner work directory
+      - ./work:/tmp/runner/work
+      # Cache directory for builds
+      - ./cache:/tmp/runner/_work/_tool
+      # Config persistence
+      - ./config:/actions-runner
+      # Deployment paths (read-only for safety)
+      - /nfs/dockermaster/docker:/deployment:ro
+    restart: unless-stopped
+    networks:
+      - docker-servers-net
+    security_opt:
+      - apparmor:unconfined
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"  # Manual updates only
+      com.docker.stack: "ci-cd"
+      com.docker.service: "github-runner"
+      portainer.autodeploy: "false"  # Prevent auto-deploy to avoid runner disruption
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "Runner.Listener"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  docker-servers-net:
+    external: true

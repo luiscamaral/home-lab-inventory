@@ -1,0 +1,40 @@
+=== DOCKER VOLUMES ===
+No calibre-specific volumes found
+
+=== ALL DOCKER VOLUMES ===
+DRIVER    VOLUME NAME
+local     bologna-e-milano_postgres_data
+local     bologna-e-milano_rabbitmq_data
+local     bologna-e-milano_redis_data
+local     claude-memory
+local     docs-mcp-data
+local     la-open-webui_neo4j_data
+local     la-open-webui_neo4j_import
+local     la-open-webui_neo4j_logs
+local     la-open-webui_open-webui
+local     la-open-webui_pipelines
+local     la-open-webui_pipelines_audio
+local     la-open-webui_pipelines_books
+local     la-open-webui_tikadata
+local     n8n-lcma_grafana-data
+local     n8n-lcma_lightrag-data
+local     n8n-lcma_litellm-data
+local     n8n-lcma_loki-data
+local     n8n-lcma_n8n-data
+local     n8n-lcma_postgres-data
+local     n8n-lcma_prometheus-data
+local     n8n-lcma_tempo-data
+local     n8n-lcma_traefik-data
+
+=== NFS CALIBRE DIRECTORY ===
+/nfs/calibre directory not found
+
+=== VOLUME MAPPINGS FROM DOCKER-COMPOSE ===
+Calibre service volumes:
+  - /nfs/calibre/Library:/Library
+  - /nfs/calibre/config:/config
+  - /nfs/calibre/upload:/upload
+  - /nfs/calibre/plugins:/plugins
+Calibre-web service volumes:
+  - /nfs/calibre/calibre-web/config:/config
+  - /nfs/calibre/calibre-web/Library:/books

@@ -5,7 +5,7 @@
 if command -v pre-commit >/dev/null 2>&1; then
   echo "🔍 Running pre-commit hooks..."
   pre-commit run --files $(git diff --cached --name-only)
-  
+
   if [ $? -eq 0 ]; then
     echo "✅ Pre-commit hooks passed"
   else

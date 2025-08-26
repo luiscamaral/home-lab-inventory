@@ -1,29 +1,24 @@
+---
 version: '3.8'
-
 services:
   puppetserver:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: puppet-master
-    hostname: puppetmaster.domain.local    # Critical: DNS must resolve this!
-    networks:
-      - docker-net
-    ports:
-      - "8140:8140"
+    hostname: puppetmaster.domain.local  # Critical: DNS must resolve this!
+    networks: [docker-net]
+    ports: [8140:8140]
     volumes:
       - puppet_data:/etc/puppetlabs
       - puppet_logs:/var/log/puppetlabs
       - ./puppet-code:/etc/puppetlabs/code
-    environment:
-      - PUPPETSERVER_JAVA_ARGS=-Xms512m -Xmx512m
+    environment: [PUPPETSERVER_JAVA_ARGS=-Xms512m -Xmx512m]
     restart: unless-stopped
-
 networks:
   docker-net:
     name: docker-servers-net
     external: true
-
 volumes:
   puppet_data:
   puppet_logs:

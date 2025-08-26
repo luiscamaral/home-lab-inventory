@@ -1,0 +1,27 @@
+{
+  "composeFile": "dockermaster/docker/compose/calibre-server/docker-compose.portainer.yml",
+  "created": "2025-08-21",
+  "env": [
+    {
+      "name": "CALIBRE_PASSWORD",
+      "value": "PLACEHOLDER_SET_IN_PORTAINER"
+    },
+    {
+      "name": "PUID",
+      "value": "1027"
+    },
+    {
+      "name": "PGID",
+      "value": "65539"
+    },
+    {
+      "name": "TZ",
+      "value": "America/Denver"
+    }
+  ],
+  "migration_phase": "deployment",
+  "name": "calibre-library",
+  "note": "Stack configuration for GitOps deployment via Portainer",
+  "repositoryReference": "refs/heads/main",
+  "repositoryUrl": "https://github.com/luiscamaral/home-lab-inventory"
+}

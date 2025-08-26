@@ -1,0 +1,7 @@
+{
+  "containers_found": false,
+  "docker_ps_output": "No calibre containers detected",
+  "note": "Containers may need to be started from docker-compose.yaml for full state capture",
+  "status": "No Calibre containers currently running or found in stopped state",
+  "timestamp": "2025-08-21_13:33:00"
+}

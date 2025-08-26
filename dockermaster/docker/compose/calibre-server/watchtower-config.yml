@@ -1,0 +1,55 @@
+---
+# Watchtower Auto-Update Configuration
+# Agent F: Monitoring Specialist - LCMA 2025
+# Purpose: Automated container updates for Calibre services
+watchtower:
+  schedule: 0 0 4 * * *  # 4 AM daily (cron format: sec min hour day month weekday)
+  cleanup: true
+  remove_volumes: false
+  label_enable: true
+  monitor_only: false
+  notifications:
+    level: info
+    format: json
+  update_strategy:
+    rolling_restart: true
+    max_concurrent: 1
+    health_check_grace: 60s
+  filters:
+    # Only update containers with the watchtower label
+    labels: [com.centurylinklabs.watchtower.enable=true]
+  exclusions:
+    # Skip containers that should not be auto-updated
+    containers: []
+    images: []
+  settings:
+    timeout: 10m
+    poll_interval: 24h
+    include_stopped: false
+    include_restarting: true
+  lifecycle:
+    pre_update_timeout: 60s
+    post_update_timeout: 60s
+  logging:
+    level: info
+    format: json
+  security:
+    # Run with minimal privileges
+    no_pull: false
+    no_restart: false
+  rollback:
+    # Enable rollback on failure
+    enabled: true
+    timeout: 300s
+# Portainer Integration
+portainer:
+  stack_name: calibre-server
+  auto_deploy: true
+  webhooks:
+    github:
+      enabled: true
+      secret: ${GITHUB_WEBHOOK_SECRET}
+  notifications:
+    update_success: true
+    update_failure: true
+    rollback_triggered: true
