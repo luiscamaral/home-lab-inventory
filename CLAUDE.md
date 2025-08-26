@@ -15,7 +15,7 @@
 
 ## 📁 Project Structure
 
-```
+```text
 inventory/          # Infrastructure documentation
 ├── servers.md
 ├── virtual-machines.md  
@@ -34,7 +34,10 @@ README.md          # Project overview
 ### Core Tools & MCP Priority
 
 1. **think-tool** → documentation → context7 → filesystem → **memory**
-2. **Version Management**: Use `mise` for tool versions
+2. **Version Management**: Use `mise` for ALL tool versions
+   - Tools installed via mise: shellcheck, shfmt, yamlfix, etc.
+   - Check tools: `mise list` or `mise which <tool>`
+   - Install new tools: `mise use -g <tool>@latest`
 3. **Docker**: Use `docker compose` (latest CE)
 4. **Git**: Prefer GitHub MCP over `gh` command
 
@@ -65,6 +68,34 @@ README.md          # Project overview
 - Never commit/push with validation issues
 - **Always**: Test → Fix → Commit → Push
 
+### Linting & Formatting Workflow
+
+1. **Before committing, run autoformatters**:
+
+   ```bash
+   # YAML files
+   yamlfix -c .yamllint.yml .github/workflows/*.yml dockermaster/**/*.yml
+
+   # Markdown files  
+   markdownlint --fix --config .markdownlint.json **/*.md
+
+   # Shell scripts
+   shfmt -l -w .githooks/*.sh setup-*.sh deployment/**/*.sh dockermaster/**/*.sh
+   ```
+
+2. **Check for remaining issues**:
+
+   ```bash
+   # Run all pre-commit hooks
+   pre-commit run --all-files
+
+   # Or run specific checks
+   yamllint -c .yamllint.yml .
+   shellcheck .githooks/*.sh setup-*.sh
+   ```
+
+3. **All linting tools MUST use their config files** - this ensures consistency between local and CI/CD
+
 ### Error Analysis & Commands
 
 ```bash
@@ -92,6 +123,14 @@ command | grep -B2 -A2 -i -E "(error|warn)"
 - **Use multiple sub-agents** for organized todos with detailed instructions
 - **Always add a LINE at the end** of every *.md file
 - **Respect style and lint**, run autoformat or respect the lint and style rules from config
-  - For YAML: Always use `yamlfix -c .yamllint.yml` (with config file)
-  - For Markdown: Use `markdownlint --fix` if available
-  - Check that all lint configs (.yamllint.yml, .markdownlint.JSON, etc) are in project
+  - **YAML**: Always use `yamlfix -c .yamllint.yml` (with config file)
+  - **Markdown**: Use `markdownlint --fix --config .markdownlint.json`
+  - **Shell scripts**: Use `shfmt -l -w` (uses .editorconfig) and `shellcheck` (uses .shellcheckrc)
+  - **All tools use configuration files** - never run without configs
+  - **Required config files in project**:
+    - `.yamllint.yml` - YAML linting rules
+    - `.markdownlint.json` - Markdown linting rules
+    - `.shellcheckrc` - Shell script validation rules
+    - `.editorconfig` - Universal editor/formatter settings (used by shfmt)
+    - `.commitlintrc.json` - Commit message validation
+    - `.pre-commit-config.yaml` - Pre-commit hooks configuration

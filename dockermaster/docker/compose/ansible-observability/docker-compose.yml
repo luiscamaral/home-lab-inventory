@@ -9,7 +9,8 @@ services:
     image: prom/prometheus
     container_name: prometheus
     hostname: prometheus
-    volumes: [./prometheus.yml:/etc/prometheus/prometheus.yml]
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
       servers-net:
         ipv4_address: 192.168.59.20

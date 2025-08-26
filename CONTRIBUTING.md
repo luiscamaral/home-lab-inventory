@@ -406,7 +406,7 @@ We follow [Conventional Commits](https://conventionalcommits.org/). See [`COMMIT
 
 **Examples:**
 
-```
+```text
 feat(inventory): add monitoring stack documentation
 fix(docker): correct nginx proxy configuration
 docs(readme): update setup instructions

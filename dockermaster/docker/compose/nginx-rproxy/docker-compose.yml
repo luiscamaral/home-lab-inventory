@@ -15,5 +15,6 @@ services:
       servers-net:
         ipv4_address: 192.168.59.28
     expose: [80, 443]
-    volumes: [./nginx-rproxy:/etc/nginx/]
+    volumes:
+      - ./nginx-rproxy:/etc/nginx/
     restart: always

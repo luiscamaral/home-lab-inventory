@@ -113,10 +113,11 @@ jobs:
         id: shell
         run: |
           sudo apt-get update && sudo apt-get install -y shellcheck
-          echo "Running shellcheck on shell scripts..."
+          echo "Running shellcheck on shell scripts (using .shellcheckrc config)..."
           SHELL_FILES=$(find . -name "*.sh" -not -path "./.git/*" -not -path "./node_modules/*" -not -path "./.history/*")
           if [ -n "$SHELL_FILES" ]; then
-            if echo "$SHELL_FILES" | xargs shellcheck -e SC1091 -e SC2034 -e SC2154; then
+            # shellcheck will automatically use .shellcheckrc in the project root
+            if echo "$SHELL_FILES" | xargs shellcheck; then
               echo "result=success" >> $GITHUB_OUTPUT
               echo "✅ Shell script linting passed"
             else

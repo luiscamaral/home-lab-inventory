@@ -20,7 +20,7 @@ This repository uses [Conventional Commits](https://www.conventionalcommits.org/
 
 ## 📝 Commit Message Format
 
-```
+```text
 <type>(<scope>): <subject>
 
 [optional body]
@@ -30,7 +30,7 @@ This repository uses [Conventional Commits](https://www.conventionalcommits.org/
 
 ### Examples
 
-```bash
+```text
 feat(docker): add nginx reverse proxy configuration
 fix(security): update gitleaks config to ignore test files
 docs(inventory): add documentation for new proxmox nodes

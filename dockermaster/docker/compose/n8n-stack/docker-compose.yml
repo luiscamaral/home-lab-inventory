@@ -15,7 +15,8 @@ services:
       timeout: 5s
       retries: 30
     env_file: .env
-    volumes: [pgdata:/var/lib/postgresql/data]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
   n8n:
     image: n8nio/n8n:latest
     restart: unless-stopped

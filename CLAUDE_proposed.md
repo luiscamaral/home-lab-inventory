@@ -15,7 +15,7 @@
 
 ## 📁 Project Structure
 
-```
+```text
 inventory/          # Infrastructure documentation
 ├── servers.md
 ├── virtual-machines.md  

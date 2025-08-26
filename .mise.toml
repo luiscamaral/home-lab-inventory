@@ -1,0 +1,6 @@
+[tools]
+python = { version = "3.12", virtualenv = ".venv" }
+"aqua:astral-sh/uv" = "latest"
+
+[env]
+_.python.venv = { path = ".venv", create = true }
