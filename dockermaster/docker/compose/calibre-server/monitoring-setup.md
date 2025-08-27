@@ -32,7 +32,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-      
+
   calibre-web:
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8083/"]
@@ -100,9 +100,9 @@ name: Deploy to Portainer
 on:
   push:
     branches: [main]
-    paths: 
+    paths:
       - 'dockermaster/docker/compose/calibre-server/**'
-      
+
 jobs:
   deploy:
     runs-on: ubuntu-latest

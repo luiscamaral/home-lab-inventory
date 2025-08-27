@@ -9,7 +9,7 @@
 - **CPU**: 20 cores (Intel Xeon E5-2680 v2 @ 2.80GHz)
 - **RAM**: 62 GB total (4.2 GB used, 58 GB available)
 - **Storage**: 192 GB SSD (35% used - 64GB used, 119GB available)
-- **Network**: 
+- **Network**:
   - Main IP: 192.168.48.44/20
   - Server Network: 192.168.59.1/26 (macvlan)
 - **Docker Version**: 28.3.2 (API 1.51)
@@ -26,13 +26,13 @@
 ### 📚 Calibre Server
 - **Image**: calibre-calibre
 - **Status**: Up 7 days
-- **Ports**: 
+- **Ports**:
   - 58080:8080 (Web UI)
   - 58081:8081 (Server)
   - 58181:8181
   - 58090:9090
 - **Resources**: 2.55% CPU, 553MB RAM (0.86%)
-- **Volumes**: 
+- **Volumes**:
   - `/nfs/calibre/Library` → `/Library`
   - `/nfs/calibre/config` → `/config`
   - `/nfs/calibre/upload` → `/upload`
@@ -44,7 +44,7 @@
 - **Status**: Up 7 days
 - **Ports**: 58083:8083
 - **Resources**: 0.02% CPU, 199MB RAM (0.31%)
-- **Volumes**: 
+- **Volumes**:
   - `/nfs/calibre/calibre-web/Library` → `/books`
   - `/nfs/calibre/calibre-web/config` → `/config`
 - **Purpose**: Web-based e-book reader interface
@@ -54,7 +54,7 @@
 - **Status**: Up 12 days
 - **Network**: 192.168.59.22 (macvlan)
 - **Resources**: 0.44% CPU, 2.25GB RAM (3.58%)
-- **Volumes**: 
+- **Volumes**:
   - `/nfs/dockermaster/docker/rundeck/data` → `/home/rundeck/server/data`
   - `/nfs/dockermaster/docker/rundeck/container-plugins`
   - `/var/run/docker.sock` → `/var/run/docker.sock`
@@ -76,7 +76,7 @@
 - **Status**: Up 12 days
 - **Network**: 192.168.59.2 (macvlan)
 - **Resources**: 0.04% CPU, 72MB RAM (0.11%)
-- **Volumes**: 
+- **Volumes**:
   - `/var/run/docker.sock` → `/var/run/docker.sock`
   - `portainer_data` volume
 - **Purpose**: Docker management UI
@@ -85,11 +85,11 @@
 ### 🌐 Bind9 DNS
 - **Image**: ubuntu/bind9:9.20-24.10_edge
 - **Status**: Up 12 days
-- **Ports**: 
+- **Ports**:
   - 53:53/tcp
   - 53:53/udp
 - **Resources**: 0.00% CPU, 12MB RAM (0.02%)
-- **Volumes**: 
+- **Volumes**:
   - `/nfs/dockermaster/docker/bind9/config` → `/etc/bind`
   - `/nfs/dockermaster/docker/bind9/cache` → `/var/cache/bind`
   - `/nfs/dockermaster/docker/bind9/records` → `/var/lib/bind`
@@ -125,7 +125,7 @@
 - **LiteLLM Service**: ghcr.io/berriai/litellm:main-stable (Exited 3 weeks ago)
 - **Prometheus**: prom/prometheus (Exited 2 weeks ago)
 - **PostgreSQL**: postgres:16 (Exited 2 weeks ago)
-- **Volumes**: 
+- **Volumes**:
   - `litellm_postgres_data`
   - `litellm_prometheus_data`
 - **Purpose**: LLM proxy and monitoring

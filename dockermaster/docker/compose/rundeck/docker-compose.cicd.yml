@@ -40,7 +40,7 @@ services:
       # Watchtower labels for automatic updates
       com.centurylinklabs.watchtower.enable: "true"
       com.centurylinklabs.watchtower.monitor-only: "false"
-      
+
   postgres:
     image: postgres:16-alpine
     container_name: postgres-rundeck

@@ -38,7 +38,7 @@ services:
       - /nfs/dockermaster/docker/rundeck/container-plugins:/home/rundeck/container-plugins
     depends_on:
       - postgres
-      
+
   postgres:
     image: postgres
     container_name: postgres-rundeck

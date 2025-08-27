@@ -10,46 +10,46 @@ monitoring:
       timeout: 10s
       expected_status: 200
       description: "Calibre server web interface health check"
-      
+
     calibre_web:
       endpoint: http://localhost:8083/
       interval: 30s
       timeout: 10s
       expected_status: 200
       description: "Calibre-Web interface health check"
-      
+
   alerts:
     container_down:
       threshold: 2_minutes
       action: notify
       severity: high
       description: "Container has been unresponsive for 2+ minutes"
-      
+
     high_memory:
       threshold: 80%
       action: alert
       severity: medium
       description: "Memory usage exceeds 80% of allocated resources"
-      
+
     critical_memory:
       threshold: 95%
       action: critical
       severity: critical
       description: "Memory usage critical - potential OOM risk"
-      
+
     volume_full:
       threshold: 90%
       action: critical
       severity: critical
       description: "Volume usage exceeds 90% - immediate action required"
-      
+
     high_cpu:
       threshold: 85%
       duration: 5_minutes
       action: alert
       severity: medium
       description: "CPU usage sustained above 85% for 5+ minutes"
-      
+
   metrics:
     - cpu_usage
     - memory_usage
@@ -58,27 +58,27 @@ monitoring:
     - disk_io
     - container_uptime
     - response_time
-    
+
   baselines:
     calibre_server:
       normal_memory: "200-500MB"
       normal_cpu: "5-20%"
       startup_time: "30-60s"
-      
+
     calibre_web:
       normal_memory: "100-300MB"
       normal_cpu: "2-15%"
       startup_time: "15-30s"
-      
+
   notification_channels:
     portainer_webhooks:
       enabled: true
       webhook_url: "${PORTAINER_WEBHOOK_URL}"
-      
+
     log_aggregation:
       enabled: true
       retention: "30d"
-      
+
   dashboard:
     refresh_interval: 30s
     charts:

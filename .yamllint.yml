@@ -50,7 +50,6 @@ rules:
   # Colons - Docker and GitHub Actions often need flexible spacing
   colons:
     max-spaces-before: 0
-    min-spaces-after: 1
     max-spaces-after: 1
 
   # Commas

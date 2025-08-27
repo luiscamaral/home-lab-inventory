@@ -9,15 +9,15 @@ on:
   # Trigger on push to main branch
   push:
     branches: [ main ]
-  
+
   # Trigger on pull requests targeting main
   pull_request:
     branches: [ main ]
-  
+
   # Scheduled daily scan at 2 AM UTC
   schedule:
     - cron: '0 2 * * *'
-  
+
   # Allow manual triggering
   workflow_dispatch:
     inputs:
@@ -60,7 +60,7 @@ jobs:
         with:
           # Fetch full history for comprehensive secret scanning
           fetch-depth: 0
-      
+
       # Cache Gitleaks database for faster subsequent runs
       - name: Cache Gitleaks database
         uses: actions/cache@v4
@@ -69,7 +69,7 @@ jobs:
           key: gitleaks-db-${{ runner.os }}-${{ hashFiles('**/*.toml', '.gitleaks.toml') }}
           restore-keys: |
             gitleaks-db-${{ runner.os }}-
-      
+
       - name: Run Gitleaks secret detection
         uses: gitleaks/gitleaks-action@v2
         env:
@@ -80,14 +80,14 @@ jobs:
           format: sarif
           output: gitleaks.sarif
           config-path: .gitleaks.toml # Optional: custom config
-      
+
       - name: Upload Gitleaks SARIF report
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: gitleaks.sarif
           category: secrets
-      
+
       - name: Archive secret scan results
         if: always()
         uses: actions/upload-artifact@v4
@@ -124,7 +124,7 @@ cleanup:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Find all Dockerfiles
         id: find-dockerfiles
         run: |
@@ -133,7 +133,7 @@ cleanup:
           echo "$DOCKERFILES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           echo "Found Dockerfiles: $DOCKERFILES"
-      
+
       - name: Run Hadolint on all Dockerfiles
         if: steps.find-dockerfiles.outputs.dockerfiles != ''
         run: |
@@ -141,10 +141,10 @@ cleanup:
           wget -O hadolint https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64
           chmod +x hadolint
           sudo mv hadolint /usr/local/bin/
-          
+
           # Create output directory
           mkdir -p hadolint-results
-          
+
           # Run hadolint on each Dockerfile
           while IFS= read -r dockerfile; do
             if [ -n "$dockerfile" ] && [ -f "$dockerfile" ]; then
@@ -154,7 +154,7 @@ cleanup:
               hadolint "$dockerfile" --format json > "hadolint-results/hadolint-${filename}.json" || true
             fi
           done <<< "${{ steps.find-dockerfiles.outputs.dockerfiles }}"
-      
+
       - name: Merge Hadolint SARIF reports
         if: steps.find-dockerfiles.outputs.dockerfiles != ''
         run: |
@@ -162,13 +162,13 @@ cleanup:
           import json
           import os
           import glob
-          
+
           merged_sarif = {
               'version': '2.1.0',
               'schema': 'https://json.schemastore.org/sarif-2.1.0.json',
               'runs': []
           }
-          
+
           for sarif_file in glob.glob('hadolint-results/*.sarif'):
               try:
                   with open(sarif_file, 'r') as f:
@@ -178,18 +178,18 @@ cleanup:
               except json.JSONDecodeError:
                   print(f'Warning: Could not parse {sarif_file}')
                   continue
-          
+
           with open('hadolint-merged.sarif', 'w') as f:
               json.dump(merged_sarif, f, indent=2)
           "
-      
+
       - name: Upload Hadolint SARIF report
         if: always() && steps.find-dockerfiles.outputs.dockerfiles != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: hadolint-merged.sarif
           category: hadolint
-      
+
       - name: Archive Hadolint results
         if: always()
         uses: actions/upload-artifact@v4
@@ -207,7 +207,7 @@ cleanup:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       # Cache Trivy database for faster subsequent runs
       - name: Cache Trivy database
         uses: actions/cache@v4
@@ -216,7 +216,7 @@ cleanup:
           key: trivy-db-${{ runner.os }}-${{ hashFiles('**/*.dockerfile', '**/Dockerfile') }}
           restore-keys: |
             trivy-db-${{ runner.os }}-
-      
+
       # Scan filesystem for vulnerabilities and misconfigurations
       - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@master
@@ -231,7 +231,7 @@ cleanup:
           exit-code: '0'
           # Skip files that are not relevant for security scanning
           skip-files: '.git/,**/.git/,**/node_modules/**,**/.history/**'
-      
+
       # Scan specific Dockerfile
       - name: Run Trivy Dockerfile scan
         if: always()
@@ -242,7 +242,7 @@ cleanup:
           format: 'sarif'
           output: 'trivy-dockerfile.sarif'
           exit-code: '0'
-      
+
       # Scan docker-compose files for security issues
       - name: Run Trivy docker-compose scan
         if: always()
@@ -253,28 +253,28 @@ cleanup:
           format: 'sarif'
           output: 'trivy-compose.sarif'
           exit-code: '0'
-      
+
       - name: Upload Trivy filesystem SARIF report
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-fs.sarif
           category: trivy-filesystem
-      
+
       - name: Upload Trivy Dockerfile SARIF report
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-dockerfile.sarif
           category: trivy-dockerfile
-      
+
       - name: Upload Trivy docker-compose SARIF report
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-compose.sarif
           category: trivy-docker-compose
-      
+
       - name: Archive container scan results
         if: always()
         uses: actions/upload-artifact@v4
@@ -294,46 +294,46 @@ cleanup:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Find recently built images
         id: find-images
         run: |
           # Get list of images that might have been built
           IMAGES=""
-          
+
           # Check for calibre-server (has Dockerfile)
           if [ -f "dockermaster/docker/compose/calibre-server/Dockerfile" ]; then
             IMAGES="$IMAGES ghcr.io/${{ env.IMAGE_PREFIX }}/calibre-server:latest"
           fi
-          
+
           # Add other images that might be built
           # This list should match what's built in build-multi-type-images.yml
           POTENTIAL_IMAGES="
           ghcr.io/${{ env.IMAGE_PREFIX }}/calibre-server:latest
           "
-          
+
           echo "Potential images to scan: $POTENTIAL_IMAGES"
           echo "images=$POTENTIAL_IMAGES" >> $GITHUB_OUTPUT
-      
+
       - name: Scan built images with Trivy
         if: steps.find-images.outputs.images != ''
         run: |
           mkdir -p image-scan-results
-          
+
           for image in ${{ steps.find-images.outputs.images }}; do
             if [ -n "$image" ]; then
               echo "Scanning $image"
               # Try to pull the image first
               if docker pull "$image" 2>/dev/null; then
                 image_name=$(echo "$image" | sed 's|/|-|g' | sed 's|:|-|g')
-                
+
                 # Scan the image
                 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
                   -v "$PWD:/workspace" \
@@ -341,7 +341,7 @@ cleanup:
                   --format sarif \
                   --output "/workspace/image-scan-results/trivy-${image_name}.sarif" \
                   "$image" || true
-                  
+
                 # Also generate JSON for easier parsing
                 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
                   -v "$PWD:/workspace" \
@@ -354,7 +354,7 @@ cleanup:
               fi
             fi
           done
-      
+
       - name: Upload built image scan results
         if: always()
         uses: actions/upload-artifact@v4
@@ -371,18 +371,18 @@ cleanup:
       actions: read
       contents: read
       security-events: write
-    
+
     strategy:
       fail-fast: false
       matrix:
         # CodeQL supports: cpp, csharp, go, java, javascript, python, ruby, swift
         # Analyzing shell scripts and configuration files
         language: [ 'javascript' ] # Using JS for shell script analysis capabilities
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       # Cache CodeQL database for faster analysis
       - name: Cache CodeQL database
         uses: actions/cache@v4
@@ -391,7 +391,7 @@ cleanup:
           key: codeql-${{ runner.os }}-${{ matrix.language }}-${{ github.sha }}
           restore-keys: |
             codeql-${{ runner.os }}-${{ matrix.language }}-
-      
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -405,11 +405,11 @@ cleanup:
               - '**/node_modules/**'
               - '**/.history/**'
               - '**/.cache/**'
-      
+
       # Autobuild attempts to build any compiled languages (none in this repo)
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
-      
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
@@ -423,7 +423,7 @@ cleanup:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       # Cache dependency databases
       - name: Cache dependency scan data
         uses: actions/cache@v4
@@ -435,7 +435,7 @@ cleanup:
           key: deps-${{ runner.os }}-${{ hashFiles('**/package*.json', '**/requirements*.txt', '**/go.mod', '**/Gemfile*') }}
           restore-keys: |
             deps-${{ runner.os }}-
-      
+
       # Since this repo doesn't have traditional dependencies,
       # we'll scan for vulnerable Docker base images and scripts
       - name: Run Trivy for known vulnerabilities in files
@@ -448,7 +448,7 @@ cleanup:
           scanners: 'vuln'
           exit-code: '0'
           skip-files: '.git/,**/.git/,**/node_modules/**,**/.history/**'
-      
+
       # Scan for license compliance in any dependencies
       - name: Run license scan
         run: |
@@ -460,7 +460,7 @@ cleanup:
           else
             echo "No dependency files found, skipping license scan"
           fi
-      
+
       - name: Archive dependency scan results
         if: always()
         uses: actions/upload-artifact@v4
@@ -478,15 +478,15 @@ cleanup:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Download all scan results
         uses: actions/download-artifact@v4
         with:
           path: scan-results
-      
+
       - name: Install jq for JSON processing
         run: sudo apt-get update && sudo apt-get install -y jq
-      
+
       - name: Generate comprehensive security summary
         id: security-summary
         run: |
@@ -494,13 +494,13 @@ cleanup:
           echo "" >> security-summary.md
           echo "*Scan performed on $(date -u +'%Y-%m-%d %H:%M:%S UTC')*" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           # Initialize counters
           TOTAL_CRITICAL=0
           TOTAL_HIGH=0
           TOTAL_MEDIUM=0
           TOTAL_LOW=0
-          
+
           # Process Gitleaks results
           echo "### 🕵️ Secret Detection (Gitleaks)" >> security-summary.md
           GITLEAKS_FILE=$(find scan-results -name "gitleaks.sarif" | head -1)
@@ -517,7 +517,7 @@ cleanup:
             echo "⚠️ Secret scan results not available" >> security-summary.md
           fi
           echo "" >> security-summary.md
-          
+
           # Process Hadolint results
           echo "### 🐋 Dockerfile Security Linting (Hadolint)" >> security-summary.md
           HADOLINT_FILE=$(find scan-results -name "hadolint-merged.sarif" | head -1)
@@ -528,12 +528,12 @@ cleanup:
               HADOLINT_ERROR=$(jq '[.runs[0].results[] | select(.level == "error")] | length' "$HADOLINT_FILE" 2>/dev/null || echo "0")
               HADOLINT_WARNING=$(jq '[.runs[0].results[] | select(.level == "warning")] | length' "$HADOLINT_FILE" 2>/dev/null || echo "0")
               HADOLINT_INFO=$(jq '[.runs[0].results[] | select(.level == "note")] | length' "$HADOLINT_FILE" 2>/dev/null || echo "0")
-              
+
               echo "⚠️ **$HADOLINT_COUNT Dockerfile issues found**" >> security-summary.md
               echo "- Errors: $HADOLINT_ERROR" >> security-summary.md
               echo "- Warnings: $HADOLINT_WARNING" >> security-summary.md
               echo "- Info: $HADOLINT_INFO" >> security-summary.md
-              
+
               TOTAL_HIGH=$((TOTAL_HIGH + HADOLINT_ERROR))
               TOTAL_MEDIUM=$((TOTAL_MEDIUM + HADOLINT_WARNING))
             else
@@ -543,7 +543,7 @@ cleanup:
             echo "✅ Dockerfile linting completed" >> security-summary.md
           fi
           echo "" >> security-summary.md
-          
+
           # Process Trivy results
           echo "### 🐳 Container Security (Trivy)" >> security-summary.md
           TRIVY_FILES=$(find scan-results -name "trivy-*.sarif" | grep -v merged)
@@ -553,7 +553,7 @@ cleanup:
               COUNT=$(jq '.runs[0].results | length' "$trivy_file" 2>/dev/null || echo "0")
               TOTAL_TRIVY=$((TOTAL_TRIVY + COUNT))
             done
-            
+
             if [ "$TOTAL_TRIVY" -gt 0 ]; then
               echo "⚠️ **$TOTAL_TRIVY security issues found in containers/configurations**" >> security-summary.md
               TOTAL_MEDIUM=$((TOTAL_MEDIUM + TOTAL_TRIVY))
@@ -564,7 +564,7 @@ cleanup:
             echo "✅ Container scan completed successfully" >> security-summary.md
           fi
           echo "" >> security-summary.md
-          
+
           # Process built image scan results
           echo "### 📦 Built Image Security" >> security-summary.md
           IMAGE_SCAN_FILES=$(find scan-results -path "*built-image-scan-results*" -name "*.json" 2>/dev/null || true)
@@ -576,7 +576,7 @@ cleanup:
                 TOTAL_IMAGE_ISSUES=$((TOTAL_IMAGE_ISSUES + VULN_COUNT))
               fi
             done
-            
+
             if [ "$TOTAL_IMAGE_ISSUES" -gt 0 ]; then
               echo "⚠️ **$TOTAL_IMAGE_ISSUES vulnerabilities found in built images**" >> security-summary.md
               TOTAL_HIGH=$((TOTAL_HIGH + TOTAL_IMAGE_ISSUES))
@@ -587,12 +587,12 @@ cleanup:
             echo "ℹ️ Built image scanning skipped or no images found" >> security-summary.md
           fi
           echo "" >> security-summary.md
-          
+
           # Add CodeQL status
           echo "### 🔍 Code Analysis (CodeQL)" >> security-summary.md
           echo "✅ CodeQL analysis completed - check Security tab for detailed results" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           # Security summary
           echo "### 📊 Security Summary" >> security-summary.md
           TOTAL_ISSUES=$((TOTAL_CRITICAL + TOTAL_HIGH + TOTAL_MEDIUM + TOTAL_LOW))
@@ -603,7 +603,7 @@ cleanup:
             echo "- Medium: $TOTAL_MEDIUM" >> security-summary.md
             echo "- Low: $TOTAL_LOW" >> security-summary.md
             echo "" >> security-summary.md
-            
+
             if [ "$TOTAL_CRITICAL" -gt 0 ]; then
               echo "🚨 **CRITICAL ISSUES MUST BE RESOLVED BEFORE MERGE**" >> security-summary.md
             elif [ "$TOTAL_HIGH" -gt 10 ]; then
@@ -613,7 +613,7 @@ cleanup:
             echo "🎉 **No security issues detected!**" >> security-summary.md
           fi
           echo "" >> security-summary.md
-          
+
           # Add links to security features
           echo "### 🔗 Detailed Results" >> security-summary.md
           echo "- [Security Overview](https://github.com/${{ github.repository }}/security)" >> security-summary.md
@@ -621,18 +621,18 @@ cleanup:
           echo "- [Secret Scanning](https://github.com/${{ github.repository }}/security/secret-scanning)" >> security-summary.md
           echo "- [Dependabot Alerts](https://github.com/${{ github.repository }}/security/dependabot)" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           # Set output for use in PR comment and security gate
           {
             echo 'security_report<<EOF'
             cat security-summary.md
             echo EOF
           } >> $GITHUB_OUTPUT
-          
+
           echo "total_critical=$TOTAL_CRITICAL" >> $GITHUB_OUTPUT
           echo "total_high=$TOTAL_HIGH" >> $GITHUB_OUTPUT
           echo "total_issues=$TOTAL_ISSUES" >> $GITHUB_OUTPUT
-      
+
       - name: Comment security results on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -642,18 +642,18 @@ cleanup:
             const securityReport = `${{ steps.security-summary.outputs.security_report }}`;
             const totalCritical = parseInt('${{ steps.security-summary.outputs.total_critical }}') || 0;
             const totalHigh = parseInt('${{ steps.security-summary.outputs.total_high }}') || 0;
-            
+
             // Find existing security comment
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
+
             const botComment = comments.data.find(comment =>
               comment.user.type === 'Bot' && comment.body.includes('🔒 Comprehensive Security Scan Results')
             );
-            
+
             // Add status check indicator based on results
             let statusIndicator = '';
             if (totalCritical > 0) {
@@ -663,9 +663,9 @@ cleanup:
             } else {
               statusIndicator = '✅ **SECURITY GATE: PASSED** - No critical security issues found\n\n';
             }
-            
+
             const finalReport = statusIndicator + securityReport;
-            
+
             if (botComment) {
               // Update existing comment
               await github.rest.issues.updateComment({
@@ -693,22 +693,22 @@ cleanup:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Download scan results
         uses: actions/download-artifact@v4
         with:
           path: scan-results
-      
+
       - name: Install jq for JSON processing
         run: sudo apt-get update && sudo apt-get install -y jq
-      
+
       - name: Evaluate security findings
         run: |
           echo "🔍 Evaluating security scan results..."
           EXIT_CODE=0
           CRITICAL_ISSUES=0
           HIGH_ISSUES=0
-          
+
           # Check for secrets (CRITICAL - always fail)
           GITLEAKS_FILE=$(find scan-results -name "gitleaks.sarif" | head -1)
           if [ -f "$GITLEAKS_FILE" ]; then
@@ -719,7 +719,7 @@ cleanup:
               EXIT_CODE=1
             fi
           fi
-          
+
           # Check for critical Dockerfile issues
           HADOLINT_FILE=$(find scan-results -name "hadolint-merged.sarif" | head -1)
           if [ -f "$HADOLINT_FILE" ]; then
@@ -731,7 +731,7 @@ cleanup:
               # EXIT_CODE=1
             fi
           fi
-          
+
           # Check for critical/high severity container issues
           TRIVY_FILES=$(find scan-results -name "trivy-*.sarif" | grep -v merged)
           if [ -n "$TRIVY_FILES" ]; then
@@ -740,11 +740,11 @@ cleanup:
               HIGH_VULN=$(jq '[.runs[0].results[] | select(.level == "error")] | length' "$trivy_file" 2>/dev/null || echo "0")
               TOTAL_HIGH_VULN=$((TOTAL_HIGH_VULN + HIGH_VULN))
             done
-            
+
             if [ "$TOTAL_HIGH_VULN" -gt 0 ]; then
               echo "⚠️ HIGH: $TOTAL_HIGH_VULN high-severity container vulnerabilities found"
               HIGH_ISSUES=$((HIGH_ISSUES + TOTAL_HIGH_VULN))
-              
+
               # Fail if more than 5 high-severity vulnerabilities
               if [ "$TOTAL_HIGH_VULN" -gt 5 ]; then
                 echo "❌ CRITICAL: Too many high-severity vulnerabilities ($TOTAL_HIGH_VULN > 5)"
@@ -752,7 +752,7 @@ cleanup:
               fi
             fi
           fi
-          
+
           # Check built image vulnerabilities
           IMAGE_SCAN_FILES=$(find scan-results -path "*built-image-scan-results*" -name "*.json" 2>/dev/null || true)
           if [ -n "$IMAGE_SCAN_FILES" ]; then
@@ -763,11 +763,11 @@ cleanup:
                 TOTAL_IMAGE_HIGH=$((TOTAL_IMAGE_HIGH + HIGH_VULN))
               fi
             done
-            
+
             if [ "$TOTAL_IMAGE_HIGH" -gt 0 ]; then
               echo "⚠️ HIGH: $TOTAL_IMAGE_HIGH high/critical vulnerabilities in built images"
               HIGH_ISSUES=$((HIGH_ISSUES + TOTAL_IMAGE_HIGH))
-              
+
               # Fail if more than 3 critical vulnerabilities in images
               if [ "$TOTAL_IMAGE_HIGH" -gt 3 ]; then
                 echo "❌ CRITICAL: Too many high/critical vulnerabilities in images ($TOTAL_IMAGE_HIGH > 3)"
@@ -775,13 +775,13 @@ cleanup:
               fi
             fi
           fi
-          
+
           # Summary
           echo "\n📊 Security Gate Summary:"
           echo "- Critical Issues: $CRITICAL_ISSUES"
           echo "- High Issues: $HIGH_ISSUES"
           echo "- Total Issues Evaluated: $((CRITICAL_ISSUES + HIGH_ISSUES))"
-          
+
           if [ $EXIT_CODE -eq 0 ]; then
             echo "\n✅ Security gate passed - no critical blocking issues found"
             if [ "$HIGH_ISSUES" -gt 0 ]; then
@@ -797,9 +797,9 @@ cleanup:
               echo "- Excessive high-priority vulnerabilities detected"
             fi
           fi
-          
+
           exit $EXIT_CODE
-      
+
       - name: Upload security gate results
         if: always()
         uses: actions/upload-artifact@v4
@@ -827,19 +827,19 @@ cleanup:
           echo "- CodeQL Analysis: ${{ needs.codeql-analysis.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Security Gate: ${{ needs.security-gate.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Calculate cache effectiveness (placeholder - would need actual metrics)
           echo "### 💾 Cache Effectiveness" >> $GITHUB_STEP_SUMMARY
           echo "- Trivy DB Cache: Enabled" >> $GITHUB_STEP_SUMMARY
           echo "- Gitleaks Cache: Enabled" >> $GITHUB_STEP_SUMMARY
           echo "- CodeQL Cache: Enabled" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
           echo "- [Security Tab](https://github.com/${{ github.repository }}/security)" >> $GITHUB_STEP_SUMMARY
           echo "- [Actions](https://github.com/${{ github.repository }}/actions)" >> $GITHUB_STEP_SUMMARY
           echo "- [Code Scanning](https://github.com/${{ github.repository }}/security/code-scanning)" >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Cleanup old artifacts
         if: github.event_name == 'schedule'
         run: |
@@ -867,7 +867,7 @@ cleanup:
           echo ""
           echo "Direct link to this run:"
           echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          
+
           # Integration endpoints (uncomment and configure as needed)
           # Slack integration
           # if [ -n "${{ secrets.SLACK_WEBHOOK }}" ]; then
@@ -875,20 +875,20 @@ cleanup:
           #     --data '{"text":"🚨 Security issues found in ${{ github.repository }}\nScan: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
           #     ${{ secrets.SLACK_WEBHOOK }}
           # fi
-          
+
           # Teams integration
           # if [ -n "${{ secrets.TEAMS_WEBHOOK }}" ]; then
           #   curl -X POST -H 'Content-type: application/json' \
           #     --data '{"text":"🚨 Security issues found in ${{ github.repository }}"}' \
           #     ${{ secrets.TEAMS_WEBHOOK }}
           # fi
-          
+
           # Email integration (using a service like SendGrid)
           # if [ -n "${{ secrets.SENDGRID_API_KEY }}" ]; then
           #   # Send email notification
           #   echo "Email notification would be sent here"
           # fi
-      
+
       - name: Update external security dashboard
         if: always()
         run: |
@@ -898,7 +898,7 @@ cleanup:
           echo "- Compliance tracking systems"
           echo "- Issue tracking systems"
           echo "- Metrics collection systems"
-          
+
       - name: Generate security badge
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
@@ -910,10 +910,10 @@ cleanup:
             BADGE_STATUS="failing"
             BADGE_COLOR="red"
           fi
-          
+
           echo "Security Status Badge: $BADGE_STATUS"
           echo "Badge Color: $BADGE_COLOR"
-          
+
           # Could integrate with shields.io or similar service
           # curl -X POST "https://your-badge-service.com/update" \
           #   -d "{\"repo\": \"${{ github.repository }}\", \"status\": \"$BADGE_STATUS\", \"color\": \"$BADGE_COLOR\"}"

@@ -10,16 +10,16 @@ if [ ! -z "$RUNNING_CONTAINERS" ]; then
     echo "Found running calibre containers:"
     echo "$RUNNING_CONTAINERS"
     echo "Stopping calibre containers gracefully..."
-    
+
     # Stop containers gracefully
     docker ps --filter "name=calibre" --format "{{.Names}}" | while read container; do
         echo "Stopping container: $container"
         docker stop "$container" --time 30
     done
-    
+
     echo "Waiting for containers to stop..."
     sleep 5
-    
+
     # Verify containers are stopped
     STILL_RUNNING=$(docker ps --filter "name=calibre" --format "{{.Names}}")
     if [ ! -z "$STILL_RUNNING" ]; then

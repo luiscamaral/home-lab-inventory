@@ -70,7 +70,7 @@ jobs:
             echo "::warning::WEBHOOK_URL secret not configured. Skipping webhook deployment."
             exit 0
           fi
-          
+
           curl -X POST "$WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -H "X-Github-Token: ${WEBHOOK_TOKEN}" \
@@ -108,32 +108,32 @@ jobs:
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
             set -e
-            
+
             # Function to deploy a service
             deploy_service() {
               local service=$1
               echo "Deploying $service..."
-              
+
               if [ ! -d "${{ env.DEPLOY_PATH }}/$service" ]; then
                 echo "Service directory not found: ${{ env.DEPLOY_PATH }}/$service"
                 return 1
               fi
-              
+
               cd "${{ env.DEPLOY_PATH }}/$service"
-              
+
               # Pull latest images
               docker compose pull
-              
+
               # Deploy with zero downtime
               docker compose up -d --remove-orphans
-              
+
               # Wait for health checks
               sleep 5
-              
+
               # Show status
               docker compose ps
             }
-            
+
             # Deploy services
             if [ "${{ github.event.inputs.service }}" = "all" ]; then
               for dir in ${{ env.DEPLOY_PATH }}/*/; do
@@ -145,7 +145,7 @@ jobs:
             else
               deploy_service "${{ github.event.inputs.service }}"
             fi
-            
+
             echo "Deployment completed!"
 
       - name: Generate deployment summary
@@ -170,7 +170,7 @@ jobs:
             echo "::warning::WATCHTOWER_HTTP_API_URL not configured. Watchtower will pull on next scheduled run."
             exit 0
           fi
-          
+
           curl -H "Authorization: Bearer ${WATCHTOWER_HTTP_API_TOKEN}" \
                "${WATCHTOWER_HTTP_API_URL}/v1/update"
 
