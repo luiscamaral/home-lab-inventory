@@ -4,7 +4,7 @@
 - For execute sudo on proxmox, set this first `SUDO_ASKPASS=$HOME/.config/bin/answer.sh`.
 - Access NAS server (synology) with `ssh nas`
 - Access dockermaster (ubuntu linux) server, repository of all home docker container, with command `ssh dockermaster`
-- For execute sudo on proxmox, set this first `SUDO_ASKPASS=$HOME/.config/bin/answer`.
+- For execute sudo on dockermaster, set this first `SUDO_ASKPASS=$HOME/.config/bin/answer`.
 - Containers can run on internal LAN using docker-servers-net, and still have access to internet.
     {
         "Name": "docker-servers-net",
@@ -28,10 +28,19 @@
                 }
             ]
         },...
-- We need to implement passive Continuous Deployment from dockermaster.
+- GitHub runner service (github-runner-homelab) is running on dockermaster for CI/CD.
+- Vault server at http://vault.d.lcamaral.com (192.168.59.25) for secret management.
+- Portainer at 192.168.59.2 for container management.
+
+# Docker Services Structure
+
+- Current and valid services are stored at dockermaster:/nfs/dockermaster/docker/<service_name>/
+- Each service has its own directory with docker-compose.yml and configuration files
+- Services use docker-servers-net macvlan network for internal LAN communication
+- Secrets should be stored in Vault at http://vault.d.lcamaral.com
+- GitHub runner has read-only access to /nfs/dockermaster/docker for deployments
 
 # Inventory
-
 - Document all servers, VMs and Containers on the files: `inventory/servers.md`, `inventory/virtual-machines.md`, and `inventory/docker-containers.md`
 - Document all commands used and versions available, identifying the servers, on the file: `inventory/commands-available.md`
 - Current project status and documents must be stored at `docs` directory.
