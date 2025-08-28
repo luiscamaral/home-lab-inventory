@@ -48,6 +48,31 @@ __pycache__/
 # Ansible
 *.retry
 
-# Docker volumes
+# Docker volumes and data
 volumes/
 data/
+
+# Sync and backup directories
+*-live/
+*-sync/
+*-backup/
+backups/
+
+# Cache directories
+.cache/
+cache/
+*.cache
+
+# Runtime files
+*.pid
+*.sock
+
+# Monitoring and metrics
+metrics/
+prometheus_data/
+grafana_data/
+
+# Database dumps and backups
+*.sql
+*.dump
+*.backup
