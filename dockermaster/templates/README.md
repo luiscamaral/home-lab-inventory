@@ -12,7 +12,7 @@ This directory contains templates for creating new services in the dockermaster 
 ### 2. Docker Compose Template
 - **File**: `docker-compose.yml`
 - **Purpose**: Standard Docker Compose configuration
-- **Features**: 
+- **Features**:
   - Macvlan network configuration
   - Volume management
   - Health checks

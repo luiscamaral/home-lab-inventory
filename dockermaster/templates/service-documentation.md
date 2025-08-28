@@ -33,7 +33,7 @@
 ### Network Configuration
 - **Network**: docker-servers-net (macvlan)
 - **IP**: 192.168.59.X
-- **Ports**: 
+- **Ports**:
   - Internal: [port]
   - External: [port] (if applicable)
 
