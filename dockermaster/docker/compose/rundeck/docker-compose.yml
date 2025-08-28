@@ -11,20 +11,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      tags:
-        - rundeck:local
+    image: rundeck:local
     container_name: rundeck
     hostname: rundeck-local
     environment:
       RUNDECK_SERVER_UUID: 2356DEE1-1A12-463C-8ABB-D6A9F44161B4
       RUNDECK_DATABASE_DRIVER: org.postgresql.Driver
       RUNDECK_DATABASE_USERNAME: rundeck
-      RUNDECK_DATABASE_PASSWORD: [REDACTED]
+      RUNDECK_DATABASE_PASSWORD: "${RUNDECK_DATABASE_PASSWORD}"
       RUNDECK_DATABASE_URL: jdbc:postgresql://postgres/rundeck?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
       RUNDECK_GRAILS_URL: http://rundeck.d.lcamaral.com
       RUNDECK_SERVER_FORWARDED: true
-      RUNDECK_STORAGE_CONVERTER_1_CONFIG_PASSWORD: [REDACTED]
-      RUNDECK_CONFIG_STORAGE_CONVERTER_1_CONFIG_PASSWORD: [REDACTED]
+      RUNDECK_STORAGE_CONVERTER_1_CONFIG_PASSWORD: "${RUNDECK_STORAGE_PASSWORD}"
+      RUNDECK_CONFIG_STORAGE_CONVERTER_1_CONFIG_PASSWORD: "${RUNDECK_CONFIG_PASSWORD}"
       RUNDECK_PASSWORD_RESET_ENABLED: true
     restart: always
     expose:
@@ -52,6 +51,6 @@ services:
     environment:
       - POSTGRES_DB=rundeck
       - POSTGRES_USER=rundeck
-      - POSTGRES_PASSWORD=[REDACTED]
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - /nfs/dockermaster/docker/rundeck/dbdata:/var/lib/postgresql/data
