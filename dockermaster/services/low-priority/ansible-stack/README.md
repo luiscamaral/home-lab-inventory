@@ -109,7 +109,7 @@ The stack consists of multiple interconnected services:
    - **Solution**: Check worker container logs and Redis connection
 
 ### Log Locations
-- **Container logs**: 
+- **Container logs**:
   - `docker logs ansible-stack-netbox`
   - `docker logs ansible-stack-netbox-worker`
   - `docker logs ansible-stack-netbox-housekeeping`

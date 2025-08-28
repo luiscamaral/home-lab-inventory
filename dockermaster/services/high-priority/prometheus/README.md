@@ -51,7 +51,7 @@ Comprehensive Prometheus monitoring stack designed to provide observability for 
 3. **System Metrics**:
    - node-exporter:9100 (dockermaster)
    - pfsense1.srv.lcamaral.com:9482 (firewall)
-4. **Network Monitoring**: 
+4. **Network Monitoring**:
    - SNMP monitoring of pfSense firewall
    - pfsense1.srv.lcamaral.com via SNMP exporter
 

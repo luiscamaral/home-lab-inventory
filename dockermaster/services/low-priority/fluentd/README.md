@@ -84,7 +84,7 @@ To deploy Fluentd:
 5. Set up monitoring and alerting
 
 ### Dependencies
-- **Future requirements**: 
+- **Future requirements**:
   - Data sources (applications, system logs)
   - Output destinations (Elasticsearch, databases)
   - Network connectivity to log sources

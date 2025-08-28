@@ -65,11 +65,11 @@ Arguments:
 
 Examples:
     $SCRIPT_NAME --all                    # Extract all services
-    $SCRIPT_NAME nginx grafana            # Extract specific services  
+    $SCRIPT_NAME nginx grafana            # Extract specific services
     $SCRIPT_NAME --list                   # List all available services
     $SCRIPT_NAME --check                  # Check compose file availability
     $SCRIPT_NAME --format json nginx      # Extract nginx config as JSON
-    
+
 Output Structure:
     output/compose-configs/
     ├── nginx/
@@ -89,11 +89,11 @@ EOF
 # Initialize output directory
 init_output_dir() {
     local output_dir="$1"
-    
+
     log_info "Initializing output directory: $output_dir"
-    
+
     mkdir -p "$output_dir"
-    
+
     # Create summary file
     cat > "$output_dir/summary.json" << 'EOF'
 {
@@ -105,20 +105,20 @@ init_output_dir() {
     "services": {}
 }
 EOF
-    
+
     log_success "Output directory initialized"
 }
 
 # Check if SSH helper is available and working
 check_ssh_connection() {
     log_info "Checking SSH connection to dockermaster..."
-    
+
     if [[ ! -x "$SSH_HELPER" ]]; then
         log_error "SSH helper script not found or not executable: $SSH_HELPER"
         log_info "Please run the SSH setup first"
         return 1
     fi
-    
+
     # Check if connection is active, establish if needed
     if ! "$SSH_HELPER" status >/dev/null 2>&1; then
         log_info "Establishing SSH connection..."
@@ -127,7 +127,7 @@ check_ssh_connection() {
             return 1
         fi
     fi
-    
+
     log_success "SSH connection ready"
     return 0
 }
@@ -135,48 +135,48 @@ check_ssh_connection() {
 # List available services on dockermaster
 list_services() {
     log_info "Listing available services on dockermaster..."
-    
+
     local services
     services=$("$SSH_HELPER" exec "find $DOCKER_BASE_PATH -maxdepth 1 -type d -name '[!.]*' | sort" 2>/dev/null) || {
         log_error "Failed to list services"
         return 1
     }
-    
+
     if [[ -z "$services" ]]; then
         log_warning "No services found in $DOCKER_BASE_PATH"
         return 1
     fi
-    
+
     echo "Available services:"
     echo "$services" | sed "s|$DOCKER_BASE_PATH/||g" | while read -r service; do
         echo "  - $service"
     done
-    
+
     local count
     count=$(echo "$services" | wc -l)
     log_success "Found $count services"
-    
+
     return 0
 }
 
 # Check which services have compose files
 check_compose_availability() {
     log_info "Checking compose file availability..."
-    
+
     local services
     services=$("$SSH_HELPER" exec "find $DOCKER_BASE_PATH -maxdepth 1 -type d -name '[!.]*' | sort" 2>/dev/null) || {
         log_error "Failed to list services"
         return 1
     }
-    
+
     echo "Service compose file status:"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    
+
     local total=0 available=0
-    
+
     echo "$services" | sed "s|$DOCKER_BASE_PATH/||g" | while read -r service; do
         total=$((total + 1))
-        
+
         local compose_file="$DOCKER_BASE_PATH/$service/docker-compose.yml"
         if "$SSH_HELPER" exec "test -f '$compose_file'" 2>/dev/null; then
             echo -e "  ✅ $service ${GREEN}(compose file exists)${NC}"
@@ -185,7 +185,7 @@ check_compose_availability() {
             echo -e "  ❌ $service ${RED}(no compose file)${NC}"
         fi
     done
-    
+
     log_success "Compose availability check completed"
     return 0
 }
@@ -194,12 +194,12 @@ check_compose_availability() {
 extract_service_metadata() {
     local service="$1"
     local output_dir="$2"
-    
+
     log_debug "Extracting metadata for service: $service"
-    
+
     local service_path="$DOCKER_BASE_PATH/$service"
     local metadata_file="$output_dir/$service/metadata.json"
-    
+
     # Create metadata JSON
     cat > "$metadata_file" << EOF
 {
@@ -217,27 +217,27 @@ extract_service_metadata() {
     "last_modified": {}
 }
 EOF
-    
+
     # Get directory contents
     local dir_contents
     dir_contents=$("$SSH_HELPER" exec "ls -la '$service_path'" 2>/dev/null || echo "") || true
-    
+
     if [[ -n "$dir_contents" ]]; then
         # Create a temporary file for directory contents
         local temp_contents
         temp_contents=$(mktemp)
         echo "$dir_contents" > "$temp_contents"
-        
+
         # Update metadata with directory contents (simplified JSON-safe format)
         local contents_json
         contents_json=$(echo "$dir_contents" | tail -n +2 | awk '{print "\"" $NF "\""}' | tr '\n' ',' | sed 's/,$//')
-        
+
         # Update JSON using a simple approach
         sed -i.bak "s/\"directory_contents\": \[\]/\"directory_contents\": [$contents_json]/" "$metadata_file"
         rm -f "$metadata_file.bak"
         rm -f "$temp_contents"
     fi
-    
+
     log_debug "Metadata extracted for $service"
 }
 
@@ -246,31 +246,31 @@ extract_service_config() {
     local service="$1"
     local output_dir="$2"
     local format="${3:-raw}"
-    
+
     log_info "Extracting configuration for service: $service"
-    
+
     local service_path="$DOCKER_BASE_PATH/$service"
     local service_output_dir="$output_dir/$service"
-    
+
     # Create service output directory
     mkdir -p "$service_output_dir"
-    
+
     # Check if service directory exists
     if ! "$SSH_HELPER" exec "test -d '$service_path'" 2>/dev/null; then
         log_error "Service directory not found: $service_path"
         return 1
     fi
-    
+
     # Extract docker-compose.yml
     local compose_file="$service_path/docker-compose.yml"
     if "$SSH_HELPER" exec "test -f '$compose_file'" 2>/dev/null; then
         log_debug "Extracting docker-compose.yml for $service"
-        
+
         "$SSH_HELPER" exec "cat '$compose_file'" > "$service_output_dir/docker-compose.yml" || {
             log_error "Failed to extract compose file for $service"
             return 1
         }
-        
+
         # Convert to different formats if requested
         case "$format" in
             "json")
@@ -286,20 +286,20 @@ extract_service_config() {
                 cp "$service_output_dir/docker-compose.yml" "$service_output_dir/docker-compose.yaml"
                 ;;
         esac
-        
+
         log_success "Compose file extracted for $service"
     else
         log_warning "No compose file found for $service"
         echo "# No docker-compose.yml found" > "$service_output_dir/no-compose.txt"
     fi
-    
+
     # Extract .env file if it exists
     local env_file="$service_path/.env"
     if "$SSH_HELPER" exec "test -f '$env_file'" 2>/dev/null; then
         log_debug "Extracting .env file for $service"
         "$SSH_HELPER" exec "cat '$env_file'" > "$service_output_dir/.env" || true
     fi
-    
+
     # Extract other common configuration files
     local config_files=(".env.local" ".env.production" "config.yml" "config.json" "settings.conf")
     for config_file in "${config_files[@]}"; do
@@ -309,13 +309,13 @@ extract_service_config() {
             "$SSH_HELPER" exec "cat '$full_path'" > "$service_output_dir/$config_file" 2>/dev/null || true
         fi
     done
-    
+
     # Create service analysis
     create_service_analysis "$service" "$service_output_dir"
-    
+
     # Extract metadata
     extract_service_metadata "$service" "$output_dir"
-    
+
     log_success "Service configuration extracted: $service"
     return 0
 }
@@ -324,11 +324,11 @@ extract_service_config() {
 create_service_analysis() {
     local service="$1"
     local service_output_dir="$2"
-    
+
     log_debug "Creating analysis for service: $service"
-    
+
     local analysis_file="$service_output_dir/analysis.txt"
-    
+
     cat > "$analysis_file" << EOF
 Service Analysis: $service
 Generated: $(date)
@@ -336,7 +336,7 @@ Generated: $(date)
 ============================================
 
 EOF
-    
+
     # Analyze compose file if it exists
     if [[ -f "$service_output_dir/docker-compose.yml" ]]; then
         cat >> "$analysis_file" << EOF
@@ -365,7 +365,7 @@ DOCKER COMPOSE ANALYSIS:
 
 EOF
     fi
-    
+
     # Analyze environment file if it exists
     if [[ -f "$service_output_dir/.env" ]]; then
         cat >> "$analysis_file" << EOF
@@ -374,7 +374,7 @@ $(grep -v "^#" "$service_output_dir/.env" 2>/dev/null | grep -v "^$" | sed 's/=.
 
 EOF
     fi
-    
+
     log_debug "Analysis created for $service"
 }
 
@@ -383,9 +383,9 @@ update_summary() {
     local output_dir="$1"
     local service="$2"
     local success="${3:-true}"
-    
+
     local summary_file="$output_dir/summary.json"
-    
+
     # Simple JSON update (not robust, but works for our case)
     if [[ "$success" == "true" ]]; then
         # This is a simplified approach - in production, use jq or proper JSON parsing
@@ -393,13 +393,13 @@ update_summary() {
     else
         log_debug "Marking $service as failed extraction"
     fi
-    
+
     # Update extraction date
     local current_date
     current_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     sed -i.bak "s/\"extraction_date\": \"\"/\"extraction_date\": \"$current_date\"/" "$summary_file"
     sed -i.bak "s/\"dockermaster_host\": \"\"/\"dockermaster_host\": \"$DOCKERMASTER_HOST\"/" "$summary_file"
-    
+
     rm -f "$summary_file.bak"
 }
 
@@ -408,35 +408,35 @@ extract_services() {
     local services=("$@")
     local output_dir="${OUTPUT_DIR}"
     local format="${FORMAT:-raw}"
-    
+
     if [[ ${#services[@]} -eq 0 ]]; then
         log_info "No services specified, extracting all services"
-        
+
         # Get all services
         local all_services
         all_services=$("$SSH_HELPER" exec "find $DOCKER_BASE_PATH -maxdepth 1 -type d -name '[!.]*' | sort" 2>/dev/null) || {
             log_error "Failed to list services"
             return 1
         }
-        
+
         # Convert to array of service names
         while IFS= read -r service_path; do
             services+=($(basename "$service_path"))
         done <<< "$all_services"
     fi
-    
+
     log_info "Extracting configurations for ${#services[@]} services"
-    
+
     # Initialize output directory
     init_output_dir "$output_dir"
-    
+
     local successful=0
     local failed=0
-    
+
     # Extract each service
     for service in "${services[@]}"; do
         log_info "Processing service: $service ($(($successful + $failed + 1))/${#services[@]})"
-        
+
         if extract_service_config "$service" "$output_dir" "$format"; then
             update_summary "$output_dir" "$service" "true"
             successful=$((successful + 1))
@@ -447,17 +447,17 @@ extract_services() {
             log_error "❌ $service"
         fi
     done
-    
+
     # Final summary
     log_info "Extraction completed"
     log_success "Successfully extracted: $successful services"
-    
+
     if [[ $failed -gt 0 ]]; then
         log_warning "Failed extractions: $failed services"
     fi
-    
+
     log_info "Output saved to: $output_dir"
-    
+
     return 0
 }
 
@@ -469,7 +469,7 @@ main() {
     local format="raw"
     local verbose=false
     local debug=false
-    
+
     # Parse command line arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -517,26 +517,26 @@ main() {
                 ;;
         esac
     done
-    
+
     # Set global format
     FORMAT="$format"
-    
+
     # Check SSH connection first
     if ! check_ssh_connection; then
         exit 1
     fi
-    
+
     # Handle list and check options
     if [[ "$list_only" == "true" ]]; then
         list_services
         exit $?
     fi
-    
+
     if [[ "$check_only" == "true" ]]; then
         check_compose_availability
         exit $?
     fi
-    
+
     # Validate format
     case "$format" in
         raw|yaml|json)
@@ -546,7 +546,7 @@ main() {
             exit 1
             ;;
     esac
-    
+
     # Extract services
     extract_services "${services[@]}"
 }

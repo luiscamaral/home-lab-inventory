@@ -118,7 +118,7 @@ Self-hosted GitHub Actions runner for the home-lab-inventory repository. This se
 
 ### Updates
 - **Update schedule**: Manual (Watchtower disabled)
-- **Update procedure**: 
+- **Update procedure**:
   1. Check for new image: `docker compose pull`
   2. Restart service: `docker compose up -d`
   3. Verify runner health in GitHub

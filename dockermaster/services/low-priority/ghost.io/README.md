@@ -95,7 +95,7 @@ The stack consists of two services:
    - **Solution**: Verify URL configuration and port forwarding
 
 ### Log Locations
-- **Container logs**: 
+- **Container logs**:
   - `docker logs <ghost-container-name>`
   - `docker logs <mysql-container-name>`
 - **Application logs**: Available in Ghost content volume
@@ -112,7 +112,7 @@ The stack consists of two services:
 - **Current version**: Ghost 5 (Alpine)
 - **MySQL version**: 8.0
 - **Update schedule**: Manual updates recommended
-- **Update procedure**: 
+- **Update procedure**:
   1. Backup content and database volumes
   2. Update image tags in compose file
   3. Recreate containers

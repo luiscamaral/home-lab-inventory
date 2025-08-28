@@ -101,7 +101,7 @@ Apache Solr is a highly reliable, scalable, and fault-tolerant search platform t
 ### Updates
 - **Current version**: Latest Solr (unspecified version)
 - **Update schedule**: Manual updates (Watchtower disabled)
-- **Update procedure**: 
+- **Update procedure**:
   1. Backup data directory
   2. Update image tag
   3. Restart container

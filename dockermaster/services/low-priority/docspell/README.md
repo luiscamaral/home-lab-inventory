@@ -109,7 +109,7 @@ The stack consists of four interconnected services:
    - **Solution**: Verify PostgreSQL health and credentials
 
 ### Log Locations
-- **Container logs**: 
+- **Container logs**:
   - `docker logs Docspell-RESTSERVER`
   - `docker logs Docspell-JOEX`
   - `docker logs Docspell-DB`
@@ -125,14 +125,14 @@ The stack consists of four interconnected services:
 
 ### Updates
 - **Update schedule**: Manual updates (Watchtower disabled)
-- **Update procedure**: 
+- **Update procedure**:
   1. Stop services
   2. Pull new images
   3. Restart stack
   4. Verify functionality
 
 ### Dependencies
-- **Service startup order**: 
+- **Service startup order**:
   1. docspell-db, docspell-solr
   2. restserver, joex
 - **Required by**: Document processing workflows

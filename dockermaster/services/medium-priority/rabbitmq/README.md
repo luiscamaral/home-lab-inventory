@@ -114,7 +114,7 @@ RabbitMQ is a message broker service that implements the Advanced Message Queuin
 
 ### Updates
 - **Update schedule**: Manual updates only (Watchtower disabled)
-- **Update procedure**: 
+- **Update procedure**:
   1. Stop service
   2. Pull new image
   3. Restart service

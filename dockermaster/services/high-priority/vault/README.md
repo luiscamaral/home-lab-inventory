@@ -181,7 +181,7 @@ Available policy files:
    ```bash
    # Option 1: Use HTTP for unseal (Quick fix)
    # Edit unseal script: Change VAULT_ADDR to "http://192.168.59.25:8200"
-   
+
    # Option 2: Configure proper TLS (Recommended)
    # Set up nginx proxy with proper certificates
    ```

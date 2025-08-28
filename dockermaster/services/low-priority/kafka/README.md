@@ -30,11 +30,11 @@ Apache Kafka is a distributed streaming platform that handles real-time data fee
   - `KAFKA_BROKER_ID`: 1
   - `KAFKA_KRAFT_CLUSTER_ID`: NmYxODQ4YWNiMjY2NDY5ZT (KAFKA_HOME_LCAMARAL_COM)
   - `KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR`: 1
-  
+
 - **Topic Configuration**:
   - `KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE`: true
   - `KAFKA_CREATE_TOPICS`: "User:1:3,Project:1:1:compact"
-  
+
 - **Debugging**:
   - `BITNAMI_DEBUG`: true
 
@@ -116,7 +116,7 @@ Apache Kafka is a distributed streaming platform that handles real-time data fee
 ### Updates
 - **Current version**: Bitnami Kafka 3.4
 - **Update schedule**: Manual updates recommended
-- **Update procedure**: 
+- **Update procedure**:
   1. Stop Kafka service
   2. Backup kafka_data volume
   3. Update image tag

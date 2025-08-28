@@ -98,7 +98,7 @@ The stack consists of two services:
    - **Solution**: Check MongoDB service availability and credentials
 
 ### Log Locations
-- **Container logs**: 
+- **Container logs**:
   - `docker logs <mongo-container-name>`
   - `docker logs <mongo-express-container-name>`
 - **MongoDB logs**: Available in container logs and data volume
@@ -114,7 +114,7 @@ The stack consists of two services:
 ### Updates
 - **Current version**: MongoDB 6.0 (jammy)
 - **Update schedule**: Manual updates recommended
-- **Update procedure**: 
+- **Update procedure**:
   1. Backup database data
   2. Update image tags
   3. Restart services

@@ -37,7 +37,7 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 - `./postgres_data:/var/lib/postgresql/data`: PostgreSQL database files
 
 ### Network Configuration
-- **Networks**: 
+- **Networks**:
   - docker-servers-net (macvlan): 192.168.59.13
   - bridge (keycloak): Internal communication with PostgreSQL
 - **Ports**:
@@ -140,7 +140,7 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 
 1. **Database Authentication Failure**
    - **Symptoms**: Keycloak container restarting, authentication errors in logs
-   - **Investigation**: 
+   - **Investigation**:
      - Verify database connectivity: `docker exec postgres psql -U keycloak -d keycloak -c '\l'`
      - Check password match between .env and PostgreSQL
    - **Solution**: Reset database password or update environment variable
@@ -224,10 +224,10 @@ Keycloak identity and access management service providing single sign-on (SSO), 
    # Check current database password
    cd /nfs/dockermaster/docker/keycloak
    docker exec postgres psql -U keycloak -d keycloak -c "SELECT current_user;"
-   
+
    # Reset password to match environment
    docker exec postgres psql -U postgres -c "ALTER USER keycloak PASSWORD 'pera6Cantar';"
-   
+
    # Restart Keycloak
    docker compose restart keycloak
    ```
@@ -243,7 +243,7 @@ Keycloak identity and access management service providing single sign-on (SSO), 
    ```bash
    # Follow logs during startup
    docker logs -f keycloak
-   
+
    # Check health status
    docker exec keycloak curl -f http://localhost:8080/health/ready
    ```

@@ -120,7 +120,7 @@ The stack consists of four interconnected services:
    - **Solution**: Check Prometheus data source configuration
 
 ### Log Locations
-- **Container logs**: 
+- **Container logs**:
   - `docker logs otel-col`
   - `docker logs jaeger`
   - `docker logs prometheus`

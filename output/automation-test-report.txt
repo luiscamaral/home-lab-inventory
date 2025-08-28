@@ -15,7 +15,7 @@ SCRIPTS TESTED:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✓ ssh-dockermaster.sh       - SSH multiplexing helper
 ✓ extract-compose.sh         - Docker compose extraction
-✓ parse-env.sh              - Environment analysis  
+✓ parse-env.sh              - Environment analysis
 ✓ find-deps.sh              - Dependency analysis
 ✓ Service matrix generation - Documentation framework
 ✓ Error handling validation - Robustness testing
