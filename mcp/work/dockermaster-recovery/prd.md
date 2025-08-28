@@ -131,25 +131,25 @@ graph TB
         NET[docker-servers-net<br/>macvlan 192.168.48.0/20]
         NFS[NFS Storage<br/>/nfs/dockermaster/]
     end
-    
+
     subgraph "Service Layer"
         SVC[32 Docker Services<br/>/docker/<service>]
         CMP[Compose Definitions<br/>/docker/compose/<service>]
         VOL[Volumes<br/>/volumes/<service>]
     end
-    
+
     subgraph "Management Layer"
         V[Vault<br/>192.168.59.25:8200]
         P[Portainer<br/>192.168.59.2:9000]
         GH[GitHub Runner<br/>github-runner-homelab]
     end
-    
+
     subgraph "Repository Layer"
         REPO[inventory repository]
         DOCS[Documentation]
         CONFIG[Configurations]
     end
-    
+
     DM --> NET --> SVC
     NFS --> CMP & VOL
     V --> SVC
