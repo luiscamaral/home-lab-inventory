@@ -149,7 +149,7 @@ cat > docs/templates/service-template.md << 'EOF'
 
 ### Network
 - **IP Address:** 192.168.59.x
-- **Ports:** 
+- **Ports:**
   - [port]: [description]
 
 ### Volumes
@@ -434,7 +434,7 @@ docker exec vault vault write auth/userpass/users/github-runner \
 # Extract current secrets from services
 for service in github-runner keycloak rabbitmq; do
   echo "Migrating secrets for: $service"
-  
+
   # Create in Vault
   docker exec vault vault kv put secret/dockermaster/$service \
     database_password=changeme \
@@ -516,13 +516,13 @@ jobs:
     runs-on: [self-hosted, linux]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Validate Docker Compose files
         run: |
           for compose in dockermaster/docker/compose/*/docker-compose.yml; do
             docker compose -f "$compose" config > /dev/null
           done
-      
+
       - name: Security scan
         run: |
           # Add security scanning here
@@ -535,7 +535,7 @@ jobs:
       - name: Trigger Portainer deployment
         run: |
           curl -X POST http://192.168.59.2:9000/api/webhooks/${{ secrets.PORTAINER_WEBHOOK }}
-      
+
       - name: Verify deployment
         run: |
           sleep 30
