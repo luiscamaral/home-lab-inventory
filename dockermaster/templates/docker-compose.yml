@@ -1,4 +1,5 @@
-name: [SERVICE_NAME]
+# Replace 'my-service' with your service name
+name: my-service
 
 networks:
   servers-net:
@@ -7,10 +8,14 @@ networks:
     external: true
 
 services:
-  service_name:
-    image: [IMAGE:TAG]
-    container_name: [CONTAINER_NAME]
-    hostname: [HOSTNAME]
+  # Replace 'my-service' with your service name
+  my-service:
+    # Replace with actual image and tag
+    image: nginx:latest
+    # Replace with your container name
+    container_name: my-service
+    # Replace with your hostname
+    hostname: my-service
     restart: unless-stopped
 
     # Environment configuration
@@ -19,14 +24,14 @@ services:
     # Or use env_file for sensitive data
     # env_file: .env
 
-    # Network configuration
+    # Network configuration - replace X with next available IP
     networks:
       servers-net:
-        ipv4_address: 192.168.59.X
+        ipv4_address: 192.168.59.10
 
     # Port exposure (use expose for internal, ports for external)
     expose:
-      - PORT
+      - 80
     # ports:
     #   - "HOST_PORT:CONTAINER_PORT"
 
@@ -62,11 +67,11 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: '/nfs/dockermaster/volumes/[service-name].data'
+      device: '/nfs/dockermaster/volumes/my-service.data'
 
   service_config:
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: '/nfs/dockermaster/volumes/[service-name].config'
+      device: '/nfs/dockermaster/volumes/my-service.config'
