@@ -94,7 +94,7 @@ parse_service() {
 # Function to check if SSH connection to dockermaster is available
 check_ssh_connection() {
     log "Testing SSH connection to dockermaster..."
-    
+
     if ssh -o ConnectTimeout=10 -o BatchMode=yes "$DOCKERMASTER_HOST" "echo 'SSH connection successful'" 2>/dev/null; then
         log "SSH connection to dockermaster: HEALTHY ✅"
         return 0
@@ -108,11 +108,11 @@ check_ssh_connection() {
 get_container_status() {
     local service_name="$1"
     local container_name="$2"
-    
+
     # Get container status via SSH
     local status
     status=$(ssh "$DOCKERMASTER_HOST" "docker ps -a --filter 'name=$container_name' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'" 2>/dev/null | tail -n +2)
-    
+
     if [[ -n "$status" ]]; then
         echo "$status"
     else
@@ -124,15 +124,15 @@ get_container_status() {
 check_service_health() {
     local service_name="$1"
     local container_name="$2"
-    
+
     local container_status
     container_status=$(get_container_status "$service_name" "$container_name")
-    
+
     if [[ "$container_status" == "CONTAINER_NOT_FOUND" ]]; then
         echo "❌ NOT_FOUND"
         return 1
     fi
-    
+
     # Check if container is running
     if echo "$container_status" | grep -q "Up "; then
         # Container is running, perform additional health checks
@@ -179,10 +179,10 @@ check_service_health() {
 # Function to get resource usage
 get_resource_usage() {
     local container_name="$1"
-    
+
     local cpu_mem
     cpu_mem=$(ssh "$DOCKERMASTER_HOST" "docker stats --no-stream --format 'table {{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}\t{{.BlockIO}}' $container_name 2>/dev/null | tail -n 1" 2>/dev/null)
-    
+
     if [[ -n "$cpu_mem" ]]; then
         echo "$cpu_mem"
     else
@@ -195,36 +195,36 @@ generate_health_report() {
     local priority_label="$1"
     shift
     local services=("$@")
-    
+
     echo "### $priority_label Services"
     echo ""
     echo "| Service | Container | Status | Health | CPU | Memory | Network I/O | Disk I/O | Last Updated |"
     echo "|---------|-----------|--------|--------|-----|--------|-------------|----------|--------------|"
-    
+
     local service_count=0
     local healthy_count=0
     local issues_count=0
     local not_found_count=0
-    
+
     for service_entry in "${services[@]}"; do
         local parsed
         parsed=$(parse_service "$service_entry")
         local service_name="${parsed%%:*}"
         local container_name="${parsed##*:}"
-        
+
         local health_status
         local resource_usage
         local timestamp
-        
+
         health_status=$(check_service_health "$service_name" "$container_name")
         resource_usage=$(get_resource_usage "$container_name")
         timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-        
+
         # Parse resource usage
         IFS=$'\t' read -r cpu memory network_io block_io <<< "$resource_usage"
-        
+
         echo "| $service_name | $container_name | $health_status | - | ${cpu:-N/A} | ${memory:-N/A} | ${network_io:-N/A} | ${block_io:-N/A} | $timestamp |"
-        
+
         # Count statistics
         service_count=$((service_count + 1))
         if echo "$health_status" | grep -q "🟢"; then
@@ -234,15 +234,15 @@ generate_health_report() {
         else
             issues_count=$((issues_count + 1))
         fi
-        
+
         # Small delay to avoid overwhelming the system
         sleep 0.5
     done
-    
+
     echo ""
     echo "**$priority_label Summary:** $service_count services - $healthy_count healthy, $issues_count with issues, $not_found_count not found"
     echo ""
-    
+
     # Store stats for global summary
     echo "$service_count $healthy_count $issues_count $not_found_count" >> /tmp/health_stats.tmp
 }
@@ -250,18 +250,18 @@ generate_health_report() {
 # Function to create comprehensive health matrix report
 create_health_matrix() {
     log "Creating comprehensive health status matrix..."
-    
+
     # Initialize stats file
     rm -f /tmp/health_stats.tmp
-    
+
     # Create report header
     cat > "$REPORT_FILE" << EOF
 # 🏥 Service Health Status Matrix
 # Dockermaster Recovery Project - Phase 7.0
 
-**Generated:** $(date '+%Y-%m-%d %H:%M:%S')  
-**Validation Phase:** System Health Assessment  
-**Total Services:** 32  
+**Generated:** $(date '+%Y-%m-%d %H:%M:%S')
+**Validation Phase:** System Health Assessment
+**Total Services:** 32
 
 ## 📊 Executive Health Summary
 
@@ -285,23 +285,23 @@ EOF
         error "SSH connection failed. Health matrix generation aborted."
         return 1
     fi
-    
+
     # Generate detailed reports for each priority level
     log "Scanning High Priority services..."
     generate_health_report "🔥 High Priority" "${HIGH_PRIORITY_SERVICES[@]}" >> "$REPORT_FILE"
-    
+
     log "Scanning Medium Priority services..."
     generate_health_report "🟡 Medium Priority" "${MEDIUM_PRIORITY_SERVICES[@]}" >> "$REPORT_FILE"
-    
+
     log "Scanning Low Priority services..."
     generate_health_report "🟢 Low Priority" "${LOW_PRIORITY_SERVICES[@]}" >> "$REPORT_FILE"
-    
+
     log "Scanning Infrastructure services..."
     generate_health_report "🏗️ Infrastructure" "${INFRASTRUCTURE_SERVICES[@]}" >> "$REPORT_FILE"
-    
+
     log "Scanning Special Case services..."
     generate_health_report "⚡ Special Cases" "${SPECIAL_SERVICES[@]}" >> "$REPORT_FILE"
-    
+
     # Calculate summary statistics
     if [[ -f /tmp/health_stats.tmp ]]; then
         local total_services=0 total_healthy=0 total_issues=0 total_not_found=0
@@ -311,19 +311,19 @@ EOF
             total_issues=$((total_issues + issues))
             total_not_found=$((total_not_found + not_found))
         done < /tmp/health_stats.tmp
-        
+
         local success_rate
         if [[ $total_services -gt 0 ]]; then
             success_rate=$(( (total_healthy * 100) / total_services ))
         else
             success_rate=0
         fi
-        
+
         # Insert summary at the beginning
         local temp_file
         temp_file=$(mktemp)
         head -n 9 "$REPORT_FILE" > "$temp_file"
-        
+
         cat >> "$temp_file" << EOF
 
 | Priority Level | Services | Healthy | Issues | Not Found | Success Rate |
@@ -333,13 +333,13 @@ EOF
 ## 🔍 Detailed Service Health Matrix
 
 EOF
-        
+
         tail -n +10 "$REPORT_FILE" >> "$temp_file"
         mv "$temp_file" "$REPORT_FILE"
-        
+
         rm -f /tmp/health_stats.tmp
     fi
-    
+
     # Add recommendations section
     cat >> "$REPORT_FILE" << 'EOF'
 
@@ -379,7 +379,7 @@ EOF
 *This report was generated by the Dockermaster Recovery Project Phase 7.0 validation system.*
 
 EOF
-    
+
     log "Health status matrix completed: $REPORT_FILE"
 }
 
@@ -387,10 +387,10 @@ EOF
 main() {
     log "Starting Service Health Matrix Generation"
     log "Report will be saved to: $REPORT_FILE"
-    
+
     # Create health matrix
     create_health_matrix
-    
+
     # Display summary
     log "Health matrix generation completed successfully!"
     log "Report saved to: $REPORT_FILE"

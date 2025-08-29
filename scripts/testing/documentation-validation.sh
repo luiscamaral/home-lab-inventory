@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # Documentation Validation Framework
-# Phase 7.4 - Dockermaster Recovery Project  
+# Phase 7.4 - Dockermaster Recovery Project
 # =============================================================================
 
 set -eo pipefail
@@ -44,7 +44,7 @@ declare -a COMPLETENESS_SCORES
 REQUIRED_SERVICE_SECTIONS=(
     "# Service:"
     "## Overview"
-    "## Configuration" 
+    "## Configuration"
     "## Dependencies"
     "## Deployment"
     "## Maintenance"
@@ -53,12 +53,12 @@ REQUIRED_SERVICE_SECTIONS=(
 # Function to discover all documentation files
 discover_documentation() {
     log "Discovering documentation files..."
-    
+
     # Find all markdown files
     while IFS= read -r -d '' file; do
         DOCUMENTATION_FILES+=("$file")
     done < <(find . -name "*.md" -type f -print0)
-    
+
     log "Found ${#DOCUMENTATION_FILES[@]} documentation files"
 }
 
@@ -67,49 +67,49 @@ validate_service_documentation() {
     local doc_file="$1"
     local service_name
     service_name=$(basename "$doc_file" .md)
-    
+
     local missing_sections=0
     local total_sections=${#REQUIRED_SERVICE_SECTIONS[@]}
-    
+
     for section in "${REQUIRED_SERVICE_SECTIONS[@]}"; do
         if ! grep -q "^$section" "$doc_file"; then
             missing_sections=$((missing_sections + 1))
             VALIDATION_ERRORS+=("$doc_file:MISSING_SECTION:$section")
         fi
     done
-    
+
     local completeness_score
     completeness_score=$(( ((total_sections - missing_sections) * 100) / total_sections ))
-    
+
     COMPLETENESS_SCORES+=("$service_name:$completeness_score:$missing_sections")
-    
+
     log "Service $service_name documentation completeness: ${completeness_score}%"
 }
 
 # Function to validate documentation quality
 validate_documentation_quality() {
     local doc_file="$1"
-    
+
     # Check for common issues
     local line_count word_count
     line_count=$(wc -l < "$doc_file")
     word_count=$(wc -w < "$doc_file")
-    
+
     # Flag overly short documentation
     if [[ $line_count -lt 20 ]] || [[ $word_count -lt 100 ]]; then
         VALIDATION_ERRORS+=("$doc_file:TOO_SHORT:${line_count}lines/${word_count}words")
     fi
-    
+
     # Check for placeholder content
     if grep -q "TODO\|FIXME\|PLACEHOLDER\|\[FILL.*\]" "$doc_file"; then
         VALIDATION_ERRORS+=("$doc_file:CONTAINS_PLACEHOLDERS:Review needed")
     fi
-    
+
     # Check for broken internal links (basic check)
     while IFS= read -r link; do
         local link_target
         link_target=$(echo "$link" | sed 's/.*(\([^)]*\)).*/\1/')
-        
+
         if [[ "$link_target" =~ ^\. ]] || [[ "$link_target" =~ ^/ ]]; then
             if [[ ! -f "$link_target" ]] && [[ ! -d "$link_target" ]]; then
                 VALIDATION_ERRORS+=("$doc_file:BROKEN_LINK:$link_target")
@@ -121,7 +121,7 @@ validate_documentation_quality() {
 # Function to check phase-specific documentation
 validate_phase_documentation() {
     log "Validating phase-specific documentation..."
-    
+
     # Phase 1-6 documentation requirements
     local required_docs=(
         "docs/dockermaster-tactical-plan.md:Tactical execution plan"
@@ -129,14 +129,14 @@ validate_phase_documentation() {
         "mcp/work/dockermaster-recovery/tasks.md:Task tracking"
         "docs/validation/:Validation reports directory"
     )
-    
+
     for doc_entry in "${required_docs[@]}"; do
         local doc_path="${doc_entry%%:*}"
         local description="${doc_entry##*:}"
-        
+
         if [[ -e "$doc_path" ]]; then
             log "✅ Required documentation found: $description"
-            
+
             # Additional validation for key documents
             case "$doc_path" in
                 "docs/service-matrix.md")
@@ -156,19 +156,19 @@ validate_phase_documentation() {
 # Function to validate service matrix documentation
 validate_service_matrix() {
     local matrix_file="docs/service-matrix.md"
-    
+
     if [[ -f "$matrix_file" ]]; then
         # Check if all 32 services are documented
         local service_count
         service_count=$(grep -c "| [a-z]" "$matrix_file" || echo "0")
-        
+
         if [[ $service_count -ge 32 ]]; then
             log "✅ Service matrix contains $service_count services (≥32 required)"
         else
             VALIDATION_ERRORS+=("$matrix_file:INCOMPLETE_SERVICE_COUNT:Only $service_count services found")
             warn "⚠️ Service matrix only contains $service_count services (32 required)"
         fi
-        
+
         # Check for completion status
         if grep -q "71.9%" "$matrix_file"; then
             log "✅ Service matrix shows completion progress"
@@ -181,14 +181,14 @@ validate_service_matrix() {
 # Function to validate task tracking
 validate_task_tracking() {
     local task_file="mcp/work/dockermaster-recovery/tasks.md"
-    
+
     if [[ -f "$task_file" ]]; then
         # Check for completed phases
         local completed_phases
         completed_phases=$(grep -c "✅ COMPLETED" "$task_file" || echo "0")
-        
+
         log "Task tracking shows $completed_phases completed phases"
-        
+
         # Check if Phase 7 tasks are present
         if grep -q "Phase 7:" "$task_file"; then
             log "✅ Phase 7 validation tasks documented"
@@ -201,16 +201,16 @@ validate_task_tracking() {
 # Function to validate validation reports
 validate_validation_reports() {
     log "Validating generated validation reports..."
-    
+
     local validation_dir="docs/validation"
-    
+
     if [[ -d "$validation_dir" ]]; then
         local report_count
         report_count=$(find "$validation_dir" -name "*.md" | wc -l)
-        
+
         if [[ $report_count -gt 0 ]]; then
             log "✅ Found $report_count validation reports in $validation_dir"
-            
+
             # Check for specific validation reports
             local expected_reports=(
                 "health-status-matrix"
@@ -218,7 +218,7 @@ validate_validation_reports() {
                 "performance-benchmark"
                 "disaster-recovery-test"
             )
-            
+
             for report_type in "${expected_reports[@]}"; do
                 if find "$validation_dir" -name "*${report_type}*" | grep -q .; then
                     log "✅ Found $report_type report"
@@ -237,9 +237,9 @@ validate_validation_reports() {
 # Function to validate scripts and automation
 validate_scripts_documentation() {
     log "Validating scripts and automation documentation..."
-    
+
     local scripts_dir="scripts"
-    
+
     if [[ -d "$scripts_dir" ]]; then
         # Check for README files in script directories
         find "$scripts_dir" -type d | while read -r dir; do
@@ -250,7 +250,7 @@ validate_scripts_documentation() {
                 fi
             fi
         done
-        
+
         # Validate script headers and documentation
         find "$scripts_dir" -name "*.sh" | while read -r script; do
             if ! head -10 "$script" | grep -q "# ==="; then
@@ -263,14 +263,14 @@ validate_scripts_documentation() {
 # Function to create documentation validation report
 create_validation_report() {
     log "Creating documentation validation report..."
-    
+
     cat > "$REPORT_FILE" << EOF
 # 📚 Documentation Validation Report
 # Dockermaster Recovery Project - Phase 7.4
 
-**Generated:** $(date '+%Y-%m-%d %H:%M:%S')  
-**Validation Phase:** Documentation Completeness Assessment  
-**Project Phase:** Final validation before completion  
+**Generated:** $(date '+%Y-%m-%d %H:%M:%S')
+**Validation Phase:** Documentation Completeness Assessment
+**Project Phase:** Final validation before completion
 
 ## 📊 Documentation Summary
 
@@ -300,7 +300,7 @@ EOF
     for score_entry in "${COMPLETENESS_SCORES[@]}"; do
         IFS=':' read -r service score missing <<< "$score_entry"
         local status="✅ COMPLETE"
-        
+
         if [[ $score -lt 100 ]]; then
             if [[ $score -ge 80 ]]; then
                 status="⚠️ MINOR GAPS"
@@ -310,10 +310,10 @@ EOF
                 status="❌ INCOMPLETE"
             fi
         fi
-        
+
         echo "| $service | ${score}% | $missing | $status |" >> "$REPORT_FILE"
     done
-    
+
     cat >> "$REPORT_FILE" << EOF
 
 ## 🚨 Documentation Issues Identified
@@ -327,11 +327,11 @@ EOF
 | File | Issue Type | Details | Priority |
 |------|------------|---------|----------|
 EOF
-        
+
         for error in "${VALIDATION_ERRORS[@]}"; do
             IFS=':' read -r file issue details <<< "$error"
             local priority="HIGH"
-            
+
             case "$issue" in
                 "MISSING_SECTION"|"MISSING_REPORT")
                     priority="CRITICAL"
@@ -343,7 +343,7 @@ EOF
                     priority="LOW"
                     ;;
             esac
-            
+
             echo "| $(basename "$file") | $issue | $details | $priority |" >> "$REPORT_FILE"
         done
     else
@@ -352,7 +352,7 @@ EOF
 🎉 **No critical documentation issues found!** All documentation meets quality standards.
 EOF
     fi
-    
+
     cat >> "$REPORT_FILE" << EOF
 
 ### Missing Documentation
@@ -364,7 +364,7 @@ EOF
 | Missing Document | Description | Impact |
 |------------------|-------------|--------|
 EOF
-        
+
         for missing in "${MISSING_DOCS[@]}"; do
             IFS=':' read -r doc_path description <<< "$missing"
             echo "| $doc_path | $description | Documentation gap |" >> "$REPORT_FILE"
@@ -375,7 +375,7 @@ EOF
 ✅ **All required documentation is present and accounted for.**
 EOF
     fi
-    
+
     cat >> "$REPORT_FILE" << EOF
 
 ## 📈 Documentation Quality Metrics
@@ -388,7 +388,7 @@ EOF
 
 ### Documentation Standards Compliance
 - [x] **Service Documentation**: Templates used consistently
-- [x] **Technical Documentation**: Comprehensive coverage  
+- [x] **Technical Documentation**: Comprehensive coverage
 - [x] **Validation Reports**: Automated generation implemented
 - [x] **Process Documentation**: Step-by-step procedures documented
 
@@ -428,7 +428,7 @@ EOF
 
 *This report validates documentation completeness for the Dockermaster Recovery Project Phase 7.4.*
 EOF
-    
+
     log "Documentation validation report completed: $REPORT_FILE"
 }
 
@@ -436,39 +436,39 @@ EOF
 main() {
     log "Starting Documentation Validation Framework"
     log "Report will be saved to: $REPORT_FILE"
-    
+
     # Discover all documentation
     discover_documentation
-    
+
     # Validate service documentation
     log "Validating service documentation..."
     for doc_file in "${DOCUMENTATION_FILES[@]}"; do
         if [[ "$doc_file" =~ /services/.*\.md$ ]]; then
             validate_service_documentation "$doc_file"
         fi
-        
+
         validate_documentation_quality "$doc_file"
     done
-    
+
     # Validate phase-specific documentation
     validate_phase_documentation
-    
+
     # Validate validation reports
     validate_validation_reports
-    
+
     # Validate scripts documentation
     validate_scripts_documentation
-    
+
     # Create comprehensive report
     create_validation_report
-    
+
     # Display summary
     log "Documentation validation completed!"
     log "Documents validated: ${#DOCUMENTATION_FILES[@]}"
     log "Issues found: ${#VALIDATION_ERRORS[@]}"
     log "Missing docs: ${#MISSING_DOCS[@]}"
     log "Report saved to: $REPORT_FILE"
-    
+
     if [[ ${#VALIDATION_ERRORS[@]} -gt 0 ]] || [[ ${#MISSING_DOCS[@]} -gt 0 ]]; then
         warn "Documentation issues found - review report for details"
         return 1

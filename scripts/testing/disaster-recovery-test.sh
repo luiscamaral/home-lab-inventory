@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Disaster Recovery Testing Framework  
+# Disaster Recovery Testing Framework
 # Phase 7.3 - Dockermaster Recovery Project
 # =============================================================================
 
@@ -47,7 +47,7 @@ record_test_result() {
     local result="$2"
     local duration="$3"
     local notes="$4"
-    
+
     DR_TEST_RESULTS+=("$test_name:$result:$duration:$notes")
     log "DR Test: $test_name - $result (${duration}s) - $notes"
 }
@@ -56,12 +56,12 @@ record_test_result() {
 test_service_backup() {
     local service_name="$1"
     local backup_type="$2"
-    
+
     log "Testing backup procedure for $service_name..."
-    
+
     local start_time end_time backup_duration
     start_time=$(date +%s)
-    
+
     case "$backup_type" in
         "volume")
             test_volume_backup "$service_name"
@@ -77,29 +77,29 @@ test_service_backup() {
             return 1
             ;;
     esac
-    
+
     end_time=$(date +%s)
     backup_duration=$((end_time - start_time))
-    
+
     record_test_result "Backup-$service_name" "SUCCESS" "$backup_duration" "$backup_type backup completed"
 }
 
 # Function to test volume backup
 test_volume_backup() {
     local service_name="$1"
-    
+
     # Create backup directory on dockermaster
     ssh "$DOCKERMASTER_HOST" "mkdir -p $BACKUP_LOCATION/volumes/$service_name"
-    
+
     # Test volume backup (dry run)
     local backup_result
     backup_result=$(ssh "$DOCKERMASTER_HOST" "docker run --rm -v ${service_name}_data:/source:ro -v $BACKUP_LOCATION/volumes/$service_name:/backup alpine tar -czf /backup/${service_name}-volumes-\$(date +%Y%m%d).tar.gz -C /source . 2>&1" || echo "BACKUP_FAILED")
-    
+
     if [[ "$backup_result" == "BACKUP_FAILED" ]]; then
         record_test_result "Volume-Backup-$service_name" "FAILED" "0" "Volume backup failed"
         return 1
     fi
-    
+
     # Verify backup file exists
     if ssh "$DOCKERMASTER_HOST" "ls -la $BACKUP_LOCATION/volumes/$service_name/*.tar.gz" >/dev/null 2>&1; then
         BACKUP_VALIDATIONS+=("$service_name:volume:SUCCESS")
@@ -111,13 +111,13 @@ test_volume_backup() {
 # Function to test config backup
 test_config_backup() {
     local service_name="$1"
-    
+
     # Create backup directory
     ssh "$DOCKERMASTER_HOST" "mkdir -p $BACKUP_LOCATION/configs/$service_name"
-    
+
     # Backup service configuration
     local config_path="/nfs/dockermaster/docker/$service_name"
-    
+
     if ssh "$DOCKERMASTER_HOST" "test -d $config_path"; then
         ssh "$DOCKERMASTER_HOST" "tar -czf $BACKUP_LOCATION/configs/$service_name/${service_name}-config-\$(date +%Y%m%d).tar.gz -C $config_path ."
         BACKUP_VALIDATIONS+=("$service_name:config:SUCCESS")
@@ -129,9 +129,9 @@ test_config_backup() {
 # Function to test database backup
 test_database_backup() {
     local service_name="$1"
-    
+
     ssh "$DOCKERMASTER_HOST" "mkdir -p $BACKUP_LOCATION/databases/$service_name"
-    
+
     case "$service_name" in
         "postgres")
             ssh "$DOCKERMASTER_HOST" "docker exec postgres pg_dumpall -U postgres > $BACKUP_LOCATION/databases/postgres/backup-\$(date +%Y%m%d).sql 2>/dev/null" && \
@@ -159,18 +159,18 @@ test_database_backup() {
 test_service_recovery() {
     local service_name="$1"
     local recovery_type="$2"
-    
+
     log "Testing recovery procedure for $service_name..."
-    
+
     local start_time end_time recovery_duration
     start_time=$(date +%s)
-    
+
     # Simulate service failure
     simulate_service_failure "$service_name"
-    
+
     # Wait a moment
     sleep 5
-    
+
     # Attempt recovery
     case "$recovery_type" in
         "restart")
@@ -187,12 +187,12 @@ test_service_recovery() {
             return 1
             ;;
     esac
-    
+
     end_time=$(date +%s)
     recovery_duration=$((end_time - start_time))
-    
+
     RECOVERY_TIMES+=("$service_name:$recovery_type:$recovery_duration")
-    
+
     # Verify service health after recovery
     if verify_service_health "$service_name"; then
         record_test_result "Recovery-$service_name" "SUCCESS" "$recovery_duration" "$recovery_type recovery successful"
@@ -204,12 +204,12 @@ test_service_recovery() {
 # Function to simulate service failure
 simulate_service_failure() {
     local service_name="$1"
-    
+
     log "Simulating failure for $service_name..."
-    
+
     # Stop the service
     ssh "$DOCKERMASTER_HOST" "cd /nfs/dockermaster/docker/$service_name && docker compose down" >/dev/null 2>&1 || true
-    
+
     # Verify service is down
     sleep 3
     if ! ssh "$DOCKERMASTER_HOST" "docker ps | grep -q $service_name"; then
@@ -222,25 +222,25 @@ simulate_service_failure() {
 # Function to test restart recovery
 test_restart_recovery() {
     local service_name="$1"
-    
+
     log "Testing restart recovery for $service_name..."
-    
+
     # Restart service
     ssh "$DOCKERMASTER_HOST" "cd /nfs/dockermaster/docker/$service_name && docker compose up -d" >/dev/null 2>&1
-    
+
     # Wait for service to stabilize
     sleep 10
 }
 
-# Function to test redeploy recovery  
+# Function to test redeploy recovery
 test_redeploy_recovery() {
     local service_name="$1"
-    
+
     log "Testing redeploy recovery for $service_name..."
-    
+
     # Force recreate containers
     ssh "$DOCKERMASTER_HOST" "cd /nfs/dockermaster/docker/$service_name && docker compose up -d --force-recreate" >/dev/null 2>&1
-    
+
     # Wait for service to stabilize
     sleep 15
 }
@@ -248,24 +248,24 @@ test_redeploy_recovery() {
 # Function to test restore recovery
 test_restore_recovery() {
     local service_name="$1"
-    
+
     log "Testing restore recovery for $service_name..."
-    
+
     # This would restore from backup in a real scenario
     # For testing, we'll just restart the service
     ssh "$DOCKERMASTER_HOST" "cd /nfs/dockermaster/docker/$service_name && docker compose up -d" >/dev/null 2>&1
-    
+
     sleep 10
 }
 
 # Function to verify service health after recovery
 verify_service_health() {
     local service_name="$1"
-    
+
     # Check if container is running
     if ssh "$DOCKERMASTER_HOST" "docker ps | grep -q $service_name"; then
         log "Service $service_name is running after recovery"
-        
+
         # Additional health checks based on service type
         case "$service_name" in
             "vault")
@@ -283,7 +283,7 @@ verify_service_health() {
                 return 0
                 ;;
         esac
-        
+
         return 0
     else
         warn "Service $service_name is not running after recovery"
@@ -294,13 +294,13 @@ verify_service_health() {
 # Function to test rollback procedures
 test_rollback_procedures() {
     log "Testing rollback procedures..."
-    
+
     # Create a test service for rollback testing
     local test_service="test-rollback-service"
-    
+
     # Deploy initial version
     ssh "$DOCKERMASTER_HOST" "mkdir -p /nfs/dockermaster/docker/$test_service"
-    
+
     ssh "$DOCKERMASTER_HOST" "cat > /nfs/dockermaster/docker/$test_service/docker-compose.yml << 'EOF'
 version: '3.8'
 services:
@@ -316,34 +316,34 @@ networks:
     external:
       name: docker-servers-net
 EOF"
-    
+
     # Deploy service
     local start_time end_time rollback_duration
     start_time=$(date +%s)
-    
+
     ssh "$DOCKERMASTER_HOST" "cd /nfs/dockermaster/docker/$test_service && docker compose up -d" >/dev/null 2>&1
     sleep 5
-    
+
     # "Upgrade" to problematic version
     ssh "$DOCKERMASTER_HOST" "sed -i 's/nginx:1.20/nginx:1.21/g' /nfs/dockermaster/docker/$test_service/docker-compose.yml"
     ssh "$DOCKERMASTER_HOST" "cd /nfs/dockermaster/docker/$test_service && docker compose up -d" >/dev/null 2>&1
     sleep 5
-    
+
     # Rollback to previous version
     ssh "$DOCKERMASTER_HOST" "sed -i 's/nginx:1.21/nginx:1.20/g' /nfs/dockermaster/docker/$test_service/docker-compose.yml"
     ssh "$DOCKERMASTER_HOST" "cd /nfs/dockermaster/docker/$test_service && docker compose up -d" >/dev/null 2>&1
     sleep 5
-    
+
     end_time=$(date +%s)
     rollback_duration=$((end_time - start_time))
-    
+
     # Verify rollback success
     if ssh "$DOCKERMASTER_HOST" "docker exec test-rollback-container nginx -v" | grep -q "1.20"; then
         record_test_result "Rollback-Test" "SUCCESS" "$rollback_duration" "Service rollback successful"
     else
         record_test_result "Rollback-Test" "FAILED" "$rollback_duration" "Service rollback failed"
     fi
-    
+
     # Cleanup
     ssh "$DOCKERMASTER_HOST" "cd /nfs/dockermaster/docker/$test_service && docker compose down && rm -rf /nfs/dockermaster/docker/$test_service" >/dev/null 2>&1
 }
@@ -351,34 +351,34 @@ EOF"
 # Function to test network failure recovery
 test_network_failure_recovery() {
     log "Testing network failure recovery scenarios..."
-    
+
     # This would test network partitions in a real scenario
     # For now, we'll test service connectivity after simulated network issues
-    
+
     local start_time end_time network_recovery_duration
     start_time=$(date +%s)
-    
+
     # Test service-to-service connectivity
     local connectivity_test
     connectivity_test=$(ssh "$DOCKERMASTER_HOST" "docker exec grafana ping -c 3 prometheus" 2>/dev/null && echo "SUCCESS" || echo "FAILED")
-    
+
     end_time=$(date +%s)
     network_recovery_duration=$((end_time - start_time))
-    
+
     record_test_result "Network-Connectivity" "$connectivity_test" "$network_recovery_duration" "Inter-service network connectivity"
 }
 
 # Function to create disaster recovery report
 create_dr_report() {
     log "Creating disaster recovery test report..."
-    
+
     cat > "$REPORT_FILE" << EOF
 # 🚨 Disaster Recovery Testing Report
 # Dockermaster Recovery Project - Phase 7.3
 
-**Generated:** $(date '+%Y-%m-%d %H:%M:%S')  
-**Test Phase:** Disaster Recovery Validation  
-**Test Environment:** Dockermaster Infrastructure  
+**Generated:** $(date '+%Y-%m-%d %H:%M:%S')
+**Test Phase:** Disaster Recovery Validation
+**Test Environment:** Dockermaster Infrastructure
 
 ## 📊 DR Testing Summary
 
@@ -389,7 +389,7 @@ EOF
 
     # Calculate statistics from test results
     local total_tests=0 passed_tests=0 failed_tests=0
-    
+
     for result in "${DR_TEST_RESULTS[@]}"; do
         total_tests=$((total_tests + 1))
         if echo "$result" | grep -q ":SUCCESS:"; then
@@ -398,14 +398,14 @@ EOF
             failed_tests=$((failed_tests + 1))
         fi
     done
-    
+
     local success_rate=0
     if [[ $total_tests -gt 0 ]]; then
         success_rate=$(( (passed_tests * 100) / total_tests ))
     fi
-    
+
     echo "| **Total DR Tests** | $total_tests | $passed_tests | $failed_tests | ${success_rate}% |" >> "$REPORT_FILE"
-    
+
     cat >> "$REPORT_FILE" << EOF
 
 ## 🔄 Backup Procedures Validation
@@ -420,7 +420,7 @@ EOF
         IFS=':' read -r service type status <<< "$validation"
         echo "| $service | $type | $status | Backup procedure test |" >> "$REPORT_FILE"
     done
-    
+
     cat >> "$REPORT_FILE" << EOF
 
 ## ⚡ Recovery Performance Analysis
@@ -434,16 +434,16 @@ EOF
     for recovery in "${RECOVERY_TIMES[@]}"; do
         IFS=':' read -r service type duration <<< "$recovery"
         local status="✅ GOOD"
-        
+
         if [[ $duration -gt 300 ]]; then
             status="⚠️ SLOW"
         elif [[ $duration -gt 600 ]]; then
             status="❌ TIMEOUT"
         fi
-        
+
         echo "| $service | $type | ${duration}s | < 300s | $status | Recovery time analysis |" >> "$REPORT_FILE"
     done
-    
+
     cat >> "$REPORT_FILE" << EOF
 
 ## 📋 Detailed Test Results
@@ -458,7 +458,7 @@ EOF
         IFS=':' read -r test_name result duration notes <<< "$result"
         echo "| $test_name | $result | ${duration}s | $notes |" >> "$REPORT_FILE"
     done
-    
+
     cat >> "$REPORT_FILE" << EOF
 
 ## 🚨 Critical DR Findings
@@ -495,7 +495,7 @@ EOF
 4. **Network Stability**: Inter-service connectivity maintained
 EOF
     fi
-    
+
     cat >> "$REPORT_FILE" << EOF
 
 ## 📋 DR Validation Checklist
@@ -525,20 +525,20 @@ EOF
 
 *This report validates disaster recovery procedures for the Dockermaster Recovery Project Phase 7.3.*
 EOF
-    
+
     log "Disaster recovery test report completed: $REPORT_FILE"
 }
 
 # Function to cleanup test artifacts
 cleanup_test_artifacts() {
     log "Cleaning up DR test artifacts..."
-    
+
     # Remove test backup directory
     ssh "$DOCKERMASTER_HOST" "rm -rf $BACKUP_LOCATION" >/dev/null 2>&1 || true
-    
+
     # Remove any test services
     ssh "$DOCKERMASTER_HOST" "docker ps -a --filter 'name=test-' --format '{{.Names}}' | xargs docker rm -f" >/dev/null 2>&1 || true
-    
+
     log "Cleanup completed"
 }
 
@@ -547,50 +547,50 @@ main() {
     log "Starting Disaster Recovery Testing Framework"
     log "Report will be saved to: $REPORT_FILE"
     log "Backup location: $BACKUP_LOCATION"
-    
+
     # Test SSH connection first
     if ! ssh -o ConnectTimeout=10 -o BatchMode=yes "$DOCKERMASTER_HOST" "echo 'SSH connection successful'" >/dev/null 2>&1; then
         error "SSH connection to dockermaster failed"
         exit 1
     fi
-    
+
     log "SSH connection established - beginning DR tests"
-    
+
     # Initialize backup location
     ssh "$DOCKERMASTER_HOST" "mkdir -p $BACKUP_LOCATION"
-    
+
     # Execute DR test suites
     log "Testing backup procedures..."
     test_service_backup "vault" "volume"
     test_service_backup "grafana" "config"
     test_service_backup "postgres" "database"
-    
+
     log "Testing recovery procedures..."
     test_service_recovery "nginx-proxy-manager" "restart"
-    test_service_recovery "grafana" "redeploy" 
-    
+    test_service_recovery "grafana" "redeploy"
+
     log "Testing rollback procedures..."
     test_rollback_procedures
-    
+
     log "Testing network failure recovery..."
     test_network_failure_recovery
-    
+
     # Create comprehensive report
     create_dr_report
-    
+
     # Cleanup test artifacts
     cleanup_test_artifacts
-    
+
     # Display summary
     local total_tests passed_tests failed_tests
     total_tests=${#DR_TEST_RESULTS[@]}
     passed_tests=$(printf '%s\n' "${DR_TEST_RESULTS[@]}" | grep -c ":SUCCESS:" || echo "0")
     failed_tests=$(printf '%s\n' "${DR_TEST_RESULTS[@]}" | grep -c ":FAILED:" || echo "0")
-    
+
     log "Disaster Recovery testing completed!"
     log "Results: $passed_tests passed, $failed_tests failed out of $total_tests tests"
     log "Report saved to: $REPORT_FILE"
-    
+
     if [[ $failed_tests -gt 0 ]]; then
         warn "Some DR tests failed - review report for details"
         return 1
