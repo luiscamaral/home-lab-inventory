@@ -1,0 +1,75 @@
+{
+  "name": "${STACK_NAME}",
+  "composeFile": "dockermaster/docker/compose/${SERVICE_DIRECTORY}/docker-compose.portainer.yml",
+  "repositoryUrl": "https://github.com/luiscamaral/home-lab-inventory",
+  "repositoryReference": "refs/heads/main",
+  "created": "${CREATION_DATE}",
+  "migration_phase": "${MIGRATION_PHASE}",
+  "note": "Stack configuration for GitOps deployment via Portainer",
+  
+  "env": [
+    {
+      "name": "PUID",
+      "value": "1000",
+      "description": "Process User ID for file permissions"
+    },
+    {
+      "name": "PGID", 
+      "value": "1000",
+      "description": "Process Group ID for file permissions"
+    },
+    {
+      "name": "TZ",
+      "value": "UTC",
+      "description": "Timezone setting"
+    }
+  ],
+  
+  "portainer": {
+    "webhook": {
+      "enabled": true,
+      "token": "${WEBHOOK_TOKEN}",
+      "url": "https://192.168.59.2:9000/api/webhooks/${WEBHOOK_ID}"
+    },
+    "autodeploy": true,
+    "accessControl": {
+      "restrictedToTeam": false,
+      "administratorOnly": false
+    }
+  },
+  
+  "gitops": {
+    "enabled": true,
+    "autoUpdate": true,
+    "pullPolicyMode": "Always",
+    "composeFilePathInRepository": "dockermaster/docker/compose/${SERVICE_DIRECTORY}/docker-compose.portainer.yml"
+  },
+  
+  "monitoring": {
+    "healthcheck": {
+      "enabled": true,
+      "endpoint": "http://${SERVICE_IP}:${SERVICE_PORT}/health",
+      "interval": "30s"
+    },
+    "watchtower": {
+      "enabled": true,
+      "updateSchedule": "0 4 * * 0"
+    }
+  },
+  
+  "backup": {
+    "volumes": ["${VOLUME_PATHS}"],
+    "schedule": "0 2 * * *",
+    "retention": "30d"
+  },
+  
+  "dependencies": [
+    "${DEPENDENT_SERVICES}"
+  ],
+  
+  "secrets": {
+    "vault_integration": true,
+    "vault_path": "secret/dockermaster/${STACK_NAME}/",
+    "secret_vars": ["${SECRET_ENVIRONMENT_VARS}"]
+  }
+}
