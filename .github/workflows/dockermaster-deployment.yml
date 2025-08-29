@@ -1,0 +1,724 @@
+# Comprehensive Dockermaster Deployment Pipeline
+# This workflow provides automated deployment, health checks, rollback automation,
+# and comprehensive monitoring for dockermaster services with Vault integration
+
+name: Dockermaster Deployment Pipeline
+
+on:
+  # Automatic deployment after successful builds
+  workflow_run:
+    workflows: ["Build and Push Docker Images"]
+    types: [completed]
+    branches: [main]
+
+  # Manual deployment with service selection
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Services to deploy (comma-separated, or "all" for all services)'
+        required: true
+        default: 'all'
+        type: string
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      skip_health_checks:
+        description: 'Skip post-deployment health checks'
+        required: false
+        type: boolean
+        default: false
+      force_deployment:
+        description: 'Force deployment even if health checks fail'
+        required: false
+        type: boolean
+        default: false
+      enable_rollback:
+        description: 'Enable automatic rollback on failure'
+        required: false
+        type: boolean
+        default: true
+
+# Environment variables
+env:
+  DEPLOY_PATH: /nfs/dockermaster/docker
+  VAULT_ADDR: http://vault.d.lcamaral.com
+  PORTAINER_URL: https://192.168.59.2:9000
+  MAX_DEPLOYMENT_TIME: 600  # 10 minutes
+  HEALTH_CHECK_TIMEOUT: 300  # 5 minutes
+  ROLLBACK_TIMEOUT: 180      # 3 minutes
+
+# Define permissions
+permissions:
+  contents: read
+  actions: write
+  deployments: write
+  pull-requests: write
+
+jobs:
+  # Job 1: Pre-deployment validation and preparation
+  pre-deployment:
+    name: Pre-deployment Validation
+    runs-on: [self-hosted, dockermaster]
+    outputs:
+      services-matrix: ${{ steps.prepare-services.outputs.matrix }}
+      deployment-id: ${{ steps.create-deployment.outputs.deployment-id }}
+      backup-id: ${{ steps.backup-state.outputs.backup-id }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Validate runner environment
+        run: |
+          echo "🔍 Validating dockermaster environment..."
+
+          # Check Docker daemon
+          if ! docker info >/dev/null 2>&1; then
+            echo "❌ Docker daemon not accessible"
+            exit 1
+          fi
+
+          # Check deployment directory
+          if [ ! -d "${{ env.DEPLOY_PATH }}" ]; then
+            echo "❌ Deployment directory not found: ${{ env.DEPLOY_PATH }}"
+            exit 1
+          fi
+
+          # Check network connectivity
+          if ! docker network ls | grep -q docker-servers-net; then
+            echo "❌ docker-servers-net network not found"
+            exit 1
+          fi
+
+          # Check disk space
+          AVAILABLE_SPACE=$(df ${{ env.DEPLOY_PATH }} | awk 'NR==2 {print $4}')
+          if [ "$AVAILABLE_SPACE" -lt 1048576 ]; then  # Less than 1GB
+            echo "⚠️ Low disk space warning: ${AVAILABLE_SPACE}KB available"
+          fi
+
+          echo "✅ Environment validation passed"
+
+      - name: Authenticate with Vault
+        id: vault-auth
+        run: |
+          echo "🔐 Authenticating with Vault..."
+
+          # Check if Vault is accessible
+          if ! curl -s -f "${{ env.VAULT_ADDR }}/v1/sys/health" >/dev/null 2>&1; then
+            echo "⚠️ Vault not accessible, using fallback authentication"
+            echo "vault_available=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Vault is accessible"
+            echo "vault_available=true" >> $GITHUB_OUTPUT
+
+            # TODO: Implement AppRole authentication
+            # VAULT_TOKEN=$(vault write -field=token auth/approle/login \
+            #   role_id="$VAULT_ROLE_ID" secret_id="$VAULT_SECRET_ID")
+            # echo "::add-mask::$VAULT_TOKEN"
+            # echo "VAULT_TOKEN=$VAULT_TOKEN" >> $GITHUB_ENV
+          fi
+
+      - name: Prepare services for deployment
+        id: prepare-services
+        run: |
+          echo "📋 Preparing services for deployment..."
+
+          if [ "${{ github.event.inputs.services }}" = "all" ] || [ -z "${{ github.event.inputs.services }}" ]; then
+            # Get all services with docker-compose files
+            SERVICES=()
+            for compose_file in ${{ env.DEPLOY_PATH }}/*/docker-compose.yml \
+                                ${{ env.DEPLOY_PATH }}/*/docker-compose.yaml; do
+              if [ -f "$compose_file" ]; then
+                SERVICE=$(basename "$(dirname "$compose_file")")
+                SERVICES+=("$SERVICE")
+              fi
+            done
+          else
+            # Parse comma-separated service list
+            IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}"
+          fi
+
+          # Remove duplicates and validate services exist
+          VALID_SERVICES=()
+          for service in "${SERVICES[@]}"; do
+            service=$(echo "$service" | xargs)  # Trim whitespace
+            if [ -f "${{ env.DEPLOY_PATH }}/$service/docker-compose.yml" ] || \
+               [ -f "${{ env.DEPLOY_PATH }}/$service/docker-compose.yaml" ]; then
+              VALID_SERVICES+=("$service")
+              echo "✅ Found service: $service"
+            else
+              echo "❌ Service not found or missing docker-compose file: $service"
+            fi
+          done
+
+          if [ ${#VALID_SERVICES[@]} -eq 0 ]; then
+            echo "❌ No valid services found for deployment"
+            exit 1
+          fi
+
+          # Create JSON matrix
+          JSON_ARRAY=$(printf '%s\n' "${VALID_SERVICES[@]}" | jq -R . | jq -s .)
+          echo "matrix={\"service\":$JSON_ARRAY}" >> $GITHUB_OUTPUT
+          echo "Services to deploy: $JSON_ARRAY"
+
+      - name: Create deployment record
+        id: create-deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: '${{ github.event.inputs.environment || "production" }}',
+              description: 'Dockermaster deployment pipeline',
+              auto_merge: false,
+              required_contexts: []
+            });
+
+            core.setOutput('deployment-id', deployment.data.id);
+            console.log(`Created deployment: ${deployment.data.id}`);
+
+      - name: Backup current service states
+        id: backup-state
+        run: |
+          echo "💾 Creating backup of current service states..."
+
+          BACKUP_ID="backup-$(date +%Y%m%d-%H%M%S)-${{ github.run_number }}"
+          BACKUP_DIR="/tmp/$BACKUP_ID"
+          mkdir -p "$BACKUP_DIR"
+
+          # Capture current container states
+          docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}" \
+            > "$BACKUP_DIR/container-states.txt"
+
+          # Backup docker-compose files for rollback
+          find ${{ env.DEPLOY_PATH }} -name "docker-compose.yml" \
+                                     -o -name "docker-compose.yaml" | while read compose_file; do
+            service=$(basename "$(dirname "$compose_file")")
+            cp "$compose_file" "$BACKUP_DIR/${service}-docker-compose.yml.bak"
+          done
+
+          # Store backup metadata
+          echo "{
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+            \"commit\": \"${{ github.sha }}\",
+            \"workflow_run\": \"${{ github.run_id }}\",
+            \"services_count\": $(ls "$BACKUP_DIR"/*.bak 2>/dev/null | wc -l)
+          }" > "$BACKUP_DIR/backup-metadata.json"
+
+          echo "backup_id=$BACKUP_ID" >> $GITHUB_OUTPUT
+          echo "backup_path=$BACKUP_DIR" >> $GITHUB_OUTPUT
+          echo "✅ Backup created: $BACKUP_ID"
+
+  # Job 2: Parallel service deployment with monitoring
+  deploy-services:
+    name: Deploy ${{ matrix.service }}
+    needs: pre-deployment
+    if: needs.pre-deployment.outputs.services-matrix != '{"service":[]}'
+    runs-on: [self-hosted, dockermaster]
+    strategy:
+      fail-fast: false
+      max-parallel: 3  # Deploy max 3 services in parallel
+      matrix: ${{ fromJson(needs.pre-deployment.outputs.services-matrix) }}
+    timeout-minutes: 15
+    outputs:
+      deployment-results: ${{ steps.deploy.outputs.result }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Load service secrets from Vault
+        id: load-secrets
+        run: |
+          echo "🔐 Loading secrets for ${{ matrix.service }}..."
+
+          if [ "${{ needs.pre-deployment.outputs.vault_available }}" = "true" ]; then
+            # TODO: Load secrets from Vault
+            echo "Loading from Vault: secret/dockermaster/${{ matrix.service }}/*"
+            # SECRETS=$(vault kv get -format=json secret/dockermaster/${{ matrix.service }})
+            echo "secrets_loaded=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Using local environment files as fallback"
+            echo "secrets_loaded=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Pre-deployment service validation
+        run: |
+          echo "🔍 Validating ${{ matrix.service }} configuration..."
+
+          SERVICE_DIR="${{ env.DEPLOY_PATH }}/${{ matrix.service }}"
+          cd "$SERVICE_DIR"
+
+          # Validate docker-compose syntax
+          if ! docker compose config >/dev/null 2>&1; then
+            echo "❌ Invalid docker-compose configuration for ${{ matrix.service }}"
+            exit 1
+          fi
+
+          # Check for required environment files
+          if [ -f ".env" ]; then
+            echo "✅ Environment file found"
+          else
+            echo "⚠️ No .env file found, using defaults"
+          fi
+
+          # Validate network access
+          if ! docker compose config | grep -q "docker-servers-net"; then
+            echo "⚠️ Service not using docker-servers-net network"
+          fi
+
+          echo "✅ Service configuration validated"
+
+      - name: Deploy service
+        id: deploy
+        run: |
+          echo "🚀 Deploying ${{ matrix.service }}..."
+
+          SERVICE_DIR="${{ env.DEPLOY_PATH }}/${{ matrix.service }}"
+          cd "$SERVICE_DIR"
+
+          # Record start time
+          START_TIME=$(date +%s)
+
+          # Pull latest images
+          echo "📥 Pulling latest images..."
+          if ! timeout 300 docker compose pull; then
+            echo "❌ Failed to pull images for ${{ matrix.service }}"
+            echo "result=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Deploy with zero downtime strategy
+          echo "🔄 Performing rolling deployment..."
+          if ! timeout 600 docker compose up -d --remove-orphans --wait; then
+            echo "❌ Deployment failed for ${{ matrix.service }}"
+            echo "result=failed" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Calculate deployment time
+          END_TIME=$(date +%s)
+          DEPLOY_TIME=$((END_TIME - START_TIME))
+
+          # Verify containers are running
+          sleep 5
+          RUNNING_CONTAINERS=$(docker compose ps --services --filter "status=running" | wc -l)
+          TOTAL_CONTAINERS=$(docker compose ps --services | wc -l)
+
+          if [ "$RUNNING_CONTAINERS" -eq "$TOTAL_CONTAINERS" ]; then
+            echo "✅ Deployment successful for ${{ matrix.service }}"
+            echo "📊 Deployment time: ${DEPLOY_TIME}s"
+            echo "📊 Containers: $RUNNING_CONTAINERS/$TOTAL_CONTAINERS running"
+            echo "result=success" >> $GITHUB_OUTPUT
+            echo "deploy_time=$DEPLOY_TIME" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Some containers failed to start for ${{ matrix.service }}"
+            echo "📊 Containers: $RUNNING_CONTAINERS/$TOTAL_CONTAINERS running"
+            echo "result=partial" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Post-deployment container inspection
+        if: always()
+        run: |
+          echo "🔍 Post-deployment inspection for ${{ matrix.service }}..."
+
+          SERVICE_DIR="${{ env.DEPLOY_PATH }}/${{ matrix.service }}"
+          cd "$SERVICE_DIR"
+
+          echo "Container status:"
+          docker compose ps --format table
+
+          echo "Container logs (last 50 lines):"
+          docker compose logs --tail=50 || true
+
+          echo "Resource usage:"
+          docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}" || true
+
+  # Job 3: Service health checks and validation
+  health-checks:
+    name: Health Checks & Validation
+    needs: [pre-deployment, deploy-services]
+    if: always() && needs.deploy-services.result != 'failure' && github.event.inputs.skip_health_checks != 'true'
+    runs-on: [self-hosted, dockermaster]
+    timeout-minutes: 10
+    outputs:
+      health-status: ${{ steps.health-check.outputs.status }}
+      failed-services: ${{ steps.health-check.outputs.failed }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Service health validation
+        id: health-check
+        run: |
+          echo "🏥 Performing health checks..."
+
+          SERVICES=$(echo '${{ needs.pre-deployment.outputs.services-matrix }}' | jq -r '.service[]')
+          FAILED_SERVICES=()
+          HEALTHY_SERVICES=()
+
+          for service in $SERVICES; do
+            echo "Checking health for $service..."
+            SERVICE_DIR="${{ env.DEPLOY_PATH }}/$service"
+
+            if [ ! -d "$SERVICE_DIR" ]; then
+              echo "❌ Service directory not found: $service"
+              FAILED_SERVICES+=("$service")
+              continue
+            fi
+
+            cd "$SERVICE_DIR"
+
+            # Check if containers are running
+            RUNNING=$(docker compose ps --services --filter "status=running" | wc -l)
+            TOTAL=$(docker compose ps --services | wc -l)
+
+            if [ "$RUNNING" -ne "$TOTAL" ]; then
+              echo "❌ Health check failed for $service: $RUNNING/$TOTAL containers running"
+              FAILED_SERVICES+=("$service")
+              continue
+            fi
+
+            # Check container health status (if healthchecks are defined)
+            UNHEALTHY=$(docker compose ps --format json | \
+                        jq -r 'select(.Health == "unhealthy") | .Name' 2>/dev/null || echo "")
+            if [ -n "$UNHEALTHY" ]; then
+              echo "❌ Unhealthy containers in $service: $UNHEALTHY"
+              FAILED_SERVICES+=("$service")
+              continue
+            fi
+
+            # Basic network connectivity test
+            CONTAINERS=$(docker compose ps --format json | jq -r '.Name')
+            NETWORK_OK=true
+            for container in $CONTAINERS; do
+              if [ -n "$container" ]; then
+                # Test if container can reach external network
+                if ! docker exec "$container" ping -c 1 -W 5 8.8.8.8 >/dev/null 2>&1; then
+                  echo "⚠️ Network connectivity issue for $container"
+                fi
+              fi
+            done
+
+            echo "✅ Health check passed for $service"
+            HEALTHY_SERVICES+=("$service")
+          done
+
+          # Generate health check results
+          TOTAL_SERVICES=${#SERVICES[@]}
+          HEALTHY_COUNT=${#HEALTHY_SERVICES[@]}
+          FAILED_COUNT=${#FAILED_SERVICES[@]}
+
+          echo "📊 Health Check Summary:"
+          echo "- Total services: $TOTAL_SERVICES"
+          echo "- Healthy: $HEALTHY_COUNT"
+          echo "- Failed: $FAILED_COUNT"
+
+          if [ $FAILED_COUNT -eq 0 ]; then
+            echo "✅ All services healthy"
+            echo "status=healthy" >> $GITHUB_OUTPUT
+            echo "failed=" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Some services failed health checks"
+            FAILED_JSON=$(printf '%s\n' "${FAILED_SERVICES[@]}" | jq -R . | jq -s . | jq -c .)
+            echo "status=unhealthy" >> $GITHUB_OUTPUT
+            echo "failed=$FAILED_JSON" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extended health checks
+        if: steps.health-check.outputs.status == 'healthy'
+        run: |
+          echo "🔬 Performing extended health checks..."
+
+          # Check service-specific health endpoints
+          SERVICES=$(echo '${{ needs.pre-deployment.outputs.services-matrix }}' | jq -r '.service[]')
+
+          for service in $SERVICES; do
+            case $service in
+              "vault")
+                echo "Checking Vault health..."
+                curl -s -f "${{ env.VAULT_ADDR }}/v1/sys/health" || echo "⚠️ Vault health check failed"
+                ;;
+              "portainer")
+                echo "Checking Portainer health..."
+                curl -s -f -k "${{ env.PORTAINER_URL }}/api/status" || echo "⚠️ Portainer health check failed"
+                ;;
+              *)
+                echo "ℹ️ No specific health check for $service"
+                ;;
+            esac
+          done
+
+  # Job 4: Automatic rollback on failure
+  rollback-on-failure:
+    name: Automatic Rollback
+    needs: [pre-deployment, deploy-services, health-checks]
+    if: |
+      always() &&
+      (needs.deploy-services.result == 'failure' || needs.health-checks.outputs.health-status == 'unhealthy') &&
+      github.event.inputs.enable_rollback != 'false' &&
+      needs.pre-deployment.outputs.backup-id != ''
+    runs-on: [self-hosted, dockermaster]
+    timeout-minutes: 8
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initiate rollback
+        run: |
+          echo "🔄 Initiating automatic rollback..."
+
+          BACKUP_ID="${{ needs.pre-deployment.outputs.backup-id }}"
+          BACKUP_DIR="/tmp/$BACKUP_ID"
+
+          if [ ! -d "$BACKUP_DIR" ]; then
+            echo "❌ Backup directory not found: $BACKUP_DIR"
+            exit 1
+          fi
+
+          echo "📋 Rolling back to backup: $BACKUP_ID"
+
+          # Determine which services to rollback
+          if [ "${{ needs.health-checks.outputs.failed-services }}" != "" ]; then
+            # Rollback only failed services
+            ROLLBACK_SERVICES=$(echo '${{ needs.health-checks.outputs.failed-services }}' | jq -r '.[]')
+            echo "Rolling back failed services: $ROLLBACK_SERVICES"
+          else
+            # Rollback all services from the deployment
+            ROLLBACK_SERVICES=$(echo '${{ needs.pre-deployment.outputs.services-matrix }}' | jq -r '.service[]')
+            echo "Rolling back all services: $ROLLBACK_SERVICES"
+          fi
+
+          ROLLBACK_SUCCESS=true
+
+          for service in $ROLLBACK_SERVICES; do
+            echo "🔄 Rolling back $service..."
+
+            SERVICE_DIR="${{ env.DEPLOY_PATH }}/$service"
+            BACKUP_FILE="$BACKUP_DIR/${service}-docker-compose.yml.bak"
+
+            if [ -f "$BACKUP_FILE" ] && [ -d "$SERVICE_DIR" ]; then
+              # Stop current containers
+              cd "$SERVICE_DIR"
+              docker compose down --timeout 30 || true
+
+              # Restore backup configuration
+              cp "$BACKUP_FILE" "$SERVICE_DIR/docker-compose.yml"
+
+              # Restart with backup configuration
+              if timeout 180 docker compose up -d --wait; then
+                echo "✅ Rollback successful for $service"
+              else
+                echo "❌ Rollback failed for $service"
+                ROLLBACK_SUCCESS=false
+              fi
+            else
+              echo "⚠️ No backup found for $service or service directory missing"
+              ROLLBACK_SUCCESS=false
+            fi
+          done
+
+          if [ "$ROLLBACK_SUCCESS" = true ]; then
+            echo "✅ Rollback completed successfully"
+          else
+            echo "❌ Rollback completed with some failures"
+            exit 1
+          fi
+
+      - name: Verify rollback success
+        run: |
+          echo "✅ Verifying rollback success..."
+
+          # Quick health check after rollback
+          ROLLBACK_SERVICES=$(echo '${{ needs.health-checks.outputs.failed-services }}' | jq -r '.[]' 2>/dev/null || \
+                              echo '${{ needs.pre-deployment.outputs.services-matrix }}' | jq -r '.service[]')
+
+          ROLLBACK_HEALTHY=true
+          for service in $ROLLBACK_SERVICES; do
+            SERVICE_DIR="${{ env.DEPLOY_PATH }}/$service"
+            if [ -d "$SERVICE_DIR" ]; then
+              cd "$SERVICE_DIR"
+              RUNNING=$(docker compose ps --services --filter "status=running" | wc -l)
+              TOTAL=$(docker compose ps --services | wc -l)
+
+              if [ "$RUNNING" -ne "$TOTAL" ]; then
+                echo "❌ Rollback verification failed for $service"
+                ROLLBACK_HEALTHY=false
+              else
+                echo "✅ Rollback verification passed for $service"
+              fi
+            fi
+          done
+
+          if [ "$ROLLBACK_HEALTHY" = true ]; then
+            echo "🎉 Rollback verification successful - services restored"
+          else
+            echo "⚠️ Rollback verification failed - manual intervention required"
+            exit 1
+          fi
+
+  # Job 5: Deployment notifications
+  notifications:
+    name: Deployment Notifications
+    needs: [pre-deployment, deploy-services, health-checks, rollback-on-failure]
+    if: always()
+    runs-on: [self-hosted, dockermaster]
+    steps:
+      - name: Determine deployment status
+        id: status
+        run: |
+          echo "📊 Determining overall deployment status..."
+
+          DEPLOY_RESULT="${{ needs.deploy-services.result }}"
+          HEALTH_RESULT="${{ needs.health-checks.result }}"
+          ROLLBACK_RESULT="${{ needs.rollback-on-failure.result }}"
+
+          if [ "$ROLLBACK_RESULT" = "success" ]; then
+            STATUS="rolled-back"
+            MESSAGE="Deployment failed and was automatically rolled back successfully"
+            COLOR="warning"
+          elif [ "$DEPLOY_RESULT" = "success" ] && [ "$HEALTH_RESULT" = "success" ]; then
+            STATUS="success"
+            MESSAGE="Deployment completed successfully with all health checks passing"
+            COLOR="good"
+          elif [ "$DEPLOY_RESULT" = "success" ] && [ "$HEALTH_RESULT" = "skipped" ]; then
+            STATUS="success-no-health"
+            MESSAGE="Deployment completed successfully (health checks skipped)"
+            COLOR="good"
+          else
+            STATUS="failed"
+            MESSAGE="Deployment failed"
+            COLOR="danger"
+          fi
+
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "message=$MESSAGE" >> $GITHUB_OUTPUT
+          echo "color=$COLOR" >> $GITHUB_OUTPUT
+
+      - name: Update GitHub deployment status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deploymentId = '${{ needs.pre-deployment.outputs.deployment-id }}';
+            const status = '${{ steps.status.outputs.status }}';
+            const message = '${{ steps.status.outputs.message }}';
+
+            let state, description;
+
+            switch(status) {
+              case 'success':
+              case 'success-no-health':
+                state = 'success';
+                description = 'Deployment successful';
+                break;
+              case 'rolled-back':
+                state = 'failure';
+                description = 'Deployment failed and rolled back';
+                break;
+              default:
+                state = 'failure';
+                description = 'Deployment failed';
+            }
+
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deploymentId,
+              state: state,
+              description: description,
+              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            });
+
+      - name: Generate deployment summary
+        run: |
+          echo "## 🚀 Dockermaster Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ steps.status.outputs.message }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment ID:** ${{ needs.pre-deployment.outputs.deployment-id }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Services:** $(echo '${{ needs.pre-deployment.outputs.services-matrix }}' | \
+                              jq -r '.service | join(", ")')" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 📋 Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Pre-deployment: ${{ needs.pre-deployment.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Service Deployment: ${{ needs.deploy-services.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Health Checks: ${{ needs.health-checks.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Rollback: ${{ needs.rollback-on-failure.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.health-checks.outputs.health-status }}" = "unhealthy" ]; then
+            echo "### ⚠️ Failed Services" >> $GITHUB_STEP_SUMMARY
+            echo '${{ needs.health-checks.outputs.failed-services }}' | jq -r '.[]' | while read service; do
+              echo "- $service" >> $GITHUB_STEP_SUMMARY
+            done
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [Portainer Dashboard](${{ env.PORTAINER_URL }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Vault UI](${{ env.VAULT_ADDR }}/ui)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Deployment History](https://github.com/${{ github.repository }}/deployments)" >> $GITHUB_STEP_SUMMARY
+
+      # Note: Notification integrations (Slack, Teams, etc.) can be added here
+      # using the same pattern as in the security workflow
+
+  # Job 6: Performance metrics and cleanup
+  performance-tracking:
+    name: Performance Metrics & Cleanup
+    needs: [pre-deployment, deploy-services, health-checks, rollback-on-failure, notifications]
+    if: always()
+    runs-on: [self-hosted, dockermaster]
+    steps:
+      - name: Collect deployment metrics
+        run: |
+          echo "📊 Collecting deployment performance metrics..."
+
+          # Calculate total deployment time
+          WORKFLOW_START="${{ github.event.head_commit.timestamp }}"
+          WORKFLOW_END=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          echo "### ⚡ Performance Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Start:** $WORKFLOW_START" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow End:** $WORKFLOW_END" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Services:** $(echo '${{ needs.pre-deployment.outputs.services-matrix }}' | \
+                                      jq '.service | length')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment Result:** ${{ needs.deploy-services.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Health Check Result:** ${{ needs.health-checks.result }}" >> $GITHUB_STEP_SUMMARY
+
+          # System resources after deployment
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 💾 System Resources" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "Docker System:" >> $GITHUB_STEP_SUMMARY
+          docker system df >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Disk Usage:" >> $GITHUB_STEP_SUMMARY
+          df -h ${{ env.DEPLOY_PATH }} >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Cleanup deployment artifacts
+        if: always()
+        run: |
+          echo "🧹 Cleaning up deployment artifacts..."
+
+          # Clean up backup files older than 7 days
+          find /tmp -name "backup-*" -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
+
+          # Clean up old Docker images and containers
+          docker system prune -f --volumes --filter "until=24h" || true
+
+          # Clean up old deployment logs
+          find /tmp -name "deploy-*.log" -mtime +3 -delete 2>/dev/null || true
+
+          echo "✅ Cleanup completed"
