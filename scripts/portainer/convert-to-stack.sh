@@ -111,18 +111,18 @@ log_verbose() {
 extract_service_info() {
     local compose_file="$1"
     local service_name="$2"
-    
+
     # Check if yq is available
     if ! command -v yq &> /dev/null; then
         print_warning "yq not found, using basic parsing"
         return 1
     fi
-    
+
     # Extract basic service information
     local image=$(yq eval ".services.${service_name}.image // \"\"" "$compose_file")
     local ports=$(yq eval ".services.${service_name}.ports[]? // \"\"" "$compose_file" | head -1)
     local volumes=$(yq eval ".services.${service_name}.volumes[]? // \"\"" "$compose_file")
-    
+
     echo "IMAGE=$image"
     echo "PORTS=$ports"
     echo "VOLUMES=$volumes"
@@ -134,37 +134,37 @@ create_portainer_compose() {
     local service_name="$2"
     local original_compose="$service_dir/docker-compose.yml"
     local portainer_compose="$service_dir/docker-compose.portainer.yml"
-    
+
     if [[ ! -f "$original_compose" ]]; then
         print_warning "Original compose file not found: $original_compose"
         return 1
     fi
-    
+
     if [[ -f "$portainer_compose" && "$FORCE_UPDATE" == false ]]; then
         print_warning "Portainer compose file exists: $portainer_compose (use --force to overwrite)"
         return 1
     fi
-    
+
     log_verbose "Creating Portainer compose file: $portainer_compose"
-    
+
     if [[ "$DRY_RUN" == false ]]; then
         # Copy original and add Portainer-specific labels
         cp "$original_compose" "$portainer_compose"
-        
+
         # Add Portainer-specific modifications
         cat >> "$portainer_compose" << 'EOF'
 
 # Portainer-specific labels added during conversion
 # These labels enable GitOps functionality and monitoring
 EOF
-        
+
         # Use yq to add labels if available
         if command -v yq &> /dev/null; then
             yq eval -i '.services.*.labels."portainer.autodeploy" = "true"' "$portainer_compose" 2>/dev/null || true
             yq eval -i '.services.*.labels."com.centurylinklabs.watchtower.enable" = "true"' "$portainer_compose" 2>/dev/null || true
         fi
     fi
-    
+
     print_status "Created: $portainer_compose"
 }
 
@@ -173,14 +173,14 @@ create_stack_config() {
     local service_dir="$1"
     local service_name="$2"
     local config_file="$service_dir/portainer-stack-config.json"
-    
+
     if [[ -f "$config_file" && "$FORCE_UPDATE" == false ]]; then
         print_warning "Stack config exists: $config_file (use --force to overwrite)"
         return 1
     fi
-    
+
     log_verbose "Creating stack configuration: $config_file"
-    
+
     if [[ "$DRY_RUN" == false ]]; then
         # Create configuration based on template
         cat > "$config_file" << EOF
@@ -192,7 +192,7 @@ create_stack_config() {
   "created": "$(date +%Y-%m-%d)",
   "migration_phase": "conversion",
   "note": "Stack configuration created by conversion script",
-  
+
   "env": [
     {
       "name": "PUID",
@@ -200,7 +200,7 @@ create_stack_config() {
       "description": "Process User ID for file permissions"
     },
     {
-      "name": "PGID", 
+      "name": "PGID",
       "value": "1000",
       "description": "Process Group ID for file permissions"
     },
@@ -210,7 +210,7 @@ create_stack_config() {
       "description": "Timezone setting"
     }
   ],
-  
+
   "portainer": {
     "webhook": {
       "enabled": true,
@@ -219,13 +219,13 @@ create_stack_config() {
     },
     "autodeploy": true
   },
-  
+
   "gitops": {
     "enabled": true,
     "autoUpdate": true,
     "pullPolicyMode": "Always"
   },
-  
+
   "monitoring": {
     "healthcheck": {
       "enabled": true
@@ -237,7 +237,7 @@ create_stack_config() {
 }
 EOF
     fi
-    
+
     print_status "Created: $config_file"
 }
 
@@ -245,50 +245,50 @@ EOF
 convert_service() {
     local service_name="$1"
     local service_dir="$COMPOSE_DIR/$service_name"
-    
+
     print_header "Converting service: $service_name"
-    
+
     # Check if service directory exists
     if [[ ! -d "$service_dir" ]]; then
         print_error "Service directory not found: $service_dir"
         return 1
     fi
-    
+
     # Create Portainer compose file
     if ! create_portainer_compose "$service_dir" "$service_name"; then
         print_warning "Failed to create Portainer compose file for $service_name"
     fi
-    
+
     # Create stack configuration
     if ! create_stack_config "$service_dir" "$service_name"; then
         print_warning "Failed to create stack configuration for $service_name"
     fi
-    
+
     print_status "Conversion completed for: $service_name"
 }
 
 # Main conversion logic
 if [[ "$CONVERT_ALL" == true ]]; then
     print_header "Converting all services in $COMPOSE_DIR"
-    
+
     # Find all service directories
     for service_dir in "$COMPOSE_DIR"/*/; do
         if [[ -d "$service_dir" ]]; then
             service_name=$(basename "$service_dir")
-            
+
             # Skip if not a service directory (no docker-compose.yml)
             if [[ ! -f "$service_dir/docker-compose.yml" ]]; then
                 log_verbose "Skipping $service_name (no docker-compose.yml)"
                 continue
             fi
-            
+
             convert_service "$service_name"
         fi
     done
-    
+
 elif [[ -n "$SERVICE_NAME" ]]; then
     convert_service "$SERVICE_NAME"
-    
+
 else
     print_error "Service name required or use --all"
     usage

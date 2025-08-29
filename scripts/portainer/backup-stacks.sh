@@ -121,9 +121,9 @@ mkdir -p "$BACKUP_PATH"
 portainer_api() {
     local method="$1"
     local endpoint="$2"
-    
+
     log_verbose "API Request: $method $PORTAINER_API$endpoint"
-    
+
     curl -s -X "$method" \
         -H "Authorization: Bearer $PORTAINER_TOKEN" \
         -H "Content-Type: application/json" \
@@ -149,43 +149,43 @@ echo "$STACKS" | jq -r '.[].Name' | while read -r stack_name; do
         log_verbose "Skipping stack: $stack_name (not specified)"
         continue
     fi
-    
+
     print_status "Processing stack: $stack_name"
-    
+
     # Get stack details
     STACK_INFO=$(echo "$STACKS" | jq ".[] | select(.Name == \"$stack_name\")")
     STACK_ID=$(echo "$STACK_INFO" | jq -r '.Id')
-    
+
     # Create stack-specific backup directory
     STACK_BACKUP_DIR="$BACKUP_PATH/stacks/$stack_name"
     mkdir -p "$STACK_BACKUP_DIR"
-    
+
     # Save stack configuration
     echo "$STACK_INFO" > "$STACK_BACKUP_DIR/stack-config.json"
-    
+
     # Get stack file content
     if [[ "$STACK_ID" != "null" ]]; then
         STACK_FILE=$(portainer_api GET "/stacks/$STACK_ID/file")
         echo "$STACK_FILE" > "$STACK_BACKUP_DIR/docker-compose.yml"
-        
+
         # Get stack environment variables
         ENV_VARS=$(echo "$STACK_INFO" | jq '.Env // []')
         echo "$ENV_VARS" > "$STACK_BACKUP_DIR/environment.json"
     fi
-    
+
     # Backup data volumes if not skipping
     if [[ "$SKIP_DATA" == false ]]; then
         print_status "Backing up data volumes for: $stack_name"
-        
+
         # Extract volume information from stack
         VOLUMES=$(echo "$STACK_FILE" | yq eval '.services.*.volumes[]?' 2>/dev/null || echo "")
-        
+
         if [[ -n "$VOLUMES" ]]; then
             echo "$VOLUMES" | while read -r volume; do
                 if [[ "$volume" =~ ^/nfs/ ]]; then
                     HOST_PATH=$(echo "$volume" | cut -d: -f1)
                     VOLUME_NAME=$(basename "$HOST_PATH")
-                    
+
                     if [[ -d "$HOST_PATH" ]]; then
                         log_verbose "Backing up volume: $HOST_PATH"
                         tar -czf "$STACK_BACKUP_DIR/${VOLUME_NAME}-data.tar.gz" \
@@ -222,11 +222,11 @@ EOF
 if [[ "$COMPRESSION_LEVEL" -gt 0 ]]; then
     print_status "Creating compressed archive..."
     ARCHIVE_NAME="portainer-backup-$TIMESTAMP.tar.gz"
-    
+
     tar -czf "$OUTPUT_DIR/$ARCHIVE_NAME" \
         -C "$OUTPUT_DIR" "$(basename "$BACKUP_PATH")" \
         --remove-files
-    
+
     print_status "Backup archive created: $OUTPUT_DIR/$ARCHIVE_NAME"
     BACKUP_PATH="$OUTPUT_DIR/$ARCHIVE_NAME"
 fi

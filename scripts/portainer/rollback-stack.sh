@@ -159,37 +159,37 @@ fi
 # List available backups
 list_backups() {
     local service="$1"
-    
+
     print_header "Available backups for: $service"
-    
+
     if [[ ! -d "$BACKUP_DIR" ]]; then
         print_warning "Backup directory not found: $BACKUP_DIR"
         return 1
     fi
-    
+
     local found_backups=false
-    
+
     for backup_path in "$BACKUP_DIR"/stack-backup-*/stacks/"$service"; do
         if [[ -d "$backup_path" ]]; then
             local backup_name=$(basename "$(dirname "$(dirname "$backup_path")")")
             local timestamp=$(echo "$backup_name" | sed 's/stack-backup-//')
             local date_readable=$(date -d "${timestamp:0:8} ${timestamp:9:2}:${timestamp:11:2}:${timestamp:13:2}" 2>/dev/null || echo "Invalid date")
-            
+
             echo "  📦 $timestamp ($date_readable)"
-            
+
             if [[ -f "$backup_path/stack-config.json" ]]; then
                 echo "     ✅ Configuration available"
             fi
-            
+
             if ls "$backup_path"/*-data.tar.gz 1> /dev/null 2>&1; then
                 echo "     💾 Data backups available"
             fi
-            
+
             echo ""
             found_backups=true
         fi
     done
-    
+
     if [[ "$found_backups" == false ]]; then
         print_warning "No backups found for service: $service"
     fi
@@ -205,13 +205,13 @@ portainer_api() {
     local method="$1"
     local endpoint="$2"
     local data="${3:-}"
-    
+
     local curl_args=(-s -X "$method" -H "Authorization: Bearer $PORTAINER_TOKEN" -H "Content-Type: application/json")
-    
+
     if [[ -n "$data" ]]; then
         curl_args+=(-d "$data")
     fi
-    
+
     log_verbose "API Request: $method $PORTAINER_API$endpoint"
     curl "${curl_args[@]}" "$PORTAINER_API$endpoint"
 }
@@ -233,13 +233,13 @@ print_status "Found stack ID: $STACK_ID"
 if [[ "$FORCE_ROLLBACK" == false ]]; then
     print_warning "This will rollback the stack: $SERVICE_NAME"
     print_warning "Method: $ROLLBACK_METHOD"
-    
+
     if [[ "$ROLLBACK_METHOD" == "backup" && -n "$BACKUP_TIMESTAMP" ]]; then
         print_warning "Backup timestamp: $BACKUP_TIMESTAMP"
     elif [[ "$ROLLBACK_METHOD" == "git" && -n "$GIT_COMMIT" ]]; then
         print_warning "Git commit: $GIT_COMMIT"
     fi
-    
+
     read -p "Are you sure you want to proceed? (y/N): " -r
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         print_status "Rollback cancelled by user"
@@ -251,9 +251,9 @@ fi
 case "$ROLLBACK_METHOD" in
     "git")
         print_header "Performing Git-based rollback"
-        
+
         cd "$PROJECT_ROOT"
-        
+
         if [[ -n "$GIT_COMMIT" ]]; then
             print_status "Rolling back to specific commit: $GIT_COMMIT"
             git reset --hard "$GIT_COMMIT"
@@ -262,47 +262,47 @@ case "$ROLLBACK_METHOD" in
             # Find last good commit (simple heuristic: previous commit)
             CURRENT_COMMIT=$(git rev-parse HEAD)
             PREVIOUS_COMMIT=$(git rev-parse HEAD~1)
-            
+
             print_status "Current commit: $CURRENT_COMMIT"
             print_status "Rolling back to: $PREVIOUS_COMMIT"
-            
+
             git reset --hard "$PREVIOUS_COMMIT"
             git push --force origin main
         fi
-        
+
         print_status "Git rollback completed - GitOps will trigger automatic deployment"
         ;;
-        
+
     "backup")
         print_header "Performing backup-based rollback"
-        
+
         if [[ -z "$BACKUP_TIMESTAMP" ]]; then
             # Find most recent backup
             BACKUP_TIMESTAMP=$(ls -1 "$BACKUP_DIR"/stack-backup-*/stacks/"$SERVICE_NAME" 2>/dev/null | head -1 | sed 's/.*stack-backup-\([0-9_]*\).*/\1/' || echo "")
-            
+
             if [[ -z "$BACKUP_TIMESTAMP" ]]; then
                 print_error "No backups found and no timestamp specified"
                 exit 1
             fi
-            
+
             print_status "Using most recent backup: $BACKUP_TIMESTAMP"
         fi
-        
+
         BACKUP_PATH="$BACKUP_DIR/stack-backup-$BACKUP_TIMESTAMP/stacks/$SERVICE_NAME"
-        
+
         if [[ ! -d "$BACKUP_PATH" ]]; then
             print_error "Backup not found: $BACKUP_PATH"
             exit 1
         fi
-        
+
         # Stop current stack
         print_status "Stopping current stack..."
         portainer_api POST "/stacks/$STACK_ID/stop"
-        
+
         # Restore data volumes if requested
         if [[ "$CONFIG_ONLY" == false ]]; then
             print_status "Restoring data volumes..."
-            
+
             for data_file in "$BACKUP_PATH"/*-data.tar.gz; do
                 if [[ -f "$data_file" ]]; then
                     print_status "Restoring: $(basename "$data_file")"
@@ -310,19 +310,19 @@ case "$ROLLBACK_METHOD" in
                 fi
             done
         fi
-        
+
         # Restore configuration if requested
         if [[ "$DATA_ONLY" == false ]]; then
             print_status "Restoring stack configuration..."
-            
+
             if [[ -f "$BACKUP_PATH/docker-compose.yml" ]]; then
                 # Create temporary configuration for restoration
                 TEMP_COMPOSE="/tmp/${SERVICE_NAME}-restore-compose.yml"
                 cp "$BACKUP_PATH/docker-compose.yml" "$TEMP_COMPOSE"
-                
+
                 # Update stack with backup configuration
                 COMPOSE_CONTENT=$(cat "$TEMP_COMPOSE" | base64 -w 0)
-                
+
                 UPDATE_PAYLOAD=$(cat <<EOF
 {
   "stackFileContent": "$COMPOSE_CONTENT",
@@ -331,32 +331,32 @@ case "$ROLLBACK_METHOD" in
 }
 EOF
 )
-                
+
                 portainer_api PUT "/stacks/$STACK_ID" "$UPDATE_PAYLOAD"
                 rm "$TEMP_COMPOSE"
             fi
         fi
-        
+
         # Start stack
         print_status "Starting restored stack..."
         portainer_api POST "/stacks/$STACK_ID/start"
         ;;
-        
+
     "config")
         print_header "Performing configuration rollback"
-        
+
         SERVICE_DIR="$PROJECT_ROOT/dockermaster/docker/compose/$SERVICE_NAME"
-        
+
         if [[ ! -f "$SERVICE_DIR/docker-compose.yml" ]]; then
             print_error "Original configuration not found: $SERVICE_DIR/docker-compose.yml"
             exit 1
         fi
-        
+
         # Reset to original compose configuration
         print_status "Resetting to original docker-compose.yml"
-        
+
         COMPOSE_CONTENT=$(cat "$SERVICE_DIR/docker-compose.yml" | base64 -w 0)
-        
+
         UPDATE_PAYLOAD=$(cat <<EOF
 {
   "stackFileContent": "$COMPOSE_CONTENT",
@@ -364,10 +364,10 @@ EOF
 }
 EOF
 )
-        
+
         portainer_api PUT "/stacks/$STACK_ID" "$UPDATE_PAYLOAD"
         ;;
-        
+
     *)
         print_error "Unknown rollback method: $ROLLBACK_METHOD"
         exit 1

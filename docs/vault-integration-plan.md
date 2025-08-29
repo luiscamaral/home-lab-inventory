@@ -42,7 +42,7 @@ services:
       "
     volumes:
       - secrets-volume:/shared
-  
+
   main-service:
     depends_on:
       vault-init:
@@ -94,7 +94,7 @@ services:
       sh -c "
       vault agent -config=/vault/config/agent.hcl
       "
-    
+
   main-service:
     image: service:latest
     container_name: ${SERVICE_NAME}
@@ -121,7 +121,7 @@ auto_auth {
       secret_id_file_path = "/vault/config/secret_id"
     }
   }
-  
+
   sink {
     type = "file"
     config {

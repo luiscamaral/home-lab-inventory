@@ -1,50 +1,40 @@
 {
-  "name": "${STACK_NAME}",
+  "backup": {
+    "retention": "30d",
+    "schedule": "0 2 * * *",
+    "volumes": [
+      "${VOLUME_PATHS}"
+    ]
+  },
   "composeFile": "dockermaster/docker/compose/${SERVICE_DIRECTORY}/docker-compose.portainer.yml",
-  "repositoryUrl": "https://github.com/luiscamaral/home-lab-inventory",
-  "repositoryReference": "refs/heads/main",
   "created": "${CREATION_DATE}",
-  "migration_phase": "${MIGRATION_PHASE}",
-  "note": "Stack configuration for GitOps deployment via Portainer",
-  
+  "dependencies": [
+    "${DEPENDENT_SERVICES}"
+  ],
   "env": [
     {
+      "description": "Process User ID for file permissions",
       "name": "PUID",
-      "value": "1000",
-      "description": "Process User ID for file permissions"
+      "value": "1000"
     },
     {
-      "name": "PGID", 
-      "value": "1000",
-      "description": "Process Group ID for file permissions"
+      "description": "Process Group ID for file permissions",
+      "name": "PGID",
+      "value": "1000"
     },
     {
+      "description": "Timezone setting",
       "name": "TZ",
-      "value": "UTC",
-      "description": "Timezone setting"
+      "value": "UTC"
     }
   ],
-  
-  "portainer": {
-    "webhook": {
-      "enabled": true,
-      "token": "${WEBHOOK_TOKEN}",
-      "url": "https://192.168.59.2:9000/api/webhooks/${WEBHOOK_ID}"
-    },
-    "autodeploy": true,
-    "accessControl": {
-      "restrictedToTeam": false,
-      "administratorOnly": false
-    }
-  },
-  
   "gitops": {
-    "enabled": true,
     "autoUpdate": true,
-    "pullPolicyMode": "Always",
-    "composeFilePathInRepository": "dockermaster/docker/compose/${SERVICE_DIRECTORY}/docker-compose.portainer.yml"
+    "composeFilePathInRepository": "dockermaster/docker/compose/${SERVICE_DIRECTORY}/docker-compose.portainer.yml",
+    "enabled": true,
+    "pullPolicyMode": "Always"
   },
-  
+  "migration_phase": "${MIGRATION_PHASE}",
   "monitoring": {
     "healthcheck": {
       "enabled": true,
@@ -56,20 +46,27 @@
       "updateSchedule": "0 4 * * 0"
     }
   },
-  
-  "backup": {
-    "volumes": ["${VOLUME_PATHS}"],
-    "schedule": "0 2 * * *",
-    "retention": "30d"
+  "name": "${STACK_NAME}",
+  "note": "Stack configuration for GitOps deployment via Portainer",
+  "portainer": {
+    "accessControl": {
+      "administratorOnly": false,
+      "restrictedToTeam": false
+    },
+    "autodeploy": true,
+    "webhook": {
+      "enabled": true,
+      "token": "${WEBHOOK_TOKEN}",
+      "url": "https://192.168.59.2:9000/api/webhooks/${WEBHOOK_ID}"
+    }
   },
-  
-  "dependencies": [
-    "${DEPENDENT_SERVICES}"
-  ],
-  
+  "repositoryReference": "refs/heads/main",
+  "repositoryUrl": "https://github.com/luiscamaral/home-lab-inventory",
   "secrets": {
+    "secret_vars": [
+      "${SECRET_ENVIRONMENT_VARS}"
+    ],
     "vault_integration": true,
-    "vault_path": "secret/dockermaster/${STACK_NAME}/",
-    "secret_vars": ["${SECRET_ENVIRONMENT_VARS}"]
+    "vault_path": "secret/dockermaster/${STACK_NAME}/"
   }
 }

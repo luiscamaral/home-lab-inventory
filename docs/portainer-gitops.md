@@ -121,30 +121,30 @@ services:
     image: service:latest
     hostname: service-name
     container_name: service-name
-    
+
     networks:
       - docker-servers-net
-    
+
     ports:
       - "HOST_PORT:CONTAINER_PORT"
-    
+
     volumes:
       - /nfs/service/data:/app/data
       - /nfs/service/config:/app/config
-    
+
     environment:
       PUID: ${PUID:-1000}
       PGID: ${PGID:-1000}
       TZ: ${TZ:-UTC}
-    
+
     restart: unless-stopped
-    
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:PORT/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-    
+
     labels:
       com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "service-name"
@@ -165,14 +165,14 @@ networks:
   "repositoryReference": "refs/heads/main",
   "created": "2025-08-29",
   "migration_phase": "deployment",
-  
+
   "env": [
     {
       "name": "PUID",
       "value": "1000"
     },
     {
-      "name": "PGID", 
+      "name": "PGID",
       "value": "1000"
     },
     {
@@ -180,7 +180,7 @@ networks:
       "value": "UTC"
     }
   ],
-  
+
   "gitops": {
     "enabled": true,
     "autoUpdate": true

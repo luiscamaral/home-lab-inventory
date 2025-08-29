@@ -9,38 +9,38 @@ services:
     image: ${SERVICE_IMAGE}
     hostname: ${SERVICE_HOSTNAME:-${SERVICE_NAME}}
     container_name: ${SERVICE_NAME}
-    
+
     # Network Configuration
     networks:
       - ${NETWORK_NAME:-docker-servers-net}
-    
+
     # Port Mappings
     ports:
       - "${HOST_PORT}:${CONTAINER_PORT}"
-    
+
     # Volume Mounts
     volumes:
       - ${HOST_VOLUME_PATH}:${CONTAINER_VOLUME_PATH}
       # Add additional volumes as needed
-    
+
     # Environment Variables
     environment:
       # Standard environment variables
       PUID: ${PUID:-1000}
       PGID: ${PGID:-1000}
       TZ: ${TZ:-UTC}
-      
+
       # Service-specific variables
       # Add service-specific environment variables here
-    
+
     # Security and Privileges
     security_opt:
       - seccomp:unconfined  # Only if required
     # privileged: true  # Only if absolutely necessary
-    
+
     # Restart Policy
     restart: unless-stopped
-    
+
     # Health Checks
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${CONTAINER_PORT}/health"]
@@ -48,7 +48,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    
+
     # Resource Limits (Optional)
     deploy:
       resources:
@@ -58,24 +58,24 @@ services:
         reservations:
           memory: ${MEMORY_RESERVATION:-256M}
           cpus: '${CPU_RESERVATION:-0.25}'
-    
+
     # Labels for Management
     labels:
       # Watchtower auto-update
       com.centurylinklabs.watchtower.enable: "true"
-      
+
       # Stack identification
       com.docker.stack: "${STACK_NAME}"
       com.docker.service: "${SERVICE_NAME}"
-      
+
       # Portainer auto-deployment
       portainer.autodeploy: "true"
-      
+
       # Service metadata
       service.description: "${SERVICE_DESCRIPTION}"
       service.version: "${SERVICE_VERSION:-latest}"
       service.maintainer: "home-lab-team"
-      
+
       # Monitoring labels
       prometheus.scrape: "true"
       prometheus.port: "${METRICS_PORT:-9090}"

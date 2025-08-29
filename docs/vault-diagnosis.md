@@ -22,10 +22,10 @@ Vault service is **FUNCTIONAL** but has **CONFIGURATION ISSUES** that cause misl
 
 **Problem**: Configuration file contains conflicting TLS settings:
 - `api_addr = "https://vault.d.lcamaral.com"` (HTTPS)
-- `cluster_addr = "https://192.168.59.25:8201"` (HTTPS) 
+- `cluster_addr = "https://192.168.59.25:8201"` (HTTPS)
 - `tls_disable = 1` (TLS disabled)
 
-**Impact**: 
+**Impact**:
 - Commands using `VAULT_ADDR=https://vault.d.lcamaral.com` fail with TLS certificate errors
 - Health checks may report incorrect status
 - Unseal scripts require workarounds
@@ -38,7 +38,7 @@ Vault service is **FUNCTIONAL** but has **CONFIGURATION ISSUES** that cause misl
 - Configuration exists only inside container at `/vault/config/config.hcl`
 - Host directory only contains policy files
 
-**Impact**: 
+**Impact**:
 - Configuration cannot be edited from host
 - Version control of configuration not possible
 

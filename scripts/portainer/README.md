@@ -201,15 +201,15 @@ services:
     image: service:latest
     hostname: service-name
     container_name: service-name
-    
+
     networks:
       - docker-servers-net
-    
+
     environment:
       PUID: ${PUID:-1000}
       PGID: ${PGID:-1000}
       TZ: ${TZ:-UTC}
-    
+
     labels:
       com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "service-name"

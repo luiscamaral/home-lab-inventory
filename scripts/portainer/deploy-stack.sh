@@ -176,20 +176,20 @@ portainer_api() {
     local method="$1"
     local endpoint="$2"
     local data="${3:-}"
-    
+
     local curl_args=(-s -X "$method" -H "Authorization: Bearer $PORTAINER_TOKEN" -H "Content-Type: application/json")
-    
+
     if [[ -n "$data" ]]; then
         curl_args+=(-d "$data")
     fi
-    
+
     log_verbose "API Request: $method $PORTAINER_API$endpoint"
-    
+
     if [[ "$DRY_RUN" == true ]]; then
         echo '{"dry_run": true}'
         return
     fi
-    
+
     curl "${curl_args[@]}" "$PORTAINER_API$endpoint"
 }
 
@@ -238,13 +238,13 @@ if [[ "$STACK_EXISTS" == true ]]; then
 }
 EOF
 )
-    
+
     print_status "Updating existing stack..."
     if [[ "$DRY_RUN" == false ]]; then
         RESPONSE=$(portainer_api PUT "/stacks/$EXISTING_STACK_ID/git/redeploy?endpointId=$ENDPOINT_ID" "$PAYLOAD")
         print_status "Stack update response: $RESPONSE"
     fi
-    
+
 else
     # Create new stack
     PAYLOAD=$(cat <<EOF
@@ -261,12 +261,12 @@ else
 }
 EOF
 )
-    
+
     print_status "Creating new stack..."
     if [[ "$DRY_RUN" == false ]]; then
         RESPONSE=$(portainer_api POST "/stacks/repository/file/start?endpointId=$ENDPOINT_ID" "$PAYLOAD")
         print_status "Stack creation response: $RESPONSE"
-        
+
         # Extract stack ID from response
         NEW_STACK_ID=$(echo "$RESPONSE" | jq -r '.Id // empty')
         if [[ -n "$NEW_STACK_ID" ]]; then
@@ -278,11 +278,11 @@ fi
 # Configure webhook if stack was created successfully
 if [[ "$DRY_RUN" == false && ("$STACK_EXISTS" == false || -n "${NEW_STACK_ID:-}") ]]; then
     print_status "Stack deployment completed successfully"
-    
+
     # Get webhook URL
     STACK_ID="${NEW_STACK_ID:-$EXISTING_STACK_ID}"
     WEBHOOK_URL="$PORTAINER_URL/api/stacks/$STACK_ID/git/deploy"
-    
+
     print_status "GitOps Configuration:"
     print_status "  Webhook URL: $WEBHOOK_URL"
     print_status "  Repository monitoring: $REPO_URL"
@@ -292,7 +292,7 @@ if [[ "$DRY_RUN" == false && ("$STACK_EXISTS" == false || -n "${NEW_STACK_ID:-}"
     print_status "1. Configure GitHub webhook pointing to: $WEBHOOK_URL"
     print_status "2. Test deployment by pushing to repository"
     print_status "3. Monitor stack in Portainer UI: $PORTAINER_URL"
-    
+
 else
     if [[ "$DRY_RUN" == true ]]; then
         print_status "DRY RUN completed successfully"
