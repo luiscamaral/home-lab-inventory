@@ -10,4 +10,4 @@ services:
     image: phensley/docker-dns
     command: --domain example.com
     volumes:
-     - "/var/run/docker.sock:/docker.sock"
+      - "/var/run/docker.sock:/docker.sock"

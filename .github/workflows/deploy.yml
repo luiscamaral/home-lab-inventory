@@ -50,7 +50,8 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ "${{ github.event.inputs.service }}" = "all" ]; then
               # Get all services with docker-compose files
-              SERVICES=$(find dockermaster/docker/compose -name "docker-compose.yml" -o -name "docker-compose.yaml" | xargs -n1 dirname | xargs -n1 basename | tr '\n' ',' | sed 's/,$//')
+              SERVICES=$(find dockermaster/docker/compose -name "docker-compose.yml" -o -name "docker-compose.yaml" \
+                | xargs -n1 dirname | xargs -n1 basename | tr '\n' ',' | sed 's/,$//')
             else
               SERVICES="${{ github.event.inputs.service }}"
             fi

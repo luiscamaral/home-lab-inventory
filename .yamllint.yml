@@ -6,7 +6,7 @@ extends: default
 rules:
   # Line length - allow longer lines for URLs and commands
   line-length:
-    max: 120
+    max: 180  # Increased for GitHub workflows with long commands
     allow-non-breakable-words: true
     allow-non-breakable-inline-mappings: true
 

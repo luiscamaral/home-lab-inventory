@@ -1028,7 +1028,8 @@ jobs:
           echo "- [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)" >> pr-summary.md
           echo "" >> pr-summary.md
 
-          echo "**🔒 Security Note:** This validation focuses on code quality and standards. Security scanning is handled by the [Security Workflow](https://github.com/${{ github.repository }}/actions/workflows/security.yml)." >> pr-summary.md
+          echo "**🔒 Security Note:** This validation focuses on code quality and standards." >> pr-summary.md
+          echo "Security scanning is handled by the [Security Workflow](https://github.com/${{ github.repository }}/actions/workflows/security.yml)." >> pr-summary.md
           echo "" >> pr-summary.md
 
           echo "---" >> pr-summary.md

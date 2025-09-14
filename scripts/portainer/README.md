@@ -9,13 +9,14 @@ This directory contains automation scripts for managing Portainer stacks with Gi
 | Script | Purpose | Usage |
 |--------|---------|-------|
 | `deploy-stack.sh` | Deploy services to Portainer as GitOps-enabled stacks | `./deploy-stack.sh -t TOKEN service-name` |
-| `convert-to-stack.sh` | Convert docker-compose.yml to Portainer-compatible stacks | `./convert-to-stack.sh --all` |
+| `convert-to-stack.sh` | Convert Docker-compose.yml to Portainer-compatible stacks | `./convert-to-stack.sh --all` |
 | `backup-stacks.sh` | Backup Portainer configurations and data volumes | `./backup-stacks.sh -t TOKEN` |
 | `rollback-stack.sh` | Emergency rollback for failed deployments | `./rollback-stack.sh -t TOKEN service-name` |
 
 ## 🚀 Quick Start Guide
 
 ### 1. Preparation
+
 ```bash
 # Ensure you have Portainer API token
 # Get from Portainer UI: User account → Access tokens
@@ -26,6 +27,7 @@ curl -k https://192.168.59.2:9000/api/status
 ```
 
 ### 2. Convert Existing Services
+
 ```bash
 # Convert all services to Portainer-compatible format
 ./convert-to-stack.sh --all
@@ -35,6 +37,7 @@ curl -k https://192.168.59.2:9000/api/status
 ```
 
 ### 3. Deploy to Portainer
+
 ```bash
 # Deploy converted stack
 ./deploy-stack.sh --token $PORTAINER_TOKEN calibre-server
@@ -44,6 +47,7 @@ curl -k https://192.168.59.2:9000/api/status
 ```
 
 ### 4. Backup Configuration
+
 ```bash
 # Backup all stacks and data
 ./backup-stacks.sh --token $PORTAINER_TOKEN
@@ -55,9 +59,11 @@ curl -k https://192.168.59.2:9000/api/status
 ## 📜 Detailed Script Documentation
 
 ### deploy-stack.sh
+
 Deploy a service to Portainer as a GitOps-enabled stack.
 
 **Usage**:
+
 ```bash
 ./deploy-stack.sh [OPTIONS] <service_name>
 
@@ -70,11 +76,13 @@ Options:
 ```
 
 **Prerequisites**:
+
 - Service must have `docker-compose.portainer.yml`
 - Service must have `portainer-stack-config.json`
-- Portainer must be accessible at https://192.168.59.2:9000
+- Portainer must be accessible at <https://192.168.59.2:9000>
 
 **Examples**:
+
 ```bash
 # Basic deployment
 ./deploy-stack.sh --token abc123 calibre-server
@@ -87,9 +95,11 @@ Options:
 ```
 
 ### convert-to-stack.sh
-Convert existing docker-compose.yml files to Portainer-compatible stacks.
+
+Convert existing Docker-compose.yml files to Portainer-compatible stacks.
 
 **Usage**:
+
 ```bash
 ./convert-to-stack.sh [OPTIONS] <service_name>
 
@@ -101,10 +111,12 @@ Options:
 ```
 
 **Output Files**:
+
 - `docker-compose.portainer.yml` - Portainer-optimized compose file
 - `portainer-stack-config.json` - Stack configuration and metadata
 
 **Examples**:
+
 ```bash
 # Convert all services
 ./convert-to-stack.sh --all
@@ -117,9 +129,11 @@ Options:
 ```
 
 ### backup-stacks.sh
+
 Create comprehensive backups of Portainer stack configurations and data.
 
 **Usage**:
+
 ```bash
 ./backup-stacks.sh [OPTIONS]
 
@@ -133,12 +147,14 @@ Options:
 ```
 
 **Backup Contents**:
+
 - Stack configurations and metadata
 - Environment variables
-- Docker compose files
+- Docker Compose files
 - Data volume contents (unless `--skip-data`)
 
 **Examples**:
+
 ```bash
 # Full backup of all stacks
 ./backup-stacks.sh --token abc123
@@ -151,9 +167,11 @@ Options:
 ```
 
 ### rollback-stack.sh
+
 Emergency rollback capabilities for failed deployments.
 
 **Usage**:
+
 ```bash
 ./rollback-stack.sh [OPTIONS] <service_name>
 
@@ -169,11 +187,13 @@ Options:
 ```
 
 **Rollback Methods**:
+
 - **git**: Revert repository to previous commit (recommended)
 - **backup**: Restore from Portainer stack backup
-- **config**: Reset to original docker-compose.yml
+- **config**: Reset to original Docker-compose.yml
 
 **Examples**:
+
 ```bash
 # Git-based rollback (recommended)
 ./rollback-stack.sh --token abc123 calibre-server
@@ -190,7 +210,8 @@ Options:
 
 ## 🔧 Configuration Files
 
-### docker-compose.portainer.yml
+### Docker-compose.portainer.yml
+
 Portainer-optimized compose file with GitOps labels:
 
 ```yaml
@@ -220,7 +241,8 @@ networks:
     external: true
 ```
 
-### portainer-stack-config.json
+### portainer-stack-config.JSON
+
 Stack metadata and configuration:
 
 ```json
@@ -247,11 +269,13 @@ Stack metadata and configuration:
 ### Common Issues
 
 #### Script Permission Denied
+
 ```bash
 chmod +x scripts/portainer/*.sh
 ```
 
 #### API Connection Failed
+
 ```bash
 # Verify Portainer is accessible
 curl -k https://192.168.59.2:9000/api/status
@@ -261,36 +285,42 @@ curl -k -H "Authorization: Bearer $TOKEN" https://192.168.59.2:9000/api/users/me
 ```
 
 #### Stack Deployment Failed
-1. Check docker-compose.portainer.yml syntax
+
+1. Check Docker-compose.portainer.yml syntax
 2. Verify environment variables
 3. Check volume paths exist
 4. Review Portainer logs
 
 #### Backup/Restore Issues
+
 1. Verify backup directory permissions
 2. Check available disk space
 3. Ensure all services are stopped during restore
 
 ### Log Locations
+
 - Script logs: stdout/stderr
-- Portainer logs: https://192.168.59.2:9000 → Activity logs
+- Portainer logs: <https://192.168.59.2:9000> → Activity logs
 - Container logs: Containers → Container → Logs
 - System logs: `journalctl -u docker`
 
 ## 🔐 Security Considerations
 
 ### API Token Management
+
 - Generate tokens with minimal required permissions
 - Rotate tokens regularly
 - Store tokens securely (not in scripts or version control)
 - Use environment variables: `export PORTAINER_TOKEN="..."`
 
 ### Network Security
+
 - Portainer accessible only from trusted networks
 - Use HTTPS for all API communications
 - Validate webhook sources
 
 ### Backup Security
+
 - Encrypt sensitive backup data
 - Secure backup storage locations
 - Regular backup validation
@@ -298,6 +328,7 @@ curl -k -H "Authorization: Bearer $TOKEN" https://192.168.59.2:9000/api/users/me
 ## 📋 Prerequisites
 
 ### Required Tools
+
 - `curl` - API communication
 - `jq` - JSON processing
 - `yq` - YAML processing (optional but recommended)
@@ -305,6 +336,7 @@ curl -k -H "Authorization: Bearer $TOKEN" https://192.168.59.2:9000/api/users/me
 - `git` - Version control
 
 ### Installation
+
 ```bash
 # Ubuntu/Debian
 sudo apt update
@@ -319,14 +351,16 @@ brew install curl jq yq docker git
 ```
 
 ### Permissions
+
 - User must have access to Portainer API
-- Docker socket access (usually via docker group)
+- Docker socket access (usually via Docker group)
 - Read/write access to backup directories
 - Git repository push permissions (for git rollbacks)
 
 ## 📈 Best Practices
 
 ### Deployment Workflow
+
 1. Test changes in development environment
 2. Create backup before major changes
 3. Use dry-run mode to validate deployment
@@ -335,12 +369,14 @@ brew install curl jq yq docker git
 6. Document any issues or special procedures
 
 ### Backup Strategy
+
 - Daily configuration backups
 - Weekly full backups (including data)
 - Monthly backup validation
 - Offsite backup storage for critical services
 
 ### Monitoring
+
 - Set up health checks for all services
 - Monitor deployment success/failure rates
 - Track resource usage trends
