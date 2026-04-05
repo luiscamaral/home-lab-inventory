@@ -6,7 +6,7 @@
 - **Category**: Secret Management
 - **Status**: Running but Unhealthy (TLS Configuration Issues)
 - **IP Address**: 192.168.59.25
-- **External URL**: https://vault.d.lcamaral.com (Currently not working)
+- **External URL**: <https://vault.d.lcamaral.com> (Currently not working)
 
 ## 🚀 Description
 
@@ -15,25 +15,29 @@ HashiCorp Vault service providing centralized secret management for the dockerma
 ## 🔧 Configuration
 
 ### Docker Compose Location
+
 ```
 /nfs/dockermaster/docker/vault/docker-compose.yml
 ```
 
 ### Environment Variables
+
 - **Required**:
-  - `VAULT_ADDR`: Vault server address (http://vault.d.lcamaral.com/)
+  - `VAULT_ADDR`: Vault server address (<http://vault.d.lcamaral.com/>)
 - **Present** (Should be managed securely):
-  - `ROOT_TOKEN`: Vault root token (hvs.vXBee6SsFvniwkanLvGp9XdM)
-  - `VAULT_TOKEN`: Service access token (A5f9a4b20871ece6ba6b535258aa879ca)
-  - `VAULT_UNSEAL_KEYS`: Unseal keys for automatic unsealing
+  - `ROOT_TOKEN`: <STORED IN VAULT — rotate if exposed>
+  - `VAULT_TOKEN`: <STORED IN VAULT — rotate if exposed>
+  - `VAULT_UNSEAL_KEYS`: <STORED OFFLINE — never commit to git>
 
 ### Volumes
+
 - `./vault/config:/vault/config`: Configuration files and policies
 - `./vault/data:/vault/data`: Raft storage backend data
 - `./vault/logs:/vault/logs`: Vault service logs
 
 ### Network Configuration
-- **Network**: docker-servers-net (macvlan)
+
+- **Network**: Docker-servers-net (macvlan)
 - **IP**: 192.168.59.25
 - **Ports**:
   - Internal: 8200 (API)
@@ -43,6 +47,7 @@ HashiCorp Vault service providing centralized secret management for the dockerma
 ## 🔐 Security
 
 ### Current Security Configuration
+
 - **Storage Backend**: Raft (High Availability capable)
 - **Seal Type**: Shamir's Secret Sharing
 - **UI**: Enabled
@@ -50,13 +55,16 @@ HashiCorp Vault service providing centralized secret management for the dockerma
 - **TLS**: Disabled for local listeners, expected for API access
 
 ### Access Control Policies
+
 Available policy files:
+
 - `kv-app-readonly.hcl`: Read-only access to KV store
 - `project-dockermaster-home-lab-inventory.hcl`: Project-specific access
 - `project-dockermaster-home-lab-inventory-ro.hcl`: Read-only project access
 - `superuser.hcl`: Administrative access
 
 ### **⚠️ CRITICAL SECURITY ISSUES**
+
 1. **Root token in environment file**: Highly insecure, should be removed after initial setup
 2. **Service token in plaintext**: Should use dynamic tokens or proper authentication
 3. **Unseal keys in plaintext**: Should be stored securely, not in version control
@@ -64,6 +72,7 @@ Available policy files:
 ## 📈 Monitoring
 
 ### Health Checks
+
 - **Endpoint**: `http://127.0.0.1:8200/v1/sys/health`
 - **Interval**: 10s
 - **Timeout**: 3s
@@ -71,12 +80,14 @@ Available policy files:
 - **Current Status**: Unhealthy (TLS configuration mismatch)
 
 ### Resource Limits
+
 - **CPU Limit**: 2 cores
 - **Memory Limit**: 2GB
 - **CPU Reservation**: 0.5 cores
 - **Memory Reservation**: 512MB
 
 ### Metrics
+
 - **Prometheus**: Not configured (should be enabled)
 - **Metrics endpoint**: `/v1/sys/metrics` (available but not exposed)
 - **Telemetry**: Not configured
@@ -84,16 +95,19 @@ Available policy files:
 ## 🚨 Current Issues
 
 ### 1. TLS Configuration Mismatch
+
 - **Problem**: API address configured as HTTPS but TLS disabled on listeners
 - **Impact**: Unseal scripts fail, external access fails
 - **Error**: `certificate signed by unknown authority`
 
 ### 2. Vault Sealed State
+
 - **Problem**: Vault may be sealed and unseal script failing due to TLS issues
 - **Impact**: Secrets inaccessible to dependent services
 - **Status**: Requires manual investigation
 
 ### 3. Configuration File Location Mismatch
+
 - **Problem**: Docker-compose references `/vault/config/config.hcl` but file is at `/vault/config/config.hcl`
 - **Impact**: May not be using correct configuration
 - **Status**: Needs verification
@@ -101,12 +115,14 @@ Available policy files:
 ## 🔄 Backup Strategy
 
 ### Data Backup
+
 - **Method**: Manual (Raft snapshots recommended)
 - **Frequency**: Should be daily
 - **Location**: Not currently configured
 - **Command**: `vault operator raft snapshot save backup.snap`
 
 ### Configuration Backup
+
 - **Git repository**: Partially (policies included, sensitive data excluded)
 - **Unseal keys**: ⚠️ Currently in environment file (INSECURE)
 - **Recovery keys**: Should be stored in secure offline location
@@ -131,11 +147,13 @@ Available policy files:
    - **Solution**: Verify configuration file path and unsealing
 
 ### Log Locations
+
 - **Container logs**: `docker logs vault`
 - **Vault logs**: `/nfs/dockermaster/docker/vault/vault/logs/`
 - **Audit logs**: Not configured (recommended to enable)
 
 ### Recovery Procedures
+
 1. **Unseal vault**: Fix TLS configuration, then run `./unseal`
 2. **Service restart**: `docker compose restart vault`
 3. **Full rebuild**: `docker compose down && docker compose up -d`
@@ -144,6 +162,7 @@ Available policy files:
 ## 📝 Maintenance
 
 ### Critical Actions Needed
+
 1. **Fix TLS configuration**: Either enable proper TLS or update unseal script to use HTTP
 2. **Secure token management**: Remove tokens from environment files
 3. **Configure backups**: Implement automated Raft snapshots
@@ -151,13 +170,15 @@ Available policy files:
 5. **Configure Prometheus monitoring**: For operational visibility
 
 ### Updates
+
 - **Current Version**: Vault v1.16.3
 - **Update schedule**: Manual (Watchtower disabled)
 - **Update procedure**: Test in staging, backup first, then update
 
 ### Dependencies
-- **Required services**: docker-servers-net network
-- **Required by**: All services using secrets (github-runner, keycloak, etc.)
+
+- **Required services**: Docker-servers-net network
+- **Required by**: All services using secrets (GitHub-runner, keycloak, etc.)
 
 ## 🔗 Related Links
 
@@ -177,7 +198,9 @@ Available policy files:
 ## 🔧 Immediate Action Items
 
 ### High Priority Fixes
+
 1. **Resolve TLS Configuration**
+
    ```bash
    # Option 1: Use HTTP for unseal (Quick fix)
    # Edit unseal script: Change VAULT_ADDR to "http://192.168.59.25:8200"
@@ -187,6 +210,7 @@ Available policy files:
    ```
 
 2. **Secure Token Management**
+
    ```bash
    # Remove tokens from .env file
    # Use vault authentication methods instead
@@ -194,6 +218,7 @@ Available policy files:
    ```
 
 3. **Test Unsealing Process**
+
    ```bash
    # After fixing TLS issues:
    cd /nfs/dockermaster/docker/vault
@@ -202,6 +227,7 @@ Available policy files:
    ```
 
 ### Configuration Template for HTTP Mode
+
 ```hcl
 # For immediate fix, update config.hcl:
 api_addr     = "http://192.168.59.25:8200"  # Use HTTP instead of HTTPS
@@ -209,6 +235,6 @@ cluster_addr = "http://192.168.59.25:8201"   # Use HTTP instead of HTTPS
 ```
 
 ---
-*Template Version: 1.0*
-*Last Updated: 2025-08-28*
-*Service Status: Running but Unhealthy - Requires TLS Configuration Fix*
+_Template Version: 1.0_
+_Last Updated: 2025-08-28_
+_Service Status: Running but Unhealthy - Requires TLS Configuration Fix_

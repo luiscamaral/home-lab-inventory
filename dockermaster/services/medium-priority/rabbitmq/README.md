@@ -15,23 +15,27 @@ RabbitMQ is a message broker service that implements the Advanced Message Queuin
 ## 🔧 Configuration
 
 ### Docker Compose Location
+
 ```
 /nfs/dockermaster/docker/rabbitmq/docker-compose.yml
 ```
 
 ### Environment Variables
+
 - **Required**:
   - `RABBITMQ_HOST`: rmq.d.lcamaral.com
   - `RABBITMQ_DEFAULT_USER`: kalo
-  - `RABBITMQ_DEFAULT_PASS`: kalo24eb8a3dacb63b1e6205c774232a0834
+  - `RABBITMQ_DEFAULT_PASS`: <STORED IN VAULT — rotate if exposed>
 
 ### Volumes
+
 - `rabbitmq-lib`: Main RabbitMQ data directory (/var/lib/rabbitmq/)
 - `rabbitmq-log`: Log files (/var/log/rabbitmq/)
 - `./config`: Configuration files mounted as read-only
 
 ### Network Configuration
-- **Network**: docker-servers-net (macvlan)
+
+- **Network**: Docker-servers-net (macvlan)
 - **IP**: 192.168.59.24
 - **Ports**:
   - Internal: 5672 (AMQP)
@@ -41,11 +45,13 @@ RabbitMQ is a message broker service that implements the Advanced Message Queuin
 ## 🔐 Security
 
 ### Secrets Management
+
 - Basic authentication configured with default user/password
 - MQTT configured to disallow anonymous access
 - TLS configuration available but currently commented out
 
 ### Access Control
+
 - Authentication method: Basic Auth (username/password)
 - Default user: kalo
 - MQTT anonymous access: disabled
@@ -53,12 +59,14 @@ RabbitMQ is a message broker service that implements the Advanced Message Queuin
 ## 📈 Monitoring
 
 ### Health Checks
+
 - **Endpoint**: rabbitmq-diagnostics -q ping
 - **Interval**: 30s
 - **Timeout**: 4s
 - **Retries**: 15
 
 ### Metrics
+
 - **Prometheus**: Not explicitly configured
 - **Management Plugin**: Enabled (rabbitmq_management)
 - **Custom dashboards**: Management UI available
@@ -66,25 +74,30 @@ RabbitMQ is a message broker service that implements the Advanced Message Queuin
 ## 🔄 Backup Strategy
 
 ### Data Backup
+
 - **Method**: Volume-based backup
 - **Frequency**: As per volume backup schedule
 - **Location**: Local Docker volumes (rabbitmq-lib, rabbitmq-log)
 
 ### Configuration Backup
+
 - **Git repository**: Yes - included in dockermaster repo
 - **Config files**: /config directory with rabbitmq.conf and enabled_plugins
 
 ## 🔧 Service Features
 
 ### Enabled Plugins
+
 - **rabbitmq_management**: Web-based management interface
 - **rabbitmq_mqtt**: MQTT protocol support
 
 ### Protocol Support
+
 - **AMQP**: Default messaging protocol (port 5672)
 - **MQTT**: IoT messaging protocol (port 1883)
 
 ### Resource Limits
+
 - **CPU Limits**: 2 cores maximum
 - **Memory Limits**: 2GB maximum
 - **CPU Reservations**: 0.5 cores minimum
@@ -93,6 +106,7 @@ RabbitMQ is a message broker service that implements the Advanced Message Queuin
 ## 🚨 Troubleshooting
 
 ### Common Issues
+
 1. **Issue**: Container fails to start
    - **Symptoms**: Container exits immediately
    - **Solution**: Check configuration files and ensure proper permissions
@@ -102,10 +116,12 @@ RabbitMQ is a message broker service that implements the Advanced Message Queuin
    - **Solution**: Verify MQTT plugin is enabled and port 1883 is accessible
 
 ### Log Locations
+
 - **Container logs**: `docker logs rabbitmq`
 - **RabbitMQ logs**: Volume `rabbitmq-log` (/var/log/rabbitmq/)
 
 ### Recovery Procedures
+
 1. **Service restart**: `docker compose restart rabbitmq`
 2. **Full rebuild**: `docker compose down && docker compose up -d`
 3. **Reset data**: Remove rabbitmq-lib volume (WARNING: data loss)
@@ -113,6 +129,7 @@ RabbitMQ is a message broker service that implements the Advanced Message Queuin
 ## 📝 Maintenance
 
 ### Updates
+
 - **Update schedule**: Manual updates only (Watchtower disabled)
 - **Update procedure**:
   1. Stop service
@@ -121,10 +138,12 @@ RabbitMQ is a message broker service that implements the Advanced Message Queuin
   4. Verify functionality
 
 ### Dependencies
-- **Required services**: docker-servers-net network
+
+- **Required services**: Docker-servers-net network
 - **Required by**: Services using message queuing (unknown without further analysis)
 
 ### Configuration Files
+
 ```
 config/
 ├── rabbitmq.conf          # Main configuration
@@ -145,5 +164,5 @@ config/
 | 2025-08-28 | Initial documentation | Documentation Team |
 
 ---
-*Template Version: 1.0*
-*Last Updated: 2025-08-28*
+_Template Version: 1.0_
+_Last Updated: 2025-08-28_

@@ -37,7 +37,7 @@ services:
 
       # Enable HTTP API for manual triggers (optional)
       WATCHTOWER_HTTP_API_UPDATE: "true"
-      WATCHTOWER_HTTP_API_TOKEN: ${WATCHTOWER_API_TOKEN:-changeme}
+      WATCHTOWER_HTTP_API_TOKEN: ${WATCHTOWER_API_TOKEN:-}
 
       # Logging
       WATCHTOWER_LOG_LEVEL: info
