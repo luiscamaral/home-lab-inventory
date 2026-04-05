@@ -19,7 +19,7 @@ services:
       RUNDECK_DATABASE_USERNAME: rundeck
       RUNDECK_DATABASE_PASSWORD: ${RUNDECK_DB_PASSWORD}
       RUNDECK_DATABASE_URL: jdbc:postgresql://postgres/rundeck?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
-      RUNDECK_GRAILS_URL: http://rundeck.d.lcamaral.com
+      RUNDECK_GRAILS_URL: https://rundeck.d.lcamaral.com
       RUNDECK_SERVER_FORWARDED: true
       RUNDECK_STORAGE_CONVERTER_1_CONFIG_PASSWORD: ${RUNDECK_STORAGE_PASSWORD}
       RUNDECK_CONFIG_STORAGE_CONVERTER_1_CONFIG_PASSWORD: ${RUNDECK_CONFIG_PASSWORD}

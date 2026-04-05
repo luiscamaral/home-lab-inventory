@@ -120,7 +120,7 @@ docker exec postgres-rundeck pg_isready -U rundeck
 
 ### 2. Test Web Interface
 
-- Navigate to: <http://rundeck.d.lcamaral.com>
+- Navigate to: <https://rundeck.d.lcamaral.com>
 - Login with existing credentials
 - Verify all projects and jobs are intact
 
