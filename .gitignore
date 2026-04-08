@@ -79,8 +79,9 @@ grafana_data/
 *.dump
 *.backup
 
-# Devin AI config
-.devin/
+# Devin AI config (keep skills tracked in git)
+.devin/*
+!.devin/skills/
 
 # Generated output
 output/
