@@ -20,7 +20,17 @@ resource "cloudflare_zone_dnssec" "lcamaral_com" {
 # DNS Records
 # ──────────────────────────────────────────────
 
-# Tunnel CNAME: bologna.lcamaral.com -> tunnel
+# Tunnel CNAME: bologna.cf.lcamaral.com -> tunnel (primary)
+resource "cloudflare_dns_record" "bologna_cf_tunnel" {
+  zone_id = cloudflare_zone.lcamaral_com.id
+  type    = "CNAME"
+  name    = "bologna.cf.lcamaral.com"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.bologna.id}.cfargotunnel.com"
+  proxied = true
+  ttl     = 1
+}
+
+# Tunnel CNAME: bologna.lcamaral.com -> tunnel (legacy)
 resource "cloudflare_dns_record" "bologna_tunnel" {
   zone_id = cloudflare_zone.lcamaral_com.id
   type    = "CNAME"
@@ -66,6 +76,10 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "bologna" {
 
   config = {
     ingress = [
+      {
+        hostname = "bologna.cf.lcamaral.com"
+        service  = "https://nginx-rproxy:443"
+      },
       {
         hostname = "bologna.lcamaral.com"
         service  = "https://nginx-rproxy:443"

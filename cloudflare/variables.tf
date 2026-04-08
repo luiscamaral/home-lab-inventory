@@ -15,3 +15,9 @@ variable "zone_id" {
   type        = string
   default     = "d91929b42a245625bebb527e5fd2e020"
 }
+
+variable "dreamhost_api_key" {
+  description = "DreamHost API Key (from Vault: secret/homelab/dreamhost)"
+  type        = string
+  sensitive   = true
+}
