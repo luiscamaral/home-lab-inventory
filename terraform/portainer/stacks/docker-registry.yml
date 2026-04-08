@@ -1,0 +1,39 @@
+name: docker-registry
+
+networks:
+  rproxy:
+    name: rproxy
+    external: true
+
+services:
+  registry:
+    image: registry:2
+    container_name: registry
+    hostname: registry
+    networks:
+      rproxy:
+    expose:
+      - 5000
+    volumes:
+      - /nfs/dockermaster/docker/registry/data:/var/lib/registry
+    environment:
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    restart: on-failure:5
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://localhost:5000/v2/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    labels:
+      com.lcamaral.home.watchtower.enable: "false"
+      com.docker.stack: "registry"
+      com.docker.service: "registry"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M

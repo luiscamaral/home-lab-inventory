@@ -29,6 +29,7 @@ and a tunnel ingress entry -- DreamHost routing is handled by the wildcard.
 | Zone | `lcamaral_com` | `lcamaral.com` (partial/CNAME setup, Free plan) |
 | DNSSEC | `lcamaral_com` | DNSSEC status (disabled) |
 | DNS CNAME | `bologna_cf_tunnel` | `bologna.cf.lcamaral.com` -> tunnel (primary) |
+| DNS CNAME | `registry_cf_tunnel` | `registry.cf.lcamaral.com` -> tunnel |
 | DNS CNAME | `bologna_tunnel` | `bologna.lcamaral.com` -> tunnel (legacy) |
 | DNS CNAME | `root` | `lcamaral.com` -> DreamHost |
 | DNS CNAME | `www` | `www.lcamaral.com` -> DreamHost |
@@ -50,7 +51,7 @@ and a tunnel ingress entry -- DreamHost routing is handled by the wildcard.
 ## Usage
 
 ```bash
-cd cloudflare
+cd terraform/cloudflare
 
 # Set tokens from Keychain and Vault
 export TF_VAR_cloudflare_api_token=$(security find-generic-password -a ${USER} -s cloudflare-api-token -w)
