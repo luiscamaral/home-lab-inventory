@@ -30,6 +30,16 @@ resource "cloudflare_dns_record" "bologna_cf_tunnel" {
   ttl     = 1
 }
 
+# Docker registry: registry.cf.lcamaral.com -> tunnel
+resource "cloudflare_dns_record" "registry_cf_tunnel" {
+  zone_id = cloudflare_zone.lcamaral_com.id
+  type    = "CNAME"
+  name    = "registry.cf.lcamaral.com"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.bologna.id}.cfargotunnel.com"
+  proxied = true
+  ttl     = 1
+}
+
 # Tunnel CNAME: bologna.lcamaral.com -> tunnel (legacy)
 resource "cloudflare_dns_record" "bologna_tunnel" {
   zone_id = cloudflare_zone.lcamaral_com.id
@@ -79,10 +89,23 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "bologna" {
       {
         hostname = "bologna.cf.lcamaral.com"
         service  = "https://nginx-rproxy:443"
+        origin_request = {
+          no_tls_verify = true
+        }
+      },
+      {
+        hostname = "registry.cf.lcamaral.com"
+        service  = "https://nginx-rproxy:443"
+        origin_request = {
+          no_tls_verify = true
+        }
       },
       {
         hostname = "bologna.lcamaral.com"
         service  = "https://nginx-rproxy:443"
+        origin_request = {
+          no_tls_verify = true
+        }
       },
       {
         service = "http_status:404"
