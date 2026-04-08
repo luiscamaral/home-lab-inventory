@@ -29,7 +29,15 @@ $ARGUMENTS
 
 ## Authentication
 
-The API token is stored in macOS Keychain. Retrieve it with:
+The API token is stored in Vault. Retrieve it with:
+
+```bash
+export VAULT_ADDR="http://vault.d.lcamaral.com"
+export VAULT_TOKEN=$(security find-generic-password -w -a lamaral -s vault-root-token)
+TOKEN=$(vault kv get -field=api_token secret/homelab/cloudflare)
+```
+
+Legacy Keychain access (still works):
 
 ```bash
 TOKEN=$(security find-generic-password -a ${USER} -s cloudflare-api-token -w)

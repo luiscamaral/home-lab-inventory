@@ -57,25 +57,27 @@ changes in another.
 
 ## Authentication
 
-All secrets come from macOS Keychain or Vault -- never from files.
+All secrets come from Vault, bootstrapped by a single Keychain token.
+
+```bash
+# Bootstrap: set Vault access (only token stored in Keychain)
+export VAULT_ADDR="http://vault.d.lcamaral.com"
+export VAULT_TOKEN=$(security find-generic-password -w -a lamaral -s vault-root-token)
+```
 
 ### Cloudflare
 
 ```bash
 cd terraform/cloudflare
-export TF_VAR_cloudflare_api_token=$(security find-generic-password -a ${USER} -s cloudflare-api-token -w)
-export TF_VAR_dreamhost_api_key=$(VAULT_ADDR="http://vault.d.lcamaral.com" \
-  VAULT_TOKEN=$(security find-generic-password -w -a lamaral -s vault-root-token) \
-  vault kv get -field=api_token secret/homelab/dreamhost)
+export TF_VAR_cloudflare_api_token=$(vault kv get -field=api_token secret/homelab/cloudflare)
+export TF_VAR_dreamhost_api_key=$(vault kv get -field=api_token secret/homelab/dreamhost)
 ```
 
 ### Portainer
 
 ```bash
 cd terraform/portainer
-export TF_VAR_portainer_password=$(VAULT_ADDR="http://vault.d.lcamaral.com" \
-  VAULT_TOKEN=$(security find-generic-password -w -a lamaral -s vault-root-token) \
-  vault kv get -field=admin_password secret/homelab/portainer)
+export TF_VAR_portainer_password=$(vault kv get -field=admin_password secret/homelab/portainer)
 ```
 
 ### Vault
@@ -163,7 +165,7 @@ terraform import portainer_stack.<name> <stack-id>
 
 | Secret | Location | Used by |
 |--------|----------|---------|
-| Cloudflare API token | Keychain: `cloudflare-api-token` | `cloudflare/` |
+| Vault root token | Keychain: `vault-root-token` | Bootstrap (all dirs) |
+| Cloudflare API token | Vault: `secret/homelab/cloudflare` | `cloudflare/` |
 | DreamHost API key | Vault: `secret/homelab/dreamhost` | `cloudflare/` |
 | Portainer password | Vault: `secret/homelab/portainer` | `portainer/` |
-| Vault root token | Keychain: `vault-root-token` | `vault/` |

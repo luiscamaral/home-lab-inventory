@@ -45,7 +45,7 @@ and a tunnel ingress entry -- DreamHost routing is handled by the wildcard.
 ## Prerequisites
 
 - Terraform >= 1.5.0
-- Cloudflare API token in macOS Keychain (`cloudflare-api-token`)
+- Cloudflare API token in Vault (`secret/homelab/cloudflare`)
 - DreamHost API key in Vault (`secret/homelab/dreamhost`)
 
 ## Usage
@@ -53,11 +53,13 @@ and a tunnel ingress entry -- DreamHost routing is handled by the wildcard.
 ```bash
 cd terraform/cloudflare
 
-# Set tokens from Keychain and Vault
-export TF_VAR_cloudflare_api_token=$(security find-generic-password -a ${USER} -s cloudflare-api-token -w)
-export TF_VAR_dreamhost_api_key=$(VAULT_ADDR="http://vault.d.lcamaral.com" \
-  VAULT_TOKEN=$(security find-generic-password -w -a lamaral -s vault-root-token) \
-  vault kv get -field=api_token secret/homelab/dreamhost)
+# Bootstrap Vault access
+export VAULT_ADDR="http://vault.d.lcamaral.com"
+export VAULT_TOKEN=$(security find-generic-password -w -a lamaral -s vault-root-token)
+
+# Set tokens from Vault
+export TF_VAR_cloudflare_api_token=$(vault kv get -field=api_token secret/homelab/cloudflare)
+export TF_VAR_dreamhost_api_key=$(vault kv get -field=api_token secret/homelab/dreamhost)
 
 # Init, plan, apply
 terraform init
