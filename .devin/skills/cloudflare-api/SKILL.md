@@ -102,9 +102,17 @@ curl -s "https://api.cloudflare.com/client/v4/<endpoint>" \
 
 | Type | Name | Content | Proxied |
 |------|------|---------|---------|
+| CNAME | `bologna.cf.lcamaral.com` | `<tunnel-id>.cfargotunnel.com` | Yes |
+| CNAME | `registry.cf.lcamaral.com` | `<tunnel-id>.cfargotunnel.com` | Yes |
 | CNAME | `bologna.lcamaral.com` | `<tunnel-id>.cfargotunnel.com` | Yes |
 | CNAME | `lcamaral.com` | `resolve-to.www.lcamaral.com` | Yes |
 | CNAME | `www.lcamaral.com` | `resolve-to.www.lcamaral.com` | Yes |
+
+**DreamHost wildcard (delegates *.cf to Cloudflare):**
+
+| Type | Name | Content |
+|------|------|---------|
+| CNAME | `*.cf.lcamaral.com` | `bologna.cf.lcamaral.com.cdn.cloudflare.net.` |
 
 ---
 
@@ -121,12 +129,16 @@ curl -s "https://api.cloudflare.com/client/v4/<endpoint>" \
 | Cloudflared version | `2026.3.0` |
 | Edge colos | lax07, slc01, lax10 |
 
-**Ingress rules** (remote config):
+**Ingress rules** (remote config, `noTLSVerify: true` on all):
 
 | Hostname | Service |
 |----------|---------|
+| `bologna.cf.lcamaral.com` | `https://nginx-rproxy:443` |
+| `registry.cf.lcamaral.com` | `https://nginx-rproxy:443` |
 | `bologna.lcamaral.com` | `https://nginx-rproxy:443` |
 | Catch-all | `http_status:404` |
+
+**Tunnel is Terraform-managed:** `terraform/cloudflare/main.tf`
 
 **Docker container on dockermaster:**
 
@@ -145,27 +157,19 @@ curl -s "https://api.cloudflare.com/client/v4/<endpoint>" \
 
 ## Common API Patterns
 
-### Verify token
+Set token first (Vault-preferred):
 
 ```bash
-TOKEN=$(security find-generic-password -a ${USER} -s cloudflare-api-token -w)
-curl -s "https://api.cloudflare.com/client/v4/user/tokens/verify" \
-  -H "Authorization: Bearer ${TOKEN}" | python3 -m json.tool
-```
-
-### List accounts
-
-```bash
-TOKEN=$(security find-generic-password -a ${USER} -s cloudflare-api-token -w)
-curl -s "https://api.cloudflare.com/client/v4/accounts?page=1&per_page=20" \
-  -H "Authorization: Bearer ${TOKEN}" | python3 -m json.tool
+export VAULT_ADDR="http://vault.d.lcamaral.com"
+export VAULT_TOKEN=$(security find-generic-password -w -a lamaral -s vault-root-token)
+TOKEN=$(vault kv get -field=api_token secret/homelab/cloudflare)
+ACCOUNT_ID="13538d3dbd6b9cd04da9359142bb8d10"
+TUNNEL_ID="eb4461ec-689f-4f8a-98f1-321cb246bb65"
 ```
 
 ### List tunnels
 
 ```bash
-TOKEN=$(security find-generic-password -a ${USER} -s cloudflare-api-token -w)
-ACCOUNT_ID="13538d3dbd6b9cd04da9359142bb8d10"
 curl -s "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/tunnels" \
   -H "Authorization: Bearer ${TOKEN}" | python3 -m json.tool
 ```
@@ -173,9 +177,6 @@ curl -s "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/tunnels" \
 ### Get tunnel config (ingress rules)
 
 ```bash
-TOKEN=$(security find-generic-password -a ${USER} -s cloudflare-api-token -w)
-ACCOUNT_ID="13538d3dbd6b9cd04da9359142bb8d10"
-TUNNEL_ID="eb4461ec-689f-4f8a-98f1-321cb246bb65"
 curl -s "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/cfd_tunnel/${TUNNEL_ID}/configurations" \
   -H "Authorization: Bearer ${TOKEN}" | python3 -m json.tool
 ```
@@ -183,9 +184,6 @@ curl -s "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/cfd_tunnel/
 ### Update tunnel ingress (PUT)
 
 ```bash
-TOKEN=$(security find-generic-password -a ${USER} -s cloudflare-api-token -w)
-ACCOUNT_ID="13538d3dbd6b9cd04da9359142bb8d10"
-TUNNEL_ID="eb4461ec-689f-4f8a-98f1-321cb246bb65"
 curl -s -X PUT \
   "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/cfd_tunnel/${TUNNEL_ID}/configurations" \
   -H "Authorization: Bearer ${TOKEN}" \
@@ -193,7 +191,9 @@ curl -s -X PUT \
   -d '{
     "config": {
       "ingress": [
-        {"hostname": "bologna.lcamaral.com", "service": "https://nginx-rproxy:443"},
+        {"hostname": "bologna.cf.lcamaral.com", "service": "https://nginx-rproxy:443", "originRequest": {"noTLSVerify": true}},
+        {"hostname": "registry.cf.lcamaral.com", "service": "https://nginx-rproxy:443", "originRequest": {"noTLSVerify": true}},
+        {"hostname": "bologna.lcamaral.com", "service": "https://nginx-rproxy:443", "originRequest": {"noTLSVerify": true}},
         {"service": "http_status:404"}
       ],
       "warp-routing": {"enabled": false}
@@ -204,9 +204,6 @@ curl -s -X PUT \
 ### Check tunnel connections
 
 ```bash
-TOKEN=$(security find-generic-password -a ${USER} -s cloudflare-api-token -w)
-ACCOUNT_ID="13538d3dbd6b9cd04da9359142bb8d10"
-TUNNEL_ID="eb4461ec-689f-4f8a-98f1-321cb246bb65"
 curl -s "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/tunnels/${TUNNEL_ID}" \
   -H "Authorization: Bearer ${TOKEN}" | python3 -c "
 import sys, json
@@ -250,9 +247,11 @@ ssh dockermaster "cd /nfs/dockermaster/docker/cloudflare && docker compose pull 
 
 ## Important Notes
 
-- The tunnel token in the compose file is a **JWT containing the account ID, tunnel ID, and secret**. It is NOT the same as the API token in Keychain.
-- The tunnel is **remote-managed** (`config_src: cloudflare`), meaning ingress rules are configured via the API, not a local `config.yml`.
-- No CLI tools (`flarectl`, `wrangler`, `cloudflared`) are installed locally. All management is done via the API or SSH to dockermaster.
-- Always use `python3 -m json.tool` to format JSON responses for readability.
+- **Terraform-managed**: Tunnel config and DNS are managed via `terraform/cloudflare/`. Prefer Terraform over raw API calls for changes.
+- The tunnel token in the compose file is a **JWT containing the account ID, tunnel ID, and secret**. It is NOT the same as the API token in Vault.
+- The tunnel is **remote-managed** (`config_src: cloudflare`), meaning ingress rules are configured via the API/Terraform, not a local `config.yml`.
+- All ingress routes use `noTLSVerify: true` because nginx certs are for `*.d.lcamaral.com`, not matching the tunnel hostname.
+- No CLI tools (`flarectl`, `wrangler`, `cloudflared`) are installed locally. All management is done via Terraform, the API, or SSH to dockermaster.
 - When modifying tunnel ingress, the **entire ingress array** must be sent (PUT replaces, does not patch). Always read current config first.
 - The catch-all rule `{"service": "http_status:404"}` must always be the **last** ingress entry.
+- SSL certs for `*.cf.lcamaral.com` are auto-provisioned by Cloudflare (free, ~90-day rotation).

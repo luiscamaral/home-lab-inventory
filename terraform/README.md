@@ -123,7 +123,7 @@ terraform apply
    },
    ```
 
-3. **Nginx vhost** -- create `registry.cf.lcamaral.com.conf` on dockermaster
+3. **Nginx vhost** -- create `myservice.cf.lcamaral.com.conf` on dockermaster
    at `/nfs/dockermaster/docker/nginx-rproxy/config/vhost.d/`
 
 4. **Portainer stack** -- add a `portainer_stack` resource in `portainer/stacks.tf`

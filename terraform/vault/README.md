@@ -26,7 +26,7 @@ terraform apply
 |----------|------|------|
 | Secret engine | `secret/` | KV v2 (homelab secrets) |
 | SSH engine | `ssh/` | SSH certificates |
-| KV engine | `kv/` | KV v1 (legacy) |
+| KV engine | `kv/` | KV v2 |
 
 ## Extending
 

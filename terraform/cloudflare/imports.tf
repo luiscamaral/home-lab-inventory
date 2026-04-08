@@ -20,6 +20,11 @@ import {
 }
 
 import {
+  to = cloudflare_dns_record.registry_cf_tunnel
+  id = "d91929b42a245625bebb527e5fd2e020/b930bcda2f991dd63f5ae85964d5b5c4"
+}
+
+import {
   to = cloudflare_dns_record.bologna_tunnel
   id = "d91929b42a245625bebb527e5fd2e020/0b078b9289609a983116061d279c12c2"
 }

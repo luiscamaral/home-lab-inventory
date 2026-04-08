@@ -21,8 +21,10 @@ output "tunnel_name" {
 output "dns_records" {
   description = "DNS record summary"
   value = {
-    bologna = cloudflare_dns_record.bologna_tunnel.name
-    root    = cloudflare_dns_record.root.name
-    www     = cloudflare_dns_record.www.name
+    bologna_cf = cloudflare_dns_record.bologna_cf_tunnel.name
+    registry   = cloudflare_dns_record.registry_cf_tunnel.name
+    bologna    = cloudflare_dns_record.bologna_tunnel.name
+    root       = cloudflare_dns_record.root.name
+    www        = cloudflare_dns_record.www.name
   }
 }
