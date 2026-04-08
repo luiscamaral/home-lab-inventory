@@ -73,7 +73,9 @@ export TF_VAR_dreamhost_api_key=$(VAULT_ADDR="http://vault.d.lcamaral.com" \
 
 ```bash
 cd terraform/portainer
-export TF_VAR_portainer_password="<admin-password>"
+export TF_VAR_portainer_password=$(VAULT_ADDR="http://vault.d.lcamaral.com" \
+  VAULT_TOKEN=$(security find-generic-password -w -a lamaral -s vault-root-token) \
+  vault kv get -field=admin_password secret/homelab/portainer)
 ```
 
 ### Vault
@@ -163,5 +165,5 @@ terraform import portainer_stack.<name> <stack-id>
 |--------|----------|---------|
 | Cloudflare API token | Keychain: `cloudflare-api-token` | `cloudflare/` |
 | DreamHost API key | Vault: `secret/homelab/dreamhost` | `cloudflare/` |
-| Portainer password | Manual | `portainer/` |
+| Portainer password | Vault: `secret/homelab/portainer` | `portainer/` |
 | Vault root token | Keychain: `vault-root-token` | `vault/` |

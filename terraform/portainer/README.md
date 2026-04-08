@@ -5,14 +5,16 @@ Manage Portainer stacks and settings on dockermaster via IaC.
 ## Prerequisites
 
 - Terraform >= 1.5.0
-- Portainer admin password
+- Portainer admin password in Vault (`secret/homelab/portainer`)
 
 ## Usage
 
 ```bash
 cd terraform/portainer
 
-export TF_VAR_portainer_password="<admin-password>"
+export TF_VAR_portainer_password=$(VAULT_ADDR="http://vault.d.lcamaral.com" \
+  VAULT_TOKEN=$(security find-generic-password -w -a lamaral -s vault-root-token) \
+  vault kv get -field=admin_password secret/homelab/portainer)
 
 terraform init
 terraform plan
