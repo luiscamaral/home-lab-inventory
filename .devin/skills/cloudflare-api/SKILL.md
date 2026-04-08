@@ -57,12 +57,13 @@ curl -s "https://api.cloudflare.com/client/v4/<endpoint>" \
 |-------|--------|
 | Accounts list | Read |
 | Tunnels | Read / Write / Config |
-| Zones list | No access (returns empty) |
+| Zone | Read / Edit |
+| DNS | Read / Edit |
+| Zone Settings | Read / Edit |
+| Access Service Tokens | Read / Write |
 | Account details | No access |
 | User endpoint | No access (not a user-level key) |
 | Token verify | Yes |
-
-If zone or DNS operations are needed, the token permissions must be extended in the Cloudflare dashboard.
 
 ---
 
@@ -74,6 +75,28 @@ If zone or DNS operations are needed, the token permissions must be extended in 
 | Account name | Luis.c.amaral@gmail.com's Account |
 | Type | Standard |
 | Created | 2021-10-22 |
+
+---
+
+## Zone (lcamaral.com)
+
+| Field | Value |
+|-------|-------|
+| Zone ID | `d91929b42a245625bebb527e5fd2e020` |
+| Domain | `lcamaral.com` |
+| Status | Active |
+| Type | Partial (CNAME setup via DreamHost) |
+| Plan | Free |
+| DNSSEC | Disabled |
+| Activated | 2021-11-26 |
+
+**DNS Records:**
+
+| Type | Name | Content | Proxied |
+|------|------|---------|---------|
+| CNAME | `bologna.lcamaral.com` | `<tunnel-id>.cfargotunnel.com` | Yes |
+| CNAME | `lcamaral.com` | `resolve-to.www.lcamaral.com` | Yes |
+| CNAME | `www.lcamaral.com` | `resolve-to.www.lcamaral.com` | Yes |
 
 ---
 

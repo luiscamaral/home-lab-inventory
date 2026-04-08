@@ -1,4 +1,58 @@
-# Cloudflare Tunnel - "bologna"
+# ──────────────────────────────────────────────
+# Zone
+# ──────────────────────────────────────────────
+resource "cloudflare_zone" "lcamaral_com" {
+  name   = "lcamaral.com"
+  paused = false
+  type   = "partial"
+
+  account = {
+    id = var.account_id
+  }
+}
+
+resource "cloudflare_zone_dnssec" "lcamaral_com" {
+  zone_id = cloudflare_zone.lcamaral_com.id
+  status  = "disabled"
+}
+
+# ──────────────────────────────────────────────
+# DNS Records
+# ──────────────────────────────────────────────
+
+# Tunnel CNAME: bologna.lcamaral.com -> tunnel
+resource "cloudflare_dns_record" "bologna_tunnel" {
+  zone_id = cloudflare_zone.lcamaral_com.id
+  type    = "CNAME"
+  name    = "bologna.lcamaral.com"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.bologna.id}.cfargotunnel.com"
+  proxied = true
+  ttl     = 1
+}
+
+# Root domain: lcamaral.com -> DreamHost
+resource "cloudflare_dns_record" "root" {
+  zone_id = cloudflare_zone.lcamaral_com.id
+  type    = "CNAME"
+  name    = "lcamaral.com"
+  content = "resolve-to.www.lcamaral.com"
+  proxied = true
+  ttl     = 1
+}
+
+# WWW: www.lcamaral.com -> DreamHost
+resource "cloudflare_dns_record" "www" {
+  zone_id = cloudflare_zone.lcamaral_com.id
+  type    = "CNAME"
+  name    = "www.lcamaral.com"
+  content = "resolve-to.www.lcamaral.com"
+  proxied = true
+  ttl     = 1
+}
+
+# ──────────────────────────────────────────────
+# Tunnel
+# ──────────────────────────────────────────────
 resource "cloudflare_zero_trust_tunnel_cloudflared" "bologna" {
   account_id = var.account_id
   name       = "bologna"

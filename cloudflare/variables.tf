@@ -9,3 +9,9 @@ variable "account_id" {
   type        = string
   default     = "13538d3dbd6b9cd04da9359142bb8d10"
 }
+
+variable "zone_id" {
+  description = "Cloudflare Zone ID for lcamaral.com"
+  type        = string
+  default     = "d91929b42a245625bebb527e5fd2e020"
+}
