@@ -5,9 +5,6 @@ networks:
     name: rproxy
     external: true
 
-volumes:
-  registry_data:
-
 services:
   registry:
     image: registry:2
@@ -18,7 +15,7 @@ services:
     expose:
       - 5000
     volumes:
-      - registry_data:/var/lib/registry
+      - /nfs/dockermaster/docker/registry/data:/var/lib/registry
     environment:
       REGISTRY_STORAGE_DELETE_ENABLED: "true"
     restart: on-failure:5
