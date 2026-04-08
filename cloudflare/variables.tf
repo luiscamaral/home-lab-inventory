@@ -1,0 +1,11 @@
+variable "cloudflare_api_token" {
+  description = "Cloudflare API Token (from macOS Keychain: cloudflare-api-token)"
+  type        = string
+  sensitive   = true
+}
+
+variable "account_id" {
+  description = "Cloudflare Account ID"
+  type        = string
+  default     = "13538d3dbd6b9cd04da9359142bb8d10"
+}
