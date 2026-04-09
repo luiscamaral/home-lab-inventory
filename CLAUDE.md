@@ -28,10 +28,10 @@
                 }
             ]
         },...
-- GitHub runner service (GitHub-runner-homelab) is running on dockermaster for CI/CD.
+- GitHub runner service (GitHub-runner-homelab) is a Terraform-managed Portainer stack running on dockermaster for CI/CD.
 - Vault server at <http://vault.d.lcamaral.com> (192.168.59.25) for secret management.
 - Portainer at 192.168.59.2 for container management (Terraform-managed via `terraform/portainer/`).
-- Docker registry at <https://registry.cf.lcamaral.com> (Portainer-managed stack).
+- Docker registry at <https://registry.cf.lcamaral.com> (Terraform-managed Portainer stack).
 
 # Infrastructure as Code (Terraform)
 
@@ -49,13 +49,22 @@
 - Wildcard `*.cf.lcamaral.com` on DreamHost CNAMEs to Cloudflare edge for subdomain delegation.
 - Cloudflare tunnel **bologna** routes `*.cf.lcamaral.com` traffic to `nginx-rproxy:443` on dockermaster.
 - Tunnel uses `noTLSVerify` for origin (nginx certs are for `*.d.lcamaral.com`).
-- Adding a new service: DNS record + tunnel ingress in `terraform/cloudflare/`, nginx vhost on dockermaster, Portainer stack in `terraform/portainer/`.
+- Adding a new service: DNS record + tunnel ingress in `terraform/cloudflare/`, nginx vhost on dockermaster, Portainer stack in `terraform/portainer/`; if the service needs secrets, add a `vault_kv_secret_v2` data source in `terraform/portainer/vault.tf`.
 - SSL certs are auto-provisioned by Cloudflare (free, ~90-day rotation).
 
 # Secret Management
 
 - All secrets are centralized in Vault. Only the Vault root token is in macOS Keychain (`vault-root-token`).
-- Vault paths: `secret/homelab/cloudflare`, `secret/homelab/dreamhost`, `secret/homelab/portainer`.
+- Vault paths:
+  - `secret/homelab/cloudflare` (API token + tunnel token)
+  - `secret/homelab/dreamhost` (DreamHost API key)
+  - `secret/homelab/portainer` (admin password)
+  - `secret/homelab/twingate/sepia-hornet` (connector A tokens)
+  - `secret/homelab/twingate/golden-mussel` (connector B tokens)
+  - `secret/homelab/vault` (operational token)
+  - `secret/homelab/calibre` (admin password)
+  - `secret/homelab/github-runner` (GitHub PAT)
+  - `secret/homelab/bind9/dnssec` (DNSSEC keys backup)
 - Terraform vars are sourced from Vault at runtime, never stored in files.
 
 # Docker Services Structure

@@ -1,78 +1,101 @@
 # Docker Compose Projects Status
 
-Last updated: 2025-08-09
+Last updated: 2026-04-09
 
 ## Overview
 
 This document provides a comprehensive status of all Docker Compose projects on dockermaster server.
 
-## Currently Running Containers
+## Deployment Model
 
-Based on `docker ps` output:
+Portainer stacks are provisioned and managed via Terraform in `terraform/portainer/`. Each stack is declared as a `portainer_stack` resource. Standalone projects (not in Terraform) are deployed directly via `docker compose` on dockermaster.
 
-| Container Name | Image | Status | Project |
+---
+
+## Terraform-Managed Portainer Stacks (9)
+
+| Stack | Portainer ID | Containers | Network | IP |
+|---|---|---|---|---|
+| docker-registry | 1 | registry | rproxy bridge | 172.24.0.x |
+| cloudflare-tunnel | 2 | cloudflare-tunnel-cloudflare-1 | rproxy bridge | 172.24.0.x |
+| bind-dns | 4 | bind-dns-bind9-1 | docker-servers-net | 192.168.59.3 |
+| twingate-a | 5 | twingate-sepia-hornet | dual (macvlan + rproxy) | 192.168.59.12 |
+| twingate-b | 6 | twingate-golden-mussel | dual (macvlan + rproxy) | 192.168.59.24 |
+| vault | 7 | vault | rproxy bridge | 172.24.0.x |
+| reverse-proxy | 8 | rproxy, reverse-proxy-promtail-1 | dual (macvlan + rproxy) | 192.168.59.28 |
+| github-runner | 9 | github-runner-homelab | docker-servers-net | 192.168.59.4 |
+| calibre | 10 | calibre, calibre-web | rproxy bridge | 172.24.0.x |
+
+---
+
+## Standalone Docker Compose (NOT Terraform-Managed)
+
+| Project | Containers | Network | IP |
 |---|---|---|---|
-| calibre | calibre-calibre | Up 8 days | calibre-server |
-| calibre-web | lscr.io/linuxserver/calibre-web:latest | Up 8 days | calibre-server |
-| rundeck | la-rundeck-rundeck | Up 12 days | rundeck |
-| portainer | portainer/portainer-ce:latest | Up 12 days | portainer |
-| bind-dns-bind9-1 | ubuntu/bind9:9.20-24.10_edge | Up 12 days | bind9 |
-| postgres-rundeck | postgres | Up 12 days | rundeck |
-| rproxy | nginx:1.27 | Up 12 days | nginx-rproxy |
+| portainer-ce | portainer | docker-servers-net | 192.168.59.2 |
+| la-rundeck | rundeck, postgres-rundeck | docker-servers-net | 192.168.59.22, 192.168.59.23 |
+| prometheus | alertmanager, cadvisor, snmp-exporter | own network | — |
+| ldap-lcamaral-com | lemonldap, openldap, phpldapadmin | rproxy bridge | — |
+| minio | minio | rproxy bridge | — |
+| ollama | ollama | rproxy bridge | — |
+| chisel | chisel | dual (macvlan + rproxy) | 192.168.59.0 |
+| rust-server | hbbs, hbbr | dual (macvlan + rproxy) | 192.168.59.10, 192.168.59.11 |
+| freeswitch | freeswitch | docker-servers-net | 192.168.59.40 |
+| elastic-search | elasticsearch | docker-servers-net | 192.168.59.25 |
+| synology-search | nas-solr, nas-tika | docker-servers-net | 192.168.59.31, 192.168.59.32 |
 
-## Project Status Summary
+> **Note**: portainer-ce is standalone because Portainer cannot manage its own bootstrap stack via Terraform.
 
-### 🟢 ACTIVE Projects (5)
+---
 
-| Project | Status | Containers | Description | Network | IP Address |
-|---|---|---|---|---|---|
-| **bind9** | ACTIVE | bind-dns-bind9-1 | DNS server with custom zones | docker-servers-net | 192.168.59.x |
-| **calibre-server** | ACTIVE | calibre, calibre-web | E-book library management | bridge | ports 58080-58183 |
-| **nginx-rproxy** | ACTIVE | rproxy | Reverse proxy with SSL termination | docker-servers-net | 192.168.59.28 |
-| **portainer** | ACTIVE | portainer | Docker management UI | docker-servers-net | 192.168.59.2 |
-| **rundeck** | ACTIVE | rundeck, postgres-rundeck | Job scheduler with PostgreSQL | docker-servers-net | 192.168.59.22/23 |
+## Inactive Projects
 
-### 🔴 INACTIVE Projects (7)
+| Project | Description |
+|---|---|
+| ansible-observability | Prometheus + Grafana for Ansible/AWX monitoring |
+| docker-dns | Dynamic DNS for Docker containers |
+| docker-vault | Legacy standalone Vault (replaced by Terraform-managed vault stack) |
+| litellm | LiteLLM proxy + PostgreSQL |
+| n8n-stack | n8n workflow automation + PostgreSQL |
+| puppet | Puppet configuration management server |
 
-| Project | Status | Last Known Config | Description |
-|---|---|---|---|
-| **ansible-observability** | INACTIVE | Prometheus + Grafana | Monitoring for Ansible/AWX |
-| **docker-dns** | INACTIVE | phensley/docker-dns | Dynamic DNS for Docker containers |
-| **docker-vault** | INACTIVE | HashiCorp Vault 1.4.2 | Secret management |
-| **litellm** | INACTIVE | LiteLLM + PostgreSQL | LLM proxy with database |
-| **n8n-stack** | INACTIVE | n8n + PostgreSQL | Workflow automation platform |
-| **ollama** | INACTIVE | Ollama | Local LLM inference server |
-| **puppet** | INACTIVE | Puppet Server | Configuration management |
-
+---
 
 ## Network Configuration
 
-Most projects use the external `docker-servers-net` macvlan network with static IP addresses in the 192.168.59.x range:
+| IP | Service |
+|---|---|
+| 192.168.59.0 | chisel |
+| 192.168.59.2 | portainer |
+| 192.168.59.3 | bind-dns (bind9) |
+| 192.168.59.4 | github-runner |
+| 192.168.59.10 | rust-server (hbbs) |
+| 192.168.59.11 | rust-server (hbbr) |
+| 192.168.59.12 | twingate-a |
+| 192.168.59.22 | rundeck |
+| 192.168.59.23 | postgres-rundeck |
+| 192.168.59.24 | twingate-b |
+| 192.168.59.25 | elastic-search |
+| 192.168.59.28 | reverse-proxy (rproxy) |
+| 192.168.59.31 | synology-search (nas-solr) |
+| 192.168.59.32 | synology-search (nas-tika) |
+| 192.168.59.40 | freeswitch |
+| 172.24.0.x | rproxy bridge (registry, cloudflare-tunnel, vault, calibre, ldap, minio, ollama) |
 
-- 192.168.59.2 - portainer
-- 192.168.59.22 - rundeck  
-- 192.168.59.23 - postgres-rundeck
-- 192.168.59.28 - rproxy
-- 192.168.59.30 - n8n (when active)
+---
 
 ## Storage Configuration
 
-Several projects use NFS-mounted volumes under `/nfs/dockermaster/volumes/`:
-- litellm (prometheus_data, postgres_data)
-- n8n-stack (pgdata, n8n_data)  
-- ollama (ollama)
+Persistent data stored on NAS via NFS mounts:
+
+- `/nfs/dockermaster/docker/<service>` — per-service config and data
+- `/nfs/calibre/` — Calibre library
+
+---
 
 ## Security Notes
 
-- Sensitive data has been redacted from extracted configurations
-- Several projects contain passwords and API keys in environment variables
-- SSH keys are present in nginx-rproxy and rundeck projects
-- SSL certificates are managed by nginx-rproxy
-
-## Recommendations
-
-1. **Security**: Rotate passwords and API keys, especially for inactive services
-2. **Cleanup**: Consider removing unused volumes and containers from inactive projects  
-3. **Documentation**: Update project documentation for configuration changes
-4. **Monitoring**: Consider reactivating ansible-observability for better monitoring
-5. **Backup**: Ensure NFS-mounted volumes are included in backup strategy
+- All secrets are centralized in Vault (`http://vault.d.lcamaral.com`)
+- Terraform sources credentials from Vault at runtime via `terraform/vault/`
+- SSL certificates provisioned automatically by Cloudflare (via cloudflare-tunnel stack)
+- Nginx certs cover `*.d.lcamaral.com`; tunnel uses `noTLSVerify` for origin

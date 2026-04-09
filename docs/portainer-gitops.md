@@ -1,15 +1,18 @@
 # Portainer GitOps Configuration Guide
 
+> **Note:** This document describes a webhook-based GitOps approach that was not implemented. The actual deployment model uses Terraform to manage Portainer stacks. See `terraform/portainer/README.md` for the current workflow.
+
 **Project**: Dockermaster Recovery - Phase 5  
 **Created**: 2025-08-29  
 **Status**: Implementation Phase  
-**Repository**: https://github.com/luiscamaral/home-lab-inventory
+**Repository**: <https://github.com/luiscamaral/home-lab-inventory>
 
 ## 📊 Executive Summary
 
 This document provides comprehensive guidance for implementing GitOps workflows using Portainer stack management. The solution enables automatic deployment of Docker services from Git repository changes, centralizing container management while maintaining infrastructure as code principles.
 
 ### Key Benefits
+
 - ✅ **Automated Deployments**: Push to repository triggers automatic service updates
 - ✅ **Centralized Management**: Single interface for all container operations  
 - ✅ **Version Control**: Full audit trail of infrastructure changes
@@ -19,6 +22,7 @@ This document provides comprehensive guidance for implementing GitOps workflows 
 ## 🏗️ Architecture Overview
 
 ### Components
+
 ```
 GitHub Repository ──→ Webhook ──→ Portainer ──→ Docker Daemon ──→ Services
      ↑                    ↓           ↑             ↓            ↑
@@ -27,6 +31,7 @@ GitHub Repository ──→ Webhook ──→ Portainer ──→ Docker Daemon 
 ```
 
 ### GitOps Workflow
+
 1. **Code Change**: Developer pushes to main branch
 2. **Webhook Trigger**: GitHub sends webhook to Portainer
 3. **Stack Update**: Portainer pulls latest compose file
@@ -69,11 +74,13 @@ inventory/
 ### Phase 1: Repository Integration
 
 #### 1.1 Access Portainer
-1. Navigate to **https://192.168.59.2:9000**
+
+1. Navigate to **<https://192.168.59.2:9000>**
 2. Log in with administrator credentials
 3. Select the appropriate endpoint (usually 'local' or 'dockermaster')
 
 #### 1.2 Configure Git Repository Access
+
 1. Go to **Settings** → **Git repositories**
 2. Add new repository:
    - **Name**: `home-lab-inventory`
@@ -84,6 +91,7 @@ inventory/
 ### Phase 2: Stack Creation and Configuration
 
 #### 2.1 Convert Services to Stacks
+
 Use the conversion script to prepare existing services:
 
 ```bash
@@ -98,6 +106,7 @@ Use the conversion script to prepare existing services:
 ```
 
 #### 2.2 Deploy Stack to Portainer
+
 ```bash
 # Get Portainer API token from UI: User account → Access tokens
 export PORTAINER_TOKEN="your-api-token-here"
@@ -110,9 +119,11 @@ export PORTAINER_TOKEN="your-api-token-here"
 ```
 
 #### 2.3 Stack Configuration Template
+
 Each service requires two files:
 
-**docker-compose.portainer.yml**:
+**Docker-compose.portainer.yml**:
+
 ```yaml
 name: service-name
 
@@ -156,7 +167,8 @@ networks:
     name: docker-servers-net
 ```
 
-**portainer-stack-config.json**:
+**portainer-stack-config.JSON**:
+
 ```json
 {
   "name": "service-name",
@@ -191,12 +203,15 @@ networks:
 ### Phase 3: Webhook Configuration
 
 #### 3.1 Configure Portainer Webhooks
+
 For each deployed stack:
+
 1. Go to **Stacks** → Select stack → **Webhooks**
 2. Generate webhook URL (format: `https://192.168.59.2:9000/api/webhooks/<id>`)
 3. Copy webhook URL for GitHub configuration
 
 #### 3.2 Configure GitHub Webhooks
+
 1. Go to repository **Settings** → **Webhooks**
 2. Add webhook:
    - **Payload URL**: Portainer webhook URL
@@ -206,6 +221,7 @@ For each deployed stack:
    - **Active**: ✅ Checked
 
 #### 3.3 Test Webhook Integration
+
 ```bash
 # Make a test change
 echo "# Test GitOps" >> docs/test-gitops.md
@@ -220,6 +236,7 @@ git push origin main
 ## 🔒 Environment Variable Management
 
 ### 3.1 Standard Variables
+
 All stacks should include these standard environment variables:
 
 | Variable | Default | Description |
@@ -229,6 +246,7 @@ All stacks should include these standard environment variables:
 | `TZ` | `UTC` | Timezone setting |
 
 ### 3.2 Service-Specific Variables
+
 Configure in Portainer UI or stack configuration:
 
 ```json
@@ -247,6 +265,7 @@ Configure in Portainer UI or stack configuration:
 ```
 
 ### 3.3 Vault Integration
+
 For sensitive data, reference Vault secrets:
 
 ```yaml
@@ -258,6 +277,7 @@ environment:
 ## 🔄 Backup and Recovery Procedures
 
 ### 4.1 Automated Backups
+
 ```bash
 # Backup all stacks and data
 ./scripts/portainer/backup-stacks.sh --token $PORTAINER_TOKEN
@@ -270,12 +290,15 @@ environment:
 ```
 
 ### 4.2 Backup Schedule
+
 Automated backups run:
+
 - **Daily**: Configuration backups at 02:00 UTC
 - **Weekly**: Full data backups on Sundays at 01:00 UTC
 - **Pre-deployment**: Before major changes
 
 ### 4.3 Backup Locations
+
 ```
 /nfs/dockermaster/backups/portainer/
 ├── stack-backup-20250829_140000/
@@ -295,7 +318,8 @@ Automated backups run:
 ## 🚨 Rollback Procedures
 
 ### 5.1 Emergency Rollback (UI Method)
-1. Access Portainer UI: **https://192.168.59.2:9000**
+
+1. Access Portainer UI: **<https://192.168.59.2:9000>**
 2. Go to **Stacks** → Select affected stack
 3. Click **Editor** tab
 4. Revert to previous version or paste known good configuration
@@ -303,6 +327,7 @@ Automated backups run:
 6. Monitor deployment logs
 
 ### 5.2 Git-Based Rollback
+
 ```bash
 # Revert to previous commit
 git log --oneline -10  # Find last good commit
@@ -315,6 +340,7 @@ git push --force origin main
 ```
 
 ### 5.3 Service-Level Rollback
+
 ```bash
 # Stop stack in Portainer
 curl -X POST "https://192.168.59.2:9000/api/stacks/$STACK_ID/stop" \
@@ -331,6 +357,7 @@ tar -xzf <service>-data.tar.gz -C /nfs/dockermaster/
 ## 📊 Monitoring and Validation
 
 ### 6.1 Health Checks
+
 Each service includes health check configuration:
 
 ```yaml
@@ -343,7 +370,9 @@ healthcheck:
 ```
 
 ### 6.2 Deployment Validation
+
 After each deployment, verify:
+
 - [ ] Stack status shows "active" in Portainer
 - [ ] All containers are "running"
 - [ ] Service endpoints respond to health checks
@@ -351,6 +380,7 @@ After each deployment, verify:
 - [ ] Resource usage within expected limits
 
 ### 6.3 Monitoring Integration
+
 Services are configured for monitoring:
 
 ```yaml
@@ -365,38 +395,47 @@ labels:
 ### Common Issues and Solutions
 
 #### 7.1 Stack Deployment Fails
+
 **Symptoms**: Stack shows "failed" status in Portainer
 **Solutions**:
+
 1. Check Git repository accessibility
-2. Verify docker-compose.portainer.yml syntax
+2. Verify Docker-compose.portainer.yml syntax
 3. Review environment variables for typos
 4. Check container logs: Stacks → Stack → Containers → Logs
 
 #### 7.2 Webhook Not Triggered
+
 **Symptoms**: Git push doesn't trigger deployment
 **Solutions**:
+
 1. Verify webhook URL in GitHub settings
 2. Check webhook delivery history in GitHub
 3. Confirm webhook payload format
 4. Review Portainer webhook logs
 
 #### 7.3 Container Start Failures
+
 **Symptoms**: Containers in "exited" state
 **Solutions**:
+
 1. Check volume paths exist and are accessible
 2. Verify port availability: `netstat -tulpn | grep :PORT`
 3. Review container environment variables
 4. Check resource limits and host capacity
 
 #### 7.4 Network Connectivity Issues
+
 **Symptoms**: Service not accessible from expected IPs
 **Solutions**:
-1. Verify docker-servers-net network exists: `docker network ls`
+
+1. Verify Docker-servers-net network exists: `docker network ls`
 2. Check container network assignment
 3. Confirm port mapping: `docker port <container>`
 4. Test internal connectivity: `docker exec -it <container> ping <target>`
 
 ### 7.5 Log Locations
+
 - **Portainer Stack Logs**: Stacks → Stack → Editor → View logs
 - **Container Logs**: Containers → Container → Logs  
 - **System Logs**: SSH to dockermaster → `journalctl -u docker`
@@ -405,6 +444,7 @@ labels:
 ## 🎯 Best Practices
 
 ### 8.1 Stack Design
+
 - Use descriptive stack names matching service function
 - Include comprehensive health checks
 - Set appropriate resource limits
@@ -412,6 +452,7 @@ labels:
 - Include monitoring labels for observability
 
 ### 8.2 GitOps Workflow
+
 - Make incremental changes in feature branches
 - Test configurations in non-production first
 - Include descriptive commit messages
@@ -419,6 +460,7 @@ labels:
 - Monitor deployments after pushing
 
 ### 8.3 Security Considerations
+
 - Use Vault for sensitive configuration
 - Restrict Portainer API token access
 - Configure webhook secrets for validation
@@ -426,6 +468,7 @@ labels:
 - Audit deployment activities
 
 ### 8.4 Environment Management
+
 - Use consistent variable naming conventions
 - Document all service-specific variables
 - Validate environment configurations before deployment
@@ -435,31 +478,37 @@ labels:
 ## 📋 Implementation Checklist
 
 ### Phase 5.1: Repository Integration
+
 - [ ] Portainer repository configured
 - [ ] Git authentication working
 - [ ] Repository pull successful
 
 ### Phase 5.2: Stack Templates
+
 - [ ] Base template created and tested
 - [ ] Service conversion script functional
 - [ ] Configuration templates validated
 
 ### Phase 5.3: Webhook Configuration  
+
 - [ ] Portainer webhooks configured
 - [ ] GitHub webhooks configured
 - [ ] Webhook delivery tested
 
 ### Phase 5.4: Environment Management
+
 - [ ] Standard environment variables defined
 - [ ] Service-specific variables documented
 - [ ] Vault integration planned
 
 ### Phase 5.5: Backup Procedures
+
 - [ ] Backup scripts created and tested
 - [ ] Automated backup schedule configured
 - [ ] Restore procedures documented and verified
 
 ### Phase 5.6: Rollback Procedures
+
 - [ ] Emergency rollback procedures tested
 - [ ] Git-based rollback validated
 - [ ] Service-level recovery verified
@@ -477,6 +526,7 @@ labels:
 ## 🔮 Future Enhancements
 
 ### Potential Improvements
+
 1. **Multi-environment Support**: Staging/production separation
 2. **Advanced Monitoring**: Custom dashboards and alerting
 3. **Automated Testing**: Pre-deployment validation pipelines
@@ -485,6 +535,7 @@ labels:
 6. **Resource Optimization**: Dynamic resource allocation
 
 ### Migration Roadmap
+
 1. **Phase 1**: Core services (Vault, GitHub Runner, Portainer)
 2. **Phase 2**: Infrastructure services (Nginx, DNS, Monitoring)  
 3. **Phase 3**: Application services (Calibre, N8N, etc.)

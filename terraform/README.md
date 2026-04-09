@@ -20,7 +20,8 @@ Terraform configurations for managing the homelab infrastructure.
               +-------------------+
               | Docker services   |
               | registry, vault,  |
-              | ollama, ...       |
+              | calibre, runner,  |
+              | bind-dns, ...     |
               +-------------------+
                         |
                    Vault (secrets)
@@ -47,7 +48,7 @@ changes in another.
 | Directory | Providers | What it manages |
 |-----------|-----------|-----------------|
 | `cloudflare/` | Cloudflare, DreamHost | Zone, DNS, tunnel, ingress, wildcard CNAME |
-| `portainer/` | Portainer | Docker stacks, settings, users |
+| `portainer/` | Portainer, Vault | Docker stacks, settings, users |
 | `vault/` | HashiCorp Vault | Secret engines, policies |
 
 ## Prerequisites
@@ -129,7 +130,18 @@ terraform apply
 4. **Portainer stack** -- add a `portainer_stack` resource in `portainer/stacks.tf`
    with the compose file in `portainer/stacks/`
 
-5. Apply both directories:
+5. **Vault secrets** -- if the stack needs secrets, add a `vault_kv_secret_v2` data
+   source in `portainer/vault.tf` and reference it as an environment variable in the
+   stack resource:
+
+   ```hcl
+   data "vault_kv_secret_v2" "myservice" {
+     mount = "secret"
+     name  = "homelab/myservice"
+   }
+   ```
+
+6. Apply both directories:
 
    ```bash
    cd terraform/cloudflare && terraform apply
@@ -169,3 +181,9 @@ terraform import portainer_stack.<name> <stack-id>
 | Cloudflare API token | Vault: `secret/homelab/cloudflare` | `cloudflare/` |
 | DreamHost API key | Vault: `secret/homelab/dreamhost` | `cloudflare/` |
 | Portainer password | Vault: `secret/homelab/portainer` | `portainer/` |
+| Vault operational token | Vault: `secret/homelab/vault` | `portainer/` |
+| Twingate A connector tokens | Vault: `secret/homelab/twingate/sepia-hornet` | `portainer/` |
+| Twingate B connector tokens | Vault: `secret/homelab/twingate/golden-mussel` | `portainer/` |
+| Calibre admin password | Vault: `secret/homelab/calibre` | `portainer/` |
+| GitHub PAT | Vault: `secret/homelab/github-runner` | `portainer/` |
+| DNSSEC keys backup | Vault: `secret/homelab/bind9/dnssec` | `portainer/` |

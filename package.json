@@ -1,7 +1,7 @@
 {
   "author": "Home Lab Administrator",
   "bugs": {
-    "url": "https://github.com/username/home-lab-inventory/issues"
+    "url": "https://github.com/luiscamaral/home-lab-inventory/issues"
   },
   "config": {
     "commitizen": {
@@ -21,7 +21,7 @@
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
   },
-  "homepage": "https://github.com/username/home-lab-inventory#readme",
+  "homepage": "https://github.com/luiscamaral/home-lab-inventory#readme",
   "keywords": [
     "home-lab",
     "infrastructure",
@@ -35,7 +35,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/username/home-lab-inventory.git"
+    "url": "git+https://github.com/luiscamaral/home-lab-inventory.git"
   },
   "scripts": {
     "check:commit-format": "echo 'Checking last 5 commits for conventional format...' && npm run lint:commits",
