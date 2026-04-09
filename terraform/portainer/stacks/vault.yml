@@ -1,0 +1,53 @@
+name: vault
+
+networks:
+  rproxy:
+    external: true
+
+volumes:
+  vault_raft:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/lib/vault/raft
+      o: bind
+
+services:
+  vault:
+    image: hashicorp/vault:1.21
+    container_name: vault
+    hostname: vault
+    restart: unless-stopped
+    networks:
+      rproxy:
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - VAULT_ADDR=${VAULT_ADDR}
+      - VAULT_TOKEN=${VAULT_TOKEN}
+    entrypoint: ["vault"]
+    command:
+      - server
+      - -config=/vault/config/config.hcl
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8200/v1/sys/health", "||", "exit", "1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - /nfs/dockermaster/docker/vault/vault/config:/vault/config
+      - vault_raft:/vault/raft
+      - /nfs/dockermaster/docker/vault/vault/logs:/vault/logs
+    labels:
+      com.lcamaral.home.watchtower.enable: "false"  # Manual updates only
+      com.docker.stack: "vault"
+      com.docker.service: "vault"
+      portainer.autodeploy: "false"  # Prevent auto-deploy to avoid runner disruption
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M

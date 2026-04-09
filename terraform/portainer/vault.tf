@@ -7,3 +7,18 @@ data "vault_kv_secret_v2" "cloudflare" {
   mount = "secret"
   name  = "homelab/cloudflare"
 }
+
+data "vault_kv_secret_v2" "twingate_sepia_hornet" {
+  mount = "secret"
+  name  = "homelab/twingate/sepia-hornet"
+}
+
+data "vault_kv_secret_v2" "twingate_golden_mussel" {
+  mount = "secret"
+  name  = "homelab/twingate/golden-mussel"
+}
+
+data "vault_kv_secret_v2" "vault" {
+  mount = "secret"
+  name  = "homelab/vault"
+}
