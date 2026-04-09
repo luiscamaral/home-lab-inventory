@@ -14,8 +14,14 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_SERVER_URL: https://s3.d.lcamaral.com
-      MINIO_BROWSER_REDIRECT_URL: https://minio.d.lcamaral.com
+      MINIO_SERVER_URL: https://s3.cf.lcamaral.com
+      MINIO_BROWSER_REDIRECT_URL: https://minio.cf.lcamaral.com
+      MINIO_IDENTITY_OPENID_CONFIG_URL: https://auth.cf.lcamaral.com/realms/homelab/.well-known/openid-configuration
+      MINIO_IDENTITY_OPENID_CLIENT_ID: minio
+      MINIO_IDENTITY_OPENID_CLIENT_SECRET: ${MINIO_OIDC_CLIENT_SECRET}
+      MINIO_IDENTITY_OPENID_CLAIM_NAME: policy
+      MINIO_IDENTITY_OPENID_SCOPES: openid,email,profile
+      MINIO_IDENTITY_OPENID_REDIRECT_URI: https://minio.cf.lcamaral.com/oauth_callback
     volumes:
       - /nfs/dockermaster/docker/MinIO/minio-data:/data
     healthcheck:

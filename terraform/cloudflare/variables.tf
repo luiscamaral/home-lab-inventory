@@ -21,3 +21,9 @@ variable "dreamhost_api_key" {
   type        = string
   sensitive   = true
 }
+
+variable "keycloak_client_secret" {
+  description = "Keycloak OIDC client secret for Cloudflare Access"
+  type        = string
+  sensitive   = true
+}

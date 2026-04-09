@@ -57,3 +57,8 @@ data "vault_kv_secret_v2" "keycloak" {
   mount = "secret"
   name  = "homelab/keycloak"
 }
+
+data "vault_kv_secret_v2" "keycloak_clients" {
+  mount = "secret"
+  name  = "homelab/keycloak/clients"
+}
