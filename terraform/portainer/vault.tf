@@ -32,3 +32,8 @@ data "vault_kv_secret_v2" "github_runner" {
   mount = "secret"
   name  = "homelab/github-runner"
 }
+
+data "vault_kv_secret_v2" "rundeck" {
+  mount = "secret"
+  name  = "homelab/rundeck"
+}

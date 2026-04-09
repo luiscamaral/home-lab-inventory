@@ -12,7 +12,7 @@ Portainer stacks are provisioned and managed via Terraform in `terraform/portain
 
 ---
 
-## Terraform-Managed Portainer Stacks (9)
+## Terraform-Managed Portainer Stacks (12)
 
 | Stack | Portainer ID | Containers | Network | IP |
 |---|---|---|---|---|
@@ -25,6 +25,9 @@ Portainer stacks are provisioned and managed via Terraform in `terraform/portain
 | reverse-proxy | 8 | rproxy, reverse-proxy-promtail-1 | dual (macvlan + rproxy) | 192.168.59.28 |
 | github-runner | 9 | github-runner-homelab | docker-servers-net | 192.168.59.4 |
 | calibre | 10 | calibre, calibre-web | rproxy bridge | 172.24.0.x |
+| rust-server | 11 | hbbs, hbbr | dual (macvlan + rproxy) | 192.168.59.10, .11 |
+| prometheus | 12 | prometheus, node-exporter, snmp-exporter, alertmanager, cadvisor | back-tier | -- |
+| la-rundeck | 13 | rundeck, postgres-rundeck | docker-servers-net | 192.168.59.22, .23 |
 
 ---
 
@@ -33,13 +36,12 @@ Portainer stacks are provisioned and managed via Terraform in `terraform/portain
 | Project | Containers | Network | IP |
 |---|---|---|---|
 | portainer-ce | portainer | docker-servers-net | 192.168.59.2 |
-| la-rundeck | rundeck, postgres-rundeck | docker-servers-net | 192.168.59.22, 192.168.59.23 |
-| prometheus | alertmanager, cadvisor, snmp-exporter | own network | — |
+| ldap-lcamaral-com | lemonldap, openldap, phpldapadmin | rproxy bridge | — |
 | ldap-lcamaral-com | lemonldap, openldap, phpldapadmin | rproxy bridge | — |
 | minio | minio | rproxy bridge | — |
 | ollama | ollama | rproxy bridge | — |
 | chisel | chisel | dual (macvlan + rproxy) | 192.168.59.0 |
-| rust-server | hbbs, hbbr | dual (macvlan + rproxy) | 192.168.59.10, 192.168.59.11 |
+| elastic-search | elasticsearch | docker-servers-net | 192.168.59.25 |
 | freeswitch | freeswitch | docker-servers-net | 192.168.59.40 |
 | elastic-search | elasticsearch | docker-servers-net | 192.168.59.25 |
 | synology-search | nas-solr, nas-tika | docker-servers-net | 192.168.59.31, 192.168.59.32 |

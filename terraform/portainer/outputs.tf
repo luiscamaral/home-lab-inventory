@@ -10,5 +10,8 @@ output "stacks" {
     twingate_b        = portainer_stack.twingate_b.name
     calibre           = portainer_stack.calibre.name
     github_runner     = portainer_stack.github_runner.name
+    rustdesk          = portainer_stack.rustdesk.name
+    rundeck           = portainer_stack.rundeck.name
+    prometheus        = portainer_stack.prometheus.name
   }
 }
