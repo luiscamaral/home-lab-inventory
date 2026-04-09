@@ -1,0 +1,32 @@
+name: cloudflare-tunnel
+
+networks:
+  rproxy:
+    name: rproxy
+    external: true
+
+services:
+  cloudflare:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    networks:
+      rproxy:
+    restart: on-failure:5
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://localhost:9080/ready || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    labels:
+      com.lcamaral.home.watchtower.enable: "false"
+      com.docker.stack: "cloudflare"
+      com.docker.service: "tunnel"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
