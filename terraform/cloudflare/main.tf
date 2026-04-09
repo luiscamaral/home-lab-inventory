@@ -40,6 +40,26 @@ resource "cloudflare_dns_record" "portainer_cf_tunnel" {
   ttl     = 1
 }
 
+# MinIO S3 API: s3.cf.lcamaral.com -> tunnel
+resource "cloudflare_dns_record" "s3_cf_tunnel" {
+  zone_id = cloudflare_zone.lcamaral_com.id
+  type    = "CNAME"
+  name    = "s3.cf.lcamaral.com"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.bologna.id}.cfargotunnel.com"
+  proxied = true
+  ttl     = 1
+}
+
+# MinIO Console: minio.cf.lcamaral.com -> tunnel
+resource "cloudflare_dns_record" "minio_cf_tunnel" {
+  zone_id = cloudflare_zone.lcamaral_com.id
+  type    = "CNAME"
+  name    = "minio.cf.lcamaral.com"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.bologna.id}.cfargotunnel.com"
+  proxied = true
+  ttl     = 1
+}
+
 # Docker registry: registry.cf.lcamaral.com -> tunnel
 resource "cloudflare_dns_record" "registry_cf_tunnel" {
   zone_id = cloudflare_zone.lcamaral_com.id
@@ -112,6 +132,20 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "bologna" {
       },
       {
         hostname = "portainer.cf.lcamaral.com"
+        service  = "https://nginx-rproxy:443"
+        origin_request = {
+          no_tls_verify = true
+        }
+      },
+      {
+        hostname = "s3.cf.lcamaral.com"
+        service  = "https://nginx-rproxy:443"
+        origin_request = {
+          no_tls_verify = true
+        }
+      },
+      {
+        hostname = "minio.cf.lcamaral.com"
         service  = "https://nginx-rproxy:443"
         origin_request = {
           no_tls_verify = true
