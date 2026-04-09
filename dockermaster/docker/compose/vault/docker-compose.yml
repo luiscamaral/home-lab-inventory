@@ -39,7 +39,7 @@ services:
       - vault_raft:/vault/raft
       - /nfs/dockermaster/docker/vault/vault/logs:/vault/logs
     labels:
-      com.lcamaral.home.watchtower.enable: "false"  # Manual updates only
+      com.centurylinklabs.watchtower.enable: "false"
       com.docker.stack: "vault"
       com.docker.service: "vault"
       portainer.autodeploy: "false"  # Prevent auto-deploy to avoid runner disruption

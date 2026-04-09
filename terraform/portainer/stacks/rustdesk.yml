@@ -21,8 +21,14 @@ services:
     depends_on:
       - hbbr
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/usr/bin/hbbs", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     labels:
-      com.lcamaral.home.watchtower.enable: "false"  # Manual updates only
+      com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "rust-server"
       com.docker.service: "hbbs"
       portainer.autodeploy: "false"
@@ -46,8 +52,14 @@ services:
       servers-net:
         ipv4_address: 192.168.59.11
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/usr/bin/hbbr", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     labels:
-      com.lcamaral.home.watchtower.enable: "false"  # Manual updates only
+      com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "rust-server"
       com.docker.service: "hbbr"
       portainer.autodeploy: "false"

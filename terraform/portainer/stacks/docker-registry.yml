@@ -25,7 +25,7 @@ services:
       timeout: 5s
       retries: 10
     labels:
-      com.lcamaral.home.watchtower.enable: "false"
+      com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "registry"
       com.docker.service: "registry"
       portainer.autodeploy: "false"

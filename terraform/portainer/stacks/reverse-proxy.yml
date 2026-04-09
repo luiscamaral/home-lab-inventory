@@ -35,7 +35,7 @@ services:
       retries: 15
     labels:
       loki.logging: "true" # Label for Promtail to identify logs
-      com.lcamaral.home.watchtower.enable: "false"  # Manual updates only
+      com.centurylinklabs.watchtower.enable: "false"
       com.docker.stack: "reverse-proxy"
       com.docker.service: "nginx-rproxy"
       portainer.autodeploy: "false"  # Prevent auto-deploy to avoid runner disruption
@@ -65,7 +65,7 @@ services:
       timeout: 5s
       retries: 15
     labels:
-      com.lcamaral.home.watchtower.enable: "false"  # Manual updates only
+      com.centurylinklabs.watchtower.enable: "false"
       com.docker.stack: "reverse-proxy"
       com.docker.service: "promtail"
       portainer.autodeploy: "false"  # Prevent auto-deploy to avoid runner disruption

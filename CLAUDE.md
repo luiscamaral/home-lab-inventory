@@ -65,6 +65,8 @@
   - `secret/homelab/calibre` (admin password)
   - `secret/homelab/github-runner` (GitHub PAT)
   - `secret/homelab/bind9/dnssec` (DNSSEC keys backup)
+  - `secret/homelab/rundeck` (DB + storage converter passwords)
+  - `secret/homelab/watchtower` (HTTP API token)
 - Terraform vars are sourced from Vault at runtime, never stored in files.
 
 # Docker Services Structure

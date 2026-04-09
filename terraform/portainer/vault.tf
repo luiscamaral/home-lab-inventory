@@ -37,3 +37,8 @@ data "vault_kv_secret_v2" "rundeck" {
   mount = "secret"
   name  = "homelab/rundeck"
 }
+
+data "vault_kv_secret_v2" "watchtower" {
+  mount = "secret"
+  name  = "homelab/watchtower"
+}

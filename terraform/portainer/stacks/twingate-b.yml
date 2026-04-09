@@ -26,7 +26,7 @@ services:
       TWINGATE_REFRESH_TOKEN: ${TWINGATE_REFRESH_TOKEN}
     restart: unless-stopped
     labels:
-      com.lcamaral.home.watchtower.enable: "false"  # Manual updates only
+      com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "twingate-golden-mussel"
       com.docker.service: "twingate-connector-1"
       portainer.autodeploy: "false"  # Prevent auto-deploy to avoid runner disruption

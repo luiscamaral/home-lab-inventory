@@ -22,8 +22,14 @@ services:
     depends_on:
       - cadvisor
     restart: always
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     labels:
-      com.lcamaral.home.watchtower.enable: "false"
+      com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "prometheus"
       com.docker.service: "prometheus"
       portainer.autodeploy: "false"
@@ -48,7 +54,14 @@ services:
     restart: always
     depends_on:
       - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9100/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     labels:
+      com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "prometheus"
       com.docker.service: "node-exporter"
 
@@ -60,7 +73,14 @@ services:
     networks:
       back-tier:
     restart: always
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9116/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     labels:
+      com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "prometheus"
       com.docker.service: "snmp-exporter"
 
@@ -74,7 +94,14 @@ services:
     command:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     labels:
+      com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "prometheus"
       com.docker.service: "alertmanager"
 
@@ -91,5 +118,6 @@ services:
       - back-tier
     restart: always
     labels:
+      com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "prometheus"
       com.docker.service: "cadvisor"

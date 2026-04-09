@@ -33,8 +33,14 @@ services:
       DISABLE_IPV6: true
       LANG: en_US.UTF-8
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s --max-time 5 -o /dev/null -w '%{http_code}' http://localhost:8080/ | grep -qE '^(200|401)$'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     labels:
-      com.lcamaral.home.watchtower.enable: "false"  # Manual updates only
+      com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "calibre"
       com.docker.service: "calibre"
       portainer.autodeploy: "false"
@@ -55,8 +61,14 @@ services:
       - /nfs/calibre/calibre-web/config:/config
       - /nfs/calibre/calibre-web/Library:/books
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs --max-time 5 http://localhost:8083/login -o /dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
     labels:
-      com.lcamaral.home.watchtower.enable: "false"
+      com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "calibre"
       com.docker.service: "calibre-web"
       portainer.autodeploy: "false"

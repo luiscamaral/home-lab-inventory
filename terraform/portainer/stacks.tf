@@ -211,3 +211,21 @@ resource "portainer_stack" "prometheus" {
 
   stack_file_content = file("${path.module}/stacks/prometheus.yml")
 }
+
+# ──────────────────────────────────────────────
+# Watchtower
+# Auto-updates opted-in containers daily at 4 AM
+# ──────────────────────────────────────────────
+resource "portainer_stack" "watchtower" {
+  name             = "watchtower"
+  endpoint_id      = var.endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/watchtower.yml")
+
+  env {
+    name  = "WATCHTOWER_API_TOKEN"
+    value = data.vault_kv_secret_v2.watchtower.data["api_token"]
+  }
+}

@@ -13,5 +13,6 @@ output "stacks" {
     rustdesk          = portainer_stack.rustdesk.name
     rundeck           = portainer_stack.rundeck.name
     prometheus        = portainer_stack.prometheus.name
+    watchtower        = portainer_stack.watchtower.name
   }
 }

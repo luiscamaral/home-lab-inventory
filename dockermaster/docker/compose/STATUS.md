@@ -12,22 +12,23 @@ Portainer stacks are provisioned and managed via Terraform in `terraform/portain
 
 ---
 
-## Terraform-Managed Portainer Stacks (12)
+## Terraform-Managed Portainer Stacks (13)
 
-| Stack | Portainer ID | Containers | Network | IP |
-|---|---|---|---|---|
-| docker-registry | 1 | registry | rproxy bridge | 172.24.0.x |
-| cloudflare-tunnel | 2 | cloudflare-tunnel-cloudflare-1 | rproxy bridge | 172.24.0.x |
-| bind-dns | 4 | bind-dns-bind9-1 | docker-servers-net | 192.168.59.3 |
-| twingate-a | 5 | twingate-sepia-hornet | dual (macvlan + rproxy) | 192.168.59.12 |
-| twingate-b | 6 | twingate-golden-mussel | dual (macvlan + rproxy) | 192.168.59.24 |
-| vault | 7 | vault | rproxy bridge | 172.24.0.x |
-| reverse-proxy | 8 | rproxy, reverse-proxy-promtail-1 | dual (macvlan + rproxy) | 192.168.59.28 |
-| github-runner | 9 | github-runner-homelab | docker-servers-net | 192.168.59.4 |
-| calibre | 10 | calibre, calibre-web | rproxy bridge | 172.24.0.x |
-| rust-server | 11 | hbbs, hbbr | dual (macvlan + rproxy) | 192.168.59.10, .11 |
-| prometheus | 12 | prometheus, node-exporter, snmp-exporter, alertmanager, cadvisor | back-tier | -- |
-| la-rundeck | 13 | rundeck, postgres-rundeck | docker-servers-net | 192.168.59.22, .23 |
+| Stack | Portainer ID | Containers | Network | IP | Auto-update |
+|---|---|---|---|---|---|
+| docker-registry | 1 | registry | rproxy bridge | 172.24.0.x | yes |
+| cloudflare-tunnel | 2 | cloudflare-tunnel-cloudflare-1 | rproxy bridge | 172.24.0.x | yes |
+| bind-dns | 4 | bind-dns-bind9-1 | docker-servers-net | 192.168.59.3 | no |
+| twingate-a | 5 | twingate-sepia-hornet | dual (macvlan + rproxy) | 192.168.59.12 | yes |
+| twingate-b | 6 | twingate-golden-mussel | dual (macvlan + rproxy) | 192.168.59.24 | yes |
+| vault | 7 | vault | rproxy bridge | 172.24.0.x | no |
+| reverse-proxy | 8 | rproxy, promtail | dual (macvlan + rproxy) | 192.168.59.28 | no |
+| github-runner | 9 | github-runner-homelab | docker-servers-net | 192.168.59.4 | yes |
+| calibre | 10 | calibre, calibre-web | rproxy bridge | 172.24.0.x | yes |
+| rust-server | 11 | hbbs, hbbr | dual (macvlan + rproxy) | 192.168.59.10, .11 | yes |
+| prometheus | 12 | prometheus, node-exporter, snmp-exporter, alertmanager, cadvisor | back-tier | -- | yes |
+| la-rundeck | 13 | rundeck (no), postgres-rundeck (yes) | docker-servers-net | 192.168.59.22, .23 | mixed |
+| watchtower | 14 | watchtower | rproxy bridge | 172.24.0.x | no |
 
 ---
 
@@ -36,12 +37,10 @@ Portainer stacks are provisioned and managed via Terraform in `terraform/portain
 | Project | Containers | Network | IP |
 |---|---|---|---|
 | portainer-ce | portainer | docker-servers-net | 192.168.59.2 |
-| ldap-lcamaral-com | lemonldap, openldap, phpldapadmin | rproxy bridge | — |
-| ldap-lcamaral-com | lemonldap, openldap, phpldapadmin | rproxy bridge | — |
-| minio | minio | rproxy bridge | — |
-| ollama | ollama | rproxy bridge | — |
+| ldap-lcamaral-com | lemonldap, openldap, phpldapadmin | rproxy bridge | -- |
+| minio | minio | rproxy bridge | -- |
+| ollama | ollama | rproxy bridge | -- |
 | chisel | chisel | dual (macvlan + rproxy) | 192.168.59.0 |
-| elastic-search | elasticsearch | docker-servers-net | 192.168.59.25 |
 | freeswitch | freeswitch | docker-servers-net | 192.168.59.40 |
 | elastic-search | elasticsearch | docker-servers-net | 192.168.59.25 |
 | synology-search | nas-solr, nas-tika | docker-servers-net | 192.168.59.31, 192.168.59.32 |
