@@ -14,5 +14,9 @@ output "stacks" {
     rundeck           = portainer_stack.rundeck.name
     prometheus        = portainer_stack.prometheus.name
     watchtower        = portainer_stack.watchtower.name
+    minio             = portainer_stack.minio.name
+    ollama            = portainer_stack.ollama.name
+    chisel            = portainer_stack.chisel.name
+    freeswitch        = portainer_stack.freeswitch.name
   }
 }

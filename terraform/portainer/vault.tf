@@ -42,3 +42,13 @@ data "vault_kv_secret_v2" "watchtower" {
   mount = "secret"
   name  = "homelab/watchtower"
 }
+
+data "vault_kv_secret_v2" "minio" {
+  mount = "secret"
+  name  = "homelab/minio"
+}
+
+data "vault_kv_secret_v2" "freeswitch" {
+  mount = "secret"
+  name  = "homelab/freeswitch"
+}

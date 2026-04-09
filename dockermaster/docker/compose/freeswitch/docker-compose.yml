@@ -1,0 +1,51 @@
+name: freeswitch
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  freeswitch:
+    image: ghcr.io/patrickbaus/freeswitch-docker
+    container_name: freeswitch
+    hostname: freeswitch
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.40
+    cap_add:
+      - SYS_NICE
+    volumes:
+      - /nfs/dockermaster/docker/freeswitch/config:/etc/freeswitch
+      - /nfs/dockermaster/docker/freeswitch/logs:/var/log/freeswitch
+    environment:
+      ESL_PASSWORD: ${ESL_PASSWORD}
+      FS_DEFAULT_PASSWORD: DISABLED_USE_PER_EXT
+      EXT_1001_PASS: ${EXT_1001_PASS}
+      EXT_1002_PASS: ${EXT_1002_PASS}
+      EXT_1003_PASS: ${EXT_1003_PASS}
+      CC_USERNAME: ${CC_USERNAME}
+      CC_PASSWORD: ${CC_PASSWORD}
+      CC_DID: ${CC_DID}
+    restart: unless-stopped
+    # Healthcheck disabled: fs_cli ESL connection failing (pre-existing issue)
+    # Uncomment once ESL event socket is configured:
+    # healthcheck:
+    #   test: ["CMD-SHELL", "fs_cli -p $ESL_PASSWORD -x status"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 30s
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "freeswitch"
+      com.docker.service: "freeswitch"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M

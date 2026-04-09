@@ -229,3 +229,100 @@ resource "portainer_stack" "watchtower" {
     value = data.vault_kv_secret_v2.watchtower.data["api_token"]
   }
 }
+
+# ──────────────────────────────────────────────
+# MinIO S3 Storage
+# Object storage — root credentials from Vault
+# ──────────────────────────────────────────────
+resource "portainer_stack" "minio" {
+  name             = "minio"
+  endpoint_id      = var.endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/minio.yml")
+
+  env {
+    name  = "MINIO_ROOT_USER"
+    value = data.vault_kv_secret_v2.minio.data["root_user"]
+  }
+
+  env {
+    name  = "MINIO_ROOT_PASSWORD"
+    value = data.vault_kv_secret_v2.minio.data["root_password"]
+  }
+}
+
+# ──────────────────────────────────────────────
+# Ollama LLM Server
+# No secrets — model cache on NFS volume
+# ──────────────────────────────────────────────
+resource "portainer_stack" "ollama" {
+  name             = "ollama"
+  endpoint_id      = var.endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/ollama.yml")
+}
+
+# ──────────────────────────────────────────────
+# Chisel TCP Tunnel
+# Stateless reverse tunnel server — no secrets
+# ──────────────────────────────────────────────
+resource "portainer_stack" "chisel" {
+  name             = "chisel"
+  endpoint_id      = var.endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/chisel.yml")
+}
+
+# ──────────────────────────────────────────────
+# FreeSWITCH VoIP/SIP Server
+# SIP credentials from Vault
+# ──────────────────────────────────────────────
+resource "portainer_stack" "freeswitch" {
+  name             = "freeswitch"
+  endpoint_id      = var.endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/freeswitch.yml")
+
+  env {
+    name  = "ESL_PASSWORD"
+    value = data.vault_kv_secret_v2.freeswitch.data["esl_password"]
+  }
+
+  env {
+    name  = "EXT_1001_PASS"
+    value = data.vault_kv_secret_v2.freeswitch.data["ext_1001_pass"]
+  }
+
+  env {
+    name  = "EXT_1002_PASS"
+    value = data.vault_kv_secret_v2.freeswitch.data["ext_1002_pass"]
+  }
+
+  env {
+    name  = "EXT_1003_PASS"
+    value = data.vault_kv_secret_v2.freeswitch.data["ext_1003_pass"]
+  }
+
+  env {
+    name  = "CC_USERNAME"
+    value = data.vault_kv_secret_v2.freeswitch.data["cc_username"]
+  }
+
+  env {
+    name  = "CC_PASSWORD"
+    value = data.vault_kv_secret_v2.freeswitch.data["cc_password"]
+  }
+
+  env {
+    name  = "CC_DID"
+    value = data.vault_kv_secret_v2.freeswitch.data["cc_did"]
+  }
+}

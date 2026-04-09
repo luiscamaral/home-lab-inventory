@@ -12,7 +12,7 @@ Portainer stacks are provisioned and managed via Terraform in `terraform/portain
 
 ---
 
-## Terraform-Managed Portainer Stacks (13)
+## Terraform-Managed Portainer Stacks (17)
 
 | Stack | Portainer ID | Containers | Network | IP | Auto-update |
 |---|---|---|---|---|---|
@@ -29,6 +29,10 @@ Portainer stacks are provisioned and managed via Terraform in `terraform/portain
 | prometheus | 12 | prometheus, node-exporter, snmp-exporter, alertmanager, cadvisor | back-tier | -- | yes |
 | la-rundeck | 13 | rundeck (no), postgres-rundeck (yes) | docker-servers-net | 192.168.59.22, .23 | mixed |
 | watchtower | 14 | watchtower | rproxy bridge | 172.24.0.x | no |
+| minio | 16 | minio | rproxy bridge | 172.24.0.x | yes |
+| chisel | 17 | chisel | dual (macvlan + rproxy) | 192.168.59.0 | yes |
+| freeswitch | 18 | freeswitch | docker-servers-net | 192.168.59.40 | no |
+| ollama | 19 | ollama | rproxy bridge | 172.24.0.x | yes |
 
 ---
 
@@ -38,10 +42,6 @@ Portainer stacks are provisioned and managed via Terraform in `terraform/portain
 |---|---|---|---|
 | portainer-ce | portainer | docker-servers-net | 192.168.59.2 |
 | ldap-lcamaral-com | lemonldap, openldap, phpldapadmin | rproxy bridge | -- |
-| minio | minio | rproxy bridge | -- |
-| ollama | ollama | rproxy bridge | -- |
-| chisel | chisel | dual (macvlan + rproxy) | 192.168.59.0 |
-| freeswitch | freeswitch | docker-servers-net | 192.168.59.40 |
 | elastic-search | elasticsearch | docker-servers-net | 192.168.59.25 |
 | synology-search | nas-solr, nas-tika | docker-servers-net | 192.168.59.31, 192.168.59.32 |
 

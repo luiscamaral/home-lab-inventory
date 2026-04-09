@@ -67,6 +67,8 @@
   - `secret/homelab/bind9/dnssec` (DNSSEC keys backup)
   - `secret/homelab/rundeck` (DB + storage converter passwords)
   - `secret/homelab/watchtower` (HTTP API token)
+  - `secret/homelab/minio` (root user + password)
+  - `secret/homelab/freeswitch` (ESL, SIP extension, calling card credentials)
 - Terraform vars are sourced from Vault at runtime, never stored in files.
 
 # Docker Services Structure

@@ -1,0 +1,31 @@
+name: chisel
+
+networks:
+  docker-servers-net:
+    external: true
+  rproxy:
+    external: true
+
+services:
+  chisel:
+    image: jpillora/chisel:latest
+    container_name: chisel
+    command: server --reverse --port 8080
+    networks:
+      docker-servers-net:
+        ipv4_address: 192.168.59.0
+      rproxy:
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "chisel"
+      com.docker.service: "chisel"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
