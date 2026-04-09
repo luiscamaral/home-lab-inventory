@@ -18,5 +18,6 @@ output "stacks" {
     ollama            = portainer_stack.ollama.name
     chisel            = portainer_stack.chisel.name
     freeswitch        = portainer_stack.freeswitch.name
+    keycloak          = portainer_stack.keycloak.name
   }
 }

@@ -326,3 +326,31 @@ resource "portainer_stack" "freeswitch" {
     value = data.vault_kv_secret_v2.freeswitch.data["cc_did"]
   }
 }
+
+# ──────────────────────────────────────────────
+# Keycloak Identity Provider
+# SSO + user management — credentials from Vault
+# ──────────────────────────────────────────────
+resource "portainer_stack" "keycloak" {
+  name             = "keycloak"
+  endpoint_id      = var.endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/keycloak.yml")
+
+  env {
+    name  = "KC_HOSTNAME"
+    value = "auth.cf.lcamaral.com"
+  }
+
+  env {
+    name  = "KC_DB_PASSWORD"
+    value = data.vault_kv_secret_v2.keycloak.data["db_password"]
+  }
+
+  env {
+    name  = "KEYCLOAK_ADMIN_PASSWORD"
+    value = data.vault_kv_secret_v2.keycloak.data["admin_password"]
+  }
+}

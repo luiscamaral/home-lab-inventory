@@ -52,3 +52,8 @@ data "vault_kv_secret_v2" "freeswitch" {
   mount = "secret"
   name  = "homelab/freeswitch"
 }
+
+data "vault_kv_secret_v2" "keycloak" {
+  mount = "secret"
+  name  = "homelab/keycloak"
+}

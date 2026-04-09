@@ -40,6 +40,16 @@ resource "cloudflare_dns_record" "portainer_cf_tunnel" {
   ttl     = 1
 }
 
+# Keycloak auth: auth.cf.lcamaral.com -> tunnel
+resource "cloudflare_dns_record" "auth_cf_tunnel" {
+  zone_id = cloudflare_zone.lcamaral_com.id
+  type    = "CNAME"
+  name    = "auth.cf.lcamaral.com"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.bologna.id}.cfargotunnel.com"
+  proxied = true
+  ttl     = 1
+}
+
 # MinIO S3 API: s3.cf.lcamaral.com -> tunnel
 resource "cloudflare_dns_record" "s3_cf_tunnel" {
   zone_id = cloudflare_zone.lcamaral_com.id
@@ -116,6 +126,13 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "bologna" {
 
   config = {
     ingress = [
+      {
+        hostname = "auth.cf.lcamaral.com"
+        service  = "https://nginx-rproxy:443"
+        origin_request = {
+          no_tls_verify = true
+        }
+      },
       {
         hostname = "bologna.cf.lcamaral.com"
         service  = "https://nginx-rproxy:443"
