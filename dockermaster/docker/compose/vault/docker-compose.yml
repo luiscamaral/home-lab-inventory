@@ -30,7 +30,7 @@ services:
       - server
       - -config=/vault/config/config.hcl
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8200/v1/sys/health", "||", "exit", "1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8200/v1/sys/health || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 10

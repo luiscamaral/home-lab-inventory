@@ -124,3 +124,39 @@ resource "portainer_stack" "twingate_b" {
     value = data.vault_kv_secret_v2.twingate_golden_mussel.data["refresh_token"]
   }
 }
+
+# ──────────────────────────────────────────────
+# Calibre (calibre + calibre-web)
+# Ebook server — password from Vault
+# ──────────────────────────────────────────────
+resource "portainer_stack" "calibre" {
+  name             = "calibre"
+  endpoint_id      = var.endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/calibre.yml")
+
+  env {
+    name  = "CALIBRE_PASSWORD"
+    value = data.vault_kv_secret_v2.calibre.data["password"]
+  }
+}
+
+# ──────────────────────────────────────────────
+# GitHub Runner
+# CI/CD self-hosted runner — PAT from Vault
+# ──────────────────────────────────────────────
+resource "portainer_stack" "github_runner" {
+  name             = "github-runner"
+  endpoint_id      = var.endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/github-runner.yml")
+
+  env {
+    name  = "GITHUB_TOKEN"
+    value = data.vault_kv_secret_v2.github_runner.data["github_token"]
+  }
+}

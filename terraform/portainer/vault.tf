@@ -22,3 +22,13 @@ data "vault_kv_secret_v2" "vault" {
   mount = "secret"
   name  = "homelab/vault"
 }
+
+data "vault_kv_secret_v2" "calibre" {
+  mount = "secret"
+  name  = "homelab/calibre"
+}
+
+data "vault_kv_secret_v2" "github_runner" {
+  mount = "secret"
+  name  = "homelab/github-runner"
+}

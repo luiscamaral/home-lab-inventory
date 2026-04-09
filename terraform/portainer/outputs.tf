@@ -8,5 +8,7 @@ output "stacks" {
     vault             = portainer_stack.vault.name
     twingate_a        = portainer_stack.twingate_a.name
     twingate_b        = portainer_stack.twingate_b.name
+    calibre           = portainer_stack.calibre.name
+    github_runner     = portainer_stack.github_runner.name
   }
 }
