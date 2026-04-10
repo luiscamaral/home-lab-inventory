@@ -1,0 +1,42 @@
+name: Build Homelab Portal
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/homelab-portal/**'
+      - '.github/workflows/build-homelab-portal.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and Push Homelab Portal
+    runs-on: [self-hosted, dockermaster]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to local registry
+        env:
+          REGISTRY_USER: admin
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_ADMIN_PASSWORD }}
+        run: |
+          echo "$REGISTRY_PASSWORD" | docker login registry.cf.lcamaral.com \
+            -u "$REGISTRY_USER" --password-stdin
+
+      - name: Build image
+        working-directory: apps/homelab-portal
+        run: |
+          docker build \
+            -t registry.cf.lcamaral.com/homelab-portal:latest \
+            -t registry.cf.lcamaral.com/homelab-portal:${GITHUB_SHA::7} \
+            .
+
+      - name: Push image
+        run: |
+          docker push registry.cf.lcamaral.com/homelab-portal:latest
+          docker push registry.cf.lcamaral.com/homelab-portal:${GITHUB_SHA::7}
+
+      - name: Log out of registry
+        if: always()
+        run: docker logout registry.cf.lcamaral.com
