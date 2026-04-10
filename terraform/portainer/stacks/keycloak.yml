@@ -4,6 +4,8 @@ networks:
   servers-net:
     name: docker-servers-net
     external: true
+  rproxy:
+    external: true
   keycloak-internal:
 
 services:
@@ -15,11 +17,12 @@ services:
     networks:
       servers-net:
         ipv4_address: 192.168.59.13
+      rproxy:
       keycloak-internal:
     environment:
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_ENABLED: "true"
-      KC_HOSTNAME: ${KC_HOSTNAME}
+      KC_HOSTNAME: https://${KC_HOSTNAME}
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
       KC_DB_USERNAME: keycloak
