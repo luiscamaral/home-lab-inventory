@@ -1,0 +1,3 @@
+[submodule "dockermaster/docker/compose/synology-search"]
+	path = dockermaster/docker/compose/synology-search
+	url = https://github.com/luiscamaral/synology-search.git

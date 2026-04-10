@@ -21,43 +21,43 @@ validate_token() {
         log_message "WARNING: No webhook token configured"
         return 0
     fi
-    
+
     if [ "$provided_token" != "$WEBHOOK_TOKEN" ]; then
         log_message "ERROR: Invalid webhook token"
         return 1
     fi
-    
+
     return 0
 }
 
 # Function to deploy a service
 deploy_service() {
     local service="$1"
-    
+
     log_message "Deploying service: $service"
-    
+
     if [ ! -d "$DEPLOY_PATH/$service" ]; then
         log_message "ERROR: Service directory not found: $DEPLOY_PATH/$service"
         return 1
     fi
-    
+
     cd "$DEPLOY_PATH/$service"
-    
+
     # Pull latest images
     log_message "Pulling latest images for $service..."
     docker compose pull 2>&1 | tee -a "$LOG_FILE"
-    
+
     # Deploy with rolling update
     log_message "Starting containers for $service..."
     docker compose up -d --remove-orphans 2>&1 | tee -a "$LOG_FILE"
-    
+
     # Wait for containers to be healthy
     sleep 5
-    
+
     # Check status
     log_message "Checking status for $service..."
     docker compose ps | tee -a "$LOG_FILE"
-    
+
     log_message "Service $service deployed successfully"
     return 0
 }
@@ -65,14 +65,14 @@ deploy_service() {
 # Function to deploy all services
 deploy_all_services() {
     log_message "Deploying all services..."
-    
+
     for dir in "$DEPLOY_PATH"/*/; do
         if [ -f "$dir/docker-compose.yml" ] || [ -f "$dir/docker-compose.yaml" ]; then
             service=$(basename "$dir")
             deploy_service "$service" || log_message "WARNING: Failed to deploy $service"
         fi
     done
-    
+
     log_message "All services deployment completed"
 }
 
@@ -80,12 +80,12 @@ deploy_all_services() {
 main() {
     local webhook_data="$1"
     local token="$2"
-    
+
     # Validate token
     if ! validate_token "$token"; then
         exit 1
     fi
-    
+
     # Parse webhook data (assuming JSON format)
     # You may need to install jq for JSON parsing
     if command -v jq &> /dev/null; then
@@ -98,9 +98,9 @@ main() {
         repository="unknown"
         triggered_by="webhook"
     fi
-    
+
     log_message "Deployment triggered by: $triggered_by from repository: $repository"
-    
+
     # Deploy services
     if [ "$services" = "all" ]; then
         deploy_all_services
@@ -112,7 +112,7 @@ main() {
             deploy_service "$service" || log_message "WARNING: Failed to deploy $service"
         done
     fi
-    
+
     log_message "Deployment process completed"
 }
 

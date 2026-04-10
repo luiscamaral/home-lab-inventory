@@ -1,0 +1,51 @@
+# Environment configuration for [SERVICE_NAME]
+# Copy to .env and configure with actual values
+
+# Basic service configuration
+SERVICE_NAME=[service-name]
+SERVICE_VERSION=latest
+
+# Database configuration (if applicable)
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=[database_name]
+DB_USER=[database_user]
+DB_PASSWORD=[CHANGE_ME]
+
+# Authentication (if applicable)
+JWT_SECRET=[GENERATE_SECURE_SECRET]
+ADMIN_EMAIL=[admin@example.com]
+ADMIN_PASSWORD=[CHANGE_ME]
+
+# External service URLs
+BASE_URL=https://[service].d.lcamaral.com
+WEBHOOK_URL=https://[service].d.lcamaral.com/webhook
+
+# API Keys and tokens (store in Vault for production)
+API_KEY=[CHANGE_ME]
+SECRET_TOKEN=[GENERATE_SECURE_TOKEN]
+
+# Timezone and locale
+TZ=America/Denver
+LANG=en_US.UTF-8
+
+# Logging configuration
+LOG_LEVEL=INFO
+LOG_FORMAT=json
+
+# Security settings
+SECURE_COOKIES=true
+CORS_ALLOWED_ORIGINS=https://[service].d.lcamaral.com
+
+# Performance tuning
+WORKERS=2
+MAX_CONNECTIONS=100
+TIMEOUT=30
+
+# Feature flags
+ENABLE_FEATURE_X=false
+DEBUG_MODE=false
+
+# Custom application variables
+# Add service-specific variables below
+CUSTOM_VAR=[value]

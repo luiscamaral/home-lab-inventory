@@ -197,7 +197,7 @@ skip_covered = false
 [tool.bandit]
 exclude_dirs = [
     ".git",
-    ".history", 
+    ".history",
     ".claude",
     ".vscode",
     ".devcontainer",

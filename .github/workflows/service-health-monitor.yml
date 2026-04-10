@@ -1,0 +1,510 @@
+# Service Health Monitoring and Alerting
+# This workflow provides continuous health monitoring for dockermaster services
+# and automated alerts when services become unhealthy
+
+name: Service Health Monitor
+
+on:
+  # Scheduled health checks every 15 minutes
+  schedule:
+    - cron: '*/15 * * * *'  # Every 15 minutes
+
+  # Manual health check trigger
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Services to check (comma-separated, or "all" for all services)'
+        required: false
+        default: 'all'
+        type: string
+      alert_threshold:
+        description: 'Number of consecutive failures before alerting'
+        required: false
+        default: '3'
+        type: string
+      detailed_check:
+        description: 'Perform detailed health checks including performance metrics'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  DEPLOY_PATH: /nfs/dockermaster/docker
+  VAULT_ADDR: http://vault.d.lcamaral.com
+  PORTAINER_URL: https://192.168.59.2:9000
+  HEALTH_CHECK_TIMEOUT: 30
+  ALERT_STATE_FILE: /tmp/health-alert-state.json
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+jobs:
+  # Job 1: Service discovery and health assessment
+  health-assessment:
+    name: Service Health Assessment
+    runs-on: [self-hosted, dockermaster]
+    outputs:
+      services-status: ${{ steps.health-check.outputs.services-status }}
+      unhealthy-services: ${{ steps.health-check.outputs.unhealthy-services }}
+      critical-services: ${{ steps.health-check.outputs.critical-services }}
+      alert-required: ${{ steps.health-check.outputs.alert-required }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Discover active services
+        id: discover
+        run: |
+          echo "🔍 Discovering active services..."
+
+          if [ "${{ github.event.inputs.services }}" = "all" ] || [ -z "${{ github.event.inputs.services }}" ]; then
+            # Get all services with docker-compose files
+            SERVICES=()
+            for compose_file in ${{ env.DEPLOY_PATH }}/*/docker-compose.yml \
+                                ${{ env.DEPLOY_PATH }}/*/docker-compose.yaml; do
+              if [ -f "$compose_file" ]; then
+                SERVICE=$(basename "$(dirname "$compose_file")")
+                # Only include services that have running containers
+                cd "$(dirname "$compose_file")"
+                if docker compose ps --services --filter "status=running" | grep -q .; then
+                  SERVICES+=("$SERVICE")
+                fi
+              fi
+            done
+          else
+            # Parse comma-separated service list
+            IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}"
+          fi
+
+          # Create JSON array of services
+          JSON_ARRAY=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -s .)
+          echo "services=$JSON_ARRAY" >> $GITHUB_OUTPUT
+          echo "Discovered services: $JSON_ARRAY"
+
+      - name: Load alert state history
+        id: load-state
+        run: |
+          echo "📊 Loading alert state history..."
+
+          if [ -f "${{ env.ALERT_STATE_FILE }}" ]; then
+            echo "Found existing alert state file"
+            cat "${{ env.ALERT_STATE_FILE }}"
+          else
+            echo "No existing alert state found, initializing..."
+            echo '{}' > "${{ env.ALERT_STATE_FILE }}"
+          fi
+
+      - name: Comprehensive health check
+        id: health-check
+        run: |
+          echo "🏥 Performing comprehensive health checks..."
+
+          SERVICES=$(echo '${{ steps.discover.outputs.services }}' | jq -r '.[]')
+          ALERT_THRESHOLD=${{ github.event.inputs.alert_threshold || 3 }}
+
+          HEALTHY_SERVICES=()
+          UNHEALTHY_SERVICES=()
+          CRITICAL_SERVICES=()
+          SERVICE_STATUS_JSON={}
+
+          # Load previous alert state
+          if [ -f "${{ env.ALERT_STATE_FILE }}" ]; then
+            ALERT_STATE=$(cat "${{ env.ALERT_STATE_FILE }}")
+          else
+            ALERT_STATE='{}'
+          fi
+
+          for service in $SERVICES; do
+            echo "Checking $service..."
+            SERVICE_DIR="${{ env.DEPLOY_PATH }}/$service"
+
+            if [ ! -d "$SERVICE_DIR" ]; then
+              echo "❌ Service directory not found: $service"
+              continue
+            fi
+
+            cd "$SERVICE_DIR"
+
+            # Initialize service health data
+            HEALTH_DATA='{
+              "service": "'$service'",
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+              "status": "unknown",
+              "containers": {},
+              "metrics": {},
+              "issues": []
+            }'
+
+            # Check container status
+            CONTAINERS_RUNNING=0
+            CONTAINERS_TOTAL=0
+            CONTAINER_ISSUES=()
+
+            if docker compose ps --format json >/dev/null 2>&1; then
+              while read -r container_data; do
+                if [ -n "$container_data" ]; then
+                  CONTAINER_NAME=$(echo "$container_data" | jq -r '.Name')
+                  CONTAINER_STATE=$(echo "$container_data" | jq -r '.State')
+                  CONTAINER_STATUS=$(echo "$container_data" | jq -r '.Status')
+                  CONTAINER_HEALTH=$(echo "$container_data" | jq -r '.Health // "no-healthcheck"')
+
+                  CONTAINERS_TOTAL=$((CONTAINERS_TOTAL + 1))
+
+                  if [ "$CONTAINER_STATE" = "running" ]; then
+                    CONTAINERS_RUNNING=$((CONTAINERS_RUNNING + 1))
+
+                    # Check health status if available
+                    if [ "$CONTAINER_HEALTH" = "unhealthy" ]; then
+                      CONTAINER_ISSUES+=("$CONTAINER_NAME: unhealthy")
+                    fi
+                  else
+                    CONTAINER_ISSUES+=("$CONTAINER_NAME: $CONTAINER_STATE")
+                  fi
+                fi
+              done <<< "$(docker compose ps --format json 2>/dev/null || echo '')"
+            fi
+
+            # Determine service health
+            if [ $CONTAINERS_RUNNING -eq $CONTAINERS_TOTAL ] && [ $CONTAINERS_TOTAL -gt 0 ] && \
+               [ ${#CONTAINER_ISSUES[@]} -eq 0 ]; then
+              SERVICE_HEALTH="healthy"
+              HEALTHY_SERVICES+=("$service")
+            elif [ $CONTAINERS_RUNNING -gt 0 ]; then
+              SERVICE_HEALTH="degraded"
+              UNHEALTHY_SERVICES+=("$service")
+            else
+              SERVICE_HEALTH="down"
+              UNHEALTHY_SERVICES+=("$service")
+            fi
+
+            # Update health data
+            HEALTH_DATA=$(echo "$HEALTH_DATA" | jq --arg status "$SERVICE_HEALTH" '.status = $status')
+            HEALTH_DATA=$(echo "$HEALTH_DATA" | jq --argjson running $CONTAINERS_RUNNING \
+                          --argjson total $CONTAINERS_TOTAL '.containers = {running: $running, total: $total}')
+
+            if [ ${#CONTAINER_ISSUES[@]} -gt 0 ]; then
+              ISSUES_JSON=$(printf '%s\n' "${CONTAINER_ISSUES[@]}" | jq -R . | jq -s .)
+              HEALTH_DATA=$(echo "$HEALTH_DATA" | jq --argjson issues "$ISSUES_JSON" '.issues = $issues')
+            fi
+
+            # Extended checks if requested
+            if [ "${{ github.event.inputs.detailed_check }}" = "true" ]; then
+              echo "🔬 Performing detailed checks for $service..."
+
+              # Check resource usage
+              if [ $CONTAINERS_RUNNING -gt 0 ]; then
+                RESOURCE_STATS=$(docker stats --no-stream --format json 2>/dev/null | \
+                                 jq -s --arg service "$service" 'map(select(.Name | startswith($service)))')
+                if [ "$RESOURCE_STATS" != "[]" ] && [ "$RESOURCE_STATS" != "null" ]; then
+                  HEALTH_DATA=$(echo "$HEALTH_DATA" | jq --argjson stats "$RESOURCE_STATS" \
+                                '.metrics.resources = $stats')
+                fi
+              fi
+
+              # Service-specific health checks
+              case $service in
+                "vault")
+                  VAULT_HEALTH=$(curl -s -f "${{ env.VAULT_ADDR }}/v1/sys/health" 2>/dev/null || echo "failed")
+                  if [ "$VAULT_HEALTH" != "failed" ]; then
+                    HEALTH_DATA=$(echo "$HEALTH_DATA" | jq --arg health "$VAULT_HEALTH" \
+                                  '.metrics.endpoint_health = $health')
+                  else
+                    HEALTH_DATA=$(echo "$HEALTH_DATA" | jq '.issues += ["Vault API endpoint unreachable"]')
+                    if [ "$SERVICE_HEALTH" = "healthy" ]; then
+                      SERVICE_HEALTH="degraded"
+                    fi
+                  fi
+                  ;;
+                "portainer")
+                  PORTAINER_HEALTH=$(curl -s -f -k "${{ env.PORTAINER_URL }}/api/status" 2>/dev/null || echo "failed")
+                  if [ "$PORTAINER_HEALTH" != "failed" ]; then
+                    HEALTH_DATA=$(echo "$HEALTH_DATA" | jq --arg health "$PORTAINER_HEALTH" \
+                                  '.metrics.endpoint_health = $health')
+                  else
+                    HEALTH_DATA=$(echo "$HEALTH_DATA" | jq '.issues += ["Portainer API endpoint unreachable"]')
+                    if [ "$SERVICE_HEALTH" = "healthy" ]; then
+                      SERVICE_HEALTH="degraded"
+                    fi
+                  fi
+                  ;;
+                "github-runner")
+                  # Check if runner is active
+                  RUNNER_LOGS=$(docker compose logs --tail=10 2>/dev/null | grep -i "Listening for Jobs" || echo "")
+                  if [ -n "$RUNNER_LOGS" ]; then
+                    HEALTH_DATA=$(echo "$HEALTH_DATA" | jq '.metrics.runner_active = true')
+                  else
+                    HEALTH_DATA=$(echo "$HEALTH_DATA" | jq '.metrics.runner_active = false')
+                    HEALTH_DATA=$(echo "$HEALTH_DATA" | jq '.issues += ["GitHub runner not listening for jobs"]')
+                  fi
+                  ;;
+              esac
+            fi
+
+            # Update service status with final health
+            HEALTH_DATA=$(echo "$HEALTH_DATA" | jq --arg status "$SERVICE_HEALTH" '.status = $status')
+
+            # Check alert threshold
+            CURRENT_FAILURES=$(echo "$ALERT_STATE" | jq -r --arg service "$service" \
+                               '.[$service].consecutive_failures // 0')
+            if [ "$SERVICE_HEALTH" != "healthy" ]; then
+              NEW_FAILURES=$((CURRENT_FAILURES + 1))
+              ALERT_STATE=$(echo "$ALERT_STATE" | jq --arg service "$service" \
+                            --argjson failures $NEW_FAILURES '.[$service].consecutive_failures = $failures')
+              ALERT_STATE=$(echo "$ALERT_STATE" | jq --arg service "$service" \
+                            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '.[$service].last_failure = $timestamp')
+
+              if [ $NEW_FAILURES -ge $ALERT_THRESHOLD ]; then
+                CRITICAL_SERVICES+=("$service")
+                echo "🚨 Service $service has failed $NEW_FAILURES consecutive times (threshold: $ALERT_THRESHOLD)"
+              fi
+            else
+              # Reset failure count on success
+              ALERT_STATE=$(echo "$ALERT_STATE" | jq --arg service "$service" '.[$service].consecutive_failures = 0')
+            fi
+
+            # Add to overall status
+            SERVICE_STATUS_JSON=$(echo "$SERVICE_STATUS_JSON" | jq --argjson data "$HEALTH_DATA" \
+                                  --arg service "$service" '.[$service] = $data')
+
+            echo "✅ Health check completed for $service: $SERVICE_HEALTH"
+          done
+
+          # Save alert state
+          echo "$ALERT_STATE" > "${{ env.ALERT_STATE_FILE }}"
+
+          # Generate outputs
+          echo "services-status<<EOF" >> $GITHUB_OUTPUT
+          echo "$SERVICE_STATUS_JSON" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          if [ ${#UNHEALTHY_SERVICES[@]} -gt 0 ]; then
+            UNHEALTHY_JSON=$(printf '%s\n' "${UNHEALTHY_SERVICES[@]}" | jq -R . | jq -s .)
+            echo "unhealthy-services=$UNHEALTHY_JSON" >> $GITHUB_OUTPUT
+          else
+            echo "unhealthy-services=[]" >> $GITHUB_OUTPUT
+          fi
+
+          if [ ${#CRITICAL_SERVICES[@]} -gt 0 ]; then
+            CRITICAL_JSON=$(printf '%s\n' "${CRITICAL_SERVICES[@]}" | jq -R . | jq -s .)
+            echo "critical-services=$CRITICAL_JSON" >> $GITHUB_OUTPUT
+            echo "alert-required=true" >> $GITHUB_OUTPUT
+          else
+            echo "critical-services=[]" >> $GITHUB_OUTPUT
+            echo "alert-required=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Generate summary
+          echo "📊 Health Check Summary:"
+          echo "- Healthy: ${#HEALTHY_SERVICES[@]}"
+          echo "- Unhealthy: ${#UNHEALTHY_SERVICES[@]}"
+          echo "- Critical: ${#CRITICAL_SERVICES[@]}"
+
+  # Job 2: Alert management and issue creation
+  alert-management:
+    name: Alert Management
+    needs: health-assessment
+    if: needs.health-assessment.outputs.alert-required == 'true'
+    runs-on: [self-hosted, dockermaster]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create or update health issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const criticalServices = JSON.parse('${{ needs.health-assessment.outputs.critical-services }}');
+            const servicesStatus = JSON.parse('${{ needs.health-assessment.outputs.services-status }}');
+
+            if (criticalServices.length === 0) return;
+
+            const now = new Date().toISOString();
+            const title = `🚨 Service Health Alert: ${criticalServices.length} Critical ` +
+                         `Service${criticalServices.length > 1 ? 's' : ''}`;
+
+            let body = `# Service Health Alert\n\n`;
+            body += `**Alert Time:** ${now}\n`;
+            body += `**Workflow:** [${context.workflow}]` +
+                    `(https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n\n`;
+
+            body += `## 🚨 Critical Services (${criticalServices.length})\n\n`;
+
+            for (const service of criticalServices) {
+              const status = servicesStatus[service];
+              body += `### ${service}\n`;
+              body += `- **Status:** ${status.status}\n`;
+              body += `- **Containers:** ${status.containers.running}/${status.containers.total} running\n`;
+
+              if (status.issues && status.issues.length > 0) {
+                body += `- **Issues:**\n`;
+                for (const issue of status.issues) {
+                  body += `  - ${issue}\n`;
+                }
+              }
+              body += `\n`;
+            }
+
+            body += `## 📊 All Services Status\n\n`;
+            body += `| Service | Status | Containers | Issues |\n`;
+            body += `|---------|--------|------------|--------|\n`;
+
+            for (const [serviceName, serviceData] of Object.entries(servicesStatus)) {
+              const status = serviceData.status === 'healthy' ? '✅' : serviceData.status === 'degraded' ? '⚠️' : '❌';
+              const containers = `${serviceData.containers.running}/${serviceData.containers.total}`;
+              const issues = serviceData.issues ? serviceData.issues.length : 0;
+              body += `| ${serviceName} | ${status} ${serviceData.status} | ${containers} | ${issues} |\n`;
+            }
+
+            body += `\n## 🔗 Quick Links\n`;
+            body += `- [Portainer Dashboard](https://192.168.59.2:9000)\n`;
+            body += `- [Vault UI](http://vault.d.lcamaral.com/ui)\n`;
+            body += `- [Service Health Monitor]` +
+                    `(https://github.com/${context.repo.owner}/` +
+                    `${context.repo.repo}/actions/workflows/service-health-monitor.yml)\n`;
+
+            body += `\n---\n`;
+            body += `*This issue was automatically created by the Service Health Monitor workflow.*\n`;
+            body += `*Issue will be automatically closed when all services return to healthy status.*`;
+
+            // Check for existing open health alert issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'health-alert,automated',
+              per_page: 1
+            });
+
+            if (issues.data.length > 0) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                title: title,
+                body: body
+              });
+              console.log(`Updated existing health alert issue #${issues.data[0].number}`);
+            } else {
+              // Create new issue
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['health-alert', 'automated', 'urgent']
+              });
+              console.log(`Created new health alert issue #${issue.data.number}`);
+            }
+
+  # Job 3: Close resolved health issues
+  close-resolved-alerts:
+    name: Close Resolved Alerts
+    needs: health-assessment
+    if: always() && needs.health-assessment.outputs.alert-required == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close resolved health alert issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Find open health alert issues
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'health-alert,automated'
+            });
+
+            for (const issue of issues.data) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ **Health Alert Resolved**\n\n` +
+                      `All services have returned to healthy status. This issue is being automatically closed.\n\n` +
+                      `*Closed by Service Health Monitor workflow at ${new Date().toISOString()}*`
+              });
+
+              console.log(`Closed resolved health alert issue #${issue.number}`);
+            }
+
+  # Job 4: Health status reporting
+  status-reporting:
+    name: Status Reporting
+    needs: [health-assessment, alert-management, close-resolved-alerts]
+    if: always()
+    runs-on: [self-hosted, dockermaster]
+    steps:
+      - name: Generate health status report
+        run: |
+          echo "## 🏥 Service Health Status Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Check Time:** $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)" >> $GITHUB_STEP_SUMMARY
+          echo "**Check Type:** ${{ github.event_name == 'schedule' && 'Scheduled' || 'Manual' }}" \
+            >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          SERVICES_STATUS='${{ needs.health-assessment.outputs.services-status }}'
+          CRITICAL_SERVICES='${{ needs.health-assessment.outputs.critical-services }}'
+          UNHEALTHY_SERVICES='${{ needs.health-assessment.outputs.unhealthy-services }}'
+
+          if [ "$SERVICES_STATUS" != "" ] && [ "$SERVICES_STATUS" != "null" ]; then
+            echo "### 📊 Service Status Overview" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            TOTAL_SERVICES=$(echo "$SERVICES_STATUS" | jq 'keys | length')
+            HEALTHY_COUNT=$(echo "$SERVICES_STATUS" | jq '[.[] | select(.status == "healthy")] | length')
+            DEGRADED_COUNT=$(echo "$SERVICES_STATUS" | jq '[.[] | select(.status == "degraded")] | length')
+            DOWN_COUNT=$(echo "$SERVICES_STATUS" | jq '[.[] | select(.status == "down")] | length')
+
+            echo "- **Total Services:** $TOTAL_SERVICES" >> $GITHUB_STEP_SUMMARY
+            echo "- **Healthy:** $HEALTHY_COUNT ✅" >> $GITHUB_STEP_SUMMARY
+            echo "- **Degraded:** $DEGRADED_COUNT ⚠️" >> $GITHUB_STEP_SUMMARY
+            echo "- **Down:** $DOWN_COUNT ❌" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            if [ "$CRITICAL_SERVICES" != "[]" ]; then
+              echo "### 🚨 Critical Alerts" >> $GITHUB_STEP_SUMMARY
+              echo "$CRITICAL_SERVICES" | jq -r '.[]' | while read service; do
+                echo "- $service" >> $GITHUB_STEP_SUMMARY
+              done
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            echo "### 📋 Detailed Status" >> $GITHUB_STEP_SUMMARY
+            echo "| Service | Status | Containers | Issues |" >> $GITHUB_STEP_SUMMARY
+            echo "|---------|--------|------------|--------|" >> $GITHUB_STEP_SUMMARY
+
+            echo "$SERVICES_STATUS" | jq -r 'to_entries[] | \
+              "\(.key)|\(.value.status)|\(.value.containers.running)/" + \
+              "\(.value.containers.total)|\(.value.issues | length)"' | \
+              while IFS='|' read -r service status containers issues; do
+              STATUS_EMOJI="❓"
+              case $status in
+                "healthy") STATUS_EMOJI="✅" ;;
+                "degraded") STATUS_EMOJI="⚠️" ;;
+                "down") STATUS_EMOJI="❌" ;;
+              esac
+              echo "| $service | $STATUS_EMOJI $status | $containers | $issues |" >> $GITHUB_STEP_SUMMARY
+            done
+          else
+            echo "⚠️ No services found for health checking" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Management Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [Portainer Dashboard](https://192.168.59.2:9000)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Vault UI](http://vault.d.lcamaral.com/ui)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Manual Health Check]" \
+               "(https://github.com/${{ github.repository }}/actions/workflows/service-health-monitor.yml)" \
+               >> $GITHUB_STEP_SUMMARY

@@ -13,12 +13,12 @@ repos:
       - id: mixed-line-ending
         args: [--fix=lf]
       - id: check-byte-order-marker
-      
+
       # File size and merge conflicts
       - id: check-added-large-files
         args: [--maxkb=1024]
       - id: check-merge-conflict
-      
+
       # JSON/YAML syntax checking
       - id: check-json
       - id: check-yaml
@@ -26,7 +26,7 @@ repos:
       - id: pretty-format-json
         args: [--autofix, --indent=2]
         exclude: ^(.vscode/|.claude/|.devcontainer/)
-      
+
       # Shell script checking
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
@@ -53,7 +53,7 @@ repos:
     rev: v2.12.0
     hooks:
       - id: hadolint-docker
-        args: [--ignore=DL3008,--ignore=DL3009,--ignore=DL3015]
+        args: [--ignore=DL3008, --ignore=DL3009, --ignore=DL3015]
 
   # Shell script linting with shellcheck
   - repo: https://github.com/shellcheck-py/shellcheck-py

@@ -54,7 +54,7 @@ jobs:
         run: |
           #!/bin/bash
           set -e
-          
+
           # Function to get image type based on path
           get_image_type() {
             local path=$1
@@ -68,7 +68,7 @@ jobs:
               *) echo "misc" ;;
             esac
           }
-          
+
           # Function to get image tags based on type
           get_image_tags() {
             local type=$1
@@ -83,10 +83,10 @@ jobs:
               *) echo "misc" ;;
             esac
           }
-          
+
           # Initialize arrays
           declare -A IMAGES
-          
+
           # Handle workflow dispatch inputs
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ -n "${{ github.event.inputs.specific_image }}" ]; then
@@ -130,17 +130,17 @@ jobs:
               DOCKERFILES=$(find . -name "Dockerfile" -o -name "*.dockerfile" | grep -v node_modules | grep -v .git)
             fi
           fi
-          
+
           # Process found Dockerfiles
           JSON_ARRAY='[]'
           IMAGE_LIST=""
-          
+
           if [ -n "$DOCKERFILES" ]; then
             for dockerfile in $DOCKERFILES; do
               # Get directory and image name
               DIR=$(dirname "$dockerfile")
               IMAGE_NAME=$(basename "$DIR")
-              
+
               # Skip if it's the current directory
               if [ "$IMAGE_NAME" = "." ]; then
                 IMAGE_NAME=$(basename "$dockerfile" .dockerfile)
@@ -148,11 +148,11 @@ jobs:
                   continue
                 fi
               fi
-              
+
               # Get image type and category
               IMAGE_TYPE=$(get_image_type "$DIR")
               IMAGE_CATEGORY=$(get_image_tags "$IMAGE_TYPE" "$IMAGE_NAME")
-              
+
               # Create JSON object for this image
               IMAGE_JSON=$(cat <<EOF
           {
@@ -165,22 +165,22 @@ jobs:
           }
           EOF
               )
-              
+
               # Add to array
               if [ "$JSON_ARRAY" = "[]" ]; then
                 JSON_ARRAY="[$IMAGE_JSON]"
               else
                 JSON_ARRAY="${JSON_ARRAY%]}, $IMAGE_JSON]"
               fi
-              
+
               IMAGE_LIST="$IMAGE_LIST $IMAGE_NAME"
             done
           fi
-          
+
           echo "Images to build: $IMAGE_LIST"
           echo "matrix={\"include\":$JSON_ARRAY}" >> $GITHUB_OUTPUT
           echo "image-list=$IMAGE_LIST" >> $GITHUB_OUTPUT
-          
+
           if [ "$JSON_ARRAY" = "[]" ]; then
             echo "has-images=false" >> $GITHUB_OUTPUT
           else

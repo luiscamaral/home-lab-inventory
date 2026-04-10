@@ -1,0 +1,653 @@
+# Emergency Rollback Workflow
+# This workflow provides manual emergency rollback capabilities for dockermaster services
+# with comprehensive backup restoration and state verification
+
+name: Emergency Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Services to rollback (comma-separated, or "all" for all services)'
+        required: true
+        type: string
+      rollback_target:
+        description: 'Rollback target'
+        required: true
+        default: 'last-known-good'
+        type: choice
+        options:
+          - last-known-good
+          - previous-deployment
+          - specific-backup
+          - git-commit
+      backup_id:
+        description: 'Backup ID (required if rollback_target is "specific-backup")'
+        required: false
+        type: string
+      git_commit:
+        description: 'Git commit SHA (required if rollback_target is "git-commit")'
+        required: false
+        type: string
+      reason:
+        description: 'Reason for emergency rollback'
+        required: true
+        type: string
+      skip_verification:
+        description: 'Skip post-rollback verification (NOT RECOMMENDED)'
+        required: false
+        type: boolean
+        default: false
+      notify_team:
+        description: 'Send emergency notifications to team'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  DEPLOY_PATH: /nfs/dockermaster/docker
+  BACKUP_BASE_PATH: /tmp
+  ROLLBACK_TIMEOUT: 300  # 5 minutes per service
+  VERIFICATION_TIMEOUT: 180  # 3 minutes
+  EMERGENCY_CONTACT_TIMEOUT: 60  # 1 minute for notifications
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+  deployments: write
+
+jobs:
+  # Job 1: Emergency rollback preparation and validation
+  rollback-preparation:
+    name: Rollback Preparation
+    runs-on: [self-hosted, dockermaster]
+    outputs:
+      services-to-rollback: ${{ steps.prepare.outputs.services }}
+      rollback-plan: ${{ steps.prepare.outputs.rollback-plan }}
+      emergency-id: ${{ steps.prepare.outputs.emergency-id }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git-commit rollbacks
+
+      - name: Validate emergency rollback request
+        run: |
+          echo "🚨 EMERGENCY ROLLBACK INITIATED"
+          echo "Requested by: ${{ github.actor }}"
+          echo "Reason: ${{ github.event.inputs.reason }}"
+          echo "Target: ${{ github.event.inputs.rollback_target }}"
+          echo "Services: ${{ github.event.inputs.services }}"
+          echo ""
+
+          # Validate required parameters based on rollback target
+          case "${{ github.event.inputs.rollback_target }}" in
+            "specific-backup")
+              if [ -z "${{ github.event.inputs.backup_id }}" ]; then
+                echo "❌ FATAL: backup_id is required for specific-backup rollback"
+                exit 1
+              fi
+              ;;
+            "git-commit")
+              if [ -z "${{ github.event.inputs.git_commit }}" ]; then
+                echo "❌ FATAL: git_commit is required for git-commit rollback"
+                exit 1
+              fi
+              # Validate commit exists
+              if ! git cat-file -e "${{ github.event.inputs.git_commit }}" 2>/dev/null; then
+                echo "❌ FATAL: git commit ${{ github.event.inputs.git_commit }} does not exist"
+                exit 1
+              fi
+              ;;
+          esac
+
+          echo "✅ Emergency rollback request validation passed"
+
+      - name: Create emergency deployment record
+        id: create-emergency-deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: 'production',
+              description: `Emergency rollback: ${{ github.event.inputs.reason }}`,
+              auto_merge: false,
+              required_contexts: []
+            });
+
+            // Update to indicate this is a rollback
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.data.id,
+              state: 'in_progress',
+              description: 'Emergency rollback in progress',
+              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            });
+
+            core.setOutput('deployment-id', deployment.data.id);
+
+      - name: Prepare rollback plan
+        id: prepare
+        run: |
+          echo "📋 Preparing emergency rollback plan..."
+
+          EMERGENCY_ID="emergency-$(date +%Y%m%d-%H%M%S)-${{ github.run_number }}"
+          echo "emergency_id=$EMERGENCY_ID" >> $GITHUB_OUTPUT
+
+          # Parse services
+          if [ "${{ github.event.inputs.services }}" = "all" ]; then
+            SERVICES=()
+            for compose_file in ${{ env.DEPLOY_PATH }}/*/docker-compose.yml \
+                                ${{ env.DEPLOY_PATH }}/*/docker-compose.yaml; do
+              if [ -f "$compose_file" ]; then
+                SERVICE=$(basename "$(dirname "$compose_file")")
+                SERVICES+=("$SERVICE")
+              fi
+            done
+          else
+            IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}"
+          fi
+
+          # Validate services exist
+          VALID_SERVICES=()
+          for service in "${SERVICES[@]}"; do
+            service=$(echo "$service" | xargs)
+            if [ -d "${{ env.DEPLOY_PATH }}/$service" ]; then
+              VALID_SERVICES+=("$service")
+              echo "✅ Service validated: $service"
+            else
+              echo "❌ Service not found: $service"
+            fi
+          done
+
+          if [ ${#VALID_SERVICES[@]} -eq 0 ]; then
+            echo "❌ FATAL: No valid services found for rollback"
+            exit 1
+          fi
+
+          # Create services JSON
+          SERVICES_JSON=$(printf '%s\n' "${VALID_SERVICES[@]}" | jq -R . | jq -s .)
+          echo "services=$SERVICES_JSON" >> $GITHUB_OUTPUT
+
+          # Create rollback plan
+          ROLLBACK_PLAN='{
+            "emergency_id": "'$EMERGENCY_ID'",
+            "rollback_target": "'${{ github.event.inputs.rollback_target }}'",
+            "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+            "triggered_by": "'${{ github.actor }}'",
+            "reason": "'${{ github.event.inputs.reason }}'",
+            "services": '$SERVICES_JSON',
+            "backup_id": "'${{ github.event.inputs.backup_id }}'",
+            "git_commit": "'${{ github.event.inputs.git_commit }}'"
+          }'
+
+          echo "rollback-plan<<EOF" >> $GITHUB_OUTPUT
+          echo "$ROLLBACK_PLAN" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "📊 Emergency Rollback Plan Created:"
+          echo "$ROLLBACK_PLAN" | jq .
+
+      - name: Capture current state before rollback
+        run: |
+          echo "📷 Capturing current state before rollback..."
+
+          EMERGENCY_ID="${{ steps.prepare.outputs.emergency-id }}"
+          STATE_DIR="/tmp/$EMERGENCY_ID-pre-rollback"
+          mkdir -p "$STATE_DIR"
+
+          # Capture docker state
+          docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}" > "$STATE_DIR/container-states.txt"
+          docker compose --parallel 0 ls > "$STATE_DIR/compose-projects.txt" 2>/dev/null || true
+
+          # Capture service configurations
+          SERVICES=$(echo '${{ steps.prepare.outputs.services }}' | jq -r '.[]')
+          for service in $SERVICES; do
+            if [ -d "${{ env.DEPLOY_PATH }}/$service" ]; then
+              cp -r "${{ env.DEPLOY_PATH }}/$service" "$STATE_DIR/$service" 2>/dev/null || true
+            fi
+          done
+
+          # Create metadata
+          echo '{
+            "capture_time": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'",
+            "git_commit": "'${{ github.sha }}'",
+            "workflow_run": "'${{ github.run_id }}'",
+            "purpose": "pre-rollback-state-capture"
+          }' > "$STATE_DIR/metadata.json"
+
+          echo "✅ Current state captured to: $STATE_DIR"
+
+  # Job 2: Execute emergency rollback
+  execute-rollback:
+    name: Execute Rollback (${{ matrix.service }})
+    needs: rollback-preparation
+    runs-on: [self-hosted, dockermaster]
+    strategy:
+      fail-fast: true  # Stop all rollbacks if one fails
+      max-parallel: 1  # Rollback services one at a time for safety
+      matrix:
+        service: ${{ fromJson(needs.rollback-preparation.outputs.services-to-rollback) }}
+    timeout-minutes: 8
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Locate rollback source
+        id: locate-source
+        run: |
+          echo "🔍 Locating rollback source for ${{ matrix.service }}..."
+
+          ROLLBACK_PLAN='${{ needs.rollback-preparation.outputs.rollback-plan }}'
+          ROLLBACK_TARGET=$(echo "$ROLLBACK_PLAN" | jq -r '.rollback_target')
+          SERVICE="${{ matrix.service }}"
+          SOURCE_FOUND=false
+          SOURCE_PATH=""
+          SOURCE_TYPE=""
+
+          case "$ROLLBACK_TARGET" in
+            "last-known-good")
+              echo "Searching for last known good state..."
+              # Look for most recent successful backup
+              LATEST_BACKUP=$(find ${{ env.BACKUP_BASE_PATH }} -name "backup-*" -type d \
+                              -exec test -f {}/backup-metadata.json \; -print | sort -r | head -1)
+              if [ -n "$LATEST_BACKUP" ] && [ -f "$LATEST_BACKUP/${SERVICE}-docker-compose.yml.bak" ]; then
+                SOURCE_PATH="$LATEST_BACKUP/${SERVICE}-docker-compose.yml.bak"
+                SOURCE_TYPE="backup"
+                SOURCE_FOUND=true
+                echo "✅ Found last known good backup: $LATEST_BACKUP"
+              fi
+              ;;
+            "previous-deployment")
+              echo "Searching for previous deployment state..."
+              # Look for second most recent backup
+              PREVIOUS_BACKUP=$(find ${{ env.BACKUP_BASE_PATH }} -name "backup-*" -type d \
+                                -exec test -f {}/backup-metadata.json \; -print | sort -r | sed -n '2p')
+              if [ -n "$PREVIOUS_BACKUP" ] && [ -f "$PREVIOUS_BACKUP/${SERVICE}-docker-compose.yml.bak" ]; then
+                SOURCE_PATH="$PREVIOUS_BACKUP/${SERVICE}-docker-compose.yml.bak"
+                SOURCE_TYPE="backup"
+                SOURCE_FOUND=true
+                echo "✅ Found previous deployment backup: $PREVIOUS_BACKUP"
+              fi
+              ;;
+            "specific-backup")
+              echo "Searching for specific backup..."
+              BACKUP_ID=$(echo "$ROLLBACK_PLAN" | jq -r '.backup_id')
+              SPECIFIC_BACKUP="${{ env.BACKUP_BASE_PATH }}/$BACKUP_ID"
+              if [ -d "$SPECIFIC_BACKUP" ] && [ -f "$SPECIFIC_BACKUP/${SERVICE}-docker-compose.yml.bak" ]; then
+                SOURCE_PATH="$SPECIFIC_BACKUP/${SERVICE}-docker-compose.yml.bak"
+                SOURCE_TYPE="backup"
+                SOURCE_FOUND=true
+                echo "✅ Found specific backup: $SPECIFIC_BACKUP"
+              fi
+              ;;
+            "git-commit")
+              echo "Using git commit for rollback..."
+              GIT_COMMIT=$(echo "$ROLLBACK_PLAN" | jq -r '.git_commit')
+              git checkout "$GIT_COMMIT" -- "dockermaster/docker/compose/$SERVICE/docker-compose.yml" 2>/dev/null || \
+              git checkout "$GIT_COMMIT" -- \
+                "dockermaster/docker/compose/$SERVICE/docker-compose.yaml" 2>/dev/null || true
+
+              if [ -f "dockermaster/docker/compose/$SERVICE/docker-compose.yml" ]; then
+                SOURCE_PATH="$(pwd)/dockermaster/docker/compose/$SERVICE/docker-compose.yml"
+                SOURCE_TYPE="git"
+                SOURCE_FOUND=true
+                echo "✅ Found git commit version: $GIT_COMMIT"
+              elif [ -f "dockermaster/docker/compose/$SERVICE/docker-compose.yaml" ]; then
+                SOURCE_PATH="$(pwd)/dockermaster/docker/compose/$SERVICE/docker-compose.yaml"
+                SOURCE_TYPE="git"
+                SOURCE_FOUND=true
+                echo "✅ Found git commit version: $GIT_COMMIT"
+              fi
+              ;;
+          esac
+
+          if [ "$SOURCE_FOUND" = false ]; then
+            echo "❌ FATAL: No rollback source found for $SERVICE with target: $ROLLBACK_TARGET"
+            exit 1
+          fi
+
+          echo "source_path=$SOURCE_PATH" >> $GITHUB_OUTPUT
+          echo "source_type=$SOURCE_TYPE" >> $GITHUB_OUTPUT
+          echo "✅ Rollback source located: $SOURCE_PATH"
+
+      - name: Execute service rollback
+        run: |
+          echo "🔄 Executing rollback for ${{ matrix.service }}..."
+
+          SERVICE="${{ matrix.service }}"
+          SERVICE_DIR="${{ env.DEPLOY_PATH }}/$SERVICE"
+          SOURCE_PATH="${{ steps.locate-source.outputs.source_path }}"
+
+          if [ ! -d "$SERVICE_DIR" ]; then
+            echo "❌ Service directory not found: $SERVICE_DIR"
+            exit 1
+          fi
+
+          if [ ! -f "$SOURCE_PATH" ]; then
+            echo "❌ Rollback source not found: $SOURCE_PATH"
+            exit 1
+          fi
+
+          cd "$SERVICE_DIR"
+
+          echo "⏹️ Stopping current service..."
+          timeout ${{ env.ROLLBACK_TIMEOUT }} docker compose down --timeout 30 || {
+            echo "⚠️ Graceful stop failed, forcing..."
+            docker compose kill
+            docker compose rm -f
+          }
+
+          echo "🔄 Restoring configuration from rollback source..."
+          cp "$SOURCE_PATH" "$SERVICE_DIR/docker-compose.yml"
+
+          echo "🚀 Starting service with rolled back configuration..."
+          if timeout ${{ env.ROLLBACK_TIMEOUT }} docker compose up -d --wait; then
+            echo "✅ Rollback successful for $SERVICE"
+
+            # Quick verification
+            sleep 5
+            RUNNING=$(docker compose ps --services --filter "status=running" | wc -l)
+            TOTAL=$(docker compose ps --services | wc -l)
+
+            if [ "$RUNNING" -eq "$TOTAL" ] && [ "$TOTAL" -gt 0 ]; then
+              echo "✅ Post-rollback verification passed: $RUNNING/$TOTAL containers running"
+            else
+              echo "⚠️ Post-rollback verification warning: $RUNNING/$TOTAL containers running"
+            fi
+          else
+            echo "❌ FATAL: Rollback failed for $SERVICE"
+            exit 1
+          fi
+
+      - name: Log rollback completion
+        if: always()
+        run: |
+          echo "📝 Logging rollback completion for ${{ matrix.service }}..."
+
+          EMERGENCY_ID="${{ needs.rollback-preparation.outputs.emergency-id }}"
+          LOG_FILE="/tmp/$EMERGENCY_ID-rollback.log"
+
+          echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) - Rollback completed for ${{ matrix.service }} - " \
+               "Result: ${{ job.status }}" >> "$LOG_FILE"
+
+          if [ "${{ job.status }}" != "success" ]; then
+            echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) - ERROR: Rollback failed for ${{ matrix.service }}" >> "$LOG_FILE"
+          fi
+
+  # Job 3: Post-rollback verification
+  post-rollback-verification:
+    name: Post-Rollback Verification
+    needs: [rollback-preparation, execute-rollback]
+    if: always() && needs.execute-rollback.result == 'success' && github.event.inputs.skip_verification != 'true'
+    runs-on: [self-hosted, dockermaster]
+    timeout-minutes: 5
+    outputs:
+      verification-status: ${{ steps.verify.outputs.status }}
+      failed-verifications: ${{ steps.verify.outputs.failed }}
+    steps:
+      - name: Comprehensive post-rollback verification
+        id: verify
+        run: |
+          echo "🔍 Performing post-rollback verification..."
+
+          SERVICES=$(echo '${{ needs.rollback-preparation.outputs.services-to-rollback }}' | jq -r '.[]')
+          VERIFICATION_FAILURES=()
+          ALL_VERIFIED=true
+
+          for service in $SERVICES; do
+            echo "Verifying $service..."
+            SERVICE_DIR="${{ env.DEPLOY_PATH }}/$service"
+
+            if [ ! -d "$SERVICE_DIR" ]; then
+              echo "❌ Service directory not found: $service"
+              VERIFICATION_FAILURES+=("$service: directory not found")
+              ALL_VERIFIED=false
+              continue
+            fi
+
+            cd "$SERVICE_DIR"
+
+            # Container status check
+            RUNNING=$(docker compose ps --services --filter "status=running" | wc -l)
+            TOTAL=$(docker compose ps --services | wc -l)
+
+            if [ "$RUNNING" -ne "$TOTAL" ]; then
+              echo "❌ Container verification failed for $service: $RUNNING/$TOTAL running"
+              VERIFICATION_FAILURES+=("$service: containers not running ($RUNNING/$TOTAL)")
+              ALL_VERIFIED=false
+              continue
+            fi
+
+            # Health check (if defined)
+            UNHEALTHY=$(docker compose ps --format json | \
+                        jq -r 'select(.Health == "unhealthy") | .Name' 2>/dev/null || echo "")
+            if [ -n "$UNHEALTHY" ]; then
+              echo "❌ Health check failed for $service: $UNHEALTHY"
+              VERIFICATION_FAILURES+=("$service: unhealthy containers ($UNHEALTHY)")
+              ALL_VERIFIED=false
+              continue
+            fi
+
+            # Network connectivity test
+            CONTAINERS=$(docker compose ps --format json | jq -r '.Name' | head -1)
+            if [ -n "$CONTAINERS" ]; then
+              if ! timeout 30 docker exec "$CONTAINERS" ping -c 1 -W 10 8.8.8.8 >/dev/null 2>&1; then
+                echo "⚠️ Network connectivity issue for $service"
+                # Don't fail verification for network issues
+              fi
+            fi
+
+            echo "✅ Verification passed for $service"
+          done
+
+          if [ "$ALL_VERIFIED" = true ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "failed=" >> $GITHUB_OUTPUT
+            echo "✅ All post-rollback verifications passed"
+          else
+            FAILURES_JSON=$(printf '%s\n' "${VERIFICATION_FAILURES[@]}" | jq -R . | jq -s .)
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "failed=$FAILURES_JSON" >> $GITHUB_OUTPUT
+            echo "❌ Some post-rollback verifications failed"
+            exit 1
+          fi
+
+  # Job 4: Emergency notification
+  emergency-notification:
+    name: Emergency Notification
+    needs: [rollback-preparation, execute-rollback, post-rollback-verification]
+    if: always() && github.event.inputs.notify_team == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create emergency incident issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const rollbackPlan = JSON.parse('${{ needs.rollback-preparation.outputs.rollback-plan }}');
+            const executionResult = '${{ needs.execute-rollback.result }}';
+            const verificationResult = \
+              '${{ needs.post-rollback-verification.outputs.verification-status || 'skipped' }}';
+
+            let status, statusEmoji;
+            if (executionResult === 'success' && \
+                (verificationResult === 'success' || verificationResult === 'skipped')) {
+              status = 'completed successfully';
+              statusEmoji = '✅';
+            } else if (executionResult === 'success' && verificationResult === 'failed') {
+              status = 'completed with verification failures';
+              statusEmoji = '⚠️';
+            } else {
+              status = 'failed';
+              statusEmoji = '❌';
+            }
+
+            const title = `🚨 EMERGENCY ROLLBACK ${statusEmoji} - ${rollbackPlan.services.join(', ')}`;
+
+            let body = `# Emergency Rollback Incident\n\n`;
+            body += `**Status:** ${statusEmoji} Emergency rollback ${status}\n`;
+            body += `**Emergency ID:** ${rollbackPlan.emergency_id}\n`;
+            body += `**Initiated by:** ${rollbackPlan.triggered_by}\n`;
+            body += `**Timestamp:** ${rollbackPlan.timestamp}\n`;
+            body += `**Workflow:** [${context.workflow}]` +
+                    `(https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n\n`;
+
+            body += `## 📋 Rollback Details\n\n`;
+            body += `**Reason:** ${rollbackPlan.reason}\n`;
+            body += `**Target:** ${rollbackPlan.rollback_target}\n`;
+            body += `**Services:** ${rollbackPlan.services.join(', ')}\n`;
+
+            if (rollbackPlan.backup_id) {
+              body += `**Backup ID:** ${rollbackPlan.backup_id}\n`;
+            }
+            if (rollbackPlan.git_commit) {
+              body += `**Git Commit:** ${rollbackPlan.git_commit}\n`;
+            }
+
+            body += `\n## 🔍 Execution Results\n\n`;
+            body += `- **Rollback Execution:** ${executionResult === 'success' ? '✅ Success' : '❌ Failed'}\n`;
+            body += `- **Post-Rollback Verification:** `;
+
+            if (verificationResult === 'success') {
+              body += `✅ Passed\n`;
+            } else if (verificationResult === 'failed') {
+              const failures = '${{ needs.post-rollback-verification.outputs.failed-verifications }}';
+              body += `❌ Failed\n`;
+              if (failures && failures !== '[]') {
+                body += `\n**Verification Failures:**\n`;
+                JSON.parse(failures).forEach(failure => {
+                  body += `- ${failure}\n`;
+                });
+              }
+            } else {
+              body += `⏭️ Skipped\n`;
+            }
+
+            if (status === 'failed') {
+              body += `\n## 🚨 IMMEDIATE ACTION REQUIRED\n\n`;
+              body += `The emergency rollback has failed. Manual intervention is required immediately.\n\n`;
+              body += `**Next Steps:**\n`;
+              body += `1. Check the workflow logs for detailed error information\n`;
+              body += `2. Verify service states manually on dockermaster\n`;
+              body += `3. Consider manual rollback or service restart\n`;
+              body += `4. Contact system administrator if needed\n\n`;
+            }
+
+            body += `\n## 🔗 Quick Links\n`;
+            body += `- [Portainer Dashboard](https://192.168.59.2:9000)\n`;
+            body += `- [Vault UI](http://vault.d.lcamaral.com/ui)\n`;
+            body += `- [Workflow Run]` +
+                    `(https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n`;
+            body += `- [Deployments History]` +
+                    `(https://github.com/${context.repo.owner}/${context.repo.repo}/deployments)\n`;
+
+            body += `\n---\n`;
+            body += `*This emergency incident was automatically created by the Emergency Rollback workflow.*`;
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['emergency', 'rollback', 'incident', 'automated', 'urgent'],
+              assignees: [context.actor]  // Assign to the person who triggered the rollback
+            });
+
+            console.log(`Created emergency incident issue #${issue.data.number}`);
+
+      - name: Update deployment status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deploymentId = '${{ needs.rollback-preparation.outputs.deployment-id }}';
+            const executionResult = '${{ needs.execute-rollback.result }}';
+            const verificationResult = \
+              '${{ needs.post-rollback-verification.outputs.verification-status || 'skipped' }}';
+
+            let state, description;
+            if (executionResult === 'success' && \
+                (verificationResult === 'success' || verificationResult === 'skipped')) {
+              state = 'success';
+              description = 'Emergency rollback completed successfully';
+            } else {
+              state = 'failure';
+              description = 'Emergency rollback failed or verification failed';
+            }
+
+            if (deploymentId && deploymentId !== '') {
+              await github.rest.repos.createDeploymentStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                deployment_id: deploymentId,
+                state: state,
+                description: description,
+                target_url: `https://github.com/${context.repo.owner}/` +
+                           `${context.repo.repo}/actions/runs/${context.runId}`
+              });
+            }
+
+  # Job 5: Generate comprehensive summary
+  rollback-summary:
+    name: Rollback Summary
+    needs: [rollback-preparation, execute-rollback, post-rollback-verification, emergency-notification]
+    if: always()
+    runs-on: [self-hosted, dockermaster]
+    steps:
+      - name: Generate comprehensive rollback summary
+        run: |
+          echo "## 🚨 Emergency Rollback Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          ROLLBACK_PLAN='${{ needs.rollback-preparation.outputs.rollback-plan }}'
+          EMERGENCY_ID=$(echo "$ROLLBACK_PLAN" | jq -r '.emergency_id')
+          SERVICES=$(echo "$ROLLBACK_PLAN" | jq -r '.services | join(", ")')
+
+          echo "**Emergency ID:** $EMERGENCY_ID" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Reason:** ${{ github.event.inputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Target:** ${{ github.event.inputs.rollback_target }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Services:** $SERVICES" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 📊 Execution Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Preparation:** ${{ needs.rollback-preparation.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Rollback Execution:** ${{ needs.execute-rollback.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Verification:** ${{ needs.post-rollback-verification.result || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Notification:** ${{ needs.emergency-notification.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Overall status
+          if [ "${{ needs.execute-rollback.result }}" = "success" ]; then
+            if [ "${{ needs.post-rollback-verification.outputs.verification-status }}" = "success" ] || \
+               [ "${{ github.event.inputs.skip_verification }}" = "true" ]; then
+              echo "### ✅ ROLLBACK SUCCESSFUL" >> $GITHUB_STEP_SUMMARY
+              echo "Emergency rollback completed successfully. All services have been restored." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "### ⚠️ ROLLBACK COMPLETED WITH ISSUES" >> $GITHUB_STEP_SUMMARY
+              echo "Rollback executed but verification failed. Manual review required." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "### ❌ ROLLBACK FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "Emergency rollback failed. Immediate manual intervention required." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Post-Rollback Actions" >> $GITHUB_STEP_SUMMARY
+          echo "1. Verify service functionality manually" >> $GITHUB_STEP_SUMMARY
+          echo "2. Check logs for any remaining issues" >> $GITHUB_STEP_SUMMARY
+          echo "3. Update stakeholders on rollback status" >> $GITHUB_STEP_SUMMARY
+          echo "4. Plan corrective actions for original issue" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Quick Access" >> $GITHUB_STEP_SUMMARY
+          echo "- [Portainer Dashboard](https://192.168.59.2:9000)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Vault UI](http://vault.d.lcamaral.com/ui)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Service Health Monitor]" \
+               "(https://github.com/${{ github.repository }}/actions/workflows/service-health-monitor.yml)" \
+               >> $GITHUB_STEP_SUMMARY

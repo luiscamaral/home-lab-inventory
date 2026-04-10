@@ -1,25 +1,150 @@
 {
-  "extends": ["@commitlint/config-conventional"],
+  "extends": [
+    "@commitlint/config-conventional"
+  ],
+  "helpUrl": "https://github.com/conventional-changelog/commitlint/#what-is-commitlint",
+  "prompt": {
+    "messages": {
+      "emptyWarning": "can not be empty",
+      "lowerLimitWarning": "below limit",
+      "max": "upper %d chars",
+      "min": "%d chars at least",
+      "skip": ":skip",
+      "upperLimitWarning": "over limit"
+    },
+    "questions": {
+      "body": {
+        "description": "Provide a longer description of the change:"
+      },
+      "breaking": {
+        "description": "Describe the breaking changes:"
+      },
+      "breakingBody": {
+        "description": "A BREAKING CHANGE commit requires a body. Please enter a longer description of the commit itself:"
+      },
+      "isBreaking": {
+        "description": "Are there any breaking changes?"
+      },
+      "isIssueAffected": {
+        "description": "Does this change affect any open issues?"
+      },
+      "issues": {
+        "description": "Add issue references (e.g. \"fix #123\", \"re #123\".):"
+      },
+      "issuesBody": {
+        "description": "If issues are closed, the commit requires a body. Please enter a longer description of the commit itself:"
+      },
+      "scope": {
+        "description": "What is the scope of this change (e.g. servers, docker, security):"
+      },
+      "subject": {
+        "description": "Write a short, imperative tense description of the change:"
+      },
+      "type": {
+        "description": "Select the type of change that you're committing:",
+        "enum": {
+          "build": {
+            "description": "Changes that affect the build system or external dependencies",
+            "emoji": "\ud83d\udee0",
+            "title": "Builds"
+          },
+          "chore": {
+            "description": "Other changes that don't modify src or test files",
+            "emoji": "\u267b\ufe0f",
+            "title": "Chores"
+          },
+          "ci": {
+            "description": "Changes to CI configuration files and scripts",
+            "emoji": "\u2699\ufe0f",
+            "title": "Continuous Integrations"
+          },
+          "config": {
+            "description": "Configuration changes for infrastructure",
+            "emoji": "\u2699\ufe0f",
+            "title": "Configuration"
+          },
+          "deploy": {
+            "description": "Deployment related changes",
+            "emoji": "\ud83d\ude80",
+            "title": "Deployment"
+          },
+          "docs": {
+            "description": "Documentation only changes",
+            "emoji": "\ud83d\udcda",
+            "title": "Documentation"
+          },
+          "feat": {
+            "description": "A new feature",
+            "emoji": "\u2728",
+            "title": "Features"
+          },
+          "fix": {
+            "description": "A bug fix",
+            "emoji": "\ud83d\udc1b",
+            "title": "Bug Fixes"
+          },
+          "perf": {
+            "description": "A code change that improves performance",
+            "emoji": "\ud83d\ude80",
+            "title": "Performance Improvements"
+          },
+          "refactor": {
+            "description": "A code change that neither fixes a bug nor adds a feature",
+            "emoji": "\ud83d\udce6",
+            "title": "Code Refactoring"
+          },
+          "revert": {
+            "description": "Reverts a previous commit",
+            "emoji": "\ud83d\uddd1",
+            "title": "Reverts"
+          },
+          "security": {
+            "description": "Security improvements and fixes",
+            "emoji": "\ud83d\udd12",
+            "title": "Security"
+          },
+          "style": {
+            "description": "Changes that do not affect the meaning of the code",
+            "emoji": "\ud83d\udc8e",
+            "title": "Styles"
+          },
+          "test": {
+            "description": "Adding missing tests or correcting existing tests",
+            "emoji": "\ud83d\udea8",
+            "title": "Tests"
+          }
+        }
+      }
+    }
+  },
   "rules": {
-    "type-enum": [
+    "body-leading-blank": [
+      1,
+      "always"
+    ],
+    "body-max-line-length": [
       2,
       "always",
-      [
-        "feat",
-        "fix",
-        "docs",
-        "style",
-        "refactor",
-        "perf",
-        "test",
-        "build",
-        "ci",
-        "chore",
-        "revert",
-        "config",
-        "deploy",
-        "security"
-      ]
+      100
+    ],
+    "footer-leading-blank": [
+      1,
+      "always"
+    ],
+    "footer-max-line-length": [
+      2,
+      "always",
+      100
+    ],
+    "header-max-length": [
+      2,
+      "always",
+      100
+    ],
+    "scope-case": [
+      2,
+      "always",
+      "lower-case"
     ],
     "scope-enum": [
       2,
@@ -43,137 +168,63 @@
         "storage"
       ]
     ],
-    "subject-max-length": [2, "always", 100],
-    "subject-min-length": [2, "always", 10],
     "subject-case": [
       2,
       "never",
-      ["sentence-case", "start-case", "pascal-case", "upper-case"]
+      [
+        "sentence-case",
+        "start-case",
+        "pascal-case",
+        "upper-case"
+      ]
     ],
-    "subject-empty": [2, "never"],
-    "subject-full-stop": [2, "never", "."],
-    "type-case": [2, "always", "lower-case"],
-    "type-empty": [2, "never"],
-    "scope-case": [2, "always", "lower-case"],
-    "header-max-length": [2, "always", 100],
-    "body-leading-blank": [1, "always"],
-    "body-max-line-length": [2, "always", 100],
-    "footer-leading-blank": [1, "always"],
-    "footer-max-line-length": [2, "always", 100]
-  },
-  "helpUrl": "https://github.com/conventional-changelog/commitlint/#what-is-commitlint",
-  "prompt": {
-    "messages": {
-      "skip": ":skip",
-      "max": "upper %d chars",
-      "min": "%d chars at least",
-      "emptyWarning": "can not be empty",
-      "upperLimitWarning": "over limit",
-      "lowerLimitWarning": "below limit"
-    },
-    "questions": {
-      "type": {
-        "description": "Select the type of change that you're committing:",
-        "enum": {
-          "feat": {
-            "description": "A new feature",
-            "title": "Features",
-            "emoji": "✨"
-          },
-          "fix": {
-            "description": "A bug fix",
-            "title": "Bug Fixes",
-            "emoji": "🐛"
-          },
-          "docs": {
-            "description": "Documentation only changes",
-            "title": "Documentation",
-            "emoji": "📚"
-          },
-          "style": {
-            "description": "Changes that do not affect the meaning of the code",
-            "title": "Styles",
-            "emoji": "💎"
-          },
-          "refactor": {
-            "description": "A code change that neither fixes a bug nor adds a feature",
-            "title": "Code Refactoring",
-            "emoji": "📦"
-          },
-          "perf": {
-            "description": "A code change that improves performance",
-            "title": "Performance Improvements",
-            "emoji": "🚀"
-          },
-          "test": {
-            "description": "Adding missing tests or correcting existing tests",
-            "title": "Tests",
-            "emoji": "🚨"
-          },
-          "build": {
-            "description": "Changes that affect the build system or external dependencies",
-            "title": "Builds",
-            "emoji": "🛠"
-          },
-          "ci": {
-            "description": "Changes to CI configuration files and scripts",
-            "title": "Continuous Integrations",
-            "emoji": "⚙️"
-          },
-          "chore": {
-            "description": "Other changes that don't modify src or test files",
-            "title": "Chores",
-            "emoji": "♻️"
-          },
-          "revert": {
-            "description": "Reverts a previous commit",
-            "title": "Reverts",
-            "emoji": "🗑"
-          },
-          "config": {
-            "description": "Configuration changes for infrastructure",
-            "title": "Configuration",
-            "emoji": "⚙️"
-          },
-          "deploy": {
-            "description": "Deployment related changes",
-            "title": "Deployment",
-            "emoji": "🚀"
-          },
-          "security": {
-            "description": "Security improvements and fixes",
-            "title": "Security",
-            "emoji": "🔒"
-          }
-        }
-      },
-      "scope": {
-        "description": "What is the scope of this change (e.g. servers, docker, security):"
-      },
-      "subject": {
-        "description": "Write a short, imperative tense description of the change:"
-      },
-      "body": {
-        "description": "Provide a longer description of the change:"
-      },
-      "isBreaking": {
-        "description": "Are there any breaking changes?"
-      },
-      "breakingBody": {
-        "description": "A BREAKING CHANGE commit requires a body. Please enter a longer description of the commit itself:"
-      },
-      "breaking": {
-        "description": "Describe the breaking changes:"
-      },
-      "isIssueAffected": {
-        "description": "Does this change affect any open issues?"
-      },
-      "issuesBody": {
-        "description": "If issues are closed, the commit requires a body. Please enter a longer description of the commit itself:"
-      },
-      "issues": {
-        "description": "Add issue references (e.g. \"fix #123\", \"re #123\".):"
-      }
-    }
+    "subject-empty": [
+      2,
+      "never"
+    ],
+    "subject-full-stop": [
+      2,
+      "never",
+      "."
+    ],
+    "subject-max-length": [
+      2,
+      "always",
+      100
+    ],
+    "subject-min-length": [
+      2,
+      "always",
+      10
+    ],
+    "type-case": [
+      2,
+      "always",
+      "lower-case"
+    ],
+    "type-empty": [
+      2,
+      "never"
+    ],
+    "type-enum": [
+      2,
+      "always",
+      [
+        "feat",
+        "fix",
+        "docs",
+        "style",
+        "refactor",
+        "perf",
+        "test",
+        "build",
+        "ci",
+        "chore",
+        "revert",
+        "config",
+        "deploy",
+        "security"
+      ]
+    ]
   }
 }

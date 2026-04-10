@@ -1,39 +1,90 @@
-# IDE and Editor
+# Dockermaster sync directory (temporary)
+dockermaster-live/
+
+# VS Code history
 .history/
+
+# Environment files
+.env
+*.env
+.env.*
+*.env.*
+!.env.example
+
+# Secret files
+*.key
+*.pem
+*.crt
+*.secret
+
+# IDE files
 .vscode/
-*.swp
-*.swo
-*~
 .idea/
 
-# OS Files
+# OS files
 .DS_Store
 Thumbs.db
 
 # Temporary files
 *.tmp
 *.bak
-*.backup
+*.swp
+*~
+
+# Log files
 *.log
+
+# Node modules
+node_modules/
 
 # Python
 __pycache__/
-*.py[cod]
-*$py.class
-.Python
-env/
-venv/
-.env
+*.pyc
+*.pyo
 
-# Node
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
 
-# Sensitive data
-*.key
-*.pem
-*.crt
-secrets/
-credentials/
+# Ansible
+*.retry
+
+# Docker volumes and data
+volumes/
+data/
+
+# Sync and backup directories
+*-live/
+*-sync/
+*-backup/
+backups/
+
+# Cache directories
+.cache/
+cache/
+*.cache
+
+# Runtime files
+*.pid
+*.sock
+
+# Monitoring and metrics
+metrics/
+prometheus_data/
+grafana_data/
+
+# Database dumps and backups
+*.sql
+*.dump
+*.backup
+
+# Devin AI config (keep skills tracked in git)
+.devin/*
+!.devin/skills/
+
+# Generated output
+output/
+
+# Timestamped backup directories inside compose trees
+backup_*/

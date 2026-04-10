@@ -6,7 +6,7 @@ extends: default
 rules:
   # Line length - allow longer lines for URLs and commands
   line-length:
-    max: 120
+    max: 180  # Increased for GitHub workflows with long commands
     allow-non-breakable-words: true
     allow-non-breakable-inline-mappings: true
 
@@ -50,7 +50,6 @@ rules:
   # Colons - Docker and GitHub Actions often need flexible spacing
   colons:
     max-spaces-before: 0
-    min-spaces-after: 1
     max-spaces-after: 1
 
   # Commas

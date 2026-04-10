@@ -8,7 +8,7 @@
 # Example: Github issue #23
 
 # --- COMMIT END ---
-# Type can be 
+# Type can be
 #    feat     (new feature)
 #    fix      (bug fix)
 #    docs     (changes to documentation)
@@ -52,7 +52,7 @@
 # --------------------
 # Examples:
 # feat(docker): add nginx reverse proxy configuration
-# fix(security): update gitleaks config to ignore test files  
+# fix(security): update gitleaks config to ignore test files
 # docs(inventory): add new server documentation for node-03
 # ci(workflows): add automated Docker image builds
 # config(proxmox): update VM resource allocations

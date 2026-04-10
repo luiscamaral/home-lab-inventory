@@ -30,11 +30,11 @@ get_latest_commit() {
 check_for_new_images() {
     local service="$1"
     local current_digest="$2"
-    
+
     # Get the current image digest from the registry
     # Note: This requires the image to be public or authentication to be configured
     local registry_image="ghcr.io/${GITHUB_REPO%/*}/${service}:latest"
-    
+
     # Pull image metadata without downloading the image
     docker manifest inspect "$registry_image" 2>/dev/null | \
         grep -o '"digest": "[^"]*"' | head -1 | cut -d'"' -f4
@@ -49,20 +49,20 @@ get_running_image_digest() {
 # Function to deploy a service
 deploy_service() {
     local service="$1"
-    
+
     log_message "Checking service: $service"
-    
+
     if [ ! -d "$DEPLOY_PATH/$service" ]; then
         log_message "Service directory not found: $DEPLOY_PATH/$service"
         return 1
     fi
-    
+
     cd "$DEPLOY_PATH/$service"
-    
+
     # Check if service uses GitHub Container Registry images
     if grep -q "ghcr.io" docker-compose.yml 2>/dev/null || \
        grep -q "ghcr.io" docker-compose.yaml 2>/dev/null; then
-        
+
         # Pull latest images
         log_message "Pulling latest images for $service..."
         if docker compose pull 2>&1 | tee -a "$LOG_FILE"; then
@@ -81,16 +81,16 @@ deploy_service() {
     else
         log_message "Service $service does not use registry images, skipping"
     fi
-    
+
     return 0
 }
 
 # Function to check and deploy all services
 check_and_deploy_all() {
     log_message "Starting deployment check..."
-    
+
     local updated_count=0
-    
+
     for dir in "$DEPLOY_PATH"/*/; do
         if [ -f "$dir/docker-compose.yml" ] || [ -f "$dir/docker-compose.yaml" ]; then
             service=$(basename "$dir")
@@ -99,7 +99,7 @@ check_and_deploy_all() {
             fi
         fi
     done
-    
+
     log_message "Deployment check completed. $updated_count services checked."
 }
 
@@ -122,20 +122,20 @@ load_state() {
 # Main logic
 main() {
     log_message "=== Starting GitHub sync check ==="
-    
+
     # Get current commit from GitHub
     current_commit=$(get_latest_commit "main")
     if [ -z "$current_commit" ]; then
         log_message "ERROR: Could not fetch latest commit from GitHub"
         exit 1
     fi
-    
+
     # Load last known commit
     last_commit=$(load_state)
-    
+
     log_message "Current commit: $current_commit"
     log_message "Last deployed commit: ${last_commit:-none}"
-    
+
     # Check if there are new changes
     if [ "$current_commit" != "$last_commit" ] || [ -z "$last_commit" ]; then
         log_message "New changes detected, checking for updates..."
@@ -147,7 +147,7 @@ main() {
         # (images might have been rebuilt/updated)
         check_and_deploy_all
     fi
-    
+
     log_message "=== GitHub sync check completed ==="
 }
 

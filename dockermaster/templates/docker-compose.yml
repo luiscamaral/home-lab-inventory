@@ -1,0 +1,77 @@
+# Replace 'my-service' with your service name
+name: my-service
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    driver: macvlan
+    external: true
+
+services:
+  # Replace 'my-service' with your service name
+  my-service:
+    # Replace with actual image and tag
+    image: nginx:latest
+    # Replace with your container name
+    container_name: my-service
+    # Replace with your hostname
+    hostname: my-service
+    restart: unless-stopped
+
+    # Environment configuration
+    environment:
+      - VARIABLE_NAME=value
+    # Or use env_file for sensitive data
+    # env_file: .env
+
+    # Network configuration - replace X with next available IP
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.10
+
+    # Port exposure (use expose for internal, ports for external)
+    expose:
+      - 80
+    # ports:
+    #   - "HOST_PORT:CONTAINER_PORT"
+
+    # Volume mounts
+    volumes:
+      - service_data:/data
+      - service_config:/config
+      - /host/path:/container/path
+
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:PORT/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Dependencies
+    # depends_on:
+    #   - other_service
+
+    # Resource limits
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 512M
+    #       cpus: '0.5'
+
+# Volume definitions
+volumes:
+  service_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: '/nfs/dockermaster/volumes/my-service.data'
+
+  service_config:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: '/nfs/dockermaster/volumes/my-service.config'

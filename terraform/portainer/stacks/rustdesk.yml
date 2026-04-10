@@ -1,0 +1,73 @@
+name: rust-server
+
+networks:
+  rproxy:
+    external: true
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  hbbs:
+    container_name: hbbs
+    image: rustdesk/rustdesk-server:latest
+    command: hbbs
+    volumes:
+      - /nfs/dockermaster/docker/rustserver/data:/root
+    networks:
+      rproxy:
+      servers-net:
+        ipv4_address: 192.168.59.10
+    depends_on:
+      - hbbr
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/usr/bin/hbbs", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "rust-server"
+      com.docker.service: "hbbs"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  hbbr:
+    container_name: hbbr
+    image: rustdesk/rustdesk-server:latest
+    command: hbbr
+    volumes:
+      - /nfs/dockermaster/docker/rustserver/data:/root
+    networks:
+      rproxy:
+      servers-net:
+        ipv4_address: 192.168.59.11
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/usr/bin/hbbr", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "rust-server"
+      com.docker.service: "hbbr"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
