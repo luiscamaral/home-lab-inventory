@@ -251,11 +251,6 @@ resource "portainer_stack" "minio" {
     name  = "MINIO_ROOT_PASSWORD"
     value = data.vault_kv_secret_v2.minio.data["root_password"]
   }
-
-  env {
-    name  = "MINIO_OIDC_CLIENT_SECRET"
-    value = data.vault_kv_secret_v2.keycloak_clients.data["minio_client_secret"]
-  }
 }
 
 # ──────────────────────────────────────────────
