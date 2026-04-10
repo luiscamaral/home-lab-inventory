@@ -359,3 +359,26 @@ resource "portainer_stack" "keycloak" {
     value = data.vault_kv_secret_v2.keycloak.data["admin_password"]
   }
 }
+
+# ──────────────────────────────────────────────
+# Postfix Relay
+# SMTP relay through DreamHost for Keycloak email
+# ──────────────────────────────────────────────
+resource "portainer_stack" "postfix_relay" {
+  name             = "postfix-relay"
+  endpoint_id      = var.endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/postfix-relay.yml")
+
+  env {
+    name  = "SMTP_USERNAME"
+    value = data.vault_kv_secret_v2.smtp.data["username"]
+  }
+
+  env {
+    name  = "SMTP_PASSWORD"
+    value = data.vault_kv_secret_v2.smtp.data["password"]
+  }
+}

@@ -1,0 +1,47 @@
+name: postfix-relay
+
+networks:
+  rproxy:
+    external: true
+
+services:
+  postfix:
+    image: boky/postfix:latest
+    container_name: postfix-relay
+    hostname: mail.d.lcamaral.com
+    networks:
+      rproxy:
+    environment:
+      RELAYHOST: "[smtp.dreamhost.com]:587"
+      RELAYHOST_USERNAME: ${SMTP_USERNAME}
+      RELAYHOST_PASSWORD: ${SMTP_PASSWORD}
+      ALLOWED_SENDER_DOMAINS: "lcamaral.com d.lcamaral.com cf.lcamaral.com"
+      POSTFIX_myhostname: mail.d.lcamaral.com
+      POSTFIX_mynetworks: "127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+      POSTFIX_smtp_use_tls: "yes"
+      POSTFIX_smtp_tls_security_level: "encrypt"
+      POSTFIX_smtp_tls_wrappermode: "no"
+      POSTFIX_smtp_sasl_auth_enable: "yes"
+      POSTFIX_smtp_sasl_security_options: "noanonymous"
+      POSTFIX_header_size_limit: "4096000"
+      POSTFIX_message_size_limit: "52428800"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "25"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "postfix-relay"
+      com.docker.service: "postfix"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
