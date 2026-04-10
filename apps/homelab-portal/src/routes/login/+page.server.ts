@@ -11,15 +11,15 @@ import {
 export const actions: Actions = {
   default: async ({ request, cookies, url }) => {
     const formData = await request.formData();
-    const email = formData.get('email')?.toString() ?? '';
+    const username = formData.get('username')?.toString().trim() ?? '';
     const password = formData.get('password')?.toString() ?? '';
 
-    if (!email || !password) {
-      return fail(400, { email, error: 'Email and password are required' });
+    if (!username || !password) {
+      return fail(400, { username, error: 'Username and password are required' });
     }
 
     try {
-      const tokens = await keycloak.passwordLogin(email, password);
+      const tokens = await keycloak.passwordLogin(username, password);
       const info = await keycloak.userinfo(tokens.access_token);
 
       const now = Math.floor(Date.now() / 1000);
@@ -42,7 +42,10 @@ export const actions: Actions = {
       cookies.set(SESSION_COOKIE_NAME, cookie, SESSION_COOKIE_OPTIONS);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
-      return fail(401, { email, error: message === 'Invalid user credentials' ? 'Invalid email or password' : message });
+      return fail(401, {
+        username,
+        error: message === 'Invalid user credentials' ? 'Invalid username or password' : message
+      });
     }
 
     const returnTo = url.searchParams.get('returnTo') ?? '/';

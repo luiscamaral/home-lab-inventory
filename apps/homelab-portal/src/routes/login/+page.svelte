@@ -18,16 +18,16 @@
       {/if}
       <div class="rounded-md shadow-sm space-y-4">
         <div>
-          <label for="email" class="sr-only">Email</label>
+          <label for="username" class="sr-only">Username or email</label>
           <input
-            id="email"
-            name="email"
-            type="email"
-            autocomplete="email"
+            id="username"
+            name="username"
+            type="text"
+            autocomplete="username"
             required
             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white p-3"
-            placeholder="Email"
-            value={form?.email ?? ''}
+            placeholder="Username or email"
+            value={form?.username ?? ''}
           />
         </div>
         <div>
