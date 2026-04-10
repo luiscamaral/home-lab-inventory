@@ -1,0 +1,44 @@
+name: homelab-portal
+
+networks:
+  rproxy:
+    external: true
+
+services:
+  portal:
+    image: registry.cf.lcamaral.com/homelab-portal:latest
+    container_name: homelab-portal
+    hostname: homelab-portal
+    networks:
+      rproxy:
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_PUBLIC_URL: https://auth.cf.lcamaral.com
+      KEYCLOAK_REALM: homelab
+      KEYCLOAK_CLIENT_ID: homelab-portal
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      SESSION_ENCRYPTION_KEY: ${SESSION_ENCRYPTION_KEY}
+      PUBLIC_BASE_URL: https://login.cf.lcamaral.com
+      NODE_ENV: production
+      PORT: "3000"
+    restart: on-failure:5
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "homelab-portal"
+      com.docker.service: "portal"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M

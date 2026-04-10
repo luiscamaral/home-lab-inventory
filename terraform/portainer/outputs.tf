@@ -20,5 +20,6 @@ output "stacks" {
     freeswitch        = portainer_stack.freeswitch.name
     keycloak          = portainer_stack.keycloak.name
     postfix_relay     = portainer_stack.postfix_relay.name
+    homelab_portal    = portainer_stack.homelab_portal.name
   }
 }

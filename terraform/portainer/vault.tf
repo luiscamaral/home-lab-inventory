@@ -67,3 +67,8 @@ data "vault_kv_secret_v2" "smtp" {
   mount = "secret"
   name  = "homelab/smtp"
 }
+
+data "vault_kv_secret_v2" "portal" {
+  mount = "secret"
+  name  = "homelab/portal"
+}

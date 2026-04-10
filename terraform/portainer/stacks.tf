@@ -382,3 +382,31 @@ resource "portainer_stack" "postfix_relay" {
     value = data.vault_kv_secret_v2.smtp.data["password"]
   }
 }
+
+# ──────────────────────────────────────────────
+# Homelab Portal
+# SvelteKit login/register/profile portal
+# ──────────────────────────────────────────────
+resource "portainer_stack" "homelab_portal" {
+  name             = "homelab-portal"
+  endpoint_id      = var.endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/homelab-portal.yml")
+
+  env {
+    name  = "KEYCLOAK_CLIENT_SECRET"
+    value = data.vault_kv_secret_v2.keycloak_clients.data["homelab_portal_secret"]
+  }
+
+  env {
+    name  = "SESSION_SECRET"
+    value = data.vault_kv_secret_v2.portal.data["session_secret"]
+  }
+
+  env {
+    name  = "SESSION_ENCRYPTION_KEY"
+    value = data.vault_kv_secret_v2.portal.data["session_encryption_key"]
+  }
+}
