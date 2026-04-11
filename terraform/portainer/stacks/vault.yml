@@ -38,11 +38,17 @@ services:
       - /nfs/dockermaster/docker/vault/vault/config:/vault/config
       - vault_raft:/vault/raft
       - /nfs/dockermaster/docker/vault/vault/logs:/vault/logs
+      - /nfs/dockermaster/docker/vault/vault/snapshots:/vault/snapshots
     labels:
       com.centurylinklabs.watchtower.enable: "false"
       com.docker.stack: "vault"
       com.docker.service: "vault"
       portainer.autodeploy: "false"  # Prevent auto-deploy to avoid runner disruption
+      # Ofelia: daily snapshot at 02:00, rotate at 02:30, retain 30 days
+      ofelia.job-exec.vault-snap-save.schedule: "0 0 2 * * *"
+      ofelia.job-exec.vault-snap-save.command: "sh -c 'vault operator raft snapshot save /vault/snapshots/snap-$$(date +%Y%m%d).snap'"
+      ofelia.job-exec.vault-snap-prune.schedule: "0 30 2 * * *"
+      ofelia.job-exec.vault-snap-prune.command: "find /vault/snapshots -name snap-*.snap -mtime +30 -delete"
     deploy:
       resources:
         limits:
@@ -51,3 +57,18 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M
+
+  ofelia:
+    image: mcuadros/ofelia:latest
+    container_name: vault-ofelia
+    restart: unless-stopped
+    depends_on:
+      vault:
+        condition: service_healthy
+    command: daemon --docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "vault"
+      com.docker.service: "vault-ofelia"
