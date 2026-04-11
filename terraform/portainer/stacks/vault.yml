@@ -3,6 +3,9 @@ name: vault
 networks:
   rproxy:
     external: true
+  docker-servers-net:
+    external: true
+    name: Docker-servers-net
 
 volumes:
   vault_raft:
@@ -20,6 +23,8 @@ services:
     restart: unless-stopped
     networks:
       rproxy:
+      docker-servers-net:
+        ipv4_address: 192.168.59.25
     cap_add:
       - IPC_LOCK
     environment:

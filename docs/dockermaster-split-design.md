@@ -49,7 +49,6 @@ Proxmox Hypervisor (20C/40T, 243 GB RAM)
 │   ├── Ollama                   LLM inference server
 │   ├── FreeSWITCH               VoIP/SIP server
 │   ├── RustDesk                 hbbs + hbbr remote desktop relay
-│   ├── n8n                      workflow automation
 │   └── node-exporter + cadvisor scraped by Prometheus on ds-1
 │
 └── NAS — Synology  (Edge endpoint — unchanged)
@@ -239,9 +238,9 @@ Firewall restricts access to specific source IPs only.
 | .22 | Rundeck | dockermaster | moves → ds-1, keeps IP |
 | .23 | Rundeck PostgreSQL | dockermaster | moves → ds-1, keeps IP |
 | .24 | Twingate B | dockermaster | moves → ds-2, keeps IP |
-| .25 | vault-1 | dockermaster | keep (add to IaC) |
+| .25 | elastic-search | dockermaster | dropped — old PoC |
 | .28 | Nginx-1 | dockermaster | keep |
-| .30 | n8n | dockermaster | moves → ds-2, keeps IP |
+| .30 | n8n | dockermaster | dropped — old PoC |
 | .40 | FreeSWITCH | dockermaster | moves → ds-2, keeps IP |
 | .41 | LiteLLM | dockermaster | dropped — deleted |
 
@@ -250,6 +249,7 @@ Firewall restricts access to specific source IPs only.
 | IP | Container | Server | Notes |
 |----|-----------|--------|-------|
 | .5 | Docker Registry | dockermaster | NEW — macvlan for cross-server pulls |
+| .25 | vault-1 | dockermaster | NEW — takes freed .25; add to vault.yml IaC |
 | .7 | Nginx-2 | ds-1 | NEW |
 | .8 | Bind9-secondary | ds-1 | NEW |
 | .9 | vault-2 | ds-1 | NEW |
@@ -265,7 +265,7 @@ Firewall restricts access to specific source IPs only.
 | 192.168.59.2 | Portainer |
 | 192.168.59.3 | Bind9-primary |
 | 192.168.59.5 | Docker Registry |
-| 192.168.59.25 | vault-1 |
+| 192.168.59.25 | vault-1 (add to IaC) |
 | 192.168.59.28 | Nginx-1 |
 
 **ds-1** (slice: .4, .7–.9, .12, .14, .22–.23 — mix of kept + new)
@@ -281,7 +281,7 @@ Firewall restricts access to specific source IPs only.
 | 192.168.59.22 | Rundeck |
 | 192.168.59.23 | Rundeck PostgreSQL |
 
-**ds-2** (slice: .10–.11, .15, .24, .30, .40)
+**ds-2** (slice: .10–.11, .15, .24, .40)
 
 | IP | Container |
 |----|-----------|
@@ -289,18 +289,18 @@ Firewall restricts access to specific source IPs only.
 | 192.168.59.11 | RustDesk hbbr |
 | 192.168.59.15 | vault-3 |
 | 192.168.59.24 | Twingate B |
-| 192.168.59.30 | n8n |
 | 192.168.59.40 | FreeSWITCH |
 
-**Available for future use**: .6, .16–.19, .26–.27, .29, .31–.39, .41–.62
+**Available for future use**: .6, .16–.19, .26–.27, .29–.31, .33–.39, .41–.62
 
 ### Known Issues to Fix
 
-1. **vault-1 at .25 missing from IaC** — `vault.yml` only declares the `rproxy` bridge
-   network. The macvlan assignment exists in production but is not in Terraform-managed
-   compose. Add `Docker-servers-net` network + `ipv4_address: 192.168.59.25` to `vault.yml`.
-2. **IPs .0, .6, .20, .21, .41** — freed; Chisel, Ansible-observability, and LiteLLM
-   dropped and deleted. `.6` is now available for future use.
+1. **vault-1 macvlan missing from IaC** — ✅ fixed. elastic-search (old PoC) was occupying
+   .25 and is dropped. `vault.yml` updated with `Docker-servers-net` + `.25`.
+2. **Standalone leftovers to stop and remove on live dockermaster**:
+   `elastic-search` (.25), `ldap-lcamaral-com` (OpenLDAP + LemonLDAP + phpLDAPadmin),
+   `n8n` (.30) — all old PoCs, no IaC, no data to preserve.
+3. **IPs freed**: .0, .6, .20, .21, .25 (elastic-search), .30 (n8n), .41.
 
 ## Resource Planning
 
@@ -342,6 +342,11 @@ Can be right-sized down to 8 vCPU / 16 GB in a future maintenance window if desi
 ### Phase 0 — Immediate (done)
 
 - [x] Vault snapshot automation — ofelia sidecar, daily, NFS-backed
+- [x] Drop Chisel, Ansible-observability, LiteLLM — IaC removed, committed
+- [ ] Stop and remove standalone leftovers on live dockermaster:
+  `docker stop elastic-search ldap-lcamaral-com n8n && docker rm elastic-search ldap-lcamaral-com n8n`
+- [x] Add vault-1 macvlan IP to `vault.yml` IaC:
+  `Docker-servers-net` network + `ipv4_address: 192.168.59.25`
 - [ ] Manual snapshot before any migration work:
   `vault operator raft snapshot save /nfs/dockermaster/docker/vault/vault/snapshots/pre-split-manual.snap`
 
@@ -380,7 +385,7 @@ Services to start on ds-1 (stop on dockermaster first):
 
 Services to start on ds-2 (stop on dockermaster first):
 
-- Twingate B, RustDesk, FreeSWITCH, n8n, Ollama
+- Twingate B, RustDesk, FreeSWITCH, Ollama
 - Keycloak-2 + PG-primary (Keycloak-1 switches connection to ds-2 PG)
 - Watchtower (manages ds-2 containers only)
 
@@ -390,7 +395,7 @@ Remove from dockermaster (now running on ds-1 or ds-2):
 
 - Twingate A, Twingate B
 - GitHub Runner, Watchtower
-- Keycloak, Rundeck, RustDesk, FreeSWITCH, n8n, Ollama, MinIO, Calibre
+- Keycloak, Rundeck, RustDesk, FreeSWITCH, Ollama, MinIO, Calibre
 
 Keep on dockermaster (control plane):
 
