@@ -343,8 +343,8 @@ Can be right-sized down to 8 vCPU / 16 GB in a future maintenance window if desi
 
 - [x] Vault snapshot automation — ofelia sidecar, daily, NFS-backed
 - [x] Drop Chisel, Ansible-observability, LiteLLM — IaC removed, committed
-- [ ] Stop and remove standalone leftovers on live dockermaster:
-  `docker stop elastic-search ldap-lcamaral-com n8n && docker rm elastic-search ldap-lcamaral-com n8n`
+- [x] Stop and remove standalone leftovers on live dockermaster:
+  `elasticsearch`, `lemonldap`, `phpldapadmin`, `openldap`, `chisel` — all stopped and removed
 - [x] Add vault-1 macvlan IP to `vault.yml` IaC:
   `Docker-servers-net` network + `ipv4_address: 192.168.59.25`
 - [ ] Manual snapshot before any migration work:
