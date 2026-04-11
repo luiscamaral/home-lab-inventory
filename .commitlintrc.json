@@ -165,7 +165,15 @@
         "monitoring",
         "backup",
         "network",
-        "storage"
+        "storage",
+        "portal",
+        "postfix",
+        "portainer",
+        "infra",
+        "terraform",
+        "keycloak",
+        "vault",
+        "platform"
       ]
     ],
     "subject-case": [

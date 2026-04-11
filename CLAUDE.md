@@ -69,6 +69,11 @@
   - `secret/homelab/watchtower` (HTTP API token)
   - `secret/homelab/minio` (root user + password)
   - `secret/homelab/freeswitch` (ESL, SIP extension, calling card credentials)
+  - `secret/homelab/keycloak` (admin + DB password)
+  - `secret/homelab/keycloak/clients` (OIDC client secrets: `minio_client_secret`, `homelab_portal_secret`)
+  - `secret/homelab/portal` (session signing + encryption keys for homelab-portal)
+  - `secret/homelab/smtp` (DreamHost SMTP relay credentials for postfix-relay)
+  - `secret/homelab/registry` (local Docker registry admin credentials)
 - Terraform vars are sourced from Vault at runtime, never stored in files.
 
 # Docker Services Structure

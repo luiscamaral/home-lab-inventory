@@ -1,6 +1,6 @@
 # Docker Compose Projects Status
 
-Last updated: 2026-04-09
+Last updated: 2026-04-10
 
 ## Overview
 
@@ -12,7 +12,7 @@ Portainer stacks are provisioned and managed via Terraform in `terraform/portain
 
 ---
 
-## Terraform-Managed Portainer Stacks (17)
+## Terraform-Managed Portainer Stacks (20)
 
 | Stack | Portainer ID | Containers | Network | IP | Auto-update |
 |---|---|---|---|---|---|
@@ -33,6 +33,9 @@ Portainer stacks are provisioned and managed via Terraform in `terraform/portain
 | chisel | 17 | chisel | dual (macvlan + rproxy) | 192.168.59.0 | yes |
 | freeswitch | 18 | freeswitch | docker-servers-net | 192.168.59.40 | no |
 | ollama | 19 | ollama | rproxy bridge | 172.24.0.x | yes |
+| keycloak | 20 | keycloak, keycloak-db | rproxy bridge | 172.24.0.x | no |
+| postfix-relay | 21 | postfix-relay | rproxy bridge | 172.24.0.x | yes |
+| homelab-portal | 22 | homelab-portal | rproxy bridge | 172.24.0.x | yes |
 
 ---
 
