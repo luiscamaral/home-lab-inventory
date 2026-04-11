@@ -1,6 +1,6 @@
 # Homelab Multi-Server Split Design
 
-**Status**: Design — pending implementation
+**Status**: Phase 0 complete — ready for Phase 1 (provision ds-1)
 **Date**: 2026-04-11
 **Branch**: `nas-docker-server`
 
@@ -303,14 +303,12 @@ Firewall restricts access to specific source IPs only.
 
 **Available for future use**: .6, .16–.19, .26–.27, .29–.31, .33–.39, .41–.62
 
-### Known Issues to Fix
+### Resolved Issues
 
-1. **vault-1 macvlan missing from IaC** — ✅ fixed. elastic-search (old PoC) was occupying
-   .25 and is dropped. `vault.yml` updated with `docker-servers-net` + `.25`.
-2. **Standalone leftovers to stop and remove on live dockermaster**:
-   `elastic-search` (.25), `ldap-lcamaral-com` (OpenLDAP + LemonLDAP + phpLDAPadmin),
-   `n8n` (.30) — all old PoCs, no IaC, no data to preserve.
-3. **IPs freed**: .0, .6, .20, .21, .25 (elastic-search), .30 (n8n), .41.
+1. ✅ **vault-1 macvlan** — `vault.yml` updated with `docker-servers-net` + `.25`; applied.
+2. ✅ **Standalone leftovers removed** — `elasticsearch`, `lemonldap`, `phpldapadmin`,
+   `openldap`, `chisel`, `n8n` stopped and removed from live dockermaster.
+3. ✅ **IPs freed**: .0, .6, .20, .21, .25, .30, .41 — available for future use.
 
 ## Resource Planning
 
@@ -358,9 +356,8 @@ Can be right-sized down to 8 vCPU / 16 GB in a future maintenance window if desi
   `elasticsearch`, `lemonldap`, `phpldapadmin`, `openldap`, `chisel` — all stopped and removed
 - [x] Add vault-1 macvlan IP to `vault.yml` IaC:
   `docker-servers-net` network + `ipv4_address: 192.168.59.25`
-- [ ] Manual snapshot before any migration work:
-  `vault operator raft snapshot save /nfs/dockermaster/docker/vault/vault/snapshots/pre-split-manual.snap`
-
+- [x] Manual snapshot before any migration work:
+  `pre-split-manual.snap` saved to NFS snapshots dir (99K, 2026-04-11)
 
 ### Phase 1 — Provision ds-1 (VM 123)
 
