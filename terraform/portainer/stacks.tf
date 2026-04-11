@@ -272,19 +272,6 @@ resource "portainer_stack" "ollama" {
 }
 
 # ──────────────────────────────────────────────
-# Chisel TCP Tunnel
-# Stateless reverse tunnel server — no secrets
-# ──────────────────────────────────────────────
-resource "portainer_stack" "chisel" {
-  name             = "chisel"
-  endpoint_id      = var.endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
-
-  stack_file_content = file("${path.module}/stacks/chisel.yml")
-}
-
-# ──────────────────────────────────────────────
 # FreeSWITCH VoIP/SIP Server
 # SIP credentials from Vault
 # ──────────────────────────────────────────────

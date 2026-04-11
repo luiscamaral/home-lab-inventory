@@ -24,7 +24,6 @@ Proxmox Hypervisor (20C/40T, 243 GB RAM)
 │   ├── cloudflared-1        CF tunnel bologna connector A
 │   ├── Bind9-primary        authoritative DNS d.lcamaral.com
 │   ├── Docker Registry      registry.cf.lcamaral.com
-│   ├── Chisel               TCP reverse tunnel server
 │   └── vault-1              Raft voter (leader candidate)
 │
 ├── VM 123 — ds-1  (Infra HA pair + App Plane A)
@@ -227,7 +226,6 @@ Firewall restricts access to specific source IPs only.
 
 | IP | Container | Current server | Status in new arch |
 |----|-----------|---------------|-------------------|
-| .0 | Chisel | dockermaster | **BUG — network address** ⚠️ |
 | .1 | host aux | dockermaster | reserved |
 | .2 | Portainer | dockermaster | keep |
 | .3 | Bind9-primary | dockermaster | keep |
@@ -252,7 +250,6 @@ Firewall restricts access to specific source IPs only.
 | IP | Container | Server | Notes |
 |----|-----------|--------|-------|
 | .5 | Docker Registry | dockermaster | NEW — macvlan for cross-server pulls |
-| .6 | Chisel | dockermaster | FIX — move from broken .0 |
 | .7 | Nginx-2 | ds-1 | NEW |
 | .8 | Bind9-secondary | ds-1 | NEW |
 | .9 | vault-2 | ds-1 | NEW |
@@ -261,14 +258,13 @@ Firewall restricts access to specific source IPs only.
 
 ### Final IP Map by Server
 
-**dockermaster** (slice: .2–.15, using .2–.6, .25, .28)
+**dockermaster** (slice: .2–.15, using .2–.5, .25, .28)
 
 | IP | Container |
 |----|-----------|
 | 192.168.59.2 | Portainer |
 | 192.168.59.3 | Bind9-primary |
 | 192.168.59.5 | Docker Registry |
-| 192.168.59.6 | Chisel (fixed) |
 | 192.168.59.25 | vault-1 |
 | 192.168.59.28 | Nginx-1 |
 
@@ -296,16 +292,15 @@ Firewall restricts access to specific source IPs only.
 | 192.168.59.30 | n8n |
 | 192.168.59.40 | FreeSWITCH |
 
-**Available for future use**: .16–.19, .26–.27, .29, .31–.39, .41–.62
+**Available for future use**: .6, .16–.19, .26–.27, .29, .31–.39, .41–.62
 
 ### Known Issues to Fix
 
-1. **Chisel at .0** — the network address of the /26. Fix: reassign to .6 in `chisel.yml`
-   and `dockermaster/docker/compose/chisel/docker-compose.yml`.
-2. **vault-1 at .25 missing from IaC** — `vault.yml` only declares the `rproxy` bridge
+1. **vault-1 at .25 missing from IaC** — `vault.yml` only declares the `rproxy` bridge
    network. The macvlan assignment exists in production but is not in Terraform-managed
    compose. Add `Docker-servers-net` network + `ipv4_address: 192.168.59.25` to `vault.yml`.
-3. **IPs .20, .21, .41** — freed; Ansible-observability and LiteLLM dropped and deleted.
+2. **IPs .0, .6, .20, .21, .41** — freed; Chisel, Ansible-observability, and LiteLLM
+   dropped and deleted. `.6` is now available for future use.
 
 ## Resource Planning
 
@@ -349,7 +344,7 @@ Can be right-sized down to 8 vCPU / 16 GB in a future maintenance window if desi
 - [x] Vault snapshot automation — ofelia sidecar, daily, NFS-backed
 - [ ] Manual snapshot before any migration work:
   `vault operator raft snapshot save /nfs/dockermaster/docker/vault/vault/snapshots/pre-split-manual.snap`
-- [ ] Fix Chisel IP (.0 → .6) in IaC and local compose
+
 
 ### Phase 1 — Provision ds-1 (VM 123)
 
@@ -400,7 +395,7 @@ Remove from dockermaster (now running on ds-1 or ds-2):
 Keep on dockermaster (control plane):
 
 - Portainer, Nginx-1, cloudflared-1, Bind9-primary
-- Docker Registry, Chisel, vault-1
+- Docker Registry, vault-1
 
 ### Phase 6 — PostgreSQL Streaming Replication (Keycloak)
 
