@@ -190,7 +190,7 @@ Apply vault macvlan change: `terraform -chdir=terraform/portainer apply -target=
 All bridge networks declared `internal: true`. Created by a `network-bootstrap` stack
 deployed first on each server; all application stacks reference them as `external: true`.
 
-### Macvlan Network (Docker-servers-net)
+### Macvlan Network (`docker-servers-net`)
 
 Same physical subnet on all three servers. Each host creates its own macvlan
 attached to the LAN interface (vmbr28 bridge).
@@ -210,7 +210,7 @@ docker network create \
   --gateway 192.168.48.1 \
   --aux-address "host=192.168.59.1" \
   --opt parent=ens18 \
-  Docker-servers-net
+  docker-servers-net
 ```
 
 Replace `X/28` with the server's slice start address.
@@ -229,7 +229,7 @@ Bridge networks are host-local. Cross-server traffic uses macvlan IPs or host-ex
 PostgreSQL ports (5432) exposed on ds-1 and ds-2 host interfaces.
 Firewall restricts access to specific source IPs only.
 
-## IP Allocation — Docker-servers-net (192.168.59.0/26)
+## IP Allocation — `docker-servers-net` (192.168.59.0/26)
 
 ### Current Assignments (complete map)
 
@@ -306,7 +306,7 @@ Firewall restricts access to specific source IPs only.
 ### Known Issues to Fix
 
 1. **vault-1 macvlan missing from IaC** — ✅ fixed. elastic-search (old PoC) was occupying
-   .25 and is dropped. `vault.yml` updated with `Docker-servers-net` + `.25`.
+   .25 and is dropped. `vault.yml` updated with `docker-servers-net` + `.25`.
 2. **Standalone leftovers to stop and remove on live dockermaster**:
    `elastic-search` (.25), `ldap-lcamaral-com` (OpenLDAP + LemonLDAP + phpLDAPadmin),
    `n8n` (.30) — all old PoCs, no IaC, no data to preserve.
@@ -357,7 +357,7 @@ Can be right-sized down to 8 vCPU / 16 GB in a future maintenance window if desi
 - [x] Stop and remove standalone leftovers on live dockermaster:
   `elasticsearch`, `lemonldap`, `phpldapadmin`, `openldap`, `chisel` — all stopped and removed
 - [x] Add vault-1 macvlan IP to `vault.yml` IaC:
-  `Docker-servers-net` network + `ipv4_address: 192.168.59.25`
+  `docker-servers-net` network + `ipv4_address: 192.168.59.25`
 - [ ] Manual snapshot before any migration work:
   `vault operator raft snapshot save /nfs/dockermaster/docker/vault/vault/snapshots/pre-split-manual.snap`
 
@@ -453,7 +453,7 @@ terraform/
 
 Portainer manages networks through a **bootstrap-first** pattern:
 
-- **Macvlan** (`Docker-servers-net`): created by host bootstrap script (host-specific
+- **Macvlan** (`docker-servers-net`): created by host bootstrap script (host-specific
   interface + IP slice); Portainer reads and displays but does not own
 - **Bridge networks** (`rproxy`, `backend`, `app`, `monitoring`): defined in a
   `network-bootstrap` Portainer stack deployed before any app stack; all app stacks

@@ -5,7 +5,6 @@ networks:
     external: true
   docker-servers-net:
     external: true
-    name: Docker-servers-net
 
 volumes:
   vault_raft:
