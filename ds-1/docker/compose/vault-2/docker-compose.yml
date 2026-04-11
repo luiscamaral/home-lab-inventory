@@ -1,8 +1,6 @@
-name: vault
+name: vault-2
 
 networks:
-  rproxy:
-    external: true
   docker-servers-net:
     external: true
 
@@ -17,18 +15,14 @@ volumes:
 services:
   vault:
     image: hashicorp/vault:1.21
-    container_name: vault
-    hostname: vault
+    container_name: vault-2
+    hostname: vault-2
     restart: unless-stopped
     networks:
-      rproxy:
       docker-servers-net:
-        ipv4_address: 192.168.59.25
+        ipv4_address: 192.168.59.9
     cap_add:
       - IPC_LOCK
-    environment:
-      - VAULT_ADDR=${VAULT_ADDR}
-      - VAULT_TOKEN=${VAULT_TOKEN}
     entrypoint: ["vault"]
     command:
       - server
@@ -39,15 +33,14 @@ services:
       timeout: 3s
       retries: 10
     volumes:
-      - /nfs/dockermaster/docker/vault/vault/config:/vault/config
+      - /nfs/dockermaster/docker/vault/vault-2/config:/vault/config
       - vault_raft:/vault/raft
-      - /nfs/dockermaster/docker/vault/vault/logs:/vault/logs
+      - /nfs/dockermaster/docker/vault/vault-2/logs:/vault/logs
       - /nfs/dockermaster/docker/vault/vault/snapshots:/vault/snapshots
     labels:
       com.centurylinklabs.watchtower.enable: "false"
-      com.docker.stack: "vault"
-      com.docker.service: "vault"
-      portainer.autodeploy: "false"
+      com.docker.stack: "vault-2"
+      com.docker.service: "vault-2"
     deploy:
       resources:
         limits:

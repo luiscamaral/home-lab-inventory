@@ -1,6 +1,6 @@
 # Homelab Multi-Server Split Design
 
-**Status**: Phase 0 complete — ready for Phase 1 (provision ds-1)
+**Status**: Phase 1 in progress — ds-1 provisioned, vault-2 running (2-node Raft cluster active)
 **Date**: 2026-04-11
 **Branch**: `nas-docker-server`
 
@@ -361,12 +361,14 @@ Can be right-sized down to 8 vCPU / 16 GB in a future maintenance window if desi
 
 ### Phase 1 — Provision ds-1 (VM 123)
 
-1. Clone VM 120 (dockermaster) → VM 123 in Proxmox
-2. Boot, change hostname to `ds-1`, change host IP
-3. Create macvlan with ds-1 IP slice
-4. Register as new Portainer endpoint
-5. Deploy `network-bootstrap` stack (creates bridge networks)
-6. Bring up vault-2 — joins vault-1 as Raft follower (2 nodes, not yet quorum-safe)
+- [x] Clone VM 120 (dockermaster) → VM 123 in Proxmox
+- [x] Boot, change hostname to `ds-1`, change host IP (192.168.48.45 / shim 192.168.59.33)
+- [x] Create macvlan with ds-1 IP slice (`docker-servers-net`, shim at 192.168.59.33/32)
+- [ ] Register as new Portainer endpoint
+- [ ] Deploy `network-bootstrap` stack (creates bridge networks: rproxy, backend, monitoring)
+- [x] Bring up vault-2 (192.168.59.9) — joined vault-1, 2-node Raft cluster active
+  - vault-1: leader (192.168.59.25), vault-2: follower (192.168.59.9)
+  - Both voters, both unsealed
 
 ### Phase 2 — Migrate App Services to ds-1
 
