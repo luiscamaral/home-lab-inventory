@@ -156,15 +156,25 @@ cluster_addr = "http://THIS_NODE_MACVLAN_IP:8201"
 ui = true
 ```
 
-### Snapshot Automation (already implemented)
+### Snapshot Automation (Phase 2 — Rundeck)
 
-`terraform/portainer/stacks/vault.yml` now includes an ofelia sidecar:
+Ofelia sidecar was removed. In a 3-node Raft cluster, a per-container scheduler
+is unreliable — followers cannot snapshot, so two of three nodes would silently fail
+every night. Snapshot job moves to Rundeck on ds-1 (single scheduler, leader-aware
+via the API endpoint, alertable).
 
-- **Save**: daily 02:00 — `vault operator raft snapshot save /vault/snapshots/snap-YYYYMMDD.snap`
-- **Prune**: daily 02:30 — removes snapshots older than 30 days
+Rundeck job spec (Phase 2):
+
+- **Schedule**: daily 02:00
+- **Command**: `vault operator raft snapshot save /nfs/dockermaster/docker/vault/vault/snapshots/snap-$(date +%Y%m%d).snap`
+- **Token**: dedicated snapshot policy token stored in `secret/homelab/vault`
+- **Prune**: daily 02:30 — `find /nfs/.../snapshots -name snap-*.snap -mtime +30 -delete`
 - **Storage**: `/nfs/dockermaster/docker/vault/vault/snapshots/` (NFS-backed, survives VM loss)
 
-Apply: `terraform -chdir=terraform/portainer apply -target=portainer_stack.vault`
+The snapshots volume mount is retained in `vault.yml` so the path is accessible
+from inside the vault container if needed for manual saves.
+
+Apply vault macvlan change: `terraform -chdir=terraform/portainer apply -target=portainer_stack.vault`
 
 ## Network Design
 
@@ -341,7 +351,8 @@ Can be right-sized down to 8 vCPU / 16 GB in a future maintenance window if desi
 
 ### Phase 0 — Immediate (done)
 
-- [x] Vault snapshot automation — ofelia sidecar, daily, NFS-backed
+- [x] Vault snapshot path provisioned — NFS snapshots dir created, pre-split manual snap taken
+- [x] Vault snapshot automation — moved to Rundeck (Phase 2); ofelia sidecar removed (not HA-safe)
 - [x] Drop Chisel, Ansible-observability, LiteLLM — IaC removed, committed
 - [x] Stop and remove standalone leftovers on live dockermaster:
   `elasticsearch`, `lemonldap`, `phpldapadmin`, `openldap`, `chisel` — all stopped and removed
