@@ -1,0 +1,16 @@
+version: '3.3'
+services:
+  speedtest:
+    restart: unless-stopped
+    container_name: openspeedtest
+    ports:
+      - '3000:3000'
+      - '3001:3001'
+    image: openspeedtest/latest
+    networks:
+      home-net:
+        ipv4_address: 192.168.4.234
+
+networks:
+  home-net:
+    external: true

@@ -1,0 +1,33 @@
+version: '3.9'
+name: netbootxyz
+
+services:
+  netbootxyz:
+    image: linuxserver/netbootxyz:0.7.6
+    container_name: netbootxyz
+    hostname: netbootxyz
+    environment:
+      - PUID=1027
+      - PGID=100
+      - TZ=America/Denver
+      - NGINX_PORT=80
+      - WEB_APP_PORT=3000
+      - BOOT_DOMAIN=192.168.2.50:8086
+    volumes:
+      - /var/services/homes/lamaral/docker/netbootxyz/config:/config
+      - /var/services/homes/lamaral/docker/netbootxyz/assets:/assets
+    restart: unless-stopped
+    networks:
+      home-net:
+        ipv4_address: 192.168.4.232
+    #ports:
+    #  - "8086:80"
+    #  - "3000:3000"
+    #  - "69:69/udp"
+    cpu_shares: 512  # Sets a relative CPU weight (default is 1024)
+    mem_limit: 512M  # Use this key for memory limits
+
+networks:
+  home-net:
+    name: home-net
+    external: true

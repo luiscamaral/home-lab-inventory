@@ -1,0 +1,22 @@
+# Twingate connector on NAS — golden-mussel connector
+# Deployed via Portainer stack on NAS endpoint (ID 6)
+# Tokens stored at: secret/homelab/twingate/golden-mussel
+name: twingate-connector
+
+services:
+  twingate-connector:
+    image: twingate/connector:latest
+    container_name: tg-fresh-marmoset
+    hostname: fresh-marmoset
+    pull_policy: always
+    environment:
+      - TWINGATE_NETWORK=lamaral
+      - TWINGATE_ACCESS_TOKEN=${TWINGATE_ACCESS_TOKEN}
+      - TWINGATE_REFRESH_TOKEN=${TWINGATE_REFRESH_TOKEN}
+    networks:
+      home-net:
+        ipv4_address: 192.168.1.4
+
+networks:
+  home-net:
+    external: true
