@@ -1,3 +1,11 @@
+output "environments" {
+  description = "Portainer environment IDs"
+  value = {
+    dockermaster = var.endpoint_id
+    ds1          = portainer_environment.ds1.id
+  }
+}
+
 output "stacks" {
   description = "Managed Portainer stacks"
   value = {

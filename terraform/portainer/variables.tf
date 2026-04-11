@@ -11,9 +11,15 @@ variable "portainer_password" {
 }
 
 variable "endpoint_id" {
-  description = "Portainer endpoint ID for dockermaster"
+  description = "Portainer endpoint ID for dockermaster (local, ID=3)"
   type        = number
   default     = 3
+}
+
+variable "ds1_endpoint_id" {
+  description = "Portainer endpoint ID for ds-1 (agent, ID=9)"
+  type        = number
+  default     = 9
 }
 
 variable "vault_addr" {

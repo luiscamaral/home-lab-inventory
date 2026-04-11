@@ -1,6 +1,6 @@
 # Homelab Multi-Server Split Design
 
-**Status**: Phase 1 in progress — ds-1 provisioned, vault-2 running (2-node Raft cluster active)
+**Status**: Phase 1 complete — ds-1 provisioned, registered in Portainer (ID 9), vault-2 running (2-node Raft cluster)
 **Date**: 2026-04-11
 **Branch**: `nas-docker-server`
 
@@ -364,8 +364,11 @@ Can be right-sized down to 8 vCPU / 16 GB in a future maintenance window if desi
 - [x] Clone VM 120 (dockermaster) → VM 123 in Proxmox
 - [x] Boot, change hostname to `ds-1`, change host IP (192.168.48.45 / shim 192.168.59.33)
 - [x] Create macvlan with ds-1 IP slice (`docker-servers-net`, shim at 192.168.59.33/32)
-- [ ] Register as new Portainer endpoint
-- [ ] Deploy `network-bootstrap` stack (creates bridge networks: rproxy, backend, monitoring)
+- [x] Register as new Portainer endpoint (ID 9, agent at 192.168.59.34:9001, type=2)
+  - Portainer agent: `portainer/agent:2.39.1`, macvlan IP 192.168.59.34
+  - Managed via `terraform/portainer/environments.tf`
+- [x] Bridge networks confirmed present (cloned from dockermaster): `rproxy` (172.24/16),
+  `prometheus_back-tier` (172.21/16), `keycloak_keycloak-internal`
 - [x] Bring up vault-2 (192.168.59.9) — joined vault-1, 2-node Raft cluster active
   - vault-1: leader (192.168.59.25), vault-2: follower (192.168.59.9)
   - Both voters, both unsealed
