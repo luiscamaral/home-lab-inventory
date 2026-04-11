@@ -236,8 +236,8 @@ Firewall restricts access to specific source IPs only.
 | .11 | RustDesk hbbr | dockermaster | moves → ds-2, keeps IP |
 | .12 | Twingate A | dockermaster | moves → ds-1, keeps IP |
 | .13 | Keycloak | dockermaster | freed — behind Nginx in new arch |
-| .20 | Ansible-observability | dockermaster | review — active? |
-| .21 | Ansible-observability | dockermaster | review — active? |
+| .20 | Ansible-observability | dockermaster | dropped — deleted |
+| .21 | Ansible-observability | dockermaster | dropped — deleted |
 | .22 | Rundeck | dockermaster | moves → ds-1, keeps IP |
 | .23 | Rundeck PostgreSQL | dockermaster | moves → ds-1, keeps IP |
 | .24 | Twingate B | dockermaster | moves → ds-2, keeps IP |
@@ -245,7 +245,7 @@ Firewall restricts access to specific source IPs only.
 | .28 | Nginx-1 | dockermaster | keep |
 | .30 | n8n | dockermaster | moves → ds-2, keeps IP |
 | .40 | FreeSWITCH | dockermaster | moves → ds-2, keeps IP |
-| .41 | LiteLLM | dockermaster | review — part of new arch? |
+| .41 | LiteLLM | dockermaster | dropped — deleted |
 
 ### New Assignments
 
@@ -305,9 +305,7 @@ Firewall restricts access to specific source IPs only.
 2. **vault-1 at .25 missing from IaC** — `vault.yml` only declares the `rproxy` bridge
    network. The macvlan assignment exists in production but is not in Terraform-managed
    compose. Add `Docker-servers-net` network + `ipv4_address: 192.168.59.25` to `vault.yml`.
-3. **Ansible-observability (.20, .21)** — not in Portainer Terraform stacks.
-   Clarify: active service or abandoned? If active, decide target server.
-4. **LiteLLM (.41)** — not in Portainer Terraform stacks. Same question.
+3. **IPs .20, .21, .41** — freed; Ansible-observability and LiteLLM dropped and deleted.
 
 ## Resource Planning
 
