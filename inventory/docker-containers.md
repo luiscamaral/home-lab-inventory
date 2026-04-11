@@ -1,5 +1,77 @@
 # Docker Container Inventory
 
+## NAS Server (Synology)
+
+### System Information
+
+- **Host**: nas (Synology NAS)
+- **Docker**: 24.0.2 via Synology Container Manager (API 1.43)
+- **Docker Compose**: v2.20.1
+- **Docker Root**: `/volume2/@docker`
+- **Storage Driver**: btrfs
+- **Portainer**: Edge Agent endpoint ID 6 (name: "nas")
+- **Edge Agent Image**: `portainer/agent:2.39.1`
+- **Credentials**: `secret/homelab/portainer-nas-agent`
+- **Compose files tracked at**: `nas/docker/`
+
+---
+
+## Running Containers on NAS (4 Portainer stacks + 1 agent)
+
+### Portainer Edge Agent
+
+- **portainer-agent**
+  - Image: `portainer/agent:2.39.1`
+  - Compose: `nas/docker/portainer-agent/docker-compose.yml`
+  - Connects outbound via WebSocket to `ws://192.168.59.2:8000`
+  - Purpose: Edge agent enabling Portainer to manage NAS containers (NAS is not directly reachable from dockermaster)
+
+### NAS Portainer Stacks (Endpoint ID 6)
+
+#### Twingate Connector (Stack ID: 28)
+
+- **twingate-connector**
+  - Network: macvlan
+  - IP: 192.168.1.4
+  - Compose: `nas/docker/twingate-connector/`
+  - Purpose: Twingate zero-trust network connector on NAS
+
+#### Speed Test (Stack ID: 29)
+
+- **speed-test**
+  - Image: openspeedtest/openspeedtest
+  - Network: macvlan
+  - IP: 192.168.4.234
+  - Compose: `nas/docker/speed-test/`
+  - Purpose: OpenSpeedTest local network speed test server
+
+#### Paperless-NGX (Stack ID: 32)
+
+- **paperlessngx** + **`postgresql`** + **`redis`**
+  - Compose: `nas/docker/paperlessngx/`
+  - Secrets: `secret/homelab/paperlessngx`
+  - Purpose: Document management system with OCR (Paperless-NGX + PostgreSQL + Redis)
+
+#### NetBoot.xyz (Stack ID: 34)
+
+- **netbootxyz**
+  - Image: lscr.io/linuxserver/netbootxyz (v0.7.6)
+  - Network: macvlan
+  - IP: 192.168.4.232
+  - Compose: `nas/docker/netbootxyz/`
+  - Purpose: Network boot server for PXE booting
+
+---
+
+### Removed from NAS
+
+| Service | Reason | Removed |
+|---|---|---|
+| vault | Superseded by dockermaster Vault (192.168.59.25). Containers, images (`vault-vault:latest`, `vault-ofelia:latest`, `hashicorp/vault:local`), and `/volume2/docker/vault/` all deleted. | 2026-04-11 |
+| ocr-photo-tag | Custom-build project not portable via Portainer Edge. Containers, image (`ocr-photo-tag-ocr-tagger:latest`), and `/var/services/homes/lamaral/docker/ocr-photo-tag/` all deleted. | 2026-04-11 |
+
+---
+
 ## Docker Master Server
 
 ### System Information
@@ -30,7 +102,7 @@
 #### Calibre (Stack ID: 10)
 
 - **calibre**
-  - Image: calibre-calibre
+  - Image: `calibre-calibre`
   - Network: rproxy bridge (172.24.0.x)
   - Ports: 58080:8080, 58081:8081, 58181:8181, 58090:9090
   - Resources: 2.55% CPU, 553MB RAM (0.86%)
@@ -38,7 +110,7 @@
   - Purpose: E-book library management server
 
 - **calibre-web**
-  - Image: lscr.io/linuxserver/calibre-web:latest
+  - Image: `lscr.io/linuxserver/calibre-web:latest`
   - Network: rproxy bridge (172.24.0.x)
   - Ports: 58083:8083
   - Resources: 0.02% CPU, 199MB RAM (0.31%)
@@ -48,8 +120,8 @@
 #### Bind DNS (Stack ID: 4)
 
 - **bind-dns-bind9-1**
-  - Image: Ubuntu/bind9:9.20-24.10_edge
-  - Network: docker-servers-net
+  - Image: `Ubuntu/bind9:9.20-24.10_edge`
+  - Network: `docker-servers-net`
   - IP: 192.168.59.3
   - Ports: 53/tcp, 53/udp
   - Resources: 0.00% CPU, 12MB RAM (0.02%)
@@ -59,22 +131,22 @@
 #### Cloudflare Tunnel (Stack ID: 2)
 
 - **cloudflare-tunnel-cloudflare-1**
-  - Image: cloudflare/cloudflared
+  - Image: `cloudflare/cloudflared`
   - Network: rproxy bridge (172.24.0.x)
-  - Purpose: Cloudflare tunnel routing `*.cf.lcamaral.com` to nginx-rproxy
+  - Purpose: Cloudflare tunnel routing `*.cf.lcamaral.com` to `nginx-rproxy`
 
 #### Docker Registry (Stack ID: 1)
 
 - **registry**
-  - Image: registry:2
+  - Image: `registry:2`
   - Network: rproxy bridge (172.24.0.x)
   - Purpose: Private Docker image registry (exposed via `registry.cf.lcamaral.com`)
 
 #### GitHub Runner (Stack ID: 9)
 
-- **github-runner-homelab**
-  - Image: myoung34/github-runner (or custom)
-  - Network: docker-servers-net
+- **`github-runner-homelab`**
+  - Image: `myoung34/github-runner` (or custom)
+  - Network: `docker-servers-net`
   - IP: 192.168.59.4
   - Volumes: `/var/run/docker.sock`, `/nfs/dockermaster/Docker` (read-only)
   - Purpose: GitHub Actions self-hosted runner for CI/CD
@@ -82,7 +154,7 @@
 #### Reverse Proxy (Stack ID: 8)
 
 - **rproxy**
-  - Image: nginx:1.27
+  - Image: `nginx:1.27`
   - Network: dual (macvlan + rproxy bridge)
   - IP: 192.168.59.28
   - Resources: 0.00% CPU, 3.6MB RAM (0.01%)
@@ -90,9 +162,9 @@
   - Purpose: Nginx reverse proxy with SSL termination for `*.d.lcamaral.com`
 
 - **reverse-proxy-promtail-1**
-  - Image: grafana/promtail
+  - Image: `grafana/promtail`
   - Network: dual (macvlan + rproxy bridge)
-  - Purpose: Log shipping for nginx access/error logs
+  - Purpose: Log shipping for Nginx access/error logs
 
 #### Twingate A (Stack ID: 5)
 
@@ -111,7 +183,7 @@
 #### Vault (Stack ID: 7)
 
 - **vault**
-  - Image: hashicorp/vault
+  - Image: `hashicorp/vault`
   - Network: rproxy bridge (172.24.0.x)
   - Purpose: HashiCorp Vault secret management (exposed via `vault.d.lcamaral.com`)
   - Notes: Root token stored in macOS Keychain; secrets at `secret/homelab/*`
@@ -123,8 +195,8 @@
 #### Portainer CE
 
 - **portainer**
-  - Image: portainer/portainer-ce:latest
-  - Network: docker-servers-net
+  - Image: `portainer/portainer-ce:latest`
+  - Network: `docker-servers-net`
   - IP: 192.168.59.2
   - Resources: 0.04% CPU, 72MB RAM (0.11%)
   - Volumes: `/var/run/docker.sock`, `portainer_data`
@@ -133,16 +205,16 @@
 #### Rundeck (la-rundeck)
 
 - **rundeck**
-  - Image: la-rundeck-rundeck (custom build)
-  - Network: docker-servers-net
+  - Image: `la-rundeck-rundeck` (custom build)
+  - Network: `docker-servers-net`
   - IP: 192.168.59.22
   - Resources: 0.44% CPU, 2.25GB RAM (3.58%)
   - Volumes: `/nfs/dockermaster/docker/rundeck/data`, `/var/run/docker.sock`
   - Purpose: Job scheduler and runbook automation
 
 - **postgres-rundeck**
-  - Image: postgres
-  - Network: docker-servers-net
+  - Image: `postgres`
+  - Network: `docker-servers-net`
   - IP: 192.168.59.23
   - Resources: 0.01% CPU, 62MB RAM (0.10%)
   - Volumes: `/nfs/dockermaster/docker/rundeck/dbdata`
@@ -207,26 +279,26 @@
 #### FreeSWITCH
 
 - **freeswitch**
-  - Network: docker-servers-net
+  - Network: `docker-servers-net`
   - IP: 192.168.59.40
   - Purpose: VoIP / SIP softswitch
 
 #### Elastic Search
 
-- **elasticsearch**
-  - Network: docker-servers-net
+- **`elasticsearch`**
+  - Network: `docker-servers-net`
   - IP: 192.168.59.25
   - Purpose: Full-text search and analytics engine
 
 #### Synology Search
 
 - **nas-solr**
-  - Network: docker-servers-net
+  - Network: `docker-servers-net`
   - IP: 192.168.59.31
   - Purpose: Solr search backend for NAS indexing
 
 - **nas-tika**
-  - Network: docker-servers-net
+  - Network: `docker-servers-net`
   - IP: 192.168.59.32
   - Purpose: Apache Tika document content extraction
 
@@ -236,12 +308,12 @@
 
 | Project | Last State | Description |
 |---|---|---|
-| ansible-observability | Stopped | Prometheus + Grafana for Ansible/AWX monitoring |
-| docker-dns | Stopped | Dynamic DNS for Docker containers |
-| docker-vault | Stopped | Legacy standalone Vault (superseded by vault Portainer stack) |
-| litellm | Stopped | LiteLLM proxy + PostgreSQL |
-| n8n-stack | Stopped | n8n workflow automation + PostgreSQL |
-| puppet | Stopped | Puppet configuration management server |
+| `ansible-observability` | Stopped | Prometheus + Grafana for Ansible/AWX monitoring |
+| `docker-dns` | Stopped | Dynamic DNS for Docker containers |
+| `docker-vault` | Stopped | Legacy standalone Vault (superseded by vault Portainer stack) |
+| `litellm` | Stopped | LiteLLM proxy + PostgreSQL |
+| `n8n-stack` | Stopped | n8n workflow automation + PostgreSQL |
+| `puppet` | Stopped | Puppet configuration management server |
 
 ---
 
@@ -249,31 +321,31 @@
 
 ### Active Networks
 
-- **docker-servers-net**: Macvlan network for static server IPs (192.168.59.0/26)
-- **rproxy bridge** (172.24.0.0/16): Internal bridge shared by nginx-rproxy and connected stacks
-- **bind-dns_default**: Bind9 internal network
-- **calibre_default**: Calibre services network
-- **prometheus_default**: Prometheus stack network
+- **`docker-servers-net`**: Macvlan network for static server IPs (192.168.59.0/26)
+- **rproxy bridge** (172.24.0.0/16): Internal bridge shared by `nginx-rproxy` and connected stacks
+- **`bind-dns_default`**: Bind9 internal network
+- **`calibre_default`**: Calibre services network
+- **`prometheus_default`**: Prometheus stack network
 
-### IP Assignment (docker-servers-net)
+### IP Assignment (`docker-servers-net`)
 
 | IP | Container / Service |
 |---|---|
-| 192.168.59.0 | chisel |
-| 192.168.59.2 | portainer |
-| 192.168.59.3 | bind-dns |
-| 192.168.59.4 | github-runner |
-| 192.168.59.10 | hbbs (RustDesk) |
-| 192.168.59.11 | hbbr (RustDesk) |
-| 192.168.59.12 | twingate-a |
-| 192.168.59.22 | rundeck |
-| 192.168.59.23 | postgres-rundeck |
-| 192.168.59.24 | twingate-b |
-| 192.168.59.25 | elasticsearch |
-| 192.168.59.28 | rproxy |
-| 192.168.59.31 | nas-solr |
-| 192.168.59.32 | nas-tika |
-| 192.168.59.40 | freeswitch |
+| 192.168.59.0 | `chisel` |
+| 192.168.59.2 | `portainer` |
+| 192.168.59.3 | `bind-dns` |
+| 192.168.59.4 | `github-runner` |
+| 192.168.59.10 | `hbbs` (RustDesk) |
+| 192.168.59.11 | `hbbr` (RustDesk) |
+| 192.168.59.12 | `twingate-a` |
+| 192.168.59.22 | `rundeck` |
+| 192.168.59.23 | `postgres-rundeck` |
+| 192.168.59.24 | `twingate-b` |
+| 192.168.59.25 | `elasticsearch` |
+| 192.168.59.28 | `rproxy` |
+| 192.168.59.31 | `nas-solr` |
+| 192.168.59.32 | `nas-tika` |
+| 192.168.59.40 | `freeswitch` |
 
 ---
 
@@ -298,29 +370,29 @@
 
 | Stack | Portainer ID |
 |---|---|
-| docker-registry | 1 |
-| cloudflare-tunnel | 2 |
-| bind-dns | 4 |
-| twingate-a | 5 |
-| twingate-b | 6 |
-| vault | 7 |
-| reverse-proxy | 8 |
-| github-runner | 9 |
-| calibre | 10 |
+| `docker-registry` | 1 |
+| `cloudflare-tunnel` | 2 |
+| `bind-dns` | 4 |
+| `twingate-a` | 5 |
+| `twingate-b` | 6 |
+| `vault` | 7 |
+| `reverse-proxy` | 8 |
+| `github-runner` | 9 |
+| `calibre` | 10 |
 
 ### Standalone (direct `docker compose`)
 
-1. portainer-ce
-2. la-rundeck
-3. prometheus
-4. ldap-lcamaral-com
-5. minio
-6. ollama
-7. chisel
-8. rust-server
-9. freeswitch
-10. elastic-search
-11. synology-search
+1. `portainer-ce`
+2. `la-rundeck`
+3. `prometheus`
+4. `ldap-lcamaral-com`
+5. `minio`
+6. `ollama`
+7. `chisel`
+8. `rust-server`
+9. `freeswitch`
+10. `elastic-search`
+11. `synology-search`
 
 ---
 
@@ -333,7 +405,7 @@
 - **Memory Usage**: ~3.5 GB of 62 GB (~5.6%)
 - **CPU Usage**: ~3% average
 - **Storage**: Persistent data on NFS mounts
-- **Network**: Macvlan (docker-servers-net) for static IPs; rproxy bridge for internal service communication
+- **Network**: Macvlan (`docker-servers-net`) for static IPs; rproxy bridge for internal service communication
 
 ---
 

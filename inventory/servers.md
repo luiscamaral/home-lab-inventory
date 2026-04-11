@@ -3,6 +3,7 @@
 ## Physical Servers
 
 ### Proxmox Hypervisor
+
 - **Hostname**: proxmox
 - **OS**: Debian GNU/Linux 12 (bookworm)
 - **Kernel**: Linux 6.8.12-9-pve
@@ -29,15 +30,41 @@
 - **Access**: SSH via `ssh proxmox`
 
 ### NAS Server
+
 - **Type**: Synology NAS
+- **Network Interfaces**:
+  - `eth0`: 192.168.0.50
+  - `bond0.10`: 192.168.1.50
+  - `eth4.10`: 192.168.2.50 (NFS storage interface)
+- **Hardware**:
+  - **CPU**: x86_64 / 4 CPUs
+  - **RAM**: 7.7 GiB
+  - **Kernel**: 4.4.302+
+- **Storage**:
+  - `/volume2`: 25TB total, 6.7TB free, btrfs filesystem
+- **Docker Environment** (Synology Container Manager):
+  - **Docker Binary**: `/var/packages/ContainerManager/target/usr/bin/docker`
+  - **Docker Version**: 24.0.2 (API 1.43)
+  - **Docker Compose**: v2.20.1
+  - **Docker Socket**: `/var/run/docker.sock` (group: `docker`)
+  - **Docker Root**: `/volume2/@docker`
+  - **Storage Driver**: btrfs
+  - **containerd**: v1.7.1
+- **Portainer Integration**:
+  - **Mode**: Edge Agent (outbound WebSocket to Portainer at `ws://192.168.59.2:8000`)
+  - **Endpoint ID**: 6 (name: "nas")
+  - **Agent Image**: `portainer/agent:2.39.1`
+  - **Credentials**: `secret/homelab/portainer-nas-agent` in Vault
+  - **Note**: NAS is not directly reachable from dockermaster (different subnets). Edge Agent reverses the connection.
 - **Services**:
   - NFS shares for VM storage and backups
-  - Shared storage at 192.168.2.50
+  - Docker containers via Portainer Edge (4 active stacks — see `docker-containers.md`)
 - **Access**: SSH via `ssh nas`
 
 ## Virtual Servers
 
 ### Docker Master Server (VM 120)
+
 - **Hostname**: dockermaster
 - **Type**: Virtual Machine on Proxmox (VMID 120)
 - **OS**: Ubuntu 24.04.2 LTS (Noble Numbat)
