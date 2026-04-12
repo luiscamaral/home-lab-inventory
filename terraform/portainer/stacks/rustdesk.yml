@@ -1,8 +1,6 @@
 name: rust-server
 
 networks:
-  rproxy:
-    external: true
   servers-net:
     name: docker-servers-net
     external: true
@@ -15,7 +13,6 @@ services:
     volumes:
       - /nfs/dockermaster/docker/rustserver/data:/root
     networks:
-      rproxy:
       servers-net:
         ipv4_address: 192.168.59.10
     depends_on:
@@ -48,7 +45,6 @@ services:
     volumes:
       - /nfs/dockermaster/docker/rustserver/data:/root
     networks:
-      rproxy:
       servers-net:
         ipv4_address: 192.168.59.11
     restart: unless-stopped

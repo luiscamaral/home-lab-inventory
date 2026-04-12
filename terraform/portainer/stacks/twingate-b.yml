@@ -4,9 +4,6 @@ networks:
   servers-net:
     name: docker-servers-net
     external: true
-  rproxy:
-    name: rproxy
-    external: true
 
 services:
   twingate:
@@ -15,13 +12,12 @@ services:
     image: twingate/connector:1
     hostname: golden-mussel
     networks:
-      rproxy:
       servers-net:
         ipv4_address: 192.168.59.24
     environment:
       TWINGATE_NETWORK: "lamaral"
       TWINGATE_LABEL_HOSTNAME: "golden-mussel"
-      TWINGATE_LABEL_DEPLOYED_BY: "dockermaster"
+      TWINGATE_LABEL_DEPLOYED_BY: "dockerserver-2"
       TWINGATE_ACCESS_TOKEN: ${TWINGATE_ACCESS_TOKEN}
       TWINGATE_REFRESH_TOKEN: ${TWINGATE_REFRESH_TOKEN}
     restart: unless-stopped

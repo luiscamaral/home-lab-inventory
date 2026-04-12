@@ -117,12 +117,12 @@ resource "portainer_stack" "twingate_a" {
 }
 
 # ──────────────────────────────────────────────
-# Twingate Connector B (golden-mussel)
+# Twingate Connector B (golden-mussel) → dockerserver-2
 # VPN connector — tokens from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "twingate_b" {
   name             = "twingate-b"
-  endpoint_id      = var.endpoint_id
+  endpoint_id      = var.ds2_endpoint_id
   deployment_type  = "standalone"
   method           = "string"
 
@@ -176,12 +176,12 @@ resource "portainer_stack" "github_runner" {
 }
 
 # ──────────────────────────────────────────────
-# RustDesk (hbbs + hbbr)
+# RustDesk (hbbs + hbbr) → dockerserver-2
 # Remote desktop server — no secrets
 # ──────────────────────────────────────────────
 resource "portainer_stack" "rustdesk" {
   name             = "rust-server"
-  endpoint_id      = var.endpoint_id
+  endpoint_id      = var.ds2_endpoint_id
   deployment_type  = "standalone"
   method           = "string"
 
@@ -320,12 +320,12 @@ resource "portainer_stack" "minio_2" {
 }
 
 # ──────────────────────────────────────────────
-# FreeSWITCH VoIP/SIP Server
+# FreeSWITCH VoIP/SIP Server → dockerserver-2
 # SIP credentials from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "freeswitch" {
   name             = "freeswitch"
-  endpoint_id      = var.endpoint_id
+  endpoint_id      = var.ds2_endpoint_id
   deployment_type  = "standalone"
   method           = "string"
 
