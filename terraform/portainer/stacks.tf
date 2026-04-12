@@ -351,3 +351,55 @@ resource "portainer_stack" "keycloak" {
     value = data.vault_kv_secret_v2.keycloak.data["admin_password"]
   }
 }
+
+# ──────────────────────────────────────────────
+# Postfix SMTP Relay
+# Outbound mail via DreamHost SMTP — credentials from Vault
+# ──────────────────────────────────────────────
+resource "portainer_stack" "postfix_relay" {
+  name             = "postfix-relay"
+  endpoint_id      = var.endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/postfix-relay.yml")
+
+  env {
+    name  = "SMTP_USERNAME"
+    value = data.vault_kv_secret_v2.smtp.data["username"]
+  }
+
+  env {
+    name  = "SMTP_PASSWORD"
+    value = data.vault_kv_secret_v2.smtp.data["password"]
+  }
+}
+
+# ──────────────────────────────────────────────
+# Homelab Portal (login.cf.lcamaral.com)
+# Custom SSO login UI backed by Keycloak
+# Secrets from Vault: keycloak/clients + portal
+# ──────────────────────────────────────────────
+resource "portainer_stack" "homelab_portal" {
+  name             = "homelab-portal"
+  endpoint_id      = var.endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/homelab-portal.yml")
+
+  env {
+    name  = "KEYCLOAK_CLIENT_SECRET"
+    value = data.vault_kv_secret_v2.keycloak_clients.data["homelab_portal_secret"]
+  }
+
+  env {
+    name  = "SESSION_SECRET"
+    value = data.vault_kv_secret_v2.portal.data["session_secret"]
+  }
+
+  env {
+    name  = "SESSION_ENCRYPTION_KEY"
+    value = data.vault_kv_secret_v2.portal.data["session_encryption_key"]
+  }
+}
