@@ -63,6 +63,11 @@ data "vault_kv_secret_v2" "keycloak_clients" {
   name  = "homelab/keycloak/clients"
 }
 
+data "vault_kv_secret_v2" "registry" {
+  mount = "secret"
+  name  = "homelab/registry"
+}
+
 data "vault_kv_secret_v2" "smtp" {
   mount = "secret"
   name  = "homelab/smtp"

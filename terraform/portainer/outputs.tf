@@ -7,6 +7,13 @@ output "environments" {
   }
 }
 
+output "registries" {
+  description = "Managed Portainer registries"
+  value = {
+    homelab_registry = portainer_registry.homelab_registry.name
+  }
+}
+
 output "stacks" {
   description = "Managed Portainer stacks"
   value = {
