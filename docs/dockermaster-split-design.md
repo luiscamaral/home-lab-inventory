@@ -1,6 +1,9 @@
 # Homelab Multi-Server Split Design
 
-**Status**: Phase 1 complete — ds-1 provisioned, registered in Portainer (ID 9), vault-2 running (2-node Raft cluster)
+**Status**: Phase 1 complete — dockerserver-1 (VM 123) and dockerserver-2 (VM 124) provisioned.
+vault-2 running (2-node Raft cluster). CPU affinity pinned: dockermaster + dockerserver-1 → socket 0,
+dockerserver-2 → socket 1.
+
 **Date**: 2026-04-11
 **Branch**: `nas-docker-server`
 
@@ -26,7 +29,7 @@ Proxmox Hypervisor (20C/40T, 243 GB RAM)
 │   ├── Docker Registry      registry.cf.lcamaral.com
 │   └── vault-1              Raft voter (leader candidate)
 │
-├── VM 123 — ds-1  (Infra HA pair + App Plane A)
+├── VM 123 — dockerserver-1  (Infra HA pair + App Plane A, short: ds-1)
 │   ├── Nginx-2 + cloudflared-2  web ingress (active-active with dockermaster)
 │   ├── Bind9-secondary          slave zone from dockermaster
 │   ├── vault-2                  Raft voter
@@ -41,7 +44,7 @@ Proxmox Hypervisor (20C/40T, 243 GB RAM)
 │   ├── MinIO                    S3 object storage
 │   └── Keycloak-1 + PG-replica  SSO node A (DB replica for failover)
 │
-├── VM 124 — ds-2  (App Plane B)
+├── VM 124 — dockerserver-2  (App Plane B, short: ds-2)
 │   ├── vault-3                  Raft voter
 │   ├── Twingate B               golden-mussel connector
 │   ├── Watchtower               auto-updates for ds-2 containers

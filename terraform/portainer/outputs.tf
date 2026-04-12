@@ -1,8 +1,9 @@
 output "environments" {
   description = "Portainer environment IDs"
   value = {
-    dockermaster = var.endpoint_id
-    ds1          = portainer_environment.ds1.id
+    dockermaster  = var.endpoint_id
+    dockerserver1 = portainer_environment.ds1.id
+    dockerserver2 = portainer_environment.ds2.id
   }
 }
 

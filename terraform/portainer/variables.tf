@@ -17,9 +17,15 @@ variable "endpoint_id" {
 }
 
 variable "ds1_endpoint_id" {
-  description = "Portainer endpoint ID for ds-1 (agent, ID=9)"
+  description = "Portainer endpoint ID for dockerserver-1 (agent, ID=9)"
   type        = number
   default     = 9
+}
+
+variable "ds2_endpoint_id" {
+  description = "Portainer endpoint ID for dockerserver-2 (agent, to be assigned on first apply)"
+  type        = number
+  default     = 0
 }
 
 variable "vault_addr" {
