@@ -1,8 +1,8 @@
 name: calibre
 
 networks:
-  rproxy:
-    name: rproxy
+  servers-net:
+    name: docker-servers-net
     external: true
 
 services:
@@ -12,7 +12,8 @@ services:
     container_name: calibre
     shm_size: '2gb'
     networks:
-      rproxy:
+      servers-net:
+        ipv4_address: 192.168.59.7
     ports:
       - 58090:9090
     volumes:
@@ -50,7 +51,8 @@ services:
     container_name: calibre-web
     hostname: calibre-web
     networks:
-      rproxy:
+      servers-net:
+        ipv4_address: 192.168.59.6
     environment:
       - PUID=1000
       - PGID=1000

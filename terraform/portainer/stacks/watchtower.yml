@@ -1,8 +1,7 @@
 name: watchtower
 
 networks:
-  rproxy:
-    external: true
+  watchtower-internal:
 
 services:
   watchtower:
@@ -10,7 +9,7 @@ services:
     container_name: watchtower
     hostname: watchtower
     networks:
-      rproxy:
+      watchtower-internal:
     environment:
       DOCKER_API_VERSION: "1.40"
       TZ: America/Denver

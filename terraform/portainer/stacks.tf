@@ -4,7 +4,7 @@
 resource "portainer_stack" "docker_registry" {
   name             = "docker-registry"
   endpoint_id      = var.endpoint_id
-  deployment_type  = "compose"
+  deployment_type  = "standalone"
   method           = "string"
 
   stack_file_content = file("${path.module}/stacks/docker-registry.yml")
@@ -80,12 +80,12 @@ resource "portainer_stack" "vault" {
 }
 
 # ──────────────────────────────────────────────
-# Twingate Connector A (sepia-hornet)
+# Twingate Connector A (sepia-hornet) → dockerserver-1
 # VPN connector — tokens from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "twingate_a" {
   name             = "twingate-a"
-  endpoint_id      = var.endpoint_id
+  endpoint_id      = var.ds1_endpoint_id
   deployment_type  = "standalone"
   method           = "string"
 
@@ -126,12 +126,12 @@ resource "portainer_stack" "twingate_b" {
 }
 
 # ──────────────────────────────────────────────
-# Calibre (calibre + calibre-web)
+# Calibre (calibre + calibre-web) → dockerserver-1
 # Ebook server — password from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "calibre" {
   name             = "calibre"
-  endpoint_id      = var.endpoint_id
+  endpoint_id      = var.ds1_endpoint_id
   deployment_type  = "standalone"
   method           = "string"
 
@@ -144,12 +144,12 @@ resource "portainer_stack" "calibre" {
 }
 
 # ──────────────────────────────────────────────
-# GitHub Runner
+# GitHub Runner → dockerserver-1
 # CI/CD self-hosted runner — PAT from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "github_runner" {
   name             = "github-runner"
-  endpoint_id      = var.endpoint_id
+  endpoint_id      = var.ds1_endpoint_id
   deployment_type  = "standalone"
   method           = "string"
 
@@ -175,13 +175,13 @@ resource "portainer_stack" "rustdesk" {
 }
 
 # ──────────────────────────────────────────────
-# Rundeck + PostgreSQL
+# Rundeck + PostgreSQL → dockerserver-1
 # Automation server — DB and storage passwords from Vault
-# Uses locally-built image (la-rundeck-rundeck:latest)
+# Image pushed to registry as registry.cf.lcamaral.com/la-rundeck:latest
 # ──────────────────────────────────────────────
 resource "portainer_stack" "rundeck" {
   name             = "la-rundeck"
-  endpoint_id      = var.endpoint_id
+  endpoint_id      = var.ds1_endpoint_id
   deployment_type  = "standalone"
   method           = "string"
 
@@ -199,13 +199,13 @@ resource "portainer_stack" "rundeck" {
 }
 
 # ──────────────────────────────────────────────
-# Prometheus Monitoring Stack
+# Prometheus Monitoring Stack → dockerserver-1
 # prometheus + node-exporter + snmp-exporter + alertmanager + cadvisor
 # Internal back-tier network only, no secrets
 # ──────────────────────────────────────────────
 resource "portainer_stack" "prometheus" {
   name             = "prometheus"
-  endpoint_id      = var.endpoint_id
+  endpoint_id      = var.ds1_endpoint_id
   deployment_type  = "standalone"
   method           = "string"
 
@@ -213,10 +213,28 @@ resource "portainer_stack" "prometheus" {
 }
 
 # ──────────────────────────────────────────────
-# Watchtower
+# Watchtower → dockerserver-1
 # Auto-updates opted-in containers daily at 4 AM
 # ──────────────────────────────────────────────
 resource "portainer_stack" "watchtower" {
+  name             = "watchtower"
+  endpoint_id      = var.ds1_endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/watchtower.yml")
+
+  env {
+    name  = "WATCHTOWER_API_TOKEN"
+    value = data.vault_kv_secret_v2.watchtower.data["api_token"]
+  }
+}
+
+# ──────────────────────────────────────────────
+# Watchtower — dockermaster (control plane)
+# Separate instance; removed in Phase 4 when dockermaster is slimmed
+# ──────────────────────────────────────────────
+resource "portainer_stack" "watchtower_dm" {
   name             = "watchtower"
   endpoint_id      = var.endpoint_id
   deployment_type  = "standalone"
@@ -231,12 +249,12 @@ resource "portainer_stack" "watchtower" {
 }
 
 # ──────────────────────────────────────────────
-# MinIO S3 Storage
+# MinIO S3 Storage → dockerserver-1
 # Object storage — root credentials from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "minio" {
   name             = "minio"
-  endpoint_id      = var.endpoint_id
+  endpoint_id      = var.ds1_endpoint_id
   deployment_type  = "standalone"
   method           = "string"
 
@@ -256,19 +274,6 @@ resource "portainer_stack" "minio" {
     name  = "MINIO_OIDC_CLIENT_SECRET"
     value = data.vault_kv_secret_v2.keycloak_clients.data["minio_client_secret"]
   }
-}
-
-# ──────────────────────────────────────────────
-# Ollama LLM Server
-# No secrets — model cache on NFS volume
-# ──────────────────────────────────────────────
-resource "portainer_stack" "ollama" {
-  name             = "ollama"
-  endpoint_id      = var.endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
-
-  stack_file_content = file("${path.module}/stacks/ollama.yml")
 }
 
 # ──────────────────────────────────────────────

@@ -24,7 +24,6 @@ output "stacks" {
     prometheus        = portainer_stack.prometheus.name
     watchtower        = portainer_stack.watchtower.name
     minio             = portainer_stack.minio.name
-    ollama            = portainer_stack.ollama.name
     freeswitch        = portainer_stack.freeswitch.name
     keycloak          = portainer_stack.keycloak.name
   }

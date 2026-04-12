@@ -7,7 +7,8 @@ networks:
 
 services:
   rundeck:
-    image: la-rundeck-rundeck:latest
+    image: registry.cf.lcamaral.com/la-rundeck:latest
+    pull_policy: if_not_present
     container_name: rundeck
     hostname: rundeck-local
     environment:
