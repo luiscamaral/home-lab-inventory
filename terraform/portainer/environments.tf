@@ -17,11 +17,11 @@ resource "portainer_environment" "ds1" {
 
 # ──────────────────────────────────────────────
 # dockerserver-2 — App Plane B (VM 124)
-# Portainer agent at 192.168.48.46:9001 (host port)
+# Portainer agent at 192.168.59.46:9001 (macvlan IP)
 # ──────────────────────────────────────────────
 resource "portainer_environment" "ds2" {
   name                = "dockerserver-2"
-  environment_address = "192.168.48.46:9001"
+  environment_address = "tcp://192.168.59.46:9001"
   type                = 2  # Docker agent (EndpointCreationType=2)
   tls_skip_verify     = true
 }
