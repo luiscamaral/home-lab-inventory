@@ -15,6 +15,7 @@ output "stacks" {
     bind_dns          = portainer_stack.bind_dns.name
     reverse_proxy     = portainer_stack.reverse_proxy.name
     vault             = portainer_stack.vault.name
+    vault_3           = portainer_stack.vault_3.name
     twingate_a        = portainer_stack.twingate_a.name
     twingate_b        = portainer_stack.twingate_b.name
     calibre           = portainer_stack.calibre.name

@@ -57,6 +57,20 @@ resource "portainer_stack" "reverse_proxy" {
 }
 
 # ──────────────────────────────────────────────
+# Vault Node 3 → dockerserver-2
+# Third Raft peer — gives cluster quorum protection
+# No secrets needed; joins existing cluster on first boot
+# ──────────────────────────────────────────────
+resource "portainer_stack" "vault_3" {
+  name             = "vault-3"
+  endpoint_id      = var.ds2_endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/vault-3.yml")
+}
+
+# ──────────────────────────────────────────────
 # HashiCorp Vault
 # Secret management — env vars for internal CLI only
 # ──────────────────────────────────────────────
