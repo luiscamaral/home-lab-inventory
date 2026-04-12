@@ -32,6 +32,7 @@ output "stacks" {
     prometheus        = portainer_stack.prometheus.name
     watchtower        = portainer_stack.watchtower.name
     minio             = portainer_stack.minio.name
+    minio_2           = portainer_stack.minio_2.name
     freeswitch        = portainer_stack.freeswitch.name
     keycloak          = portainer_stack.keycloak.name
     postfix_relay     = portainer_stack.postfix_relay.name

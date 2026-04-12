@@ -291,6 +291,35 @@ resource "portainer_stack" "minio" {
 }
 
 # ──────────────────────────────────────────────
+# MinIO S3 Replica → dockerserver-2
+# Site replication peer for minio on ds-1
+# Data on local disk (/var/lib/minio-data) for storage-level HA
+# ──────────────────────────────────────────────
+resource "portainer_stack" "minio_2" {
+  name             = "minio-2"
+  endpoint_id      = var.ds2_endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/minio-2.yml")
+
+  env {
+    name  = "MINIO_ROOT_USER"
+    value = data.vault_kv_secret_v2.minio.data["root_user"]
+  }
+
+  env {
+    name  = "MINIO_ROOT_PASSWORD"
+    value = data.vault_kv_secret_v2.minio.data["root_password"]
+  }
+
+  env {
+    name  = "MINIO_OIDC_CLIENT_SECRET"
+    value = data.vault_kv_secret_v2.keycloak_clients.data["minio_client_secret"]
+  }
+}
+
+# ──────────────────────────────────────────────
 # FreeSWITCH VoIP/SIP Server
 # SIP credentials from Vault
 # ──────────────────────────────────────────────
