@@ -1,8 +1,7 @@
 # Homelab Multi-Server Split Design
 
-**Status**: Phase 1 complete — dockerserver-1 (VM 123) and dockerserver-2 (VM 124) provisioned.
-vault-2 running (2-node Raft cluster). CPU affinity pinned: dockermaster + dockerserver-1 → socket 0,
-dockerserver-2 → socket 1.
+**Status**: Phase 1 complete. ds-2 provisioned (out-of-order, before Phase 2).
+Phase 2 (service migration to ds-1) is the active next step.
 
 **Date**: 2026-04-11
 **Branch**: `nas-docker-server`
@@ -65,13 +64,67 @@ Proxmox Hypervisor (20C/40T, 243 GB RAM)
 
 - **dockermaster stays** — lean control plane, not decommissioned
 - **Clone strategy** — clone dockermaster → ds-1 (carries NFS mounts, Docker config);
-  clone again → ds-2 then prune to app-only services
+  clone dockerserver-1 → ds-2 then prune to app-only services
+  *(Note: ds-2 was cloned from dockerserver-1, not dockermaster)*
 - **NFS mount point** — `/nfs/dockermaster` on all three servers, same NAS export
   (`tnas:/volume2/servers/dockermaster`). No path changes in compose files.
 - **Watchtower** — one instance per app server (ds-1, ds-2); removed from dockermaster
   (control-plane containers should not be auto-updated)
 - **Vault HA** — 3 Raft voters on dockermaster + ds-1 + ds-2; NAS excluded
   (kernel 4.4 too old for reliable Vault)
+
+## Current State (2026-04-11)
+
+### What Is Running Where
+
+**dockermaster (VM 120)** — still the monolith, migration pending:
+
+| Container | Target |
+|-----------|--------|
+| portainer | keep on dockermaster |
+| rproxy (Nginx-1 + Promtail) | keep on dockermaster |
+| cloudflare-tunnel | keep on dockermaster |
+| bind-dns (Bind9-primary) | keep on dockermaster |
+| registry | keep on dockermaster |
+| vault (vault-1, macvlan .25) | keep on dockermaster |
+| GitHub-runner-homelab | → move to ds-1 |
+| twingate-sepia-hornet (A) | → move to ds-1 |
+| twingate-golden-mussel (B) | → move to ds-2 |
+| calibre, calibre-web | → move to ds-1 |
+| rundeck, postgres-rundeck | → move to ds-1 |
+| Prometheus stack | → move to ds-1 |
+| minio | → move to ds-1 |
+| homelab-portal | → move to ds-1 |
+| keycloak, keycloak-db | → move to ds-1 (node A) + ds-2 (node B + PG primary) |
+| hbbs, hbbr (RustDesk) | → move to ds-2 |
+| freeswitch ⚠️ unhealthy | → move to ds-2 |
+| ollama | → move to ds-2 |
+| watchtower | → remove from dockermaster |
+| postfix-relay | utility — keep or remove (not in target arch) |
+| nas-solr, nas-tika | Synology Search indexers — decide keep/move/remove |
+
+**dockerserver-1 (VM 123)** — provisioned, Phase 2 pending:
+
+| Container | Notes |
+|-----------|-------|
+| portainer-agent (macvlan .34) | permanent |
+| vault-2 (macvlan .9) | permanent — Raft follower |
+
+**dockerserver-2 (VM 124)** — provisioned, Phase 3 remaining items pending:
+
+| Container | Notes |
+|-----------|-------|
+| portainer-agent (macvlan .46) | permanent |
+| vault-3 | not yet deployed |
+
+### Vault Cluster State
+
+- vault-1 (dockermaster, 192.168.59.25): leader ✅
+- vault-2 (dockerserver-1, 192.168.59.9): follower ✅ — 2-node cluster, no quorum
+- vault-3 (dockerserver-2, 192.168.59.15): **not yet deployed** ❌
+
+2-node Raft has no quorum protection — losing either node makes the cluster read-only.
+Deploying vault-3 is therefore a prerequisite before extended Phase 2 migration work.
 
 ## Nginx Green-Green + Cloudflare Tunnel
 
@@ -174,11 +227,6 @@ Rundeck job spec (Phase 2):
 - **Prune**: daily 02:30 — `find /nfs/.../snapshots -name snap-*.snap -mtime +30 -delete`
 - **Storage**: `/nfs/dockermaster/docker/vault/vault/snapshots/` (NFS-backed, survives VM loss)
 
-The snapshots volume mount is retained in `vault.yml` so the path is accessible
-from inside the vault container if needed for manual saves.
-
-Apply vault macvlan change: `terraform -chdir=terraform/portainer apply -target=portainer_stack.vault`
-
 ## Network Design
 
 ### Bridge Networks (per server, host-local)
@@ -187,7 +235,7 @@ Apply vault macvlan change: `terraform -chdir=terraform/portainer apply -target=
 |---------|-----------|---------|
 | `rproxy` | dockermaster, ds-1 | Nginx ↔ upstream web services |
 | `backend` | ds-1 | Rundeck ↔ PG, Keycloak-1 ↔ PG-replica |
-| `app` | ds-2 | Keycloak-2 ↔ PG-primary, n8n, internal |
+| `app` | ds-2 | Keycloak-2 ↔ PG-primary, internal |
 | `monitoring` | all three | Prometheus stack, node-exporter, cadvisor |
 
 All bridge networks declared `internal: true`. Created by a `network-bootstrap` stack
@@ -196,7 +244,7 @@ deployed first on each server; all application stacks reference them as `externa
 ### Macvlan Network (`docker-servers-net`)
 
 Same physical subnet on all three servers. Each host creates its own macvlan
-attached to the LAN interface (vmbr28 bridge).
+attached to the LAN interface (ens19, which is vmbr28 inside the VM).
 
 **Subnet**: 192.168.48.0/20
 **IPRange**: 192.168.59.0/26 (divided into per-server slices below)
@@ -208,15 +256,20 @@ Creation command per host (run once during bootstrap):
 ```bash
 docker network create \
   --driver macvlan \
+  --opt macvlan_mode=bridge \
+  --opt parent=ens19 \
   --subnet 192.168.48.0/20 \
   --ip-range 192.168.59.X/28 \
   --gateway 192.168.48.1 \
   --aux-address "host=192.168.59.1" \
-  --opt parent=ens18 \
   docker-servers-net
 ```
 
 Replace `X/28` with the server's slice start address.
+
+**Note**: Portainer (and its provider) communicates with agent containers via macvlan
+container-to-container paths, not host ports. Agent endpoint URLs must use macvlan IPs
+with `tcp://` scheme (e.g. `tcp://192.168.59.34:9001`).
 
 ### Cross-Server Communication
 
@@ -224,7 +277,7 @@ Bridge networks are host-local. Cross-server traffic uses macvlan IPs or host-ex
 
 | Pattern | Example |
 |---------|---------|
-| macvlan → macvlan | Vault Raft cluster, Bind9 zone transfer, Nginx-1 ↔ Nginx-2 (none needed — independent) |
+| macvlan → macvlan | Vault Raft cluster, Bind9 zone transfer |
 | bridge → host port | Keycloak-1 (ds-1) → ds-2 host IP:5432 → PG primary |
 | bridge → host port | Prometheus (ds-1) → dockermaster:9100 / ds-2:9100 → node-exporter |
 | via Nginx | All HTTP services — clients hit Nginx macvlan IP, proxy to backend bridge |
@@ -246,111 +299,113 @@ Firewall restricts access to specific source IPs only.
 | .11 | RustDesk hbbr | dockermaster | moves → ds-2, keeps IP |
 | .12 | Twingate A | dockermaster | moves → ds-1, keeps IP |
 | .13 | Keycloak | dockermaster | freed — behind Nginx in new arch |
-| .20 | Ansible-observability | dockermaster | dropped — deleted |
-| .21 | Ansible-observability | dockermaster | dropped — deleted |
 | .22 | Rundeck | dockermaster | moves → ds-1, keeps IP |
 | .23 | Rundeck PostgreSQL | dockermaster | moves → ds-1, keeps IP |
 | .24 | Twingate B | dockermaster | moves → ds-2, keeps IP |
-| .25 | elastic-search | dockermaster | dropped — old PoC |
+| .25 | vault-1 | dockermaster | keep |
 | .28 | Nginx-1 | dockermaster | keep |
-| .30 | n8n | dockermaster | dropped — old PoC |
 | .40 | FreeSWITCH | dockermaster | moves → ds-2, keeps IP |
-| .41 | LiteLLM | dockermaster | dropped — deleted |
 
 ### New Assignments
 
 | IP | Container | Server | Notes |
 |----|-----------|--------|-------|
 | .5 | Docker Registry | dockermaster | NEW — macvlan for cross-server pulls |
-| .25 | vault-1 | dockermaster | NEW — takes freed .25; add to vault.yml IaC |
 | .7 | Nginx-2 | ds-1 | NEW |
 | .8 | Bind9-secondary | ds-1 | NEW |
-| .9 | vault-2 | ds-1 | NEW |
+| .9 | vault-2 | ds-1 | ✅ active |
 | .14 | MinIO | ds-1 | NEW — was bridge-only |
-| .15 | vault-3 | ds-2 | NEW |
+| .15 | vault-3 | ds-2 | pending deployment |
+| .34 | portainer-agent | ds-1 | ✅ active (Portainer endpoint ID 9) |
+| .46 | portainer-agent | ds-2 | ✅ active (Portainer endpoint ID 13) |
 
 ### Final IP Map by Server
 
-**dockermaster** (slice: .2–.15, using .2–.5, .25, .28)
+**dockermaster** (slice: .2–.5, .25, .28)
 
 | IP | Container |
 |----|-----------|
 | 192.168.59.2 | Portainer |
 | 192.168.59.3 | Bind9-primary |
 | 192.168.59.5 | Docker Registry |
-| 192.168.59.25 | vault-1 (add to IaC) |
+| 192.168.59.25 | vault-1 |
 | 192.168.59.28 | Nginx-1 |
 
-**ds-1** (slice: .4, .7–.9, .12, .14, .22–.23 — mix of kept + new)
+**ds-1** (slice: .4, .7–.9, .12, .14, .22–.23, .34)
 
 | IP | Container |
 |----|-----------|
 | 192.168.59.4 | GitHub Runner |
 | 192.168.59.7 | Nginx-2 |
 | 192.168.59.8 | Bind9-secondary |
-| 192.168.59.9 | vault-2 |
+| 192.168.59.9 | vault-2 ✅ |
 | 192.168.59.12 | Twingate A |
 | 192.168.59.14 | MinIO |
 | 192.168.59.22 | Rundeck |
 | 192.168.59.23 | Rundeck PostgreSQL |
+| 192.168.59.34 | portainer-agent ✅ |
 
-**ds-2** (slice: .10–.11, .15, .24, .40)
+**ds-2** (slice: .10–.11, .15, .24, .40, .46)
 
 | IP | Container |
 |----|-----------|
 | 192.168.59.10 | RustDesk hbbs |
 | 192.168.59.11 | RustDesk hbbr |
-| 192.168.59.15 | vault-3 |
+| 192.168.59.15 | vault-3 (pending) |
 | 192.168.59.24 | Twingate B |
 | 192.168.59.40 | FreeSWITCH |
+| 192.168.59.46 | portainer-agent ✅ |
 
-**Available for future use**: .6, .16–.19, .26–.27, .29–.31, .33–.39, .41–.62
+**Available for future use**: .6, .16–.21, .26–.27, .29–.33, .35–.39, .41–.45, .47–.62
 
 ### Resolved Issues
 
 1. ✅ **vault-1 macvlan** — `vault.yml` updated with `docker-servers-net` + `.25`; applied.
 2. ✅ **Standalone leftovers removed** — `elasticsearch`, `lemonldap`, `phpldapadmin`,
    `openldap`, `chisel`, `n8n` stopped and removed from live dockermaster.
-3. ✅ **IPs freed**: .0, .6, .20, .21, .25, .30, .41 — available for future use.
+3. ✅ **Docker-servers-net on ds-2** — recreated after Docker prune during provisioning;
+   uses `--opt parent=ens19`, `--opt macvlan_mode=bridge`, no IP slice restriction.
 
 ## Resource Planning
 
 ### dockermaster (VM 120 — unchanged)
 
-- **CPU**: 20 vCPU (keep — already provisioned)
-- **RAM**: 62 GB (keep — already provisioned)
+- **CPU**: 20 vCPU (keep — already provisioned), pinned to socket 0 (CPUs 0-9, 20-29)
+- **RAM**: 64 GB (keep — already provisioned)
 - **Storage**: 196 GB SSD
 
 After migration, dockermaster will be lightly loaded (6–7 lightweight containers).
 Can be right-sized down to 8 vCPU / 16 GB in a future maintenance window if desired.
 
-### ds-1 (VM 123 — new)
+### dockerserver-1 (VM 123)
 
-- **CPU**: 10 vCPU
-- **RAM**: 24 GB (Prometheus + MinIO + Keycloak-1 + PG-replica need headroom)
-- **Storage**: 150 GB SSD (thin-pool-ssd)
+- **CPU**: 10 vCPU (host), pinned to socket 0 (CPUs 0-9, 20-29)
+- **RAM**: 24 GB
+- **Storage**: 120 GB SSD (thin-pool)
 - **Network**: vmbr28
 
-### ds-2 (VM 124 — new)
+### dockerserver-2 (VM 124)
 
-- **CPU**: 12 vCPU
-- **RAM**: 32 GB (Ollama models ~8 GB each, Keycloak-2 + PG-primary, FreeSWITCH)
-- **Storage**: 200 GB SSD (thin-pool-ssd)
+- **CPU**: 10 vCPU (host), pinned to socket 1 (CPUs 10-19, 30-39)
+- **RAM**: 24 GB
+- **Storage**: 120 GB SSD (thin-pool)
 - **Network**: vmbr28
+- ⚠️ **Ollama note**: LLM models (~8 GB each) may require a RAM increase to 32 GB
+  before deploying Ollama in production. Proxmox allows hot-add memory with balloon driver.
 
 ### Proxmox Capacity
 
 | | RAM |
 |--|-----|
 | Total | 243 GB |
-| Currently running (7 VMs) | ~134 GB |
-| Available headroom | ~109 GB |
-| ds-1 + ds-2 | 56 GB |
-| Remaining after split | ~53 GB ✅ |
+| Currently running (8 VMs) | ~158 GB |
+| Available headroom | ~85 GB |
+| ds-1 + ds-2 | 48 GB |
+| Remaining after split | ~37 GB ✅ |
 
 ## Implementation Phases
 
-### Phase 0 — Immediate (done)
+### Phase 0 — Immediate (complete ✅)
 
 - [x] Vault snapshot path provisioned — NFS snapshots dir created, pre-split manual snap taken
 - [x] Vault snapshot automation — moved to Rundeck (Phase 2); ofelia sidecar removed (not HA-safe)
@@ -362,63 +417,85 @@ Can be right-sized down to 8 vCPU / 16 GB in a future maintenance window if desi
 - [x] Manual snapshot before any migration work:
   `pre-split-manual.snap` saved to NFS snapshots dir (99K, 2026-04-11)
 
-### Phase 1 — Provision ds-1 (VM 123)
+### Phase 1 — Provision dockerserver-1 (complete ✅)
 
 - [x] Clone VM 120 (dockermaster) → VM 123 in Proxmox
-- [x] Boot, change hostname to `ds-1`, change host IP (192.168.48.45 / shim 192.168.59.33)
-- [x] Create macvlan with ds-1 IP slice (`docker-servers-net`, shim at 192.168.59.33/32)
-- [x] Register as new Portainer endpoint (ID 9, agent at 192.168.59.34:9001, type=2)
-  - Portainer agent: `portainer/agent:2.39.1`, macvlan IP 192.168.59.34
+- [x] Boot, set hostname to `dockerserver-1`, change host IP to 192.168.48.45
+- [x] pfSense DHCP static map: MAC → 192.168.48.45, DNS `dockerserver-1.srv.lcamaral.com`
+- [x] Proxmox VM name set to `dockerserver-1`, affinity pinned to socket 0 (CPUs 0-9,20-29)
+- [x] Specs: 10 vCPU / 24 GB RAM (thin-pool 120 GB, trimmed from 196 GB clone)
+- [x] Create macvlan (`docker-servers-net`, parent ens19, macvlan bridge mode)
+- [x] Register as Portainer endpoint: ID 9, agent at `tcp://192.168.59.34:9001`, type=2
   - Managed via `terraform/portainer/environments.tf`
-- [x] Bridge networks confirmed present (cloned from dockermaster): `rproxy` (172.24/16),
-  `prometheus_back-tier` (172.21/16), `keycloak_keycloak-internal`
-- [x] Bring up vault-2 (192.168.59.9) — joined vault-1, 2-node Raft cluster active
+- [x] Bridge networks present from clone: `rproxy`, `prometheus_back-tier`, `keycloak_keycloak-internal`
+- [x] Bring up vault-2 (macvlan .9) — joined vault-1, 2-node Raft active
   - vault-1: leader (192.168.59.25), vault-2: follower (192.168.59.9)
-  - Both voters, both unsealed
 
-### Phase 2 — Migrate App Services to ds-1
+### Phase 1b — Provision dockerserver-2 (infrastructure ready ✅, vault-3 pending)
 
-Services to start on ds-1 (stop on dockermaster first):
+*Executed out of planned order — ds-2 infrastructure was provisioned before Phase 2 migration.*
 
-- GitHub Runner, Twingate A, Calibre, Rundeck + PG
-- MinIO, homelab-portal, Prometheus stack
-- Keycloak-1, PG-replica (streaming from dockermaster Keycloak PG)
-- Nginx-2 + cloudflared-2 (add second CF tunnel connector to bologna tunnel)
-- Bind9-secondary (configure zone transfer from dockermaster Bind9)
-- Watchtower (manages ds-1 containers only)
+- [x] Clone VM 123 (dockerserver-1) → VM 124 in Proxmox
+- [x] Boot, set hostname to `dockerserver-2`, change host IP to 192.168.48.46
+- [x] pfSense DHCP static map: MAC bc:24:11:84:bc:16 → 192.168.48.46,
+  DNS `dockerserver-2.srv.lcamaral.com`
+- [x] Proxmox VM name set to `dockerserver-2`, affinity pinned to socket 1 (CPUs 10-19,30-39)
+- [x] Specs: 10 vCPU / 24 GB RAM (thin-pool 120 GB)
+- [x] Recreate macvlan (`docker-servers-net`, parent ens19, macvlan bridge mode)
+- [x] Register as Portainer endpoint: ID 13, agent at `tcp://192.168.59.46:9001`, type=2
+  - Managed via `terraform/portainer/environments.tf`
+- [x] Docker prune — removed clone artifacts (images, stopped containers, volumes)
+- [ ] **Deploy vault-3** (macvlan .15) — join Raft cluster → 3 voters, quorum reached
+  - Do this before starting Phase 2 migration
 
-### Phase 3 — Provision ds-2 (VM 124)
+### Phase 2 — Migrate App Services to dockerserver-1 (next)
 
-1. Clone VM 120 (dockermaster) → VM 124
-2. Boot, change hostname to `ds-2`, change host IP
-3. Create macvlan with ds-2 IP slice
-4. Register as new Portainer endpoint
-5. Deploy `network-bootstrap` stack
-6. Bring up vault-3 — joins Raft cluster → 3 voters, quorum reached ✅
-7. Verify: `vault operator raft list-peers` shows 3 voters
+**Prerequisite**: vault-3 deployed on ds-2 (3-node quorum) before extended migration work.
 
-### Phase 4 — Migrate App Services to ds-2
+Migration order (stop on dockermaster, start on ds-1):
+
+1. **Twingate A** (sepia-hornet) — macvlan .12; low-risk, no state
+2. **GitHub Runner** — macvlan .4; stop runner, start on ds-1, verify CI
+3. **Calibre + Calibre Web** — NFS-backed data; stop on dockermaster, start on ds-1
+4. **MinIO** — macvlan .14; verify NFS data path, test bucket access after move
+5. **Rundeck + PostgreSQL** — macvlan .22/.23; stop on dockermaster, start on ds-1
+6. **Prometheus stack** — bridge `monitoring`; scrape targets update to ds-1 host
+7. **homelab-portal** — NFS-backed config; stop on dockermaster, start on ds-1
+8. **Nginx-2 + cloudflared-2** — macvlan .7; add second bologna connector to CF tunnel
+9. **Bind9-secondary** — macvlan .8; configure zone transfer from dockermaster Bind9
+10. **Watchtower (ds-1)** — start after all ds-1 services up; watches ds-1 containers only
+11. **Keycloak-1 + PG-replica** — macvlan .13→bridge; streaming replica from dockermaster PG
+
+### Phase 3 — Migrate App Services to dockerserver-2
 
 Services to start on ds-2 (stop on dockermaster first):
 
-- Twingate B, RustDesk, FreeSWITCH, Ollama
-- Keycloak-2 + PG-primary (Keycloak-1 switches connection to ds-2 PG)
-- Watchtower (manages ds-2 containers only)
+1. **Twingate B** (golden-mussel) — macvlan .24; low-risk, no state
+2. **RustDesk** (hbbs .10, hbbr .11) — macvlan; stop on dockermaster, start on ds-2
+3. **FreeSWITCH** ⚠️ — macvlan .40; currently unhealthy on dockermaster, investigate first
+4. **Ollama** — NFS model storage; ensure ds-2 has 24+ GB free RAM for models
+5. **Keycloak-2 + PG-primary** — start PG primary on ds-2, then Keycloak-2
+6. **Watchtower (ds-2)** — start after all ds-2 services up
 
-### Phase 5 — Slim dockermaster
+### Phase 4 — Slim dockermaster
 
-Remove from dockermaster (now running on ds-1 or ds-2):
+Remove from dockermaster once confirmed running on ds-1/ds-2:
 
-- Twingate A, Twingate B
-- GitHub Runner, Watchtower
-- Keycloak, Rundeck, RustDesk, FreeSWITCH, Ollama, MinIO, Calibre
+- Twingate A, Twingate B, GitHub Runner, Watchtower
+- Keycloak + PG, Rundeck + PG, RustDesk, FreeSWITCH, Ollama, MinIO, Calibre
+- homelab-portal, Prometheus stack
+
+Remaining cleanup decisions:
+
+- **postfix-relay** — not in target arch; decide to keep as utility or remove
+- **nas-solr + nas-tika** — Synology Search indexers; decide where these live long-term
 
 Keep on dockermaster (control plane):
 
-- Portainer, Nginx-1, cloudflared-1, Bind9-primary
+- Portainer, Nginx-1 + Promtail, cloudflared-1, Bind9-primary
 - Docker Registry, vault-1
 
-### Phase 6 — PostgreSQL Streaming Replication (Keycloak)
+### Phase 5 — PostgreSQL Streaming Replication (Keycloak)
 
 1. Configure PG primary on ds-2 for streaming replication
 2. Set up PG hot standby on ds-1
@@ -431,28 +508,19 @@ Keep on dockermaster (control plane):
 terraform/
 ├── cloudflare/          # unchanged
 ├── vault/               # unchanged
-├── portainer/
-│   ├── dockermaster/    # control-plane stacks (renamed from portainer/)
-│   │   ├── provider.tf
-│   │   ├── variables.tf
-│   │   ├── stacks.tf
-│   │   ├── vault.tf
-│   │   └── stacks/
-│   ├── ds1/             # ds-1 stacks
-│   │   ├── provider.tf
-│   │   ├── variables.tf
-│   │   ├── stacks.tf
-│   │   ├── vault.tf
-│   │   └── stacks/
-│   └── ds2/             # ds-2 stacks
-│       ├── provider.tf
-│       ├── variables.tf
-│       ├── stacks.tf
-│       ├── vault.tf
-│       └── stacks/
+├── portainer/           # current: all stacks in one module
+│   ├── provider.tf
+│   ├── variables.tf
+│   ├── environments.tf  # ds1 (ID 9) + ds2 (ID 13) registered
+│   ├── stacks.tf
+│   ├── vault.tf
+│   └── stacks/
 └── modules/
     └── cf-service/      # unchanged
 ```
+
+*Future refactor (post-Phase 2)*: split `portainer/` into per-server subdirectories
+(`dockermaster/`, `ds1/`, `ds2/`) once stack ownership is clear.
 
 ## Portainer Network Management
 
