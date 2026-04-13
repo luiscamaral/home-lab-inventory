@@ -112,6 +112,11 @@
   - Volumes: NFS-backed
   - **HA:** repmgr primary (or standby after failover); paired with keycloak-db-1 on ds-1
   - Purpose: PostgreSQL backing store for Keycloak cluster
+  - **Env tweak:** `POSTGRESQL_PGCTLTIMEOUT=600` added 2026-04-13 so the
+    standby-rejoin path survives long WAL catch-up. Matching setting on
+    keycloak-db-1. Primary also has `wal_sender_timeout=0` set via
+    `ALTER SYSTEM` (persisted in `postgresql.auto.conf` in the data
+    volume). See commits `4aa8d6f` and `7172d61`.
 
 - **homelab-portal** — `registry.cf.lcamaral.com/homelab-portal:latest`
   - Networks: `docker-servers-net` (192.168.59.18) + `rproxy` bridge (172.24.0.9)

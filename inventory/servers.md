@@ -117,6 +117,12 @@
 - **Network**:
   - **LAN IP**: 192.168.48.44/20
   - **Macvlan gateway**: 192.168.59.1/26 (host alias for `docker-servers-net`)
+  - **Macvlan shim MAC**: `02:00:00:00:00:01` (explicit in
+    `hosts/dockermaster/etc/systemd/network/10-server-net-shim.netdev` —
+    see task #31)
+  - **machine-id**: `2bd69dbe597b47edb0bbc1e571c208bf` (the original; ds-1
+    and ds-2 were cloned from this host and regenerated theirs on
+    2026-04-13)
 - **Docker**: 28.3.2, systemd cgroup driver
 - **NFS Mounts**:
   - `/nfs/calibre` — Calibre library (legacy mount, served from NAS)
@@ -140,6 +146,9 @@
 - **Network**:
   - **LAN IP**: 192.168.48.45/20
   - **Macvlan**: 192.168.59.33 (host alias in `docker-servers-net`)
+  - **Macvlan shim MAC**: `02:00:00:00:00:21` (explicit, see task #31)
+  - **machine-id**: `de152d98902944208fb3571dd969c3a9` (regenerated
+    2026-04-13 — was identical to dm's before; caused shim MAC collision)
 - **Docker**: Latest CE, Portainer agent endpoint ID 9
 - **NFS Mounts**:
   - `/nfs/dockermaster` — Shared Docker persistent data via NFS
@@ -167,6 +176,9 @@
 - **Network**:
   - **LAN IP**: 192.168.48.46/20
   - **Macvlan**: 192.168.59.46 (host alias)
+  - **Macvlan shim MAC**: `02:00:00:00:00:2e` (explicit, see task #31)
+  - **machine-id**: `3b8d239a029a4afbb7cb0e562e8b407f` (regenerated
+    2026-04-13)
 - **Docker**: Latest CE, Portainer agent endpoint ID 13
 - **NFS Mounts**:
   - `/nfs/dockermaster` — Shared Docker persistent data via NFS

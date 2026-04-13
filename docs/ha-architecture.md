@@ -1,7 +1,10 @@
 # Homelab HA Architecture
 
-> **Status:** Current as of 2026-04-12. Authoritative for all HA topology.
+> **Status:** Current as of 2026-04-13. Authoritative for all HA topology.
 > Source of truth for service placement: `terraform/portainer/stacks.tf`.
+> Cross-host MAC collision fix, Vault auto-unseal, Twingate DNS fix, and
+> dockermaster package damage recovery were applied during the
+> 2026-04-12/13 recovery session. See the "Session fixes" section below.
 
 ## Host roster
 
@@ -44,6 +47,11 @@ giving locality and isolation.
 - Nginx fronts via `upstream vault_cluster { }` with passive health
   (`max_fails=2 fail_timeout=10s`) + `proxy_next_upstream` + `proxy_connect_timeout 2s`
 - Vault's built-in request forwarding routes writes to leader from any node
+- **Auto-unseal** via `scripts/vault-auto-unseal/` — a systemd oneshot unit
+  runs after `docker.service` on each host, reads the Shamir key from
+  `/etc/vault/unseal.key` (mode 600 root-owned), and POSTs it to the local
+  vault API. Boot-time reseal is now automatic; no human needed. The unseal
+  key is also in macOS Keychain `vault-unseal-key` for manual fallback.
 
 ### Object storage — MinIO site replication
 
@@ -152,10 +160,66 @@ HA is out of scope for the homelab:
 
 ## Still-to-do / known gaps
 
-- **bind9 HA** — a second bind9 on ds-1 with zone transfer from dm primary
+- **bind9 → pihole HA migration** — bind9 on dm is the last major SPOF. Plan:
+  move authoritative records to two pihole instances with Gravity sync;
+  decommission bind9. Tracked as task #26.
 - **Registry HA** — replicate images to a second registry
 - **Rundeck HA** — supported upstream, deferred
 - **pfSense HA** — requires a second pfSense box + CARP
+- **dockermaster latent file damage** — ~81k files missing from the
+  2026-04-12 disk shrink (docs, `/usr/src/linux-headers-*`, Perl XS
+  modules, plymouth renderers). Boot-critical set was restored by reinstalling
+  25 packages. Remainder are mostly cosmetic; fix opportunistically with
+  `apt install --reinstall` per-package as symptoms surface. `needrestart`
+  is currently broken due to missing `Module/Find.pm`.
+- **VM backups (vzdump) were silently failing for 2 months** due to a
+  full Synology quota. Fixed: pruned, added ds-1 and ds-2 to the job,
+  switched to zstd, retention `keep-daily=1,keep-weekly=1`.
+
+## Session fixes applied 2026-04-12/13
+
+This section captures non-obvious config invariants applied during the
+recovery session. Re-read before making structural changes.
+
+### Macvlan cross-host L2 depends on unique shim MACs
+
+All 3 Docker hosts initially derived their `server-net-shim` MAC from
+`/etc/machine-id`, which was identical across the three (VM clone artifact).
+The result: three hosts with the same shim MAC collided at the switch MAC
+table, breaking cross-host macvlan traffic silently. Fixed with:
+
+1. Regenerate `/etc/machine-id` on ds-1 and ds-2.
+2. Pin an explicit `MACAddress=` in each host's
+   `/etc/systemd/network/10-server-net-shim.netdev` (captured in IaC under
+   `hosts/<h>/etc/systemd/network/`). Values: dm `02:00:00:00:00:01`,
+   ds-1 `02:00:00:00:00:21`, ds-2 `02:00:00:00:00:2e`.
+
+### Twingate connectors need explicit DNS
+
+Both `twingate-sepia-hornet` (ds-1) and `twingate-golden-mussel` (ds-2)
+are macvlan-only Docker containers. Docker writes `127.0.0.11` to their
+`resolv.conf` unconditionally, but that address isn't routable on macvlan
+networks — the containers silently had no DNS and flapped Offline/Online
+with `pubnub-lib` errors. Fixed: `dns: [192.168.48.1, 1.1.1.1]` in both
+compose files (commit `c6bb5a1`). Same pattern applies to any future
+macvlan-only container that needs outbound public DNS.
+
+### Restart policy on HA stacks
+
+Previously 12 stacks used `restart: on-failure:5` which skipped clean-exit
+recovery — any container that exited with code 0 wouldn't come back
+automatically after a host reboot. Changed to `restart: unless-stopped`
+across all affected stacks (commit `71ca18a`).
+
+### Keycloak DB HA rejoin after long gaps
+
+Bitnami `postgresql-repmgr` has a 60s default `POSTGRESQL_PGCTLTIMEOUT`
+that is too short when a standby needs to replay hours of WAL after
+rejoining. Both compose files now set `POSTGRESQL_PGCTLTIMEOUT=600`.
+Additionally, the current primary has `wal_sender_timeout=0` set via
+`ALTER SYSTEM` (persisted in `postgresql.auto.conf` inside the data
+volume) to prevent the walsender from terminating during slow catch-up.
+See commits `4aa8d6f`, `7172d61`.
 
 ## Test plan & evidence
 
