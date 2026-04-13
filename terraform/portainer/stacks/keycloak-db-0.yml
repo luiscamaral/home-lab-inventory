@@ -34,6 +34,10 @@ services:
       REPMGR_USERNAME: repmgr
       REPMGR_DATABASE: repmgr
       POSTGRESQL_PORT_NUMBER: 5432
+      # Extend the pg_isready wait during startup to allow for long WAL replay
+      # when rejoining as a standby after extended downtime. Default is 60s,
+      # which is too short when replaying a large catch-up after clone.
+      POSTGRESQL_PGCTLTIMEOUT: "600"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
