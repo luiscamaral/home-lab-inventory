@@ -14,6 +14,10 @@ services:
     networks:
       servers-net:
         ipv4_address: 192.168.59.24
+    # See twingate-a.yml for rationale — macvlan containers need explicit DNS.
+    dns:
+      - 192.168.48.1
+      - 1.1.1.1
     environment:
       TWINGATE_NETWORK: "lamaral"
       TWINGATE_LABEL_HOSTNAME: "golden-mussel"

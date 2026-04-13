@@ -14,6 +14,13 @@ services:
     networks:
       servers-net:
         ipv4_address: 192.168.59.12
+    # macvlan containers can't use docker's embedded dns at 127.0.0.11
+    # because that address is only routed inside bridge networks. without
+    # explicit dns, twingate's libsdwan/pubnub-lib can't resolve its
+    # control-plane endpoints and flaps Offline/Authentication/Online.
+    dns:
+      - 192.168.48.1  # pfSense Unbound on SRVAN — internal + public
+      - 1.1.1.1       # Cloudflare fallback
     environment:
       TWINGATE_NETWORK: "lamaral"
       TWINGATE_LABEL_HOSTNAME: "sepia-hornet"
