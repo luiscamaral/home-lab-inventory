@@ -27,7 +27,7 @@ services:
       REGISTRY_AUTH: htpasswd
       REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
-    restart: on-failure:5
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qS http://localhost:5000/v2/ 2>&1 | grep -q '200\\|401'"]
       interval: 10s

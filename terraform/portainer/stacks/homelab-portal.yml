@@ -27,7 +27,7 @@ services:
       PUBLIC_BASE_URL: https://login.cf.lcamaral.com
       NODE_ENV: production
       PORT: "3000"
-    restart: on-failure:5
+    restart: unless-stopped
     healthcheck:
       test:
         - CMD

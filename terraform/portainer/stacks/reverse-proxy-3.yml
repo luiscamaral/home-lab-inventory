@@ -30,7 +30,7 @@ services:
       - /nfs/dockermaster/docker/nginx-rproxy/config/vhost.d:/etc/nginx/vhost.d:ro
       - /nfs/dockermaster/docker/nginx-rproxy/www:/var/www
       - /nfs/dockermaster/docker/nginx-rproxy/logs/nginx-3:/var/log/nginx
-    restart: on-failure:5
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost/"]
       interval: 5s
