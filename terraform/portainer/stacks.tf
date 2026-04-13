@@ -399,6 +399,55 @@ resource "portainer_stack" "freeswitch" {
 }
 
 # ──────────────────────────────────────────────
+# Keycloak DB HA cluster — PostgreSQL with repmgr
+# Node 0 (primary) on dockermaster, Node 1 (standby) on dockerserver-1
+# Auto-failover via repmgr; JDBC clients use multi-host URL
+# ──────────────────────────────────────────────
+resource "portainer_stack" "keycloak_db_0" {
+  name             = "keycloak-db-0"
+  endpoint_id      = var.endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/keycloak-db-0.yml")
+
+  env {
+    name  = "POSTGRES_ROOT_PASSWORD"
+    value = data.vault_kv_secret_v2.keycloak.data["postgres_root_password"]
+  }
+  env {
+    name  = "DB_PASSWORD"
+    value = data.vault_kv_secret_v2.keycloak.data["db_password"]
+  }
+  env {
+    name  = "REPMGR_PASSWORD"
+    value = data.vault_kv_secret_v2.keycloak.data["repmgr_password"]
+  }
+}
+
+resource "portainer_stack" "keycloak_db_1" {
+  name             = "keycloak-db-1"
+  endpoint_id      = var.ds1_endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/keycloak-db-1.yml")
+
+  env {
+    name  = "POSTGRES_ROOT_PASSWORD"
+    value = data.vault_kv_secret_v2.keycloak.data["postgres_root_password"]
+  }
+  env {
+    name  = "DB_PASSWORD"
+    value = data.vault_kv_secret_v2.keycloak.data["db_password"]
+  }
+  env {
+    name  = "REPMGR_PASSWORD"
+    value = data.vault_kv_secret_v2.keycloak.data["repmgr_password"]
+  }
+}
+
+# ──────────────────────────────────────────────
 # Keycloak Identity Provider
 # SSO + user management — credentials from Vault
 # ──────────────────────────────────────────────
@@ -409,6 +458,33 @@ resource "portainer_stack" "keycloak" {
   method           = "string"
 
   stack_file_content = file("${path.module}/stacks/keycloak.yml")
+
+  env {
+    name  = "KC_HOSTNAME"
+    value = "auth.cf.lcamaral.com"
+  }
+
+  env {
+    name  = "KC_DB_PASSWORD"
+    value = data.vault_kv_secret_v2.keycloak.data["db_password"]
+  }
+
+  env {
+    name  = "KEYCLOAK_ADMIN_PASSWORD"
+    value = data.vault_kv_secret_v2.keycloak.data["admin_password"]
+  }
+}
+
+# ──────────────────────────────────────────────
+# Keycloak 2 (on dockerserver-1) — Infinispan cluster peer
+# ──────────────────────────────────────────────
+resource "portainer_stack" "keycloak_2" {
+  name             = "keycloak-2"
+  endpoint_id      = var.ds1_endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/keycloak-2.yml")
 
   env {
     name  = "KC_HOSTNAME"
@@ -461,6 +537,33 @@ resource "portainer_stack" "homelab_portal" {
   method           = "string"
 
   stack_file_content = file("${path.module}/stacks/homelab-portal.yml")
+
+  env {
+    name  = "KEYCLOAK_CLIENT_SECRET"
+    value = data.vault_kv_secret_v2.keycloak_clients.data["homelab_portal_secret"]
+  }
+
+  env {
+    name  = "SESSION_SECRET"
+    value = data.vault_kv_secret_v2.portal.data["session_secret"]
+  }
+
+  env {
+    name  = "SESSION_ENCRYPTION_KEY"
+    value = data.vault_kv_secret_v2.portal.data["session_encryption_key"]
+  }
+}
+
+# ──────────────────────────────────────────────
+# Homelab Portal replica 2 on dockerserver-1 — stateless, no sticky needed
+# ──────────────────────────────────────────────
+resource "portainer_stack" "homelab_portal_2" {
+  name             = "homelab-portal-2"
+  endpoint_id      = var.ds1_endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/homelab-portal-2.yml")
 
   env {
     name  = "KEYCLOAK_CLIENT_SECRET"

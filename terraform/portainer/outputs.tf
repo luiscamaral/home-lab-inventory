@@ -37,7 +37,11 @@ output "stacks" {
     minio_2           = portainer_stack.minio_2.name
     freeswitch        = portainer_stack.freeswitch.name
     keycloak          = portainer_stack.keycloak.name
+    keycloak_2        = portainer_stack.keycloak_2.name
+    keycloak_db_0     = portainer_stack.keycloak_db_0.name
+    keycloak_db_1     = portainer_stack.keycloak_db_1.name
     postfix_relay     = portainer_stack.postfix_relay.name
     homelab_portal    = portainer_stack.homelab_portal.name
+    homelab_portal_2  = portainer_stack.homelab_portal_2.name
   }
 }

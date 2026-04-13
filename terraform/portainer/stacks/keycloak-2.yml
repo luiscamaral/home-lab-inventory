@@ -1,26 +1,22 @@
-name: keycloak
+name: keycloak-2
 
-# Keycloak node 1 (on dockermaster) — part of a 2-node Infinispan cluster
-# with keycloak-2 on dockerserver-1. Peer discovery via JDBC_PING (shared DB
-# table in the keycloak-db HA cluster). No etcd/consul needed.
+# Keycloak node 2 (on dockerserver-1) — part of the 2-node Infinispan cluster
+# with keycloak on dockermaster. Peer discovery via JDBC_PING.
 
 networks:
   servers-net:
     name: docker-servers-net
     external: true
-  rproxy:
-    external: true
 
 services:
   keycloak:
     image: keycloak/keycloak:26.3
-    container_name: keycloak
-    hostname: keycloak
+    container_name: keycloak-2
+    hostname: keycloak-2
     command: start
     networks:
       servers-net:
-        ipv4_address: 192.168.59.13
-      rproxy:
+        ipv4_address: 192.168.59.43
     environment:
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_ENABLED: "true"
@@ -31,10 +27,9 @@ services:
       KC_DB_PASSWORD: ${KC_DB_PASSWORD}
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-      # Infinispan clustering — JDBC_PING discovery protocol uses the shared DB
       KC_CACHE: ispn
       KC_CACHE_STACK: jdbc-ping
-      JAVA_OPTS_APPEND: "-Djgroups.dns.query=keycloak.d.lcamaral.com -Djgroups.bind_addr=192.168.59.13"
+      JAVA_OPTS_APPEND: "-Djgroups.bind_addr=192.168.59.43"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
@@ -44,7 +39,7 @@ services:
       start_period: 120s
     labels:
       com.centurylinklabs.watchtower.enable: "false"
-      com.docker.stack: "keycloak"
+      com.docker.stack: "keycloak-2"
       com.docker.service: "keycloak"
       portainer.autodeploy: "false"
     deploy:

@@ -1,0 +1,56 @@
+name: keycloak-db-0
+
+# PostgreSQL HA cluster node 0 (primary) on dockermaster
+# Uses bitnami/postgresql-repmgr for streaming replication + auto-failover
+# Partner: keycloak-db-1 on dockerserver-1
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  postgresql:
+    image: bitnamilegacy/postgresql-repmgr:17.6.0
+    container_name: keycloak-db-0
+    hostname: keycloak-db-0
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.44
+    volumes:
+      - /nfs/dockermaster/docker/keycloak-ha/db-0:/bitnami/postgresql
+    environment:
+      POSTGRESQL_POSTGRES_PASSWORD: ${POSTGRES_ROOT_PASSWORD}
+      POSTGRESQL_USERNAME: keycloak
+      POSTGRESQL_PASSWORD: ${DB_PASSWORD}
+      POSTGRESQL_DATABASE: keycloak
+      REPMGR_PASSWORD: ${REPMGR_PASSWORD}
+      REPMGR_PRIMARY_HOST: 192.168.59.44
+      REPMGR_PRIMARY_PORT: 5432
+      REPMGR_PARTNER_NODES: 192.168.59.44,192.168.59.54
+      REPMGR_NODE_NAME: keycloak-db-0
+      REPMGR_NODE_NETWORK_NAME: 192.168.59.44
+      REPMGR_PORT_NUMBER: 5432
+      REPMGR_USERNAME: repmgr
+      REPMGR_DATABASE: repmgr
+      POSTGRESQL_PORT_NUMBER: 5432
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    restart: on-failure:5
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "keycloak-db-0"
+      com.docker.service: "postgresql"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
