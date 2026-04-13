@@ -33,6 +33,9 @@ services:
       REPMGR_USERNAME: repmgr
       REPMGR_DATABASE: repmgr
       POSTGRESQL_PORT_NUMBER: 5432
+      # Same pg_ctl timeout extension as db-0 — used when this node is
+      # rebuilt as standby after a long gap (see keycloak-db-0.yml).
+      POSTGRESQL_PGCTLTIMEOUT: "600"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
