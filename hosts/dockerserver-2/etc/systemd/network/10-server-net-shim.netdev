@@ -1,0 +1,6 @@
+[NetDev]
+Name=server-net-shim
+Kind=macvlan
+
+[MACVLAN]
+Mode=bridge

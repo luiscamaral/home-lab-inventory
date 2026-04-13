@@ -1,0 +1,9 @@
+[Match]
+Name=ens19
+
+[Network]
+Address=192.168.48.46/20
+# If you had a gateway/DNS on ens19 via netplan, add them here:
+Gateway=192.168.48.1
+DNS=192.168.48.1
+MACVLAN=server-net-shim
