@@ -3,6 +3,9 @@ name: homelab-portal
 networks:
   rproxy:
     external: true
+  servers-net:
+    name: docker-servers-net
+    external: true
 
 services:
   portal:
@@ -11,8 +14,10 @@ services:
     hostname: homelab-portal
     networks:
       rproxy:
+      servers-net:
+        ipv4_address: 192.168.59.18
     environment:
-      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_URL: http://192.168.59.13:8080
       KEYCLOAK_PUBLIC_URL: https://auth.cf.lcamaral.com
       KEYCLOAK_REALM: homelab
       KEYCLOAK_CLIENT_ID: homelab-portal

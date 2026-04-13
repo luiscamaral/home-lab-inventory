@@ -11,7 +11,7 @@ resource "portainer_stack" "docker_registry" {
 }
 
 # ──────────────────────────────────────────────
-# Cloudflare Tunnel
+# Cloudflare Tunnel (replica 1 on dockermaster)
 # Connects homelab to Cloudflare edge via tunnel "bologna"
 # Token injected from Vault at apply time
 # ──────────────────────────────────────────────
@@ -22,6 +22,24 @@ resource "portainer_stack" "cloudflare_tunnel" {
   method           = "string"
 
   stack_file_content = file("${path.module}/stacks/cloudflare-tunnel.yml")
+
+  env {
+    name  = "TUNNEL_TOKEN"
+    value = data.vault_kv_secret_v2.cloudflare.data["tunnel_token"]
+  }
+}
+
+# ──────────────────────────────────────────────
+# Cloudflare Tunnel (replica 2 on dockerserver-1)
+# Second replica of the same tunnel for HA. Cloudflare balances across replicas.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "cloudflare_tunnel_2" {
+  name             = "cloudflare-tunnel-2"
+  endpoint_id      = var.ds1_endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/cloudflare-tunnel-2.yml")
 
   env {
     name  = "TUNNEL_TOKEN"
@@ -44,7 +62,7 @@ resource "portainer_stack" "bind_dns" {
 }
 
 # ──────────────────────────────────────────────
-# Nginx Reverse Proxy + Promtail
+# Nginx Reverse Proxy + Promtail (rproxy-1 on dockermaster)
 # All services route through this — certs managed by pfSense
 # ──────────────────────────────────────────────
 resource "portainer_stack" "reverse_proxy" {
@@ -54,6 +72,19 @@ resource "portainer_stack" "reverse_proxy" {
   method           = "string"
 
   stack_file_content = file("${path.module}/stacks/reverse-proxy.yml")
+}
+
+# ──────────────────────────────────────────────
+# Nginx Reverse Proxy (rproxy-2 on dockerserver-1)
+# Second instance for HA — shares the same vhost.d config via NFS
+# ──────────────────────────────────────────────
+resource "portainer_stack" "reverse_proxy_2" {
+  name             = "reverse-proxy-2"
+  endpoint_id      = var.ds1_endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/reverse-proxy-2.yml")
 }
 
 # ──────────────────────────────────────────────

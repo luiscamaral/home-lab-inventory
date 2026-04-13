@@ -4,6 +4,9 @@ networks:
   rproxy:
     name: rproxy
     external: true
+  servers-net:
+    name: docker-servers-net
+    external: true
 
 services:
   registry:
@@ -12,6 +15,8 @@ services:
     hostname: registry
     networks:
       rproxy:
+      servers-net:
+        ipv4_address: 192.168.59.16
     expose:
       - 5000
     volumes:
