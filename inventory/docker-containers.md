@@ -1,5 +1,9 @@
 # Docker Container Inventory
 
+> **Last refreshed:** 2026-04-12 after Phase 1-4 HA deployment
+> **Source of truth:** `terraform/portainer/stacks.tf` (Portainer-managed) + on-host `docker ps`
+> **HA topology:** see `docs/ha-architecture.md`
+
 ## NAS Server (Synology)
 
 ### System Information
@@ -14,11 +18,9 @@
 - **Credentials**: `secret/homelab/portainer-nas-agent`
 - **Compose files tracked at**: `nas/docker/`
 
----
+### Running Containers on NAS (4 Portainer stacks + 1 agent)
 
-## Running Containers on NAS (4 Portainer stacks + 1 agent)
-
-### Portainer Edge Agent
+#### Portainer Edge Agent
 
 - **portainer-agent**
   - Image: `portainer/agent:2.39.1`
@@ -26,9 +28,9 @@
   - Connects outbound via WebSocket to `ws://192.168.59.2:8000`
   - Purpose: Edge agent enabling Portainer to manage NAS containers (NAS is not directly reachable from dockermaster)
 
-### NAS Portainer Stacks (Endpoint ID 6)
+#### NAS Portainer Stacks (Endpoint ID 6)
 
-#### Twingate Connector (Stack ID: 28)
+##### Twingate Connector (Stack ID: 28)
 
 - **twingate-connector**
   - Network: macvlan
@@ -36,7 +38,7 @@
   - Compose: `nas/docker/twingate-connector/`
   - Purpose: Twingate zero-trust network connector on NAS
 
-#### Speed Test (Stack ID: 29)
+##### Speed Test (Stack ID: 29)
 
 - **speed-test**
   - Image: openspeedtest/openspeedtest
@@ -45,14 +47,14 @@
   - Compose: `nas/docker/speed-test/`
   - Purpose: OpenSpeedTest local network speed test server
 
-#### Paperless-NGX (Stack ID: 32)
+##### Paperless-NGX (Stack ID: 32)
 
-- **paperlessngx** + **`postgresql`** + **`redis`**
+- **paperlessngx** + **PostgreSQL** + **Redis**
   - Compose: `nas/docker/paperlessngx/`
   - Secrets: `secret/homelab/paperlessngx`
   - Purpose: Document management system with OCR (Paperless-NGX + PostgreSQL + Redis)
 
-#### NetBoot.xyz (Stack ID: 34)
+##### NetBoot.xyz (Stack ID: 34)
 
 - **netbootxyz**
   - Image: lscr.io/linuxserver/netbootxyz (v0.7.6)
@@ -63,362 +65,359 @@
 
 ---
 
-### Removed from NAS
+## dockermaster (VM 120)
 
-| Service | Reason | Removed |
-|---|---|---|
-| vault | Superseded by dockermaster Vault (192.168.59.25). Containers, images (`vault-vault:latest`, `vault-ofelia:latest`, `hashicorp/vault:local`), and `/volume2/docker/vault/` all deleted. | 2026-04-11 |
-| ocr-photo-tag | Custom-build project not portable via Portainer Edge. Containers, image (`ocr-photo-tag-ocr-tagger:latest`), and `/var/services/homes/lamaral/docker/ocr-photo-tag/` all deleted. | 2026-04-11 |
+### System info
 
----
-
-## Docker Master Server
-
-### System Information
-
-- **Host**: dockermaster (VM 120)
-- **OS**: Ubuntu 24.04.2 LTS (Noble Numbat)
-- **Kernel**: Linux 6.8.0-64-generic
-- **CPU**: 20 cores (Intel Xeon E5-2680 v2 @ 2.80GHz)
-- **RAM**: 62 GB total (4.2 GB used, 58 GB available)
-- **Storage**: 192 GB SSD (35% used - 64GB used, 119GB available)
+- **Host**: dockermaster (Proxmox VM 120)
+- **OS**: Ubuntu 24.04 LTS
+- **CPU**: 20 cores (Intel Xeon E5-2680 v2)
+- **RAM**: 62 GB
+- **Storage**: 192 GB SSD
 - **Network**:
-  - Main IP: 192.168.48.44/20
-  - Server Network: 192.168.59.1/26 (macvlan)
-- **Docker Version**: 28.3.2 (API 1.51)
-- **Docker Compose**: 20 active projects (9 Terraform-managed via Portainer, 11 standalone)
+  - LAN: 192.168.48.44/20 (ens19)
+  - Macvlan shim: 192.168.59.1/26 (`docker-servers-net`)
+- **Docker**: 28.3.2 (API 1.51)
+- **NFS mounts**: `/nfs/calibre`, `/nfs/dockermaster` (from NAS)
+- **Role**: Control plane + edge + HA peers
 
-### NFS Mounts
+### Running containers
 
-- `/nfs/calibre` - Calibre library storage (from NAS)
-- `/nfs/dockermaster` - Docker persistent data (from NAS)
+#### Edge tier
 
----
-
-## Running Containers (29 across 20 compose projects)
-
-### Terraform-Managed Portainer Stacks
-
-#### Calibre (Stack ID: 10)
-
-- **calibre**
-  - Image: `calibre-calibre`
-  - Network: rproxy bridge (172.24.0.x)
-  - Ports: 58080:8080, 58081:8081, 58181:8181, 58090:9090
-  - Resources: 2.55% CPU, 553MB RAM (0.86%)
-  - Volumes: `/nfs/calibre/Library`, `/nfs/calibre/config`, `/nfs/calibre/upload`, `/nfs/calibre/plugins`
-  - Purpose: E-book library management server
-
-- **calibre-web**
-  - Image: `lscr.io/linuxserver/calibre-web:latest`
-  - Network: rproxy bridge (172.24.0.x)
-  - Ports: 58083:8083
-  - Resources: 0.02% CPU, 199MB RAM (0.31%)
-  - Volumes: `/nfs/calibre/calibre-web/Library`, `/nfs/calibre/calibre-web/config`
-  - Purpose: Web-based e-book reader interface
-
-#### Bind DNS (Stack ID: 4)
-
-- **bind-dns-bind9-1**
-  - Image: `Ubuntu/bind9:9.20-24.10_edge`
-  - Network: `docker-servers-net`
-  - IP: 192.168.59.3
-  - Ports: 53/tcp, 53/udp
-  - Resources: 0.00% CPU, 12MB RAM (0.02%)
-  - Volumes: `/nfs/dockermaster/docker/bind9/config`, `/nfs/dockermaster/docker/bind9/cache`, `/nfs/dockermaster/docker/bind9/records`
-  - Purpose: DNS server with custom zones
-
-#### Cloudflare Tunnel (Stack ID: 2)
-
-- **cloudflare-tunnel-cloudflare-1**
-  - Image: `cloudflare/cloudflared`
-  - Network: rproxy bridge (172.24.0.x)
-  - Purpose: Cloudflare tunnel routing `*.cf.lcamaral.com` to `nginx-rproxy`
-
-#### Docker Registry (Stack ID: 1)
-
-- **registry**
-  - Image: `registry:2`
-  - Network: rproxy bridge (172.24.0.x)
-  - Purpose: Private Docker image registry (exposed via `registry.cf.lcamaral.com`)
-
-#### GitHub Runner (Stack ID: 9)
-
-- **`github-runner-homelab`**
-  - Image: `myoung34/github-runner` (or custom)
-  - Network: `docker-servers-net`
-  - IP: 192.168.59.4
-  - Volumes: `/var/run/docker.sock`, `/nfs/dockermaster/Docker` (read-only)
-  - Purpose: GitHub Actions self-hosted runner for CI/CD
-
-#### Reverse Proxy (Stack ID: 8)
-
-- **rproxy**
-  - Image: `nginx:1.27`
-  - Network: dual (macvlan + rproxy bridge)
-  - IP: 192.168.59.28
-  - Resources: 0.00% CPU, 3.6MB RAM (0.01%)
+- **rproxy** — `nginx:1.29-otel`
+  - Networks: `docker-servers-net` (192.168.59.28) + `rproxy` bridge (172.24.0.6)
   - Volumes: `/nfs/dockermaster/docker/nginx-rproxy/nginx-rproxy` → `/etc/nginx`
-  - Purpose: Nginx reverse proxy with SSL termination for `*.d.lcamaral.com`
+  - **HA:** 1 of 3 (paired with rproxy-2 on ds-1, rproxy-3 on ds-2); shared vhost.d via NFS
+  - Purpose: Nginx reverse proxy + SSL termination for `*.d.lcamaral.com`
 
-- **reverse-proxy-promtail-1**
-  - Image: `grafana/promtail`
-  - Network: dual (macvlan + rproxy bridge)
+- **reverse-proxy-promtail-1** — `grafana/promtail:latest`
+  - Network: `rproxy` bridge
   - Purpose: Log shipping for Nginx access/error logs
 
-#### Twingate A (Stack ID: 5)
+- **cloudflare-tunnel-cloudflare-1** — `cloudflare/cloudflared:latest`
+  - Network: `rproxy` bridge (172.24.0.8)
+  - **HA:** replica 1 of 3 for tunnel `bologna`
+  - Purpose: Forwards `*.cf.lcamaral.com` from Cloudflare edge to local Nginx
 
-- **twingate-sepia-hornet**
-  - Network: dual (macvlan + rproxy bridge)
-  - IP: 192.168.59.12
-  - Purpose: Twingate connector node A for zero-trust remote access
+#### Auth tier
 
-#### Twingate B (Stack ID: 6)
+- **keycloak** — `keycloak/keycloak:26.3`
+  - Networks: `docker-servers-net` (192.168.59.13) + `rproxy` bridge (172.24.0.7)
+  - **HA:** Infinispan cluster with keycloak-2 (jdbc-ping discovery via `jgroups_ping` table)
+  - Purpose: SSO identity provider (`auth.cf.lcamaral.com`)
 
-- **twingate-golden-mussel**
-  - Network: dual (macvlan + rproxy bridge)
-  - IP: 192.168.59.24
-  - Purpose: Twingate connector node B for zero-trust remote access (HA pair)
+- **keycloak-db-0** — `bitnamilegacy/postgresql-repmgr:17.6.0`
+  - Network: `docker-servers-net` (192.168.59.44)
+  - Volumes: NFS-backed
+  - **HA:** repmgr primary (or standby after failover); paired with keycloak-db-1 on ds-1
+  - Purpose: PostgreSQL backing store for Keycloak cluster
 
-#### Vault (Stack ID: 7)
+- **homelab-portal** — `registry.cf.lcamaral.com/homelab-portal:latest`
+  - Networks: `docker-servers-net` (192.168.59.18) + `rproxy` bridge (172.24.0.9)
+  - **HA:** stateless replica 1 of 2 (cookie-based session state, shared secrets)
+  - Purpose: Custom SSO login UI (`login.cf.lcamaral.com`) backed by Keycloak
 
-- **vault**
-  - Image: `hashicorp/vault`
-  - Network: rproxy bridge (172.24.0.x)
-  - Purpose: HashiCorp Vault secret management (exposed via `vault.d.lcamaral.com`)
-  - Notes: Root token stored in macOS Keychain; secrets at `secret/homelab/*`
+#### Backing services
+
+- **vault** — `hashicorp/vault:1.21`
+  - Networks: `docker-servers-net` (192.168.59.25) + `rproxy` bridge (172.24.0.5)
+  - **HA:** Raft node 1 of 3 (voter)
+  - Purpose: Secret management (`vault.d.lcamaral.com`, `vault.cf.lcamaral.com`)
+
+- **bind-dns-bind9-1** — `ubuntu/bind9:9.20-24.10_edge`
+  - Network: `docker-servers-net` (192.168.59.3)
+  - Volumes: `/nfs/dockermaster/docker/bind9/{config,cache,records}`
+  - Purpose: Authoritative DNS for `*.d.lcamaral.com` (single instance)
+
+- **registry** — `registry:2`
+  - Networks: `docker-servers-net` (192.168.59.16) + `rproxy` bridge (172.24.0.3)
+  - Purpose: Private Docker image registry (`registry.cf.lcamaral.com`) — single instance
+
+- **postfix-relay** — `boky/postfix:latest`
+  - Network: `rproxy` bridge (172.24.0.2)
+  - Purpose: Outbound SMTP relay via DreamHost — single instance
+
+- **portainer** — `portainer/portainer-ce:latest`
+  - Network: `docker-servers-net` (192.168.59.2)
+  - Volumes: `/var/run/docker.sock`, `portainer_data`
+  - Purpose: Docker management UI (bootstrap, not self-managed via Terraform)
+
+#### Ancillary
+
+- **watchtower** — `containrrr/watchtower:latest`
+  - Network: internal bridge
+  - Purpose: Auto-update opted-in images at 04:00 daily
 
 ---
 
-### Standalone Docker Compose
+## dockerserver-1 (VM 123)
 
-#### Portainer CE
+### System info
 
-- **portainer**
-  - Image: `portainer/portainer-ce:latest`
-  - Network: `docker-servers-net`
-  - IP: 192.168.59.2
-  - Resources: 0.04% CPU, 72MB RAM (0.11%)
-  - Volumes: `/var/run/docker.sock`, `portainer_data`
-  - Purpose: Docker management UI (bootstrap — not self-managed via Terraform)
+- **Host**: dockerserver-1 (Proxmox VM 123)
+- **OS**: Ubuntu 24.04.4 LTS (kernel 6.8.0-107-generic)
+- **CPU**: 10 cores
+- **RAM**: 23 GB
+- **Storage**: 113 GB (`/dev/sda2`, 37% used)
+- **Network**:
+  - LAN: 192.168.48.45/20 (ens19)
+  - Macvlan shim: 192.168.59.33/32 (`server-net-shim`)
+- **Role**: Primary workloads + HA peers
 
-#### Rundeck (la-rundeck)
+### Running containers
 
-- **rundeck**
-  - Image: `la-rundeck-rundeck` (custom build)
-  - Network: `docker-servers-net`
-  - IP: 192.168.59.22
-  - Resources: 0.44% CPU, 2.25GB RAM (3.58%)
+#### Edge tier
+
+- **rproxy-2** — `nginx:1.29-otel`
+  - Networks: `docker-servers-net` (192.168.59.48) + local `rproxy` bridge (172.20.0.3)
+  - Volumes: shared Nginx vhost.d via NFS
+  - **HA:** 2 of 3
+  - Purpose: Nginx reverse proxy replica
+
+- **cloudflare-tunnel-2** — `cloudflare/cloudflared:latest`
+  - Network: local `rproxy` bridge (172.20.0.2)
+  - **HA:** replica 2 of 3 for tunnel `bologna`
+  - Purpose: Tunnel to local Nginx on this host
+
+#### Auth tier
+
+- **keycloak-2** — `keycloak/keycloak:26.3`
+  - Network: `docker-servers-net` (192.168.59.43)
+  - **HA:** Infinispan peer with keycloak on dm
+  - Purpose: Keycloak cluster peer
+
+- **keycloak-db-1** — `bitnamilegacy/postgresql-repmgr:17.6.0`
+  - Network: `docker-servers-net` (192.168.59.54)
+  - Volumes: local disk
+  - **HA:** repmgr standby (or primary after failover)
+  - Purpose: PostgreSQL HA peer for Keycloak
+
+- **homelab-portal-2** — `registry.cf.lcamaral.com/homelab-portal:latest`
+  - Network: `docker-servers-net` (192.168.59.38)
+  - **HA:** stateless replica 2 of 2
+  - Purpose: Homelab portal replica
+
+#### Backing services
+
+- **vault-2** — `hashicorp/vault:1.21`
+  - Network: `docker-servers-net` (192.168.59.9)
+  - **HA:** Raft node 2 of 3 (voter)
+  - Purpose: Vault cluster peer
+
+- **minio-minio-1** — `minio/minio:latest`
+  - Network: `docker-servers-net` (192.168.59.17)
+  - Volumes: `/nfs/dockermaster/docker/MinIO/minio-data` (NFS)
+  - **HA:** site replication peer 1 (paired with minio-2 on ds-2)
+  - Purpose: S3-compatible object storage (`s3.cf.lcamaral.com`, `minio.cf.lcamaral.com`)
+
+- **twingate-sepia-hornet** — `twingate/connector:1`
+  - Network: `docker-servers-net` (192.168.59.12)
+  - **HA:** 1 of 2 Twingate connectors (paired with golden-mussel on ds-2)
+  - Purpose: Zero-trust remote access connector
+
+#### Workloads (single instance)
+
+- **calibre** — `linuxserver/calibre:latest`
+  - Network: `docker-servers-net` (192.168.59.7)
+  - Volumes: `/nfs/calibre/Library`, `/nfs/calibre/config`, `/nfs/calibre/upload`, `/nfs/calibre/plugins`
+  - Purpose: E-book library management (single — SQLite store)
+
+- **calibre-web** — `lscr.io/linuxserver/calibre-web:latest`
+  - Network: `docker-servers-net` (192.168.59.6)
+  - Volumes: `/nfs/calibre/calibre-web/{Library,config}`
+  - Purpose: Web-based e-book reader UI
+
+- `github-runner-homelab` — `myoung34/github-runner:latest`
+  - Network: `docker-servers-net` (192.168.59.4)
+  - Volumes: `/var/run/docker.sock`, `/nfs/dockermaster/Docker` (read-only)
+  - Purpose: Self-hosted GitHub Actions runner for CI/CD
+
+- **rundeck** — `registry.cf.lcamaral.com/la-rundeck:latest`
+  - Network: `docker-servers-net` (192.168.59.22)
   - Volumes: `/nfs/dockermaster/docker/rundeck/data`, `/var/run/docker.sock`
-  - Purpose: Job scheduler and runbook automation
+  - Purpose: Job scheduler / runbook automation
 
-- **postgres-rundeck**
-  - Image: `postgres`
-  - Network: `docker-servers-net`
-  - IP: 192.168.59.23
-  - Resources: 0.01% CPU, 62MB RAM (0.10%)
+- **postgres-rundeck** — `postgres:17`
+  - Network: `docker-servers-net` (192.168.59.23)
   - Volumes: `/nfs/dockermaster/docker/rundeck/dbdata`
   - Purpose: Database backend for Rundeck
 
-#### Prometheus
+#### Monitoring stack (Prometheus)
 
-- **alertmanager**
-  - Purpose: Alert routing and notification management
+- `prometheus-prometheus-1` — `prom/prometheus:latest`
+  - Network: internal `prometheus_back-tier` bridge; host-published `:9090`
+  - Purpose: Metrics TSDB (single instance)
+- `prometheus-alertmanager-1` — `prom/alertmanager`
+  - Purpose: Alert routing
+- `prometheus-cadvisor-1` — `gcr.io/cadvisor/cadvisor`
+  - Purpose: Container resource metrics
+- `prometheus-node-exporter-1` — `quay.io/prometheus/node-exporter:latest`
+  - Purpose: Host metrics
+- `prometheus-snmp-exporter-1` — `prom/snmp-exporter:v0.20.0`
+  - Purpose: SNMP metrics for network devices
 
-- **cadvisor**
-  - Purpose: Container resource usage and performance monitoring
+#### Ancillary
 
-- **snmp-exporter**
-  - Purpose: SNMP metrics export for network devices
+- **portainer-agent** — `portainer/agent:2.39.1`
+  - Network: `docker-servers-net` (192.168.59.34)
+  - Purpose: Portainer agent for managing ds-1 from the central Portainer
 
-#### LDAP (ldap-lcamaral-com)
+- **watchtower** — `containrrr/watchtower:latest`
+  - Purpose: Local image auto-updater
 
-- **lemonldap**
-  - Network: rproxy bridge
-  - Purpose: LemonLDAP::NG SSO portal
+---
 
-- **openldap**
-  - Network: rproxy bridge
-  - Purpose: OpenLDAP directory server
+## dockerserver-2 (VM 124)
 
-- **phpldapadmin**
-  - Network: rproxy bridge
-  - Purpose: Web UI for OpenLDAP administration
+### System info
 
-#### MinIO
+- **Host**: dockerserver-2 (Proxmox VM 124)
+- **OS**: Ubuntu 24.04.4 LTS (kernel 6.8.0-107-generic)
+- **CPU**: 10 cores
+- **RAM**: 23 GB
+- **Storage**: 113 GB (`/dev/sda2`, 28% used)
+- **Network**:
+  - LAN: 192.168.48.46/20 (ens19)
+  - Macvlan shim: 192.168.59.33/32 (`server-net-shim`)
+- **Role**: Workloads + HA peers
 
-- **minio**
-  - Network: rproxy bridge
-  - Purpose: S3-compatible object storage
+### Running containers
 
-#### Ollama
+#### Edge tier
 
-- **ollama**
-  - Network: rproxy bridge
-  - Purpose: Local LLM inference server
+- **rproxy-3** — `nginx:1.29-otel`
+  - Networks: `docker-servers-net` (192.168.59.49) + local `rproxy` bridge (172.18.0.3)
+  - **HA:** 3 of 3 (shared vhost.d via NFS)
+  - Purpose: Nginx reverse proxy replica
 
-#### Chisel
+- **cloudflare-tunnel-3** — `cloudflare/cloudflared:latest`
+  - Network: local `rproxy` bridge (172.18.0.2)
+  - **HA:** replica 3 of 3 for tunnel `bologna`
+  - Purpose: Tunnel to local Nginx on this host
 
-- **chisel**
-  - Network: dual (macvlan + rproxy bridge)
-  - IP: 192.168.59.0
-  - Purpose: TCP/UDP tunnel over HTTP
+#### Backing services
 
-#### Rust Server (RustDesk relay)
+- **vault-3** — `hashicorp/vault:1.21`
+  - Network: `docker-servers-net` (192.168.59.15)
+  - **HA:** Raft node 3 of 3 (voter)
+  - Purpose: Vault cluster peer
 
-- **hbbs**
-  - Network: dual (macvlan + rproxy bridge)
-  - IP: 192.168.59.10
-  - Purpose: RustDesk ID/rendezvous server
+- **minio-2-minio-1** — `minio/minio:latest`
+  - Network: `docker-servers-net` (192.168.59.37)
+  - Volumes: `/var/lib/minio-data` (local disk — storage-level HA from ds-1's NFS)
+  - **HA:** site replication peer 2 (bidirectional active-active)
+  - Purpose: MinIO S3 replica
 
-- **hbbr**
-  - Network: dual (macvlan + rproxy bridge)
-  - IP: 192.168.59.11
+- **twingate-golden-mussel** — `twingate/connector:1`
+  - Network: `docker-servers-net` (192.168.59.24)
+  - **HA:** 2 of 2 Twingate connectors
+  - Purpose: Zero-trust remote access connector
+
+#### Workloads (single instance)
+
+- **freeswitch** — `ghcr.io/patrickbaus/freeswitch-docker`
+  - Network: `docker-servers-net` (192.168.59.40)
+  - Purpose: VoIP / SIP softswitch (stateful — single by design)
+
+- **hbbs** — `rustdesk/rustdesk-server:latest`
+  - Network: `docker-servers-net` (192.168.59.10)
+  - Purpose: RustDesk ID / rendezvous server
+
+- **hbbr** — `rustdesk/rustdesk-server:latest`
+  - Network: `docker-servers-net` (192.168.59.11)
   - Purpose: RustDesk relay server
 
-#### FreeSWITCH
+#### Ancillary
 
-- **freeswitch**
-  - Network: `docker-servers-net`
-  - IP: 192.168.59.40
-  - Purpose: VoIP / SIP softswitch
-
-#### Elastic Search
-
-- **`elasticsearch`**
-  - Network: `docker-servers-net`
-  - IP: 192.168.59.25
-  - Purpose: Full-text search and analytics engine
-
-#### Synology Search
-
-- **nas-solr**
-  - Network: `docker-servers-net`
-  - IP: 192.168.59.31
-  - Purpose: Solr search backend for NAS indexing
-
-- **nas-tika**
-  - Network: `docker-servers-net`
-  - IP: 192.168.59.32
-  - Purpose: Apache Tika document content extraction
+- **portainer-agent** — `portainer/agent:latest`
+  - Network: `docker-servers-net` (192.168.59.46)
+  - Purpose: Portainer agent for managing ds-2 from the central Portainer
 
 ---
 
-## Inactive Projects
+## Network / IP assignments (`docker-servers-net`, 192.168.59.0/26)
 
-| Project | Last State | Description |
+| IP | Container | Host |
 |---|---|---|
-| `ansible-observability` | Stopped | Prometheus + Grafana for Ansible/AWX monitoring |
-| `docker-dns` | Stopped | Dynamic DNS for Docker containers |
-| `docker-vault` | Stopped | Legacy standalone Vault (superseded by vault Portainer stack) |
-| `litellm` | Stopped | LiteLLM proxy + PostgreSQL |
-| `n8n-stack` | Stopped | n8n workflow automation + PostgreSQL |
-| `puppet` | Stopped | Puppet configuration management server |
+| .1 | gateway / dockermaster macvlan shim | dm |
+| .2 | portainer | dm |
+| .3 | bind-dns-bind9-1 | dm |
+| .4 | `github-runner-homelab` | ds-1 |
+| .6 | calibre-web | ds-1 |
+| .7 | calibre | ds-1 |
+| .9 | vault-2 | ds-1 |
+| .10 | hbbs (RustDesk ID) | ds-2 |
+| .11 | hbbr (RustDesk relay) | ds-2 |
+| .12 | twingate-sepia-hornet | ds-1 |
+| .13 | keycloak | dm |
+| .15 | vault-3 | ds-2 |
+| .16 | registry | dm |
+| .17 | minio-minio-1 | ds-1 |
+| .18 | homelab-portal | dm |
+| .22 | rundeck | ds-1 |
+| .23 | postgres-rundeck | ds-1 |
+| .24 | twingate-golden-mussel | ds-2 |
+| .25 | vault | dm |
+| .28 | rproxy (edge 1/3) | dm |
+| .33 | server-net-shim (ds-1 & ds-2 host shim) | ds-1, ds-2 |
+| .34 | portainer-agent | ds-1 |
+| .37 | minio-2-minio-1 | ds-2 |
+| .38 | homelab-portal-2 | ds-1 |
+| .40 | freeswitch | ds-2 |
+| .43 | keycloak-2 | ds-1 |
+| .44 | keycloak-db-0 | dm |
+| .46 | portainer-agent | ds-2 |
+| .48 | rproxy-2 (edge 2/3) | ds-1 |
+| .49 | rproxy-3 (edge 3/3) | ds-2 |
+| .54 | keycloak-db-1 | ds-1 |
 
----
+## Removed services (since last refresh)
 
-## Docker Networks
+The following services were present in the pre-HA inventory and have been removed or superseded:
 
-### Active Networks
-
-- **`docker-servers-net`**: Macvlan network for static server IPs (192.168.59.0/26)
-- **rproxy bridge** (172.24.0.0/16): Internal bridge shared by `nginx-rproxy` and connected stacks
-- **`bind-dns_default`**: Bind9 internal network
-- **`calibre_default`**: Calibre services network
-- **`prometheus_default`**: Prometheus stack network
-
-### IP Assignment (`docker-servers-net`)
-
-| IP | Container / Service |
+| Service | Reason |
 |---|---|
-| 192.168.59.0 | `chisel` |
-| 192.168.59.2 | `portainer` |
-| 192.168.59.3 | `bind-dns` |
-| 192.168.59.4 | `github-runner` |
-| 192.168.59.10 | `hbbs` (RustDesk) |
-| 192.168.59.11 | `hbbr` (RustDesk) |
-| 192.168.59.12 | `twingate-a` |
-| 192.168.59.22 | `rundeck` |
-| 192.168.59.23 | `postgres-rundeck` |
-| 192.168.59.24 | `twingate-b` |
-| 192.168.59.25 | `elasticsearch` |
-| 192.168.59.28 | `rproxy` |
-| 192.168.59.31 | `nas-solr` |
-| 192.168.59.32 | `nas-tika` |
-| 192.168.59.40 | `freeswitch` |
+| chisel | Removed — replaced by Twingate + Cloudflare tunnel |
+| ldap-lcamaral-com (openldap, lemonldap, phpldapadmin) | Removed — superseded by Keycloak |
+| ollama | Removed |
+| `elasticsearch` | Removed |
+| `nas-solr`, `nas-tika` | Removed from dockermaster (NAS search now handled differently) |
+| `ansible-observability`, `docker-dns`, `docker-vault`, `litellm`, `n8n-stack`, `puppet` | Removed (were already stopped) |
+| vault on NAS | Superseded by 3-node Vault Raft cluster |
+| ocr-photo-tag on NAS | Removed (non-portable) |
 
----
+## Terraform-managed Portainer stacks
 
-## Docker Volumes
+Authoritative list in `terraform/portainer/stacks.tf`:
 
-### Named Volumes
-
-- `dockermaster-portainer_portainer_data` - Portainer configuration
-- `ollama_ollama` - Ollama models and data
-
-### NFS-backed Storage
-
-- All persistent data stored on NAS via NFS mounts
-- Configuration files in `/nfs/dockermaster/docker/`
-- Calibre library in `/nfs/calibre/`
-
----
-
-## Docker Compose Stacks
-
-### Terraform-Managed (via `terraform/portainer/`)
-
-| Stack | Portainer ID |
+| Stack | Endpoint |
 |---|---|
-| `docker-registry` | 1 |
-| `cloudflare-tunnel` | 2 |
-| `bind-dns` | 4 |
-| `twingate-a` | 5 |
-| `twingate-b` | 6 |
-| `vault` | 7 |
-| `reverse-proxy` | 8 |
-| `github-runner` | 9 |
-| `calibre` | 10 |
+| `docker-registry` | dm |
+| `cloudflare-tunnel`, `cloudflare-tunnel-2`, `cloudflare-tunnel-3` | dm, ds-1, ds-2 |
+| `bind-dns` | dm |
+| `reverse-proxy`, `reverse-proxy-2`, `reverse-proxy-3` | dm, ds-1, ds-2 |
+| `vault`, `vault-3` (vault-2 runs alongside) | dm, ds-2 (+ ds-1) |
+| `twingate-a`, `twingate-b` | ds-1, ds-2 |
+| `calibre` | ds-1 |
+| `github-runner` | ds-1 |
+| `rust-server` | ds-2 |
+| `la-rundeck` | ds-1 |
+| `prometheus` | ds-1 |
+| `watchtower`, `watchtower_dm` | ds-1, dm |
+| `minio`, `minio-2` | ds-1, ds-2 |
+| `freeswitch` | ds-2 |
+| `keycloak-db-0`, `keycloak-db-1` | dm, ds-1 |
+| `keycloak`, `keycloak-2` | dm, ds-1 |
+| `postfix-relay` | dm |
+| `homelab-portal`, `homelab-portal-2` | dm, ds-1 |
 
-### Standalone (direct `docker compose`)
+Portainer itself (on dm, `192.168.59.2`) is bootstrap and not Terraform-managed.
 
-1. `portainer-ce`
-2. `la-rundeck`
-3. `prometheus`
-4. `ldap-lcamaral-com`
-5. `minio`
-6. `ollama`
-7. `chisel`
-8. `rust-server`
-9. `freeswitch`
-10. `elastic-search`
-11. `synology-search`
+## Notes
 
----
-
-## Resource Summary
-
-- **Total Containers**: 29 running across 20 active compose projects
-- **Terraform-managed stacks**: 9 (via Portainer)
-- **Standalone compose projects**: 11
-- **Inactive projects**: 6
-- **Memory Usage**: ~3.5 GB of 62 GB (~5.6%)
-- **CPU Usage**: ~3% average
-- **Storage**: Persistent data on NFS mounts
-- **Network**: Macvlan (`docker-servers-net`) for static IPs; rproxy bridge for internal service communication
-
----
-
-## Container Orchestration Platforms (VMs - Stopped)
-
-### Docker Swarm Cluster
-
-- Manager: VM 230
-- Workers: VM 231, 232
-- Status: Stopped
-
-### Kubernetes Clusters
-
-- Standard K8s: VMs 240-242
-- Talos K8s: VMs 250-252
-- Status: Stopped
+- All `.cf.lcamaral.com` traffic enters via Cloudflare tunnel → nearest
+  cloudflared replica → local Nginx on the same host.
+- All `.d.lcamaral.com` traffic is LAN-only; bind9 returns 3 A records for
+  HA vhosts (`.28`, `.48`, `.49`).
+- HA failure modes and tested failover scenarios: see `docs/ha-architecture.md`.

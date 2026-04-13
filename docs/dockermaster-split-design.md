@@ -1,9 +1,33 @@
 # Homelab Multi-Server Split Design
 
-**Status**: Phase 1 complete. ds-2 provisioned (out-of-order, before Phase 2).
-Phase 2 (service migration to ds-1) is the active next step.
+> **✅ COMPLETE (2026-04-12)** — all planned phases executed. Current state is
+> in `docs/ha-architecture.md` which supersedes this design doc as the
+> authoritative topology reference. This file is retained as the historical
+> record of what was planned and why.
+>
+> **Phases executed:**
+>
+> - Phase 1: ds-1 provisioned, base migration
+> - Phase 2: service migration from dm → ds-1 (calibre, rundeck, Prometheus,
+>   GitHub-runner, watchtower, minio, twingate-a)
+> - Phase 3: ds-2 provisioned, additional migration (freeswitch, twingate-b,
+>   rustdesk-hbbs/hbbr, vault-3, minio-2)
+> - Phase 4 (HA hardening, 2026-04-12):
+>   - Nginx/cloudflared 3-replica edge HA (rproxy-2 ds-1, rproxy-3 ds-2)
+>   - Keycloak 2-node Infinispan cluster (keycloak dm + keycloak-2 ds-1)
+>   - Postgres-repmgr HA cluster for keycloak-db (db-0 dm + db-1 ds-1)
+>   - homelab-portal 2-replica (dm + ds-1)
+>   - Nginx vhosts converted to upstream blocks with cookie-hash sticky
+>   - bind9 multi-A records for all HA-backed hostnames
+>
+> **Deviations from original plan:**
+>
+> - Keycloak-1 lives on dm (not ds-1); keycloak-2 on ds-1 (not ds-2).
+>   PG HA uses db-0/db-1 both on dm/ds-1.
+> - Ollama not deployed (dropped from scope).
+> - Bind9-secondary on ds-1 not yet implemented (known gap).
 
-**Date**: 2026-04-11
+**Date**: 2026-04-11 (plan) → 2026-04-12 (execution complete)
 **Branch**: `nas-docker-server`
 
 ## Motivation

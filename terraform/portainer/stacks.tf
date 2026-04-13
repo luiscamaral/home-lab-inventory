@@ -48,6 +48,24 @@ resource "portainer_stack" "cloudflare_tunnel_2" {
 }
 
 # ──────────────────────────────────────────────
+# Cloudflare Tunnel (replica 3 on dockerserver-2)
+# Third replica, completes 3-host edge HA
+# ──────────────────────────────────────────────
+resource "portainer_stack" "cloudflare_tunnel_3" {
+  name             = "cloudflare-tunnel-3"
+  endpoint_id      = var.ds2_endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/cloudflare-tunnel-3.yml")
+
+  env {
+    name  = "TUNNEL_TOKEN"
+    value = data.vault_kv_secret_v2.cloudflare.data["tunnel_token"]
+  }
+}
+
+# ──────────────────────────────────────────────
 # Bind9 DNS
 # Authoritative DNS for d.lcamaral.com (internal LAN)
 # No secrets needed — config is on NFS volumes
@@ -85,6 +103,19 @@ resource "portainer_stack" "reverse_proxy_2" {
   method           = "string"
 
   stack_file_content = file("${path.module}/stacks/reverse-proxy-2.yml")
+}
+
+# ──────────────────────────────────────────────
+# Nginx Reverse Proxy (rproxy-3 on dockerserver-2)
+# Third instance for HA — completes the 3-host edge
+# ──────────────────────────────────────────────
+resource "portainer_stack" "reverse_proxy_3" {
+  name             = "reverse-proxy-3"
+  endpoint_id      = var.ds2_endpoint_id
+  deployment_type  = "standalone"
+  method           = "string"
+
+  stack_file_content = file("${path.module}/stacks/reverse-proxy-3.yml")
 }
 
 # ──────────────────────────────────────────────
