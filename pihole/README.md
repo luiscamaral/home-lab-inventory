@@ -31,36 +31,83 @@ collision (see [Migration status](#migration-status) below).
   2026-04-13. The pfSense Unbound forward-zone for
   `d.lcamaral.com -> 192.168.100.254` was configured correctly via the
   API (both `domainoverrides.conf` and `custom_options` cleaned up), but
-  Unbound never actually delivered queries to pihole. The blocking issue
-  is that `host_entries.conf` has
-  `local-data: "hbbs.d.lcamaral.com. A 192.168.59.10"` and
-  `local-data: "hbbr.d.lcamaral.com. A 192.168.59.11"` — these create
-  an implicit `local-zone "d.lcamaral.com."` that intercepts ALL queries
-  for the zone, returning NODATA for anything not in the explicit
-  local-data instead of falling through to the forward.
+  Unbound never actually delivered queries to pihole. **The original
+  local-zone interception theory is wrong** — the existing
+  `lab.home -> pihole-1` forward also has a `local-data` entry inside
+  the zone (`pihole.lab.home`) and works fine. Real cause is unknown,
+  more likely DNSSEC chain validation against the parent `lcamaral.com`
+  zone, or stale negative cache from before the forward took effect.
+  Empty `drill vault.d.lcamaral.com` answers had a `lcamaral.com. SOA`
+  from DreamHost in the AUTHORITY section — that's the smoking gun:
+  the query went UPSTREAM to public DNS and got NODATA, bypassing the
+  forward entirely. `domain-insecure: d.lcamaral.com` is supposed to
+  prevent that but evidently didn't apply during the test.
 - [ ] **3d — Stop bind9** container.
 - [ ] **3e — Deploy pihole-2** on ds-2 as Docker macvlan container.
 - [ ] **3f — Configure orbital-sync** between pihole-1 and pihole-2.
 - [ ] **3g — IaC capture + commit final state**.
 
-## Three fix paths for Phase 3c (pick one next session)
+## Diagnostic plan for Phase 3c (next session)
 
-1. **Add explicit `local-zone "d.lcamaral.com." transparent`** to pfSense
-   Unbound's `custom_options`. This _should_ force the implicit local-zone
-   to be transparent (which is the documented default) but pfSense may be
-   setting it to "static" implicitly. Easy to test.
+The local-zone theory was wrong — `lab.home` has the same shape and
+works. The real cause is most likely DNSSEC or cache. Diagnostic plan:
 
-2. **Move `hbbs.d.lcamaral.com` and `hbbr.d.lcamaral.com` OUT of pfSense
-   host overrides INTO pihole records.** With no local-data for
-   `d.lcamaral.com` in pfSense, Unbound has nothing to intercept and the
-   forward-zone takes over. This is the cleanest long-term fix because
-   all `d.lcamaral.com` records live in one place (pihole).
+1. **Re-apply the forward-zone change** (PATCH custom_options to remove
+   hardcoded forward, PATCH domain override to point at pihole, kill
+   unbound, apply, restart).
 
-3. **Use `stub-zone` instead of `forward-zone`** in domainoverrides.conf.
-   Stub zones bypass the local-zone interception because they're treated
-   as authoritative delegations. May require directly editing the
-   generated unbound.conf since pfSense's domain override UI only emits
-   forward-zones.
+2. **Verify state** with `grep -A3 "name: \"d.lcamaral.com\"" /var/unbound/unbound.conf`
+   — the hardcoded forward should be gone, and the only forward should
+   be from `domainoverrides.conf` pointing at .100.254.
+
+3. **Force a totally unique fresh query** that has never been resolved
+   before: `drill never-used-$(date +%s).d.lcamaral.com @127.0.0.1`.
+   Watch the unbound resolver log in parallel:
+   `tail -F /var/log/resolver.log | grep -iE "d.lcamaral|192.168.100"`
+
+4. **Check the AUTHORITY section** of any failed answer. If it's a
+   `lcamaral.com SOA from DreamHost`, the query went upstream. If it's
+   something else, different cause.
+
+5. **Test with `+bufsize=4096 +cd`** (CD = checking-disabled, skips
+   DNSSEC) on the drill query. If that succeeds where the normal
+   query fails, DNSSEC validation is the cause.
+
+6. **Verify `domain-insecure: d.lcamaral.com`** is in the live
+   unbound.conf and applies — search for it after restart and confirm
+   it's at the right scope.
+
+## Better path forward — switch to "Pattern B"
+
+Rather than continue debugging the pfSense forward path, consider
+restructuring as **Pattern B (collaboration)**:
+
+- Clients use **pihole** as their primary DNS (DHCP option), with
+  pfSense as secondary/fallback
+- Pihole answers everything it knows authoritatively (lab.home,
+  d.lcamaral.com, ad-blocking)
+- Pihole's upstream is pfSense Unbound (already configured this way:
+  `server=192.168.4.1` in pihole's dnsmasq.conf)
+- pfSense Unbound recurses to internet for public DNS, serves
+  `*.home.lcamaral.com` host overrides, handles DHCP-derived hostnames
+
+Pros:
+
+- Bypasses the Phase 3c blocker entirely (no pfSense → pihole forward
+  needed)
+- Brings ad-blocking to all LAN clients (currently only k8s lab subnet
+  uses pihole)
+- Clean separation: pihole owns ad-blocking + dev/Docker records,
+  pfSense owns recursion + home-device records
+- HA via DHCP serving multiple resolvers in priority order
+
+Cons:
+
+- Requires DHCP scope updates on pfSense (per-VLAN)
+- Pi-hole becomes a (single) point in the data path for client DNS;
+  mitigated by pfSense as the secondary
+
+Decision pending — discuss next session.
 
 Recommended: **option 2** (longer-term clean), with option 1 as a quick test.
 
