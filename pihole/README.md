@@ -143,7 +143,215 @@ Cons:
 
 Decision pending — discuss next session.
 
-Recommended: **option 2** (longer-term clean), with option 1 as a quick test.
+## Design rationale (next-session reference)
+
+Captured 2026-04-13 after a long Q&A. Covers the HA topology, loop
+prevention, caching, sync, DHCP, and authority boundaries so the next
+session can execute without re-deriving the architecture.
+
+### Target topology — 3-node pihole HA
+
+| Instance | Where | IP | Physical host |
+|---|---|---|---|
+| **pihole-1** | Proxmox LXC 10000 (existing, don't touch) | `192.168.100.254` (vmbr0) | Proxmox |
+| **pihole-2** | New Docker stack via Portainer on dockerserver-1, macvlan | e.g. `192.168.59.50` | Proxmox (same box as pihole-1) |
+| **pihole-3** | New Docker stack via Portainer **on the NAS** (Portainer Edge endpoint id 6) | e.g. `192.168.4.236` in NAS `home-net` macvlan | NAS (different physical box) |
+
+Three instances across two physical machines. If Proxmox dies, pihole-3
+still serves. If NAS dies, pihole-1 + pihole-2 cover.
+
+Container requirements (baked-in lessons from today):
+
+- `image: pihole/pihole:2025.xx` (match pihole-1's v6 line — required
+  for orbital-sync compatibility)
+- `dns: [192.168.48.1, 1.1.1.1]` — macvlan containers can't use
+  Docker's 127.0.0.11 embedded DNS
+- `restart: unless-stopped`
+- Static macvlan IPs
+- Local volumes for `/etc/pihole/` and `/etc/dnsmasq.d/` (NOT NFS —
+  orbital-sync needs distinct datastores per instance)
+- Env: `WEBPASSWORD`, `TZ`, `FTLCONF_LOCAL_IPV4`
+- Apply the same `lxc-hardening.md` overlay adapted for Docker where
+  relevant (load check, IPv6, NTP — cgroups may also need `misc.check.load`
+  disabled since `/proc/loadavg` inside a container still reports the
+  host's load average)
+
+### Loop prevention (the circular-dependency question)
+
+Pi-hole forwarding public queries to pfSense Unbound is safe **only if**
+pihole is marked authoritative for its owned zones, otherwise an
+unmatched query like `unknown.d.lcamaral.com` loops:
+pihole → upstream pfSense → pfSense forwards d.lcamaral.com back → pihole
+→ upstream → pfSense → ...
+
+Fix: add `local=/<zone>/` lines to each dnsmasq.d file. `local=` tells
+dnsmasq "I own this zone — return NXDOMAIN for unmatched names, do NOT
+forward upstream." Loop closed:
+
+```conf
+# In pihole/dnsmasq.d/04-d-lcamaral-com.conf
+local=/d.lcamaral.com/           # authoritative marker
+address=/vault.d.lcamaral.com/192.168.59.28
+address=/vault.d.lcamaral.com/192.168.59.48
+# ... etc
+```
+
+Same goes for any other zone pihole owns authoritatively (e.g.
+`local=/lab.home/` if/when those records are repo-managed).
+
+### Caching
+
+pihole-FTL has a built-in dnsmasq cache, size `10000` by default (set
+in `/etc/pihole/dnsmasq.conf`). TTLs from upstream answers are honored.
+In Pattern B this gives three wins for free:
+
+1. Per-client query visibility in the pihole UI (pfSense sees only
+   "client pihole" in that flow).
+2. Sub-millisecond repeat-query response for cached answers.
+3. Reduced recursive load on pfSense Unbound.
+
+Cache is in-process memory — clears on `pihole-FTL` restart.
+
+### orbital-sync
+
+**Self-scheduled.** The official container exposes `INTERVAL_MINUTES`
+(or `INTERVAL_HOURS`) — runs in a loop, no external cron required.
+Uses Pi-hole's HTTP Teleporter API, not SSH — simpler than the legacy
+gravity-sync model.
+
+```yaml
+services:
+  orbital-sync:
+    image: mattwebbio/orbital-sync:latest
+    restart: unless-stopped
+    environment:
+      PRIMARY_HOST_BASE_URL: "http://192.168.100.254"
+      PRIMARY_HOST_PASSWORD: "<pihole-1 password>"
+      SECONDARY_HOST_1_BASE_URL: "http://192.168.59.50"
+      SECONDARY_HOST_1_PASSWORD: "<pihole-2 password>"
+      SECONDARY_HOST_2_BASE_URL: "http://192.168.4.236"
+      SECONDARY_HOST_2_PASSWORD: "<pihole-3 password>"
+      INTERVAL_MINUTES: "60"
+      VERBOSE: "true"
+```
+
+**What orbital-sync DOES sync:** adlists, gravity DB, whitelist,
+blacklist, regex rules, `pihole.toml` `dns.hosts` array, custom CNAMEs,
+groups + clients.
+
+**What orbital-sync does NOT sync:** `/etc/dnsmasq.d/*.conf` files.
+These live outside the Teleporter backup scope.
+
+So: if records live in `dnsmasq.d/*.conf` files (what we did today),
+orbital-sync doesn't sync them — we need a different mechanism.
+If records live in `pihole.toml` `dns.hosts`, orbital-sync DOES sync them
+but toml-editing is awkward for IaC.
+
+### Hybrid Option C — records via IaC, gravity via orbital-sync
+
+The cleanest split:
+
+| Concern | Mechanism | Why |
+|---|---|---|
+| Authoritative records (`d.lcamaral.com` etc.) | **Terraform writes the same `dnsmasq.d/*.conf` content to all 3 piholes** via volume bind mounts or Portainer stack re-deploys | IaC owns records; single source of truth in git; atomic all-or-nothing deploys; audit trail |
+| Ad-block lists and gravity DB | **orbital-sync** scheduled hourly, pihole-1 → pihole-2/3 | Native to Pi-hole, handles gravity refresh automatically, runtime-friendly |
+| Web-UI changes on pihole-1 | Limited to ad-block list subscriptions (repo-managed records are read-only from the UI's perspective) | Keeps UI changes out of the repo-authoritative path |
+| Public DNS recursion | pfSense Unbound (unchanged) | pfSense is already doing this well |
+
+### DHCP role — stays on pfSense
+
+DHCP is NOT migrating to pihole. pfSense ISC dhcpd keeps serving every
+VLAN scope as it does today. The only DHCP change for Pattern B is
+updating the **DNS server option** per scope to hand out piholes first
+with pfSense as the last-resort fallback:
+
+```text
+HOME VLAN scope DNS servers (in priority order):
+  192.168.100.254   # pihole-1
+  192.168.59.50     # pihole-2 (when deployed)
+  192.168.4.236     # pihole-3 (when deployed)
+  192.168.4.1       # pfSense Unbound (fallback)
+```
+
+Four-layer DNS HA via DHCP option ordering, no new infrastructure.
+Needs the same update on HOME, SRVAN, IoT (and GUEST if desired).
+pfSense GUI or API per scope.
+
+**Why keep DHCP on pfSense:**
+
+- pfSense ISC dhcpd has multi-VLAN scopes, user-alias filtering, and
+  static reservations already configured — rebuilding on pihole buys
+  nothing
+- pfSense's `dhcpleases` process auto-updates Unbound's
+  `dhcpleases_entries.conf` so DHCP-derived hostnames resolve as
+  `<host>.home.lcamaral.com` — a critical integration that would
+  break if DHCP moved
+- pfSense DHCP is a SPOF either way (pfSense IS the router); same
+  blast radius as today, no regression
+- Pi-hole's DHCP is designed for single-pihole-as-router deployments,
+  doesn't cluster, and loses the dhcpleases → Unbound pipeline
+
+### DHCP-derived hostname resolution path in Pattern B
+
+Concrete example, laptop `MacBook-Pro-LA-M2` on HOME VLAN:
+
+```text
+1. Laptop gets lease from pfSense → IP 192.168.0.7
+2. pfSense dhcpleases writes local-data to Unbound:
+   "MacBook-Pro-LA-M2.home.lcamaral.com. A 192.168.0.7"
+3. Another LAN device queries the hostname
+4. Query hits pihole-1 (DHCP option = pihole first)
+5. Pihole has no record for *.home.lcamaral.com
+6. Pihole forwards upstream → pfSense Unbound
+7. pfSense Unbound answers from local-data
+8. Pihole caches the answer and returns it
+9. Subsequent queries for the same name hit pihole's cache directly
+```
+
+Result: DHCP-derived hostnames resolve correctly, plus pihole caches
+them for free, plus pihole logs them for visibility.
+
+### Authority boundaries — who owns what
+
+```text
+DHCP authority:          pfSense ISC dhcpd (unchanged)
+  └ hands out DNS:       [pihole-1, pihole-2, pihole-3, pfSense]
+
+DNS authority tiers:
+  ┌─ pihole (tier 1, client-facing)
+  │    authoritative:   d.lcamaral.com, lab.home (via local= + address=)
+  │    feature:         ad-blocking (gravity DB, adlists)
+  │    cache:           10000 entries for all upstream answers
+  │    forwards to:     pfSense Unbound (upstream=192.168.4.1)
+  │
+  └─ pfSense Unbound (tier 2, recursive)
+       authoritative:   *.home.lcamaral.com, *.iot.lcamaral.com,
+                        *.admin.lcamaral.com (via host_entries.conf +
+                        dhcpleases_entries.conf)
+       recursive:       public DNS (.com, .org, etc.) with DNSSEC
+       fallback target: also in DHCP option list as last resort
+```
+
+Each tool plays to its strengths:
+
+- **pihole** = ad-blocking + dev/Docker records + UI + caching
+- **pfSense Unbound** = recursive public DNS + device hostnames + DHCP
+  integration
+- **Terraform** = single source of truth for dnsmasq.d records across
+  all pihole instances
+- **orbital-sync** = gravity/adlist sync across pihole instances
+
+### DHCP caveats worth remembering
+
+1. **Client DNS server ordering matters.** Clients prefer the first
+   listed DNS server. Pihole first, pfSense last — otherwise clients
+   bypass pihole and you lose ad-blocking.
+2. **DHCP option changes aren't instant.** Clients pick up new DNS
+   option at lease renewal. Default pfSense lease is ~2 hours, so
+   worst-case 2-hour rollout after changing the scope.
+3. **DHCP itself is still a SPOF on pfSense.** Separate (bigger)
+   problem; not something Pattern B addresses. ISC dhcpd supports
+   `failover-peer` if you ever want a second DHCP server.
 
 ## Manual deploy of dnsmasq.d to pihole-1
 
