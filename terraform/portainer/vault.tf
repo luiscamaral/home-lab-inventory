@@ -77,3 +77,8 @@ data "vault_kv_secret_v2" "portal" {
   mount = "secret"
   name  = "homelab/portal"
 }
+
+data "vault_kv_secret_v2" "pihole" {
+  mount = "secret"
+  name  = "homelab/pihole"
+}

@@ -18,8 +18,9 @@ collision (see [Migration status](#migration-status) below).
 
 | Instance | Where | IP | Status |
 |---|---|---|---|
-| pihole-1 | Proxmox LXC 10000 (Debian 12, Pi-hole v6.4.1) | `192.168.100.254` (vmbr0) | Running, has `04-d-lcamaral-com.conf` loaded, resolves d.lcamaral.com records correctly when queried directly. LXC hardening + ad-blocking applied 2026-04-13 (see below). |
-| pihole-2 | not deployed | — | Phase 3e — defer until Phase 3c-d unblocked |
+| pihole-1 | Proxmox LXC 10000 (Debian 12, Pi-hole v6.4.1) | `192.168.100.254` (vmbr0) | Running, has `04-d-lcamaral-com.conf` loaded, resolves d.lcamaral.com records correctly when queried directly. LXC hardening + ad-blocking applied 2026-04-13. |
+| pihole-2 | Docker on dockerserver-1 (Pi-hole v6 image `2025.10.0`) | `192.168.59.50` (Docker-servers-net macvlan) | Deployed 2026-04-14 via `terraform/portainer/`. Healthy. dnsmasq.d injected via compose `configs:` content. All d.lcamaral.com records resolve correctly (multi-A, CNAME, NXDOMAIN, public forward). |
+| pihole-3 | Docker on Synology NAS (Pi-hole v6 image `2025.10.0`) | `192.168.4.236` (home-net macvlan) | Deployed 2026-04-14 via `terraform/portainer/` (Edge agent endpoint id 6). Healthy. Same configs-injected dnsmasq.d as pihole-2. |
 
 ## Ad-blocking state (pihole-1)
 
@@ -56,30 +57,43 @@ Full rationale, verify commands, and re-apply instructions in
 
 ## Migration status
 
-**Phase progression** (see task #26):
+**Pattern B execution** (chosen 2026-04-14, see task #26):
+
+The original Pattern A approach (pfSense Unbound forwards d.lcamaral.com →
+pihole-1) was abandoned after the Phase 3c blocker. Switched to Pattern B
+where clients query pihole as primary and pihole forwards public/unknown
+queries upstream to pfSense Unbound. See "Better path forward" section
+below for the full rationale.
 
 - [x] **3a — Translate bind9 zone** to dnsmasq config
   (`04-d-lcamaral-com.conf`).
 - [x] **3b — Apply records to pihole-1** and verify direct resolution.
-- [ ] **3c — pfSense Unbound forward** to pihole-1. _Reverted_ on
-  2026-04-13. The pfSense Unbound forward-zone for
-  `d.lcamaral.com -> 192.168.100.254` was configured correctly via the
-  API (both `domainoverrides.conf` and `custom_options` cleaned up), but
-  Unbound never actually delivered queries to pihole. **The original
-  local-zone interception theory is wrong** — the existing
-  `lab.home -> pihole-1` forward also has a `local-data` entry inside
-  the zone (`pihole.lab.home`) and works fine. Real cause is unknown,
-  more likely DNSSEC chain validation against the parent `lcamaral.com`
-  zone, or stale negative cache from before the forward took effect.
-  Empty `drill vault.d.lcamaral.com` answers had a `lcamaral.com. SOA`
-  from DreamHost in the AUTHORITY section — that's the smoking gun:
-  the query went UPSTREAM to public DNS and got NODATA, bypassing the
-  forward entirely. `domain-insecure: d.lcamaral.com` is supposed to
-  prevent that but evidently didn't apply during the test.
-- [ ] **3d — Stop bind9** container.
-- [ ] **3e — Deploy pihole-2** on ds-2 as Docker macvlan container.
-- [ ] **3f — Configure orbital-sync** between pihole-1 and pihole-2.
-- [ ] **3g — IaC capture + commit final state**.
+- [x] **3e — Deploy pihole-2** on dockerserver-1 as Docker macvlan
+  container (192.168.59.50). Done 2026-04-14 via Terraform.
+- [x] **3e' — Deploy pihole-3** on NAS as Docker macvlan container
+  (192.168.4.236). Done 2026-04-14 via Terraform — different physical
+  host than pihole-1/2, survives Proxmox loss.
+- [x] **3g — IaC capture** for pihole-2 + pihole-3. Stack content lives
+  in `terraform/portainer/stacks/pihole-{2,3}.yml.tftpl`. The d.lcamaral
+  zone is pulled from `pihole/dnsmasq.d/04-d-lcamaral-com.conf` (single
+  source of truth) via `templatefile()` and injected into containers
+  via Docker Compose `configs:` with inline `content:`. Re-deploy is
+  automatic on file changes.
+- [ ] **3f — orbital-sync DEFERRED.** Pi-hole v6 isn't supported by
+  orbital-sync 1.x (uses old v5 PHP admin endpoints; Pi-hole v6 uses a
+  new REST API). orbital-sync 2.x with v6 support is in progress
+  upstream but not yet released as of 2026-04-14. Until then, gravity
+  DB + adlist sync between piholes must be done manually via the
+  Pi-hole Teleporter export/import in the v6 web UI. The dnsmasq.d
+  records are not impacted — they are kept in sync automatically via
+  the compose `configs:` mechanism.
+- [ ] **3c — pfSense DHCP option update** (replaces the original
+  Pattern A Unbound forward step). Update DHCP scope DNS servers per
+  VLAN to hand out `[pihole-1, pihole-2, pihole-3, pfSense]` in that
+  order. See "DHCP role" section below for the per-VLAN list. Tracked
+  as task #36.
+- [ ] **3d — Retire bind9** container after Pattern B is stable for
+  ≥24h. Tracked as task #37.
 
 ## Diagnostic plan for Phase 3c (next session)
 

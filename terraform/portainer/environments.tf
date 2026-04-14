@@ -11,7 +11,7 @@
 resource "portainer_environment" "ds1" {
   name                = "dockerserver-1"
   environment_address = "tcp://192.168.59.34:9001"
-  type                = 2  # Docker agent (EndpointCreationType=2)
+  type                = 2 # Docker agent (EndpointCreationType=2)
   tls_skip_verify     = true
 }
 
@@ -22,6 +22,6 @@ resource "portainer_environment" "ds1" {
 resource "portainer_environment" "ds2" {
   name                = "dockerserver-2"
   environment_address = "tcp://192.168.59.46:9001"
-  type                = 2  # Docker agent (EndpointCreationType=2)
+  type                = 2 # Docker agent (EndpointCreationType=2)
   tls_skip_verify     = true
 }

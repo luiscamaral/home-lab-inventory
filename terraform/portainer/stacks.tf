@@ -2,10 +2,10 @@
 # Docker Registry (already deployed via Portainer)
 # ──────────────────────────────────────────────
 resource "portainer_stack" "docker_registry" {
-  name             = "docker-registry"
-  endpoint_id      = var.endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "docker-registry"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/docker-registry.yml")
 }
@@ -16,10 +16,10 @@ resource "portainer_stack" "docker_registry" {
 # Token injected from Vault at apply time
 # ──────────────────────────────────────────────
 resource "portainer_stack" "cloudflare_tunnel" {
-  name             = "cloudflare-tunnel"
-  endpoint_id      = var.endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "cloudflare-tunnel"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/cloudflare-tunnel.yml")
 
@@ -34,10 +34,10 @@ resource "portainer_stack" "cloudflare_tunnel" {
 # Second replica of the same tunnel for HA. Cloudflare balances across replicas.
 # ──────────────────────────────────────────────
 resource "portainer_stack" "cloudflare_tunnel_2" {
-  name             = "cloudflare-tunnel-2"
-  endpoint_id      = var.ds1_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "cloudflare-tunnel-2"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/cloudflare-tunnel-2.yml")
 
@@ -52,10 +52,10 @@ resource "portainer_stack" "cloudflare_tunnel_2" {
 # Third replica, completes 3-host edge HA
 # ──────────────────────────────────────────────
 resource "portainer_stack" "cloudflare_tunnel_3" {
-  name             = "cloudflare-tunnel-3"
-  endpoint_id      = var.ds2_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "cloudflare-tunnel-3"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/cloudflare-tunnel-3.yml")
 
@@ -71,10 +71,10 @@ resource "portainer_stack" "cloudflare_tunnel_3" {
 # No secrets needed — config is on NFS volumes
 # ──────────────────────────────────────────────
 resource "portainer_stack" "bind_dns" {
-  name             = "bind-dns"
-  endpoint_id      = var.endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "bind-dns"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/bind-dns.yml")
 }
@@ -84,10 +84,10 @@ resource "portainer_stack" "bind_dns" {
 # All services route through this — certs managed by pfSense
 # ──────────────────────────────────────────────
 resource "portainer_stack" "reverse_proxy" {
-  name             = "reverse-proxy"
-  endpoint_id      = var.endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "reverse-proxy"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/reverse-proxy.yml")
 }
@@ -97,10 +97,10 @@ resource "portainer_stack" "reverse_proxy" {
 # Second instance for HA — shares the same vhost.d config via NFS
 # ──────────────────────────────────────────────
 resource "portainer_stack" "reverse_proxy_2" {
-  name             = "reverse-proxy-2"
-  endpoint_id      = var.ds1_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "reverse-proxy-2"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/reverse-proxy-2.yml")
 }
@@ -110,10 +110,10 @@ resource "portainer_stack" "reverse_proxy_2" {
 # Third instance for HA — completes the 3-host edge
 # ──────────────────────────────────────────────
 resource "portainer_stack" "reverse_proxy_3" {
-  name             = "reverse-proxy-3"
-  endpoint_id      = var.ds2_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "reverse-proxy-3"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/reverse-proxy-3.yml")
 }
@@ -124,10 +124,10 @@ resource "portainer_stack" "reverse_proxy_3" {
 # No secrets needed; joins existing cluster on first boot
 # ──────────────────────────────────────────────
 resource "portainer_stack" "vault_3" {
-  name             = "vault-3"
-  endpoint_id      = var.ds2_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "vault-3"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/vault-3.yml")
 }
@@ -137,10 +137,10 @@ resource "portainer_stack" "vault_3" {
 # Secret management — env vars for internal CLI only
 # ──────────────────────────────────────────────
 resource "portainer_stack" "vault" {
-  name             = "vault"
-  endpoint_id      = var.endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "vault"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/vault.yml")
 
@@ -160,10 +160,10 @@ resource "portainer_stack" "vault" {
 # VPN connector — tokens from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "twingate_a" {
-  name             = "twingate-a"
-  endpoint_id      = var.ds1_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "twingate-a"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/twingate-a.yml")
 
@@ -183,10 +183,10 @@ resource "portainer_stack" "twingate_a" {
 # VPN connector — tokens from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "twingate_b" {
-  name             = "twingate-b"
-  endpoint_id      = var.ds2_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "twingate-b"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/twingate-b.yml")
 
@@ -206,10 +206,10 @@ resource "portainer_stack" "twingate_b" {
 # Ebook server — password from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "calibre" {
-  name             = "calibre"
-  endpoint_id      = var.ds1_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "calibre"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/calibre.yml")
 
@@ -224,10 +224,10 @@ resource "portainer_stack" "calibre" {
 # CI/CD self-hosted runner — PAT from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "github_runner" {
-  name             = "github-runner"
-  endpoint_id      = var.ds1_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "github-runner"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/github-runner.yml")
 
@@ -242,10 +242,10 @@ resource "portainer_stack" "github_runner" {
 # Remote desktop server — no secrets
 # ──────────────────────────────────────────────
 resource "portainer_stack" "rustdesk" {
-  name             = "rust-server"
-  endpoint_id      = var.ds2_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "rust-server"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/rustdesk.yml")
 }
@@ -256,10 +256,10 @@ resource "portainer_stack" "rustdesk" {
 # Image pushed to registry as registry.cf.lcamaral.com/la-rundeck:latest
 # ──────────────────────────────────────────────
 resource "portainer_stack" "rundeck" {
-  name             = "la-rundeck"
-  endpoint_id      = var.ds1_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "la-rundeck"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/rundeck.yml")
 
@@ -280,10 +280,10 @@ resource "portainer_stack" "rundeck" {
 # Internal back-tier network only, no secrets
 # ──────────────────────────────────────────────
 resource "portainer_stack" "prometheus" {
-  name             = "prometheus"
-  endpoint_id      = var.ds1_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "prometheus"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/prometheus.yml")
 }
@@ -293,10 +293,10 @@ resource "portainer_stack" "prometheus" {
 # Auto-updates opted-in containers daily at 4 AM
 # ──────────────────────────────────────────────
 resource "portainer_stack" "watchtower" {
-  name             = "watchtower"
-  endpoint_id      = var.ds1_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "watchtower"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/watchtower.yml")
 
@@ -311,10 +311,10 @@ resource "portainer_stack" "watchtower" {
 # Separate instance; removed in Phase 4 when dockermaster is slimmed
 # ──────────────────────────────────────────────
 resource "portainer_stack" "watchtower_dm" {
-  name             = "watchtower"
-  endpoint_id      = var.endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "watchtower"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/watchtower.yml")
 
@@ -329,10 +329,10 @@ resource "portainer_stack" "watchtower_dm" {
 # Object storage — root credentials from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "minio" {
-  name             = "minio"
-  endpoint_id      = var.ds1_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "minio"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/minio.yml")
 
@@ -358,10 +358,10 @@ resource "portainer_stack" "minio" {
 # Data on local disk (/var/lib/minio-data) for storage-level HA
 # ──────────────────────────────────────────────
 resource "portainer_stack" "minio_2" {
-  name             = "minio-2"
-  endpoint_id      = var.ds2_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "minio-2"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/minio-2.yml")
 
@@ -386,10 +386,10 @@ resource "portainer_stack" "minio_2" {
 # SIP credentials from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "freeswitch" {
-  name             = "freeswitch"
-  endpoint_id      = var.ds2_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "freeswitch"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/freeswitch.yml")
 
@@ -435,10 +435,10 @@ resource "portainer_stack" "freeswitch" {
 # Auto-failover via repmgr; JDBC clients use multi-host URL
 # ──────────────────────────────────────────────
 resource "portainer_stack" "keycloak_db_0" {
-  name             = "keycloak-db-0"
-  endpoint_id      = var.endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "keycloak-db-0"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/keycloak-db-0.yml")
 
@@ -457,10 +457,10 @@ resource "portainer_stack" "keycloak_db_0" {
 }
 
 resource "portainer_stack" "keycloak_db_1" {
-  name             = "keycloak-db-1"
-  endpoint_id      = var.ds1_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "keycloak-db-1"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/keycloak-db-1.yml")
 
@@ -483,10 +483,10 @@ resource "portainer_stack" "keycloak_db_1" {
 # SSO + user management — credentials from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "keycloak" {
-  name             = "keycloak"
-  endpoint_id      = var.endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "keycloak"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/keycloak.yml")
 
@@ -510,10 +510,10 @@ resource "portainer_stack" "keycloak" {
 # Keycloak 2 (on dockerserver-1) — Infinispan cluster peer
 # ──────────────────────────────────────────────
 resource "portainer_stack" "keycloak_2" {
-  name             = "keycloak-2"
-  endpoint_id      = var.ds1_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "keycloak-2"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/keycloak-2.yml")
 
@@ -538,10 +538,10 @@ resource "portainer_stack" "keycloak_2" {
 # Outbound mail via DreamHost SMTP — credentials from Vault
 # ──────────────────────────────────────────────
 resource "portainer_stack" "postfix_relay" {
-  name             = "postfix-relay"
-  endpoint_id      = var.endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "postfix-relay"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/postfix-relay.yml")
 
@@ -562,10 +562,10 @@ resource "portainer_stack" "postfix_relay" {
 # Secrets from Vault: keycloak/clients + portal
 # ──────────────────────────────────────────────
 resource "portainer_stack" "homelab_portal" {
-  name             = "homelab-portal"
-  endpoint_id      = var.endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "homelab-portal"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/homelab-portal.yml")
 
@@ -589,10 +589,10 @@ resource "portainer_stack" "homelab_portal" {
 # Homelab Portal replica 2 on dockerserver-1 — stateless, no sticky needed
 # ──────────────────────────────────────────────
 resource "portainer_stack" "homelab_portal_2" {
-  name             = "homelab-portal-2"
-  endpoint_id      = var.ds1_endpoint_id
-  deployment_type  = "standalone"
-  method           = "string"
+  name            = "homelab-portal-2"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
 
   stack_file_content = file("${path.module}/stacks/homelab-portal-2.yml")
 
@@ -611,3 +611,74 @@ resource "portainer_stack" "homelab_portal_2" {
     value = data.vault_kv_secret_v2.portal.data["session_encryption_key"]
   }
 }
+
+# ──────────────────────────────────────────────
+# Pi-hole HA — Pattern B execution (task #26)
+#
+# Three pihole instances across two physical hosts:
+#   pihole-1 (existing) — Proxmox LXC 10000, 192.168.100.254
+#   pihole-2 (this)     — Docker on dockerserver-1, macvlan 192.168.59.50
+#   pihole-3 (this)     — Docker on NAS, macvlan 192.168.4.236
+#
+# Authoritative records for d.lcamaral.com live in the repo at
+# pihole/dnsmasq.d/04-d-lcamaral-com.conf (single source of truth).
+# The compose templates use docker `configs:` with inline `content:` to
+# inject the file at the target path inside each container — terraform
+# `templatefile()` interpolates the content at apply time. When the source
+# file changes, the rendered stack content changes, terraform sees the
+# diff, and Portainer re-deploys the stack. No host filesystem coupling.
+# ──────────────────────────────────────────────
+
+locals {
+  pihole_dnsmasq_zone = file("${path.module}/../../pihole/dnsmasq.d/04-d-lcamaral-com.conf")
+}
+
+resource "portainer_stack" "pihole_2" {
+  name            = "pihole-2"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/pihole-2.yml.tftpl", {
+    dnsmasq_content = local.pihole_dnsmasq_zone
+  })
+
+  env {
+    name  = "WEBPASSWORD"
+    value = data.vault_kv_secret_v2.pihole.data["admin_password"]
+  }
+}
+
+resource "portainer_stack" "pihole_3" {
+  name            = "pihole-3"
+  endpoint_id     = var.nas_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/pihole-3.yml.tftpl", {
+    dnsmasq_content = local.pihole_dnsmasq_zone
+  })
+
+  env {
+    name  = "WEBPASSWORD"
+    value = data.vault_kv_secret_v2.pihole.data["admin_password"]
+  }
+}
+
+# ──────────────────────────────────────────────
+# orbital-sync — DEFERRED
+#
+# Pi-hole v6 is not yet supported by orbital-sync (latest 1.8.4 still
+# targets the v5 PHP admin endpoints; v6 introduced a new REST API at
+# /api/auth which 1.x cannot speak). orbital-sync v2.x with v6 support
+# is in progress upstream but unreleased as of 2026-04-14.
+#
+# Until then, gravity DB + adlist sync between pihole-1/2/3 must be done
+# manually (Pi-hole v6 has Teleporter export/import in the web UI). The
+# /etc/dnsmasq.d/04-d-lcamaral-com.conf records on all 3 instances are
+# kept in sync automatically via the compose `configs:` block above —
+# only the gravity/adlist side is impacted by this gap.
+#
+# When orbital-sync 2.x ships, restore this resource pointing at
+# stacks/orbital-sync.yml with image bumped to the v6 tag.
+# ──────────────────────────────────────────────

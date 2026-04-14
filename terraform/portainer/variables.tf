@@ -28,6 +28,12 @@ variable "ds2_endpoint_id" {
   default     = 13
 }
 
+variable "nas_endpoint_id" {
+  description = "Portainer endpoint ID for NAS (Edge agent, ID=6)"
+  type        = number
+  default     = 6
+}
+
 variable "vault_addr" {
   description = "Vault server address"
   type        = string
