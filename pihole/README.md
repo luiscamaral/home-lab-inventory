@@ -12,13 +12,47 @@ collision (see [Migration status](#migration-status) below).
 | Path | Purpose |
 |---|---|
 | `dnsmasq.d/04-d-lcamaral-com.conf` | The translated bind9 zone for `d.lcamaral.com` in dnsmasq `address=` / `cname=` format. Deployed to pihole-1 at `/etc/dnsmasq.d/04-d-lcamaral-com.conf` and read by `pihole-FTL` after enabling `misc.etc_dnsmasq_d = true` in `/etc/pihole/pihole.toml`. |
+| `lxc-hardening.md` | Pi-hole v6 config overlay for LXC environments — disables FTL NTP client, load check, and IPv6 resolver (all fail inside a Proxmox container). Apply to every pihole LXC. |
 
 ## Pi-hole inventory
 
 | Instance | Where | IP | Status |
 |---|---|---|---|
-| pihole-1 | Proxmox LXC 10000 (Debian 12, Pi-hole v6.3.3) | `192.168.100.254` (vmbr0) | Running, has `04-d-lcamaral-com.conf` loaded, resolves d.lcamaral.com records correctly when queried directly |
+| pihole-1 | Proxmox LXC 10000 (Debian 12, Pi-hole v6.4.1) | `192.168.100.254` (vmbr0) | Running, has `04-d-lcamaral-com.conf` loaded, resolves d.lcamaral.com records correctly when queried directly. LXC hardening + ad-blocking applied 2026-04-13 (see below). |
 | pihole-2 | not deployed | — | Phase 3e — defer until Phase 3c-d unblocked |
+
+## Ad-blocking state (pihole-1)
+
+As of 2026-04-13, pihole-1 has **1 adlist** subscribed:
+
+| URL | Source | Domains | Added |
+|---|---|---|---|
+| `https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts` | StevenBlack unified-hosts | ~87 771 | 2026-04-13 |
+
+Chosen as the conservative default (Option A from the `pihole -d`
+diagnostic plan): low false-positive rate, single source, no allowlist
+babysitting. Revisit when Pattern B is adopted and the LAN moves onto
+pihole — more aggressive lists (OISD, 1Hosts) can be layered then.
+
+`pihole -g` is already scheduled via `/etc/cron.d/pihole` weekly (Sunday 03:34).
+
+## LXC hardening (pihole-1)
+
+Four FTL v6 defaults do not work inside a Proxmox LXC. Applied
+2026-04-13:
+
+| Key | Value | Reason |
+|---|---|---|
+| `ntp.sync.active` | `false` | LXC lacks `CAP_SYS_TIME`; FTL NTP client can't adjust clock |
+| `misc.check.load` | `false` | `/proc/loadavg` is host-wide inside the container; false "load > nproc" alerts |
+| `resolver.resolveIPv6` | `false` | Container is v4-only; stops failed upstream AAAA lookups |
+| `misc.nice` | `0` | LXC lacks `CAP_SYS_NICE`; default `-10` triggers warning every FTL restart |
+
+Upstream DNS de-duplicated to single `192.168.4.1` (pfSense Unbound).
+
+Full rationale, verify commands, and re-apply instructions in
+[`lxc-hardening.md`](./lxc-hardening.md). Apply the same overlay to
+`pihole-2` when it is deployed.
 
 ## Migration status
 
