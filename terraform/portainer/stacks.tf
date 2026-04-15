@@ -65,19 +65,11 @@ resource "portainer_stack" "cloudflare_tunnel_3" {
   }
 }
 
-# ──────────────────────────────────────────────
-# Bind9 DNS
-# Authoritative DNS for d.lcamaral.com (internal LAN)
-# No secrets needed — config is on NFS volumes
-# ──────────────────────────────────────────────
-resource "portainer_stack" "bind_dns" {
-  name            = "bind-dns"
-  endpoint_id     = var.endpoint_id
-  deployment_type = "standalone"
-  method          = "string"
-
-  stack_file_content = file("${path.module}/stacks/bind-dns.yml")
-}
+# bind-dns retired 2026-04-15 (task #37). Authoritative records for
+# d.lcamaral.com and the bare `home` zone moved to the pihole HA trio
+# via Pattern B; pfSense Unbound's forward-zones now load-balance across
+# pihole-1/2/3. See pihole/dnsmasq.d/04-d-lcamaral-com.conf and
+# 05-home.conf for the new source of truth.
 
 # ──────────────────────────────────────────────
 # Nginx Reverse Proxy + Promtail (rproxy-1 on dockermaster)
@@ -630,7 +622,9 @@ resource "portainer_stack" "homelab_portal_2" {
 # ──────────────────────────────────────────────
 
 locals {
-  pihole_dnsmasq_zone = file("${path.module}/../../pihole/dnsmasq.d/04-d-lcamaral-com.conf")
+  pihole_dnsmasq_zone   = file("${path.module}/../../pihole/dnsmasq.d/04-d-lcamaral-com.conf")
+  pihole_home_zone      = file("${path.module}/../../pihole/dnsmasq.d/05-home.conf")
+  pihole_host_overrides = file("${path.module}/../../pihole/dnsmasq.d/06-host-overrides.conf")
 }
 
 resource "portainer_stack" "pihole_2" {
@@ -640,7 +634,9 @@ resource "portainer_stack" "pihole_2" {
   method          = "string"
 
   stack_file_content = templatefile("${path.module}/stacks/pihole-2.yml.tftpl", {
-    dnsmasq_content = local.pihole_dnsmasq_zone
+    dnsmasq_content        = local.pihole_dnsmasq_zone
+    home_content           = local.pihole_home_zone
+    host_overrides_content = local.pihole_host_overrides
   })
 
   env {
@@ -656,7 +652,9 @@ resource "portainer_stack" "pihole_3" {
   method          = "string"
 
   stack_file_content = templatefile("${path.module}/stacks/pihole-3.yml.tftpl", {
-    dnsmasq_content = local.pihole_dnsmasq_zone
+    dnsmasq_content        = local.pihole_dnsmasq_zone
+    home_content           = local.pihole_home_zone
+    host_overrides_content = local.pihole_host_overrides
   })
 
   env {

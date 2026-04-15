@@ -21,7 +21,6 @@ output "stacks" {
     cloudflare_tunnel   = portainer_stack.cloudflare_tunnel.name
     cloudflare_tunnel_2 = portainer_stack.cloudflare_tunnel_2.name
     cloudflare_tunnel_3 = portainer_stack.cloudflare_tunnel_3.name
-    bind_dns            = portainer_stack.bind_dns.name
     reverse_proxy       = portainer_stack.reverse_proxy.name
     reverse_proxy_2     = portainer_stack.reverse_proxy_2.name
     reverse_proxy_3     = portainer_stack.reverse_proxy_3.name

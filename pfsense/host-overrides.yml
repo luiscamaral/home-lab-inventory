@@ -1,0 +1,138 @@
+# pfSense DNS Resolver Host Overrides — single source of truth
+#
+# This file is the canonical source for static DNS records that need to
+# be served from BOTH pfSense Unbound (for clients that resolve directly
+# via pfSense — e.g. ADMIN VLAN devices, twingate connectors) AND the
+# pihole HA trio (for everything else routed through DHCP option DNS).
+#
+# Workflow:
+#   1. Edit this file
+#   2. Run: scripts/sync-host-overrides.py [--apply]
+#      - Generates pihole/dnsmasq.d/06-host-overrides.conf
+#      - Diffs against pfSense, applies via REST API (with --apply)
+#   3. terraform -chdir=terraform/portainer apply  (rolls dnsmasq.d to pihole-2/-3)
+#   4. Manually push 06-host-overrides.conf to pihole-1 LXC
+#      (see pihole/README.md "Manual deploy" section)
+#   5. Commit the YAML + the generated dnsmasq.d file together
+#
+# Format notes:
+#   - host: short hostname (no domain part)
+#   - domain: zone the entry belongs to
+#   - ip: A record value. For multi-value, use a YAML list. (pfSense
+#     also accepts comma-separated, but list form is cleaner.)
+#   - description: optional, surfaces in pfSense GUI
+#   - aliases: optional list of additional names that point at the same IP
+
+- host: ilo
+  domain: admin.lcamaral.com
+  ip: 192.168.32.36
+
+- host: omada-controller
+  domain: admin.lcamaral.com
+  ip: 192.168.32.40
+
+- host: pfsense
+  domain: admin.lcamaral.com
+  ip: 192.168.32.33
+
+- host: switch24a
+  domain: admin.lcamaral.com
+  ip: 192.168.32.39
+
+- host: unifi-ap1
+  domain: admin.lcamaral.com
+  ip: 192.168.32.43
+
+- host: unifi-ap2
+  domain: admin.lcamaral.com
+  ip: 192.168.32.44
+
+- host: unifi-controller
+  domain: admin.lcamaral.com
+  ip: 192.168.32.41
+
+- host: argo
+  domain: home.lcamaral.com
+  ip: 192.168.4.70
+  description: ArgoCD GitOps UI (short alias)
+
+- host: argocd
+  domain: home.lcamaral.com
+  ip: 192.168.4.70
+  description: ArgoCD GitOps UI
+
+- host: freeswitch
+  domain: home.lcamaral.com
+  ip: 192.168.59.28
+
+- host: google-dns
+  domain: home.lcamaral.com
+  ip:
+    - 8.8.8.8
+    - 8.8.4.4
+  description: Google DNS
+
+- host: hbbr
+  domain: home.lcamaral.com
+  ip: 192.168.59.11
+  description: RustServer Relay (hbbr)
+  aliases:
+    - host: hbbr
+      domain: d.lcamaral.com
+
+- host: hbbs
+  domain: home.lcamaral.com
+  ip: 192.168.59.10
+  description: RustServer ID (hbbr)
+  aliases:
+    - host: hbbs
+      domain: d.lcamaral.com
+
+- host: istio-gateway
+  domain: home.lcamaral.com
+  ip: 192.168.4.70
+  description: Istio Gateway LoadBalancer IP (MetalLB managed)
+
+- host: paperless-nas
+  domain: home.lcamaral.com
+  ip: 192.168.1.50
+  description: paperless server on nas
+
+- host: pfsense
+  domain: home.lcamaral.com
+  ip: 192.168.4.1
+  description: pfsense home
+
+- host: proxmox
+  domain: home.lcamaral.com
+  ip: 192.168.7.11
+
+- host: rustdesk
+  domain: home.lcamaral.com
+  ip: 192.168.59.28
+  aliases:
+    - host: rundesk-relay
+      domain: home.lcamaral.com
+    - host: tunnel
+      domain: home.lcamaral.com
+
+- host: speed-test
+  domain: home.lcamaral.com
+  ip: 192.168.50.2
+
+- host: synology
+  domain: home.lcamaral.com
+  ip: 192.168.4.1
+  description: synology
+
+- host: unifi
+  domain: home.lcamaral.com
+  ip: 192.168.4.1
+
+- host: voip
+  domain: home.lcamaral.com
+  ip: 192.168.59.40
+
+- host: pihole
+  domain: lab.home
+  ip: 192.168.100.254

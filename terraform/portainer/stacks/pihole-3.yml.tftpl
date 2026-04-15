@@ -17,6 +17,12 @@ configs:
   dlc_zone:
     content: |
       ${indent(6, dnsmasq_content)}
+  home_zone:
+    content: |
+      ${indent(6, home_content)}
+  host_overrides:
+    content: |
+      ${indent(6, host_overrides_content)}
 
 services:
   pihole:
@@ -41,6 +47,12 @@ services:
     configs:
       - source: dlc_zone
         target: /etc/dnsmasq.d/04-d-lcamaral-com.conf
+        mode: 0644
+      - source: home_zone
+        target: /etc/dnsmasq.d/05-home.conf
+        mode: 0644
+      - source: host_overrides
+        target: /etc/dnsmasq.d/06-host-overrides.conf
         mode: 0644
     restart: unless-stopped
     healthcheck:

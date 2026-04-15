@@ -87,13 +87,68 @@ below for the full rationale.
   Pi-hole Teleporter export/import in the v6 web UI. The dnsmasq.d
   records are not impacted — they are kept in sync automatically via
   the compose `configs:` mechanism.
-- [ ] **3c — pfSense DHCP option update** (replaces the original
-  Pattern A Unbound forward step). Update DHCP scope DNS servers per
-  VLAN to hand out `[pihole-1, pihole-2, pihole-3, pfSense]` in that
-  order. See "DHCP role" section below for the per-VLAN list. Tracked
-  as task #36.
-- [ ] **3d — Retire bind9** container after Pattern B is stable for
-  ≥24h. Tracked as task #37.
+- [x] **3c — pfSense DHCP option update**. Done 2026-04-14. HOME / SRVAN
+  / IoT scopes now hand out `[pihole-1, pihole-2, pihole-3, pfSense]`
+  (SRVAN omits pihole-3 due to cross-VLAN macvlan reachability to NAS).
+- [x] **3d — Retire bind9** container. Done 2026-04-15. Removed from
+  `terraform/portainer/stacks.tf`. pfSense Unbound forward-zones for
+  `d.lcamaral.com` and `home` now load-balance across the three piholes
+  via Custom Options multi-`forward-addr`.
+
+## Records source of truth
+
+All authoritative records served by the pihole HA trio live under
+`pihole/dnsmasq.d/` in this repo. The Terraform pipeline reads each
+file via `templatefile()` and injects them into pihole-2/-3 containers
+through Docker Compose `configs:` content blocks. pihole-1 (LXC) is
+updated manually via the procedure in "Manual deploy" below.
+
+| File | Source | Owner |
+|---|---|---|
+| `04-d-lcamaral-com.conf` | hand-edited (translated from old bind9 `d-lcamaral-com.zone`) | repo |
+| `05-home.conf` | hand-edited (translated from old bind9 `home.zone`) | repo |
+| `06-host-overrides.conf` | **GENERATED** by `scripts/sync-host-overrides.py` from `pfsense/host-overrides.yml` | YAML |
+
+The host-overrides file is dual-target: the same script that writes it
+also pushes the entries to pfSense Unbound via the REST API, so pfSense
+host_overrides and pihole dnsmasq records stay in lock-step.
+
+### Workflow when records change
+
+```bash
+# d.lcamaral.com or home zones: edit the .conf file directly
+$EDITOR pihole/dnsmasq.d/04-d-lcamaral-com.conf
+
+# Host overrides: edit the YAML and re-generate
+$EDITOR pfsense/host-overrides.yml
+scripts/sync-host-overrides.py --apply   # writes 06-host-overrides.conf + pushes to pfSense
+
+# Push to pihole-2 / pihole-3 (Terraform-managed)
+terraform -chdir=terraform/portainer apply \
+  -target=portainer_stack.pihole_2 \
+  -target=portainer_stack.pihole_3
+
+# Force-recreate the containers so Docker Compose re-renders configs
+PORTAINER_PW=$(VAULT_TOKEN=$(security find-generic-password -w -s vault-root-token -a $USER) \
+  VAULT_ADDR=http://vault.d.lcamaral.com vault kv get -field=admin_password secret/homelab/portainer)
+JWT=$(curl -sk -X POST https://192.168.59.2:9443/api/auth \
+  -H 'Content-Type: application/json' \
+  -d "{\"username\":\"admin\",\"password\":\"$PORTAINER_PW\"}" \
+  | python3 -c 'import sys,json; print(json.load(sys.stdin)["jwt"])')
+for stack in 85; do
+  curl -sk -X POST "https://192.168.59.2:9443/api/stacks/$stack/stop?endpointId=9" -H "Authorization: Bearer $JWT" >/dev/null
+  sleep 2
+  curl -sk -X POST "https://192.168.59.2:9443/api/stacks/$stack/start?endpointId=9" -H "Authorization: Bearer $JWT" >/dev/null
+done
+
+# Push to pihole-1 LXC (manual)
+for f in 04-d-lcamaral-com.conf 05-home.conf 06-host-overrides.conf; do
+  scp pihole/dnsmasq.d/$f proxmox:/tmp/$f
+  ssh proxmox "SUDO_ASKPASS=\$HOME/.config/bin/answer.sh sudo -A pct push 10000 /tmp/$f /etc/dnsmasq.d/$f && \
+    SUDO_ASKPASS=\$HOME/.config/bin/answer.sh sudo -A pct exec 10000 -- systemctl restart pihole-FTL && \
+    rm /tmp/$f"
+done
+```
 
 ## Diagnostic plan for Phase 3c (next session)
 
