@@ -1,10 +1,17 @@
 # Homelab HA Architecture
 
-> **Status:** Current as of 2026-04-13. Authoritative for all HA topology.
+> **Status:** Current as of 2026-04-17. Authoritative for all HA topology.
 > Source of truth for service placement: `terraform/portainer/stacks.tf`.
 > Cross-host MAC collision fix, Vault auto-unseal, Twingate DNS fix, and
 > dockermaster package damage recovery were applied during the
-> 2026-04-12/13 recovery session. See the "Session fixes" section below.
+> 2026-04-12/13 recovery session.
+>
+> **DNS HA migration (Pattern B) completed 2026-04-14/17:** three-node
+> pihole trio (pihole-1 LXC + pihole-2 on ds-1 + pihole-3 on NAS) now
+> serves all authoritative records for `d.lcamaral.com`, `home`, and
+> host-overrides. bind9 retired (`99d51b0`). NAS Portainer endpoint
+> switched from Edge Agent to Direct Agent (`9d908bf`) to eliminate
+> tunnel flakiness. See the new "DNS tier" section below.
 
 ## Host roster
 
@@ -20,13 +27,14 @@
 
 | Component | Instances | IPs | Topology |
 |---|---|---|---|
-| **Nginx reverse proxy** | rproxy (dm), rproxy-2 (ds-1), rproxy-3 (ds-2) | `.28`, `.48`, `.49` | bind9 multi-A, shared vhosts via NFS |
+| **Nginx reverse proxy** | rproxy (dm), rproxy-2 (ds-1), rproxy-3 (ds-2) | `.28`, `.48`, `.49` | pihole multi-A for `*.d.lcamaral.com`, shared vhosts via NFS |
 | **cloudflared tunnel** | cf-tunnel (dm), cf-tunnel-2 (ds-1), cf-tunnel-3 (ds-2) | (bridge) | 3 replicas of tunnel `bologna`, CF load-balances |
 
 **DNS resolution:**
 
-- `*.d.lcamaral.com` → bind9 returns 3 A records (`.28`, `.48`, `.49`).
-  Clients retry on connect failure.
+- `*.d.lcamaral.com` → pihole multi-A returns 3 records (`.28`, `.48`, `.49`).
+  Clients retry on connect failure. Authoritative records live in
+  `pihole/dnsmasq.d/04-d-lcamaral-com.conf` in the repo.
 - `*.cf.lcamaral.com` → Cloudflare edge → 3 tunnel replicas → each cloudflared
   forwards to its local `nginx-rproxy` (via the per-host `rproxy` Docker bridge).
 
@@ -34,6 +42,35 @@
 Each host has a local Docker bridge named `rproxy` with a cloudflared + Nginx
 pair. This makes `https://nginx-rproxy:443` resolve to the host-local Nginx,
 giving locality and isolation.
+
+### DNS tier — Pi-hole 3-node
+
+| Node | Host | IP | Type |
+|---|---|---|---|
+| pihole-1 | Proxmox LXC 10000 | `192.168.100.254` (vmbr0) | LXC (hardened) |
+| pihole-2 | dockerserver-1 | `192.168.59.50` (SRVAN macvlan) | Terraform-managed Docker |
+| pihole-3 | NAS | `192.168.4.236` (home-net macvlan) | Terraform-managed Docker |
+
+- **Pattern B architecture** — clients query piholes as primary DNS (via DHCP
+  option), piholes answer authoritatively for owned zones and forward
+  unknown/public queries upstream to pfSense Unbound.
+- **Authoritative zones on pihole:** `d.lcamaral.com`, `home` (flat TLD),
+  host-overrides for `home.lcamaral.com`/`admin.lcamaral.com` (synced
+  bidirectionally with pfSense via `scripts/sync-host-overrides.py`).
+- **HA via DHCP order:** HOME/SRVAN/IoT scopes hand out
+  `[pihole-1, pihole-2, pihole-3, pfSense]` (SRVAN excludes pihole-3
+  was the original plan but re-added 2026-04-17 once `FTLCONF_dns_listeningMode=all`
+  let it serve cross-subnet queries).
+- **HA on the pfSense fallback path:** pfSense Unbound Custom Options has
+  `forward-zone` entries for `d.lcamaral.com` and `home` with 3
+  `forward-addr` lines, Unbound picks the fastest and fails over on timeout.
+- **Records source of truth:** repo files in `pihole/dnsmasq.d/*.conf`
+  injected into pihole-2/-3 via Terraform `templatefile()` + Docker Compose
+  `configs: content:`; pihole-1 LXC is manual push via `pct` (documented
+  in `pihole/README.md`).
+- **Gravity/adlist sync:** not HA yet — see "Still-to-do" section.
+- **Retired:** bind9 (container `bind-dns-bind9-1` on dm); authority moved
+  to piholes on 2026-04-15 (commit `99d51b0`).
 
 ### Secrets tier — Vault Raft 3-node
 
@@ -133,7 +170,6 @@ HA is out of scope for the homelab:
 
 | Service | Host | IP | Why single |
 |---|---|---|---|
-| bind-dns (bind9) | dm | `192.168.59.3` | Internal DNS; pfSense is fallback resolver |
 | Docker registry | dm | `192.168.59.16` + rproxy bridge | Single; no HA yet |
 | postfix-relay | dm | (rproxy bridge) | Outbound SMTP queue; tolerates brief outages |
 | portainer | dm | `192.168.59.2` | Management plane only |
@@ -154,18 +190,24 @@ HA is out of scope for the homelab:
 | keycloak-db-0 primary | none — keycloak-db-1 auto-promoted | manual failback optional |
 | Either keycloak app instance | none — Infinispan cluster survives | auto |
 | Either portal replica | none — stateless LB | auto |
-| Nginx `rproxy` on any host | none — bind9 multi-A + CF replicas | clients/CF retry other hosts |
+| Any pihole node | none — other 2 piholes answer via DHCP list + Unbound multi-addr | auto |
+| Nginx `rproxy` on any host | none — pihole multi-A + CF replicas | clients/CF retry other hosts |
 | cloudflared on any host | none — CF balances across replicas | auto |
-| Combined: dockermaster fully down | degraded — some single-instance services lost (DNS, Portainer, etc.) but all HA services continue via ds-1/ds-2 | manual recovery of singletons |
+| Combined: dockermaster fully down | degraded — some single-instance services lost (Portainer, registry) but all HA services continue via ds-1/ds-2 + NAS; pihole-2/-3 still serve DNS | manual recovery of singletons |
 
 ## Still-to-do / known gaps
 
-- **bind9 → pihole HA migration** — bind9 on dm is the last major SPOF. Plan:
-  move authoritative records to two pihole instances with Gravity sync;
-  decommission bind9. Tracked as task #26.
 - **Registry HA** — replicate images to a second registry
 - **Rundeck HA** — supported upstream, deferred
 - **pfSense HA** — requires a second pfSense box + CARP
+- **Pi-hole gravity sync (ad-block list sync)** — deferred; `orbital-sync`
+  1.x targets Pi-hole v5 only, and v2.x (v6 support) has been unreleased
+  upstream since 2025-01 with no active development. Gravity DB and
+  adlists are currently out of sync between pihole-1/2/3. The authoritative
+  DNS records (d.lcamaral.com, home, host-overrides) ARE kept in sync via
+  Terraform-injected `configs: content:` blocks, so only the ad-block
+  side drifts. Revisit when v6-compatible sync tooling ships, or replace
+  with a small custom script that hits Pi-hole v6's Teleporter API.
 - **dockermaster latent file damage** — ~81k files missing from the
   2026-04-12 disk shrink (docs, `/usr/src/linux-headers-*`, Perl XS
   modules, plymouth renderers). Boot-critical set was restored by reinstalling

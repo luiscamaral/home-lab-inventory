@@ -1,6 +1,6 @@
 # Docker Container Inventory
 
-> **Last refreshed:** 2026-04-12 after Phase 1-4 HA deployment
+> **Last refreshed:** 2026-04-17 after NAS Direct Agent switch + pihole HA completion
 > **Source of truth:** `terraform/portainer/stacks.tf` (Portainer-managed) + on-host `docker ps`
 > **HA topology:** see `docs/ha-architecture.md`
 
@@ -13,22 +13,25 @@
 - **Docker Compose**: v2.20.1
 - **Docker Root**: `/volume2/@docker`
 - **Storage Driver**: btrfs
-- **Portainer**: Edge Agent endpoint ID 6 (name: "nas")
-- **Edge Agent Image**: `portainer/agent:2.39.1`
-- **Credentials**: `secret/homelab/portainer-nas-agent`
-- **Compose files tracked at**: `nas/docker/`
+- **Portainer**: **Direct Agent** endpoint ID 14 (name: "nas") — switched from
+  Edge Agent on 2026-04-15 (task #38); see `docs/ha-architecture.md`
+- **Agent image**: `portainer/agent:2.39.1`
+- **Agent address**: `tcp://192.168.4.235:9001` (home-net macvlan)
+- **Agent compose**: `nas:/volume2/docker/portainer-agent/docker-compose.yml`
+  (bootstrap-only, not Terraform-managed since Terraform would need the
+  agent to be up before managing anything on NAS)
 
-### Running Containers on NAS (4 Portainer stacks + 1 agent)
+### Running Containers on NAS (5 stacks + 1 agent)
 
-#### Portainer Edge Agent
+#### Portainer Docker Agent
 
 - **portainer-agent**
   - Image: `portainer/agent:2.39.1`
-  - Compose: `nas/docker/portainer-agent/docker-compose.yml`
-  - Connects outbound via WebSocket to `ws://192.168.59.2:8000`
-  - Purpose: Edge agent enabling Portainer to manage NAS containers (NAS is not directly reachable from dockermaster)
+  - Network: `home-net` macvlan at 192.168.4.235
+  - Mode: Direct Agent (inbound TCP from Portainer at 192.168.59.2)
+  - Purpose: Lets Portainer manage containers on NAS
 
-#### NAS Portainer Stacks (Endpoint ID 6)
+#### NAS Portainer Stacks (Endpoint ID 14)
 
 ##### Twingate Connector (Stack ID: 28)
 
@@ -62,6 +65,20 @@
   - IP: 192.168.4.232
   - Compose: `nas/docker/netbootxyz/`
   - Purpose: Network boot server for PXE booting
+
+##### pihole-3 (Stack ID: 93, Terraform-managed)
+
+- **pihole-3-pihole-1** — `pihole/pihole:2025.10.0`
+  - Network: `home-net` macvlan at 192.168.4.236
+  - Terraform: `portainer_stack.pihole_3` in `terraform/portainer/stacks.tf`
+  - Compose template: `terraform/portainer/stacks/pihole-3.yml.tftpl`
+  - dnsmasq.d records injected via Docker Compose `configs: content:` from
+    `pihole/dnsmasq.d/{04-d-lcamaral-com,05-home,06-host-overrides}.conf`
+  - Env: `FTLCONF_dns_listeningMode=all` (accepts cross-subnet queries),
+    `FTLCONF_dns_upstreams=192.168.4.1` (forwards to pfSense Unbound)
+  - **HA:** 3 of 3 pihole instances (paired with pihole-1 LXC + pihole-2 on ds-1);
+    survives loss of Proxmox host (different physical box)
+  - Purpose: Authoritative DNS for `d.lcamaral.com` and `home`, ad-blocking
 
 ---
 
@@ -129,11 +146,6 @@
   - Networks: `docker-servers-net` (192.168.59.25) + `rproxy` bridge (172.24.0.5)
   - **HA:** Raft node 1 of 3 (voter)
   - Purpose: Secret management (`vault.d.lcamaral.com`, `vault.cf.lcamaral.com`)
-
-- **bind-dns-bind9-1** — `ubuntu/bind9:9.20-24.10_edge`
-  - Network: `docker-servers-net` (192.168.59.3)
-  - Volumes: `/nfs/dockermaster/docker/bind9/{config,cache,records}`
-  - Purpose: Authoritative DNS for `*.d.lcamaral.com` (single instance)
 
 - **registry** — `registry:2`
   - Networks: `docker-servers-net` (192.168.59.16) + `rproxy` bridge (172.24.0.3)
@@ -261,6 +273,19 @@
   - Purpose: Host metrics
 - `prometheus-snmp-exporter-1` — `prom/snmp-exporter:v0.20.0`
   - Purpose: SNMP metrics for network devices
+
+#### DNS tier
+
+- **pihole-2-pihole-1** — `pihole/pihole:2025.10.0`
+  - Network: `docker-servers-net` macvlan at 192.168.59.50
+  - Terraform: `portainer_stack.pihole_2` in `terraform/portainer/stacks.tf`
+  - Compose template: `terraform/portainer/stacks/pihole-2.yml.tftpl`
+  - dnsmasq.d records injected via Docker Compose `configs: content:` from
+    `pihole/dnsmasq.d/{04-d-lcamaral-com,05-home,06-host-overrides}.conf`
+  - Env: `FTLCONF_dns_listeningMode=all`,
+    `FTLCONF_dns_upstreams=192.168.4.1` (pfSense)
+  - **HA:** 2 of 3 pihole instances
+  - Purpose: Authoritative DNS + ad-blocking for SRVAN-local clients
 
 #### Ancillary
 
