@@ -88,3 +88,13 @@ output/
 
 # Timestamped backup directories inside compose trees
 backup_*/
+
+# App build artifacts — built elsewhere, not tracked here (images
+# land in registry.cf.lcamaral.com directly)
+apps/
+
+# npm lockfile — not consumed by anything in this repo
+package-lock.json
+
+# Terraform plan binary — per-apply artifact
+terraform/**/tfplan
