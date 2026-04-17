@@ -41,6 +41,7 @@ services:
       FTLCONF_misc_check_load: "false"
       FTLCONF_resolver_resolveIPv6: "false"
       FTLCONF_ntp_sync_active: "false"
+      FTLCONF_dns_listeningMode: "all"
     volumes:
       - /nfs/dockermaster/docker/pihole-2/etc-pihole:/etc/pihole
     configs:

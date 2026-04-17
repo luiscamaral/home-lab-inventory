@@ -4,6 +4,7 @@ output "environments" {
     dockermaster  = var.endpoint_id
     dockerserver1 = portainer_environment.ds1.id
     dockerserver2 = portainer_environment.ds2.id
+    nas           = portainer_environment.nas.id
   }
 }
 

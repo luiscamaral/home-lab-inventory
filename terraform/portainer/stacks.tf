@@ -647,7 +647,7 @@ resource "portainer_stack" "pihole_2" {
 
 resource "portainer_stack" "pihole_3" {
   name            = "pihole-3"
-  endpoint_id     = var.nas_endpoint_id
+  endpoint_id     = portainer_environment.nas.id
   deployment_type = "standalone"
   method          = "string"
 
