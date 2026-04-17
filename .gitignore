@@ -98,3 +98,6 @@ package-lock.json
 
 # Terraform plan binary — per-apply artifact
 terraform/**/tfplan
+
+# Git worktrees (isolated dev workspaces)
+.worktrees/
