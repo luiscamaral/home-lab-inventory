@@ -72,6 +72,11 @@
     - 8.8.4.4
   description: Google DNS
 
+- host: ha
+  domain: home.lcamaral.com
+  ip: 192.168.59.28
+  description: Home Assistant (reverse proxy to ha.iot:8123)
+
 - host: hbbr
   domain: home.lcamaral.com
   ip: 192.168.59.11
