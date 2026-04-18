@@ -208,12 +208,24 @@ HA is out of scope for the homelab:
   Terraform-injected `configs: content:` blocks, so only the ad-block
   side drifts. Revisit when v6-compatible sync tooling ships, or replace
   with a small custom script that hits Pi-hole v6's Teleporter API.
-- **dockermaster latent file damage** — ~81k files missing from the
-  2026-04-12 disk shrink (docs, `/usr/src/linux-headers-*`, Perl XS
-  modules, plymouth renderers). Boot-critical set was restored by reinstalling
-  25 packages. Remainder are mostly cosmetic; fix opportunistically with
-  `apt install --reinstall` per-package as symptoms surface. `needrestart`
-  is currently broken due to missing `Module/Find.pm`.
+- **dockermaster file damage recovery** — ✓ resolved 2026-04-17.
+  The 2026-04-12 disk shrink had amputated ~42k files across 603
+  packages. Systematic `apt install --reinstall` across 172 packages
+  with non-cosmetic damage restored all functional files, including:
+  needrestart + perl deps (Module::Find, NeedRestart::Utils, Digest::MD5,
+  Dpkg::Conf, Text::Iconv, Net::SSLeay, HTML::Parser), kernel headers,
+  ca-certificates, tzdata, python3-botocore, Ansible, git, openssl,
+  libkrb5-3 (spake preauth), libheif codecs, ImageMagick coders, and
+  ~150 others. Two packages needed special handling: python3-botocore
+  (dpkg --remove --force-all then reinstall due to post-install
+  ModuleNotFoundError on `debpython`), and grub-pc (pre-seeded
+  `grub-pc/install_devices=/dev/sda` via debconf — the legacy value
+  was `/dev/xvda` from a previous Xen/Oracle-style install that
+  caused the postinst to hang on an interactive device-selection
+  prompt). ~13k cosmetic files (man pages, docs, locales, icons,
+  `/usr/share/bug/*` report templates, gdb auto-load scripts)
+  intentionally left unreinstalled — benign and not worth 2-3 GB
+  of package download.
 - **VM backups (vzdump) were silently failing for 2 months** due to a
   full Synology quota. Fixed: pruned, added ds-1 and ds-2 to the job,
   switched to zstd, retention `keep-daily=1,keep-weekly=1`.
