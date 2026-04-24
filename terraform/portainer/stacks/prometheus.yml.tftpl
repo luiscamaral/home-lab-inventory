@@ -1,0 +1,109 @@
+name: prometheus
+
+# prometheus-1 + thanos-sidecar-1 — Phase 1 monitoring core on ds-1.
+# Image versions pinned per generated/prometheus-thanos-monitoring/VERSIONS.md.
+# external_labels.replica=A; prometheus-2 (replica B) lands on the NAS in Phase 2.
+#
+# Both services share the named volume "prometheus_data" — Prometheus owns the
+# write side, the sidecar reads it (ro) to ship blocks to MinIO. The sidecar's
+# objstore.yml is rendered from Vault by terraform templatefile() and injected
+# via docker compose configs:.
+#
+# Static IPs in 192.168.59.0/26 chosen from the free pool documented in
+# stacks.tf header comment.
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+volumes:
+  prometheus_data:
+    name: prometheus_data
+
+configs:
+  prometheus_yml:
+    content: |
+${indent(6, prometheus_config)}
+  objstore_yml:
+    content: |
+${indent(6, objstore_config)}
+
+services:
+  prometheus-1:
+    image: quay.io/prometheus/prometheus:v3.11.2
+    hostname: prometheus-1
+    networks:
+      servers-net:
+        # IP picked from 192.168.59.0/26 free pool (see stacks.tf header)
+        ipv4_address: 192.168.59.19
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--web.external-url=http://prometheus.d.lcamaral.com'
+    volumes:
+      - prometheus_data:/prometheus
+    configs:
+      - source: prometheus_yml
+        target: /etc/prometheus/prometheus.yml
+        mode: 0644
+    expose:
+      - "9090"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "prometheus"
+      com.docker.service: "prometheus-1"
+      portainer.autodeploy: "false"
+
+  thanos-sidecar-1:
+    image: quay.io/thanos/thanos:v0.41.0
+    hostname: thanos-sidecar-1
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.20
+    command:
+      - sidecar
+      - --prometheus.url=http://prometheus-1:9090
+      - --tsdb.path=/prometheus
+      - --objstore.config-file=/etc/thanos/objstore.yml
+      - --shipper.upload-compacted=false
+      - --grpc-address=0.0.0.0:10901
+      - --http-address=0.0.0.0:10902
+      - --log.level=info
+    volumes:
+      # Read-only mount of Prometheus TSDB so the sidecar can read blocks.
+      - prometheus_data:/prometheus:ro
+    configs:
+      - source: objstore_yml
+        target: /etc/thanos/objstore.yml
+        mode: 0644
+    expose:
+      - "10901"
+      - "10902"
+    depends_on:
+      - prometheus-1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:10902/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "prometheus"
+      com.docker.service: "thanos-sidecar-1"
+      portainer.autodeploy: "false"

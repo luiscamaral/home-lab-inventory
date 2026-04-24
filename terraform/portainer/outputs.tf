@@ -46,5 +46,12 @@ output "stacks" {
     homelab_portal_2    = portainer_stack.homelab_portal_2.name
     pihole_2            = portainer_stack.pihole_2.name
     pihole_3            = portainer_stack.pihole_3.name
+    prometheus_2        = portainer_stack.prometheus_2.name
+    thanos_query        = portainer_stack.thanos_query.name
+    thanos_store        = portainer_stack.thanos_store.name
+    alertmanager_1      = portainer_stack.alertmanager_1.name
+    node_exporter_ds1   = portainer_stack.node_exporter_ds1.name
+    cadvisor_ds1        = portainer_stack.cadvisor_ds1.name
+    snmp_exporter       = portainer_stack.snmp_exporter.name
   }
 }

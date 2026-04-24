@@ -82,3 +82,22 @@ data "vault_kv_secret_v2" "pihole" {
   mount = "secret"
   name  = "homelab/pihole"
 }
+
+# Thanos S3 service-account credentials (MinIO svcacct scoped to the
+# `thanos` bucket). Consumed by both prometheus-1's sidecar (Phase 1)
+# and prometheus-2's sidecar (Phase 2). The two sidecars use different
+# objstore endpoints (LAN vs nginx-rproxy) but the same access keys.
+data "vault_kv_secret_v2" "thanos" {
+  mount = "secret"
+  name  = "homelab/thanos/s3"
+}
+
+# Alertmanager SMTP routing — recipient address read from Vault so it can
+# rotate without a code change. Outbound SMTP itself flows through the
+# existing postfix-relay on dockermaster; this secret only carries the
+# destination email and any per-route overrides we add later.
+# Fields: to_address
+data "vault_kv_secret_v2" "alertmanager_smtp" {
+  mount = "secret"
+  name  = "homelab/alertmanager/smtp"
+}

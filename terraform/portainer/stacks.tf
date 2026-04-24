@@ -266,10 +266,130 @@ resource "portainer_stack" "rundeck" {
   }
 }
 
-# Prometheus monitoring deferred to feature/prometheus-thanos-plan branch
-# (full Thanos + Grafana HA setup in progress). Standalone prometheus stack
-# was added speculatively on 2026-04-12 (commit 67fe785) but never deployed
-# to Portainer; removed here to avoid drift with the planned HA topology.
+# ──────────────────────────────────────────────
+# Phase 1 Prometheus + Thanos monitoring core (replica A on ds-1)
+#
+# This block replaces the legacy bundled prometheus stack. The legacy stack
+# bundled prometheus + node-exporter + snmp-exporter + alertmanager + cadvisor
+# in one compose; here those concerns are split into 6 independent stacks so
+# each can be lifecycled separately (and so node/cadvisor/snmp survive when
+# the legacy stack is decommissioned in Phase 0):
+#
+#   portainer_stack.prometheus           — prometheus-1 + thanos-sidecar-1
+#   portainer_stack.thanos_query         — thanos-query (on dockermaster)
+#   portainer_stack.thanos_store         — thanos-store-gw (on ds-1)
+#   portainer_stack.alertmanager_1       — alertmanager-1 (on ds-1)
+#   portainer_stack.node_exporter_ds1    — node-exporter (host-mode on ds-1)
+#   portainer_stack.cadvisor_ds1         — cadvisor (host-mode on ds-1)
+#   portainer_stack.snmp_exporter        — snmp-exporter (on ds-1)
+#
+# Static IP allocations from 192.168.59.0/26 (docker-servers-net macvlan):
+#   .19  prometheus-1
+#   .20  thanos-sidecar-1
+#   .21  thanos-store-gw
+#   .26  thanos-query (on dockermaster)
+#   .27  alertmanager-1
+#   .29  snmp-exporter
+# ──────────────────────────────────────────────
+
+# prometheus-1 + thanos-sidecar-1 (replica A) on ds-1.
+# Both scrape configs (`_a` and `_b`) live in locals.tf — that's the single
+# source-of-truth for what gets scraped. Two near-identical bodies, the
+# only intentional difference is `external_labels.replica`. Edit both.
+# Reads scrape config from the local stub above; reads objstore creds from
+# Vault and renders the LAN-side objstore.yml via templatefile().
+resource "portainer_stack" "prometheus" {
+  name            = "prometheus"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/prometheus.yml.tftpl", {
+    prometheus_config = local.prometheus_scrape_config_a
+    objstore_config = templatefile("${path.module}/stacks/objstore-ds1.yml.tftpl", {
+      access_key = data.vault_kv_secret_v2.thanos.data["access_key"]
+      secret_key = data.vault_kv_secret_v2.thanos.data["secret_key"]
+    })
+  })
+}
+
+# thanos-query — read fan-out, runs on dockermaster (control plane).
+# Phase 1 wires sidecar-1 + store-gw; Phase 2 will append sidecar-2.
+resource "portainer_stack" "thanos_query" {
+  name            = "thanos-query"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/thanos-query.yml")
+}
+
+# thanos-store-gw — historical block reader, runs on ds-1.
+# Same objstore.yml as the sidecar (LAN endpoint).
+resource "portainer_stack" "thanos_store" {
+  name            = "thanos-store"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/thanos-store.yml.tftpl", {
+    objstore_config = templatefile("${path.module}/stacks/objstore-ds1.yml.tftpl", {
+      access_key = data.vault_kv_secret_v2.thanos.data["access_key"]
+      secret_key = data.vault_kv_secret_v2.thanos.data["secret_key"]
+    })
+  })
+}
+
+# alertmanager-1 (replica A) on ds-1.
+# Phase 1 stub config; Phase 5 wires the real SMTP routing tree.
+resource "portainer_stack" "alertmanager_1" {
+  name            = "alertmanager"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  # alertmanager_config is defined later in this file (alongside the
+  # prometheus_2 stub) and reused here so both replicas serve identical
+  # configs. The local is referenced before its declaration in source order
+  # but Terraform resolves locals graph-wide.
+  stack_file_content = templatefile("${path.module}/stacks/alertmanager.yml.tftpl", {
+    alertmanager_config = local.alertmanager_config
+  })
+}
+
+# node-exporter on ds-1 (host network mode, no IP allocation needed).
+# Phase 3 will add identical stacks for ds-2 and dockermaster.
+resource "portainer_stack" "node_exporter_ds1" {
+  name            = "node-exporter-ds1"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/node-exporter-ds1.yml")
+}
+
+# cadvisor on ds-1 (host network mode, privileged). Phase 3 expands.
+resource "portainer_stack" "cadvisor_ds1" {
+  name            = "cadvisor-ds1"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/cadvisor-ds1.yml")
+}
+
+# snmp-exporter on ds-1. Bind-mounts the legacy ~17k-line snmp.yml from
+# /nfs/dockermaster/docker/snmp-exporter/snmp.yml — the orchestrator must
+# pre-stage this file before the legacy prometheus stack is destroyed in
+# Phase 0 (or accept a brief snmp scrape gap).
+resource "portainer_stack" "snmp_exporter" {
+  name            = "snmp-exporter"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/snmp-exporter.yml")
+}
 
 # ──────────────────────────────────────────────
 # Watchtower → dockerserver-1
@@ -671,3 +791,57 @@ resource "portainer_stack" "pihole_3" {
 # When orbital-sync 2.x ships, restore this resource pointing at
 # stacks/orbital-sync.yml with image bumped to the v6 tag.
 # ──────────────────────────────────────────────
+
+# ──────────────────────────────────────────────
+# Prometheus + Thanos HA (Phase 2 — replica B on NAS)
+#
+# `prometheus-2` + `thanos-sidecar-2` + `alertmanager-2` deployed as a
+# single Portainer stack on the Synology NAS endpoint, on the home-net
+# macvlan. Replica A (`prometheus-1` + `thanos-sidecar-1` + `alertmanager-1`)
+# lives on ds-1; the pair survives a Proxmox outage.
+#
+# IPs are allocated from the home-net 192.168.4.232/29 pool — see the
+# header comment in stacks/prometheus-2.yml.tftpl for the .237/.238/.239
+# assignment.
+#
+# Three template variables are interpolated by templatefile():
+#   prometheus_config   — full prometheus.yml body (scrape jobs +
+#                         external_labels + alerting + rule_files).
+#                         Identical to prometheus-1 except for the
+#                         `replica: B` external label.
+#   alertmanager_config — full alertmanager.yml body. Same SMTP routing
+#                         as alertmanager-1 (intentionally duplicated;
+#                         the gossip cluster keeps state in sync).
+#   objstore_config_nas — Thanos S3 objstore config rendered from
+#                         stacks/objstore-nas.yml.tftpl. The NAS sidecar
+#                         reaches MinIO via https://s3.d.lcamaral.com:443
+#                         (TLS, via nginx-rproxy) — the ds-1 sidecar uses
+#                         the internal http://192.168.59.17:9000.
+#
+# `prometheus_scrape_config` and `alertmanager_config` locals live in
+# locals.tf — that's the single source of truth for both replicas. Edit
+# there to update the scrape jobs or alert routing; the resource block
+# below picks up changes on next `terraform apply`.
+# ──────────────────────────────────────────────
+
+# Phase 2 prometheus-2 references:
+#   local.prometheus_scrape_config — shared with prometheus-1 (locals.tf)
+#   local.alertmanager_config      — shared with alertmanager-1 (locals.tf)
+# The replica differentiation (external_labels.replica = B) is injected
+# inside the prometheus-2.yml.tftpl compose via a per-stack CLI flag, not
+# in the YAML body — this keeps a single source-of-truth scrape config.
+resource "portainer_stack" "prometheus_2" {
+  name            = "prometheus-2"
+  endpoint_id     = portainer_environment.nas.id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/prometheus-2.yml.tftpl", {
+    prometheus_config   = local.prometheus_scrape_config_b
+    alertmanager_config = local.alertmanager_config
+    objstore_config_nas = templatefile("${path.module}/stacks/objstore-nas.yml.tftpl", {
+      access_key = data.vault_kv_secret_v2.thanos.data["access_key"]
+      secret_key = data.vault_kv_secret_v2.thanos.data["secret_key"]
+    })
+  })
+}

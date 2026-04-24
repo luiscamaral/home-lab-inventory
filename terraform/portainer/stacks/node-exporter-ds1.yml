@@ -1,0 +1,45 @@
+name: node-exporter-ds1
+
+# node-exporter on ds-1 — host-level metrics (CPU/mem/disk/net/systemd).
+# Decoupled from the legacy bundled prometheus stack so it survives the
+# Phase 0 decommission of the old prometheus stack on ds-1.
+#
+# Uses network_mode: host so the exporter sees the host network namespace.
+# Listens on 0.0.0.0:9100 — Prometheus scrapes via the ds-1 host IP.
+#
+# Phase 3 will add identical stacks for ds-2 and dockermaster.
+
+services:
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.11.1
+    hostname: node-exporter-ds1
+    network_mode: host
+    pid: host
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/host/root'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)'
+      - '--collector.systemd'
+      - '--collector.processes'
+      - '--collector.textfile.directory=/var/lib/node_exporter/textfile_collector'
+      - '--no-collector.wifi'
+      - '--web.listen-address=:9100'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro,rslave
+      - /var/lib/node_exporter/textfile_collector:/var/lib/node_exporter/textfile_collector:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9100/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "node-exporter-ds1"
+      com.docker.service: "node-exporter"
+      portainer.autodeploy: "false"
