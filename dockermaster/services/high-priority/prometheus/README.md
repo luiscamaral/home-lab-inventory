@@ -2,7 +2,7 @@
 
 ## 📊 Service Overview
 
-- **Service Name**: prometheus (monitoring stack)
+- **Service Name**: Prometheus (monitoring stack)
 - **Category**: Monitoring & Observability
 - **Status**: ⚠️ NOT DEPLOYED (Critical Issue)
 - **IP Address**: 192.168.59.31 (configured but not active)
@@ -10,16 +10,22 @@
 
 ## 🚀 Description
 
-Comprehensive Prometheus monitoring stack designed to provide observability for all infrastructure services. The stack includes Prometheus for metrics collection, AlertManager for alerting, Node Exporter for system metrics, cAdvisor for container metrics, and SNMP Exporter for network device monitoring. This service is critical for operational visibility across the entire homelab infrastructure.
+Comprehensive Prometheus monitoring stack designed to provide observability for all
+infrastructure services. The stack includes Prometheus for metrics collection, AlertManager for
+alerting, Node Exporter for system metrics, cAdvisor for container metrics, and SNMP Exporter
+for network device monitoring. This service is critical for operational visibility across the
+entire homelab infrastructure.
 
 ## 🔧 Configuration
 
 ### Docker Compose Location
-```
+
+```text
 /nfs/dockermaster/docker/prometheus/docker-compose.yaml
 ```
 
 ### Stack Components
+
 1. **Prometheus Server**: Core metrics database and query engine
 2. **Node Exporter**: System-level metrics (CPU, memory, disk, network)
 3. **cAdvisor**: Container metrics (Docker stats, resource usage)
@@ -27,8 +33,9 @@ Comprehensive Prometheus monitoring stack designed to provide observability for 
 5. **SNMP Exporter**: Network device monitoring (pfSense firewall)
 
 ### Network Configuration
+
 - **Networks**:
-  - front-tier: docker-servers-net (macvlan) - IP 192.168.59.31
+  - front-tier: Docker-servers-net (macvlan) - IP 192.168.59.31
   - back-tier: Internal communication between components
 - **Ports**:
   - Prometheus: 9090 (not exposed externally)
@@ -37,6 +44,7 @@ Comprehensive Prometheus monitoring stack designed to provide observability for 
   - cAdvisor: 8080 (internal only)
 
 ### Volumes
+
 - `prometheus_data`: Persistent storage for metrics data
 - Configuration files mounted from host:
   - `prometheus.yml`: Main Prometheus configuration
@@ -46,16 +54,18 @@ Comprehensive Prometheus monitoring stack designed to provide observability for 
 ## 📈 Monitoring Targets
 
 ### Current Configuration
+
 1. **Prometheus Self-Monitoring**: localhost:9090
 2. **Container Metrics**: cadvisor:8080
 3. **System Metrics**:
    - node-exporter:9100 (dockermaster)
-   - pfsense1.srv.lcamaral.com:9482 (firewall)
+   - `pfsense.admin.lcamaral.com` → `192.168.4.1:9100` (firewall, `node_exporter` package — running and healthy)
 4. **Network Monitoring**:
    - SNMP monitoring of pfSense firewall
-   - pfsense1.srv.lcamaral.com via SNMP exporter
+   - `pfsense.admin.lcamaral.com` via SNMP exporter
 
 ### Scrape Intervals
+
 - **Default**: 15s
 - **Container metrics**: 5s
 - **Node metrics**: 5s
@@ -64,12 +74,14 @@ Comprehensive Prometheus monitoring stack designed to provide observability for 
 ## 🚨 CRITICAL ISSUES
 
 ### 1. Service Not Deployed
+
 - **Problem**: Entire Prometheus monitoring stack is not running
 - **Impact**: NO monitoring or observability for any infrastructure services
 - **Evidence**: `docker compose ps` shows no running containers
 - **Risk Level**: CRITICAL - Operational blind spot
 
 ### 2. Missing Monitoring Coverage
+
 - **Problem**: 32 services mentioned in infrastructure have no monitoring
 - **Impact**: No visibility into service health, performance, or issues
 - **Missing Data**:
@@ -80,6 +92,7 @@ Comprehensive Prometheus monitoring stack designed to provide observability for 
   - Alert notifications
 
 ### 3. Configuration Issues
+
 - **Docker Compose Version**: Obsolete `version` attribute (warning message)
 - **AlertManager**: Slack notifications not configured (commented out)
 - **Alert Rules**: Referenced `alert.rules` file not found
@@ -87,11 +100,13 @@ Comprehensive Prometheus monitoring stack designed to provide observability for 
 ## 🔐 Security
 
 ### Access Control
+
 - **Prometheus UI**: No authentication configured (internal network only)
 - **AlertManager**: No authentication configured
-- **Network Security**: Services on internal docker network
+- **Network Security**: Services on internal Docker network
 
 ### **⚠️ SECURITY CONSIDERATIONS**
+
 1. **No authentication**: Services accessible without credentials on internal network
 2. **No TLS**: All communication in plaintext
 3. **Privileged access**: cAdvisor and node-exporter require host access
@@ -99,14 +114,16 @@ Comprehensive Prometheus monitoring stack designed to provide observability for 
 ## 🔄 Backup Strategy
 
 ### Data Backup
+
 - **Method**: Not configured
 - **Metrics Data**: Stored in `prometheus_data` Docker volume
 - **Recommended**: Regular volume backups or remote write to external system
 - **Retention**: Default Prometheus retention (15 days)
 
 ### Configuration Backup
+
 - **Configuration Files**: Included in dockermaster repository
-- **Data Recovery**: Requires proper backup of prometheus_data volume
+- **Data Recovery**: Requires proper backup of Prometheus_data volume
 
 ## 🚨 Troubleshooting
 
@@ -126,33 +143,38 @@ Comprehensive Prometheus monitoring stack designed to provide observability for 
    - **External**: Test SNMP connectivity to pfSense
 
 ### Log Locations
+
 - **Prometheus**: `docker logs prometheus`
 - **Node Exporter**: `docker logs node-exporter`
 - **AlertManager**: `docker logs alertmanager`
 - **cAdvisor**: `docker logs cadvisor`
 
 ### Recovery Procedures
+
 1. **Deploy monitoring stack**:
+
    ```bash
    cd /nfs/dockermaster/docker/prometheus
    docker compose up -d
    ```
 
 2. **Verify services**:
+
    ```bash
    docker compose ps
    docker compose logs
    ```
 
 3. **Access interfaces**:
-   - Prometheus: http://192.168.59.31:9090
-   - Node Exporter: http://192.168.59.31:9100
+   - Prometheus: <http://192.168.59.31:9090>
+   - Node Exporter: <http://192.168.59.31:9100>
 
 ## 📝 Maintenance
 
 ### IMMEDIATE ACTIONS REQUIRED
 
 1. **Deploy Monitoring Stack** (CRITICAL):
+
    ```bash
    cd /nfs/dockermaster/docker/prometheus
    # Fix docker-compose version warning
@@ -161,6 +183,7 @@ Comprehensive Prometheus monitoring stack designed to provide observability for 
    ```
 
 2. **Verify Deployment**:
+
    ```bash
    docker compose ps
    curl http://192.168.59.31:9090/-/healthy
@@ -172,18 +195,21 @@ Comprehensive Prometheus monitoring stack designed to provide observability for 
    - Set up proper alert rules
 
 ### Configuration Updates Needed
-1. **Remove obsolete version attribute** from docker-compose.yaml
+
+1. **Remove obsolete version attribute** from Docker-compose.YAML
 2. **Create alert.rules file** for monitoring alerts
 3. **Configure AlertManager** with proper notification channels
 4. **Add service discovery** for all dockermaster services
 
 ### Updates
+
 - **Current Images**: Latest versions (may need pinning)
 - **Update schedule**: Should be manual with testing
 - **Compatibility**: Verify configuration compatibility with updates
 
 ### Dependencies
-- **Required**: Docker network (docker-servers-net)
+
+- **Required**: Docker network (Docker-servers-net)
 - **Network Access**: SNMP access to pfSense firewall
 - **Storage**: Sufficient disk space for metrics retention
 
@@ -206,6 +232,7 @@ Comprehensive Prometheus monitoring stack designed to provide observability for 
 ## 🚀 Deployment Instructions
 
 ### Quick Deploy (Emergency)
+
 ```bash
 cd /nfs/dockermaster/docker/prometheus
 
@@ -221,6 +248,7 @@ docker compose logs --tail 20
 ```
 
 ### Verification Steps
+
 ```bash
 # Check Prometheus
 curl -f http://192.168.59.31:9090/-/healthy
@@ -233,6 +261,7 @@ curl -s http://192.168.59.31:9090/api/v1/query?query=up | jq '.data.result[] | {
 ```
 
 ### Post-Deployment Configuration
+
 1. **Add missing alert.rules file**
 2. **Configure AlertManager notifications**
 3. **Set up service discovery for all 32 services**
