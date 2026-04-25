@@ -12,6 +12,9 @@ resource "portainer_environment" "ds1" {
   environment_address = "tcp://192.168.59.34:9001"
   type                = 2 # Docker agent (EndpointCreationType=2)
   tls_skip_verify     = true
+  # Portainer keeps a separate PublicURL field (matches agent address).
+  # Provider can't clear it once set, so declare it explicitly to match live.
+  public_ip = "tcp://192.168.59.34:9001"
 }
 
 # ──────────────────────────────────────────────
@@ -23,6 +26,7 @@ resource "portainer_environment" "ds2" {
   environment_address = "tcp://192.168.59.46:9001"
   type                = 2 # Docker agent (EndpointCreationType=2)
   tls_skip_verify     = true
+  public_ip           = "tcp://192.168.59.46:9001"
 }
 
 # ──────────────────────────────────────────────
