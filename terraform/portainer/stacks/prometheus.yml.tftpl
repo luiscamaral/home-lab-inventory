@@ -24,10 +24,10 @@ volumes:
 configs:
   prometheus_yml:
     content: |
-${indent(6, prometheus_config)}
+      ${indent(6, prometheus_config)}
   objstore_yml:
     content: |
-${indent(6, objstore_config)}
+      ${indent(6, objstore_config)}
 
 services:
   prometheus-1:
@@ -41,6 +41,9 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=7d'
+      # Disable Prometheus local compaction so Thanos sidecar owns it
+      - '--storage.tsdb.min-block-duration=2h'
+      - '--storage.tsdb.max-block-duration=2h'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
       - '--web.enable-lifecycle'
@@ -78,13 +81,13 @@ services:
       - --prometheus.url=http://prometheus-1:9090
       - --tsdb.path=/prometheus
       - --objstore.config-file=/etc/thanos/objstore.yml
-      - --shipper.upload-compacted=false
+      - --no-shipper.upload-compacted
       - --grpc-address=0.0.0.0:10901
       - --http-address=0.0.0.0:10902
       - --log.level=info
     volumes:
-      # Read-only mount of Prometheus TSDB so the sidecar can read blocks.
-      - prometheus_data:/prometheus:ro
+      # RW mount — sidecar writes thanos.shipper.json bookkeeping into TSDB dir.
+      - prometheus_data:/prometheus
     configs:
       - source: objstore_yml
         target: /etc/thanos/objstore.yml

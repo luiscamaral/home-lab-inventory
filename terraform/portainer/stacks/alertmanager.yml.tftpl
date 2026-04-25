@@ -22,7 +22,7 @@ volumes:
 configs:
   alertmanager_yml:
     content: |
-${indent(6, alertmanager_config)}
+      ${indent(6, alertmanager_config)}
 
 services:
   alertmanager-1:

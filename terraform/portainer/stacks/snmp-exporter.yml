@@ -23,7 +23,7 @@ networks:
 
 services:
   snmp-exporter:
-    image: quay.io/prometheus/snmp-exporter:v0.30.1
+    image: quay.io/prometheus/snmp-exporter:v0.29.0
     hostname: snmp-exporter
     networks:
       servers-net:
@@ -33,7 +33,7 @@ services:
       - '--config.file=/etc/snmp_exporter/snmp.yml'
       - '--web.listen-address=:9116'
     volumes:
-      - /nfs/dockermaster/docker/snmp-exporter/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
+      - /nfs/dockermaster/docker/prometheus/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
     expose:
       - "9116"
     restart: unless-stopped

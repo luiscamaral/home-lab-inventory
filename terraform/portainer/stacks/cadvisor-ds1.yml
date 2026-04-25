@@ -8,7 +8,7 @@ name: cadvisor-ds1
 
 services:
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.56.2
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
     hostname: cadvisor-ds1
     network_mode: host
     privileged: true

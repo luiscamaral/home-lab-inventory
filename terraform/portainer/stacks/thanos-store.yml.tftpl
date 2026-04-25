@@ -17,12 +17,15 @@ volumes:
 configs:
   objstore_yml:
     content: |
-${indent(6, objstore_config)}
+      ${indent(6, objstore_config)}
 
 services:
   thanos-store-gw:
     image: quay.io/thanos/thanos:v0.41.0
     hostname: thanos-store-gw
+    # Run as root so the container can mkdir on the named volume which
+    # docker creates with root ownership.
+    user: "0:0"
     networks:
       servers-net:
         # IP picked from 192.168.59.0/26 free pool (see stacks.tf header)

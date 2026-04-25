@@ -24,7 +24,7 @@ the choice is explained.
 
 ### `cadvisor` (every Docker host)
 
-- **Version pin:** `gcr.io/cadvisor/cadvisor:v0.56.2`.
+- **Version pin:** `gcr.io/cadvisor/cadvisor:v0.55.1`.
 - **Targets:** dockermaster, ds-1, ds-2, NAS.
 - **Deployment:** per-host container, privileged, bind-mounts
   `/var/run`, `/sys`, `/var/lib/docker`, `/dev/disk`.
@@ -51,7 +51,7 @@ the choice is explained.
 Two options, pick one for initial, add the other later:
 
 1. **`snmp_exporter` (generic, requires module config):**
-   - Image `quay.io/prometheus/snmp-exporter:v0.30.1`.
+   - Image `quay.io/prometheus/snmp-exporter:v0.29.0`.
    - pfSense community SNMP module or generate via
      `snmp_exporter`'s `generator` against the pfSense MIB bundle.
    - SNMPv3 creds in Vault.

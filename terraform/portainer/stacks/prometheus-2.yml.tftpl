@@ -91,7 +91,7 @@ services:
       - --prometheus.url=http://prometheus-2:9090
       - --tsdb.path=/prometheus
       - --objstore.config-file=/etc/thanos/objstore.yml
-      - --shipper.upload-compacted=false
+      - --no-shipper.upload-compacted
       - --grpc-address=0.0.0.0:10901
       - --http-address=0.0.0.0:10902
     volumes:

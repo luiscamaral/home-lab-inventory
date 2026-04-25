@@ -28,9 +28,9 @@ services:
       - --grpc-address=0.0.0.0:10901
       - --query.replica-label=replica
       - --query.auto-downsampling
-      - --store=192.168.59.20:10901
-      - --store=192.168.59.21:10901
-      # TODO Phase 2: add NAS sidecar-2 store target once deployed.
+      - --endpoint=192.168.59.20:10901
+      - --endpoint=192.168.59.21:10901
+      - --endpoint=192.168.4.239:10901
       - --log.level=info
     expose:
       - "10901"
