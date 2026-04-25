@@ -8,7 +8,10 @@ networks:
 services:
   twingate:
     container_name: twingate-golden-mussel
-    pull_policy: always
+    # Image updates handled by watchtower (label below); skip pull on every
+    # redeploy to avoid transient registry "Proxy failure" errors during
+    # `compose up`. Image cache survives container removal.
+    pull_policy: missing
     image: twingate/connector:1
     hostname: golden-mussel
     networks:
