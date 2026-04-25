@@ -33,7 +33,6 @@ output "stacks" {
     github_runner       = portainer_stack.github_runner.name
     rustdesk            = portainer_stack.rustdesk.name
     rundeck             = portainer_stack.rundeck.name
-    prometheus          = portainer_stack.prometheus.name
     watchtower          = portainer_stack.watchtower.name
     minio               = portainer_stack.minio.name
     minio_2             = portainer_stack.minio_2.name

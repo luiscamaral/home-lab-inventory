@@ -266,19 +266,10 @@ resource "portainer_stack" "rundeck" {
   }
 }
 
-# ──────────────────────────────────────────────
-# Prometheus Monitoring Stack → dockerserver-1
-# prometheus + node-exporter + snmp-exporter + alertmanager + cadvisor
-# Internal back-tier network only, no secrets
-# ──────────────────────────────────────────────
-resource "portainer_stack" "prometheus" {
-  name            = "prometheus"
-  endpoint_id     = var.ds1_endpoint_id
-  deployment_type = "standalone"
-  method          = "string"
-
-  stack_file_content = file("${path.module}/stacks/prometheus.yml")
-}
+# Prometheus monitoring deferred to feature/prometheus-thanos-plan branch
+# (full Thanos + Grafana HA setup in progress). Standalone prometheus stack
+# was added speculatively on 2026-04-12 (commit 67fe785) but never deployed
+# to Portainer; removed here to avoid drift with the planned HA topology.
 
 # ──────────────────────────────────────────────
 # Watchtower → dockerserver-1
