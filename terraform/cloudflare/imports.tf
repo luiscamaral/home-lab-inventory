@@ -65,11 +65,14 @@ import {
 }
 
 # ──────────────────────────────────────────────
-# DreamHost DNS — import not supported by provider v0.3.2
-# (see "could not determine record from input ID" error).
-# Live wildcard record exists at *.cf.lcamaral.com → bologna.cf.lcamaral.com.cdn.cloudflare.net.
-# Manual fix needed: either upgrade provider or hand-edit state to import.
+# DreamHost DNS
 # ──────────────────────────────────────────────
+# Note: adamantal/dreamhost provider v0.3.2 import id format is TYPE|RECORD|VALUE
+# (pipe-separated, type first), NOT the documented record;type;value pattern.
+import {
+  to = dreamhost_dns_record.cf_wildcard
+  id = "CNAME|*.cf.lcamaral.com|bologna.cf.lcamaral.com.cdn.cloudflare.net."
+}
 
 # ──────────────────────────────────────────────
 # Tunnel
