@@ -39,6 +39,38 @@ import {
   id = "d91929b42a245625bebb527e5fd2e020/fc65d8a0c4316934a39c65342c1870b6"
 }
 
+import {
+  to = cloudflare_dns_record.auth_cf_tunnel
+  id = "d91929b42a245625bebb527e5fd2e020/3093ea96e589e6f383fe1a8a0b4a2d21"
+}
+
+import {
+  to = cloudflare_dns_record.login_cf_tunnel
+  id = "d91929b42a245625bebb527e5fd2e020/66d2660ab04b419c601914d1372a389d"
+}
+
+import {
+  to = cloudflare_dns_record.portainer_cf_tunnel
+  id = "d91929b42a245625bebb527e5fd2e020/82638815d06761fddc205fe4b2090292"
+}
+
+import {
+  to = cloudflare_dns_record.s3_cf_tunnel
+  id = "d91929b42a245625bebb527e5fd2e020/c2c6eec78e80e84532343f4fc3da26f1"
+}
+
+import {
+  to = cloudflare_dns_record.minio_cf_tunnel
+  id = "d91929b42a245625bebb527e5fd2e020/e3f66706109de276de89aec2ebbca1d0"
+}
+
+# ──────────────────────────────────────────────
+# DreamHost DNS — import not supported by provider v0.3.2
+# (see "could not determine record from input ID" error).
+# Live wildcard record exists at *.cf.lcamaral.com → bologna.cf.lcamaral.com.cdn.cloudflare.net.
+# Manual fix needed: either upgrade provider or hand-edit state to import.
+# ──────────────────────────────────────────────
+
 # ──────────────────────────────────────────────
 # Tunnel
 # ──────────────────────────────────────────────
