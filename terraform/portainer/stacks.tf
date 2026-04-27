@@ -520,7 +520,7 @@ resource "portainer_stack" "watchtower" {
   # Phase 3a: macvlan IP for Prometheus scrape of /v1/metrics on :8080
   env {
     name  = "WATCHTOWER_MACVLAN_IP"
-    value = "192.168.59.34"
+    value = "192.168.59.36"
   }
 }
 

@@ -221,7 +221,7 @@ locals {
         static_configs:
           - targets: [192.168.59.33:8080]
             labels: { instance: watchtower-dm }
-          - targets: [192.168.59.34:8080]
+          - targets: [192.168.59.36:8080]
             labels: { instance: watchtower-ds1 }
 
       # ── Phase 3h: blackbox_exporter probes ──────────────────────────
@@ -505,7 +505,7 @@ locals {
         static_configs:
           - targets: [192.168.59.33:8080]
             labels: { instance: watchtower-dm }
-          - targets: [192.168.59.34:8080]
+          - targets: [192.168.59.36:8080]
             labels: { instance: watchtower-ds1 }
 
       # ── Phase 3h: blackbox_exporter probes ──────────────────────────

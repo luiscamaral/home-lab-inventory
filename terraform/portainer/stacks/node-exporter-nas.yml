@@ -26,8 +26,12 @@ services:
     command:
       - '--path.procfs=/host/proc'
       - '--path.sysfs=/host/sys'
-      - '--path.rootfs=/host/root'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|tmpRoot|initrd|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs|volume[0-9]+/@.+|volumeUSB[0-9]+/@.+)($$|/)'
+      # NO --path.rootfs on DSM — DSM's docker rejects bind-mounts of /
+      # ("path / is mounted on / but it is not a shared or slave mount").
+      # Filesystem metrics still arrive from /sys/block; we lose only the
+      # full-rootfs walk, which on DSM is dominated by Synology @-prefixed
+      # internal mounts that we'd exclude anyway.
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|etc|tmpRoot|initrd|volume[0-9]+/@.+|volumeUSB[0-9]+/@.+)($$|/)'
       - '--collector.processes'
       - '--no-collector.wifi'
       - '--no-collector.systemd'
@@ -35,7 +39,6 @@ services:
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
-      - /:/host/root:ro,rslave
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:9100/metrics"]

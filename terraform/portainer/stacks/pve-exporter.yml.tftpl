@@ -26,7 +26,7 @@ configs:
 
 services:
   pve-exporter:
-    image: prompve/prometheus-pve-exporter:v3.8.2
+    image: prompve/prometheus-pve-exporter:3.8.2
     hostname: pve-exporter
     networks:
       servers-net:
@@ -34,7 +34,7 @@ services:
         ipv4_address: 192.168.59.35
     configs:
       - source: pve_yml
-        target: /etc/pve.yml
+        target: /etc/prometheus/pve.yml
         mode: 0644
     expose:
       - "9221"
