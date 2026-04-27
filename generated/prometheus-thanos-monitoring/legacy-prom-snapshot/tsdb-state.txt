@@ -1,0 +1,27 @@
+# TSDB state snapshot — captured 2026-04-24
+# docker exec prometheus-prometheus-1 du -sh /prometheus
+3.1G	/prometheus
+
+# Per-block sizes (du -sh /prometheus/*) — most blocks compacted to ~15-50 MB,
+# one large block (~136 MB) is the long-range compaction:
+136.3M	/prometheus/01KPZJB4F2K14NYWR5JNEKVZ05
+ 15.7M	/prometheus/01KQ002FP52D8XZEYC5ZCD90MW
+ 15.7M	/prometheus/01KQ06Y6Y5MEBK5FQMQFTKEQM8
+ 46.1M	/prometheus/01KQ06Y78QD90PX0RYJK5STDFX
+ 16.8M	/prometheus/01KQ0DSY66RZF1QJBABE56TTZA
+ 16.1M	/prometheus/01KQ0MNNE6NQYQS2FYA2PP96W0
+ 19.8M	/prometheus/chunks_head
+168.7M	/prometheus/wal
+   0    /prometheus/lock
+4.0K	/prometheus/queries.active
+
+# Block count: 25 ULID-named directories
+# Oldest block dir mtime: 2026-04-10 03:00 (01KNTNA60DG4SXZZ1YYB71DRHE)
+# Newest block dir mtime: 2026-04-24 21:00 (01KQ0MNNE6NQYQS2FYA2PP96W0)
+# → ~14 days of retained data on disk, consistent with default 15d retention.
+
+# Volume mount (host side):
+#   prometheus_prometheus_data → /var/lib/docker/volumes/prometheus_prometheus_data/_data → /prometheus
+
+# Container started: 2026-04-20 18:42 UTC (last restart, e.g. watchtower update)
+# Healthcheck: passing.

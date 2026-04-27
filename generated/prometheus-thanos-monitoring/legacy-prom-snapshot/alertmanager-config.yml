@@ -1,0 +1,13 @@
+# /nfs/dockermaster/docker/prometheus/alertmanager/config.yml — captured 2026-04-24
+# This is the entire current Alertmanager config — placeholder only, no live receivers.
+
+route:
+  receiver: 'slack'
+
+receivers:
+  - name: 'slack'
+#       slack_configs:
+#           - send_resolved: true
+#             username: '<username>'
+#             channel: '#<channel-name>'
+#             api_url: '<incomming-webhook-url>'

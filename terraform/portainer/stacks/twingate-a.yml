@@ -30,6 +30,14 @@ services:
       TWINGATE_LABEL_DEPLOYED_BY: "dockerserver-1"
       TWINGATE_ACCESS_TOKEN: ${TWINGATE_ACCESS_TOKEN}
       TWINGATE_REFRESH_TOKEN: ${TWINGATE_REFRESH_TOKEN}
+      # Phase 3f: native Prometheus metrics on connector v1.80+. The
+      # connector binds [::]:9999 (dual-stack) and our macvlan namespace
+      # has IPv6 fully unloaded (no /proc/sys/net/ipv6/...) so bind()
+      # fails with EAFNOSUPPORT — connector logs the error but stays
+      # Online. Variable is set so metrics light up automatically the
+      # day the network gains IPv6; until then prometheus has no scrape
+      # job for it. See locals.tf comment.
+      TWINGATE_METRICS_PORT: "9999"
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: "true"

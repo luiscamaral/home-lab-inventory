@@ -1,0 +1,73 @@
+global:
+  scrape_interval: 15s
+  external_labels:
+    monitor: 'localprom'
+
+# Load and evaluate rules in this file every 'evaluation_interval' seconds.
+rule_files:
+  - 'alert.rules'
+  # - "first.rules"
+  # - "second.rules"
+
+# alert
+alerting:
+  alertmanagers:
+  - scheme: http
+    static_configs:
+    - targets:
+      - "alertmanager:9093"
+
+scrape_configs:
+  - job_name: 'prometheus.local'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          container: 'prometheus_local'
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: '(.*)'
+        target_label: __name__
+        replacement: 'localprom_$1'
+      - action: labelmap
+        regex: '__meta_(.+)'
+
+  - job_name: 'cadvisor'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  - job_name: 'node-exporter'
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+        - 'node-exporter:9100'
+        - 'pfsense1.srv.lcamaral.com:9482'
+
+  - job_name: 'snmp-pfsense'
+    static_configs:
+      - targets:
+        - "pfsense1.srv.lcamaral.com"
+    metrics_path: "/snmp"
+    params:
+      module: [pfsense]
+    scrape_interval: 5s
+    scrape_timeout: 5s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: snmp-exporter:9116  # The SNMP exporter's real hostname:port.
+
+
+# remote_write:
+#   - url: 'https://aps-workspaces.YOUR_WORKSPACE_ID.REGION.amazonaws.com/api/v1/write'
+#     basic_auth:
+#       username: 'YOUR_ACCESS_KEY'
+#       password: 'YOUR_SECRET_KEY'
+#     queue_config:
+#       batch_send_deadline: 30s
+#       max_samples_per_send: 1000
+#       max_shards: 100

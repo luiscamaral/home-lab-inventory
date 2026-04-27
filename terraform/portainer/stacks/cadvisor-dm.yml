@@ -1,0 +1,41 @@
+name: cadvisor-dm
+
+# cadvisor on dockermaster — container-level metrics (per-container CPU/mem/io).
+# Phase 3 expansion alongside ds-1 and ds-2; see cadvisor-ds1.yml for the
+# original template. Identical to ds-1 — only the hostname label changes.
+#
+# Uses host networking and privileged + device access — required to read
+# Docker stats via cgroups and /var/lib/docker.
+
+services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
+    hostname: cadvisor-dm
+    network_mode: host
+    privileged: true
+    command:
+      - '--listen_ip=0.0.0.0'
+      - '--port=8080'
+      - '--docker_only=true'
+      - '--store_container_labels=false'
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "cadvisor-dm"
+      com.docker.service: "cadvisor"
+      portainer.autodeploy: "false"

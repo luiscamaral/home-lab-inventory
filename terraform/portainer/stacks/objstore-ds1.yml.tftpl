@@ -1,0 +1,17 @@
+# Thanos object-store config for the ds-1 plane (replica A sidecar +
+# store gateway). Both processes are on docker-servers-net and reach
+# MinIO via its internal LAN address (192.168.59.17:9000) over plain
+# HTTP — no TLS overhead, no nginx hop. Credentials come from Vault at
+# secret/homelab/thanos/s3 and are interpolated by templatefile().
+#
+# Distinct from objstore-nas.yml.tftpl (Phase 2) which goes through
+# nginx-rproxy on TLS because the NAS macvlan can't reach the internal
+# servers-net directly.
+type: S3
+config:
+  bucket: thanos
+  endpoint: 192.168.59.17:9000
+  access_key: ${access_key}
+  secret_key: ${secret_key}
+  insecure: true
+  signature_version2: false

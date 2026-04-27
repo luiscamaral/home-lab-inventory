@@ -26,6 +26,7 @@ output "stacks" {
     reverse_proxy_2     = portainer_stack.reverse_proxy_2.name
     reverse_proxy_3     = portainer_stack.reverse_proxy_3.name
     vault               = portainer_stack.vault.name
+    vault_2             = portainer_stack.vault_2.name
     vault_3             = portainer_stack.vault_3.name
     twingate_a          = portainer_stack.twingate_a.name
     twingate_b          = portainer_stack.twingate_b.name
@@ -46,5 +47,24 @@ output "stacks" {
     homelab_portal_2    = portainer_stack.homelab_portal_2.name
     pihole_2            = portainer_stack.pihole_2.name
     pihole_3            = portainer_stack.pihole_3.name
+    prometheus          = portainer_stack.prometheus.name
+    prometheus_2        = portainer_stack.prometheus_2.name
+    thanos_query        = portainer_stack.thanos_query.name
+    thanos_store        = portainer_stack.thanos_store.name
+    alertmanager_1      = portainer_stack.alertmanager_1.name
+    node_exporter_ds1   = portainer_stack.node_exporter_ds1.name
+    node_exporter_ds2   = portainer_stack.node_exporter_ds2.name
+    node_exporter_dm    = portainer_stack.node_exporter_dm.name
+    node_exporter_nas   = portainer_stack.node_exporter_nas.name
+    cadvisor_ds1        = portainer_stack.cadvisor_ds1.name
+    cadvisor_ds2        = portainer_stack.cadvisor_ds2.name
+    cadvisor_dm         = portainer_stack.cadvisor_dm.name
+    cadvisor_nas        = portainer_stack.cadvisor_nas.name
+    snmp_exporter       = portainer_stack.snmp_exporter.name
+    pve_exporter        = portainer_stack.pve_exporter.name
+    blackbox_exporter   = portainer_stack.blackbox_exporter.name
+    pihole_exporter_1   = portainer_stack.pihole_exporter_1.name
+    pihole_exporter_2   = portainer_stack.pihole_exporter_2.name
+    pihole_exporter_3   = portainer_stack.pihole_exporter_3.name
   }
 }

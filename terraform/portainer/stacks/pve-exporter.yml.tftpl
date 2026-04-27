@@ -1,0 +1,59 @@
+name: pve-exporter
+
+# pve-exporter — Phase 3c Proxmox VE metrics gateway.
+# Image pinned per generated/prometheus-thanos-monitoring/VERSIONS.md (v3.8.2).
+# Runs on dockermaster, on docker-servers-net macvlan; Prometheus scrapes the
+# exporter with a `target` query parameter (the Proxmox node to inspect) and
+# the exporter walks the PVE API to expose node/VM/storage metrics.
+#
+# Auth: Proxmox API token `prometheus@pam!metrics`. The token_secret is
+# read from Vault at apply time (secret/homelab/proxmox/api_token) and
+# rendered into pve.yml via terraform templatefile() + docker configs:.
+# verify_ssl: false because Proxmox uses self-signed certs in this homelab.
+#
+# Static IP from 192.168.59.0/26 free pool — see stacks.tf header. Picked
+# .35 (.30-.34 reserved by Phase 3a: cf-tunnel x3 + watchtower x2).
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+configs:
+  pve_yml:
+    content: |
+      ${indent(6, pve_config)}
+
+services:
+  pve-exporter:
+    image: prompve/prometheus-pve-exporter:3.8.2
+    hostname: pve-exporter
+    # Force IPv4 bind: docker-servers-net macvlan is IPv4-only, so the default
+    # `[::]:9221` listener fails with "Address family not supported by protocol"
+    # and gunicorn enters a restart loop. See feedback_pve_exporter_ipv4_bind.
+    command:
+      - --config.file=/etc/prometheus/pve.yml
+      - --web.listen-address=0.0.0.0:9221
+    networks:
+      servers-net:
+        # IP picked from 192.168.59.0/26 free pool (see stacks.tf header)
+        ipv4_address: 192.168.59.35
+    configs:
+      - source: pve_yml
+        target: /etc/prometheus/pve.yml
+        mode: 0644
+    expose:
+      - "9221"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9221/pve?target=192.168.7.11"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "pve-exporter"
+      com.docker.service: "pve-exporter"
+      portainer.autodeploy: "false"

@@ -1,7 +1,17 @@
 name: vault-2
 
+# vault-2 — Vault Raft cluster follower on ds-1 (192.168.59.9).
+# Mirrors the vault-1/vault-3 IaC pattern. Was previously running
+# as a raw `docker run` outside Portainer; brought under Terraform
+# management to close the IaC gap.
+#
+# Host-side config lives at /nfs/dockermaster/docker/vault/vault-2/config/
+# and is mounted read-only into the container. The auto-unseal systemd
+# unit on ds-1 unseals vault-2 on container restart.
+
 networks:
-  docker-servers-net:
+  servers-net:
+    name: docker-servers-net
     external: true
 
 volumes:
@@ -13,13 +23,13 @@ volumes:
       o: bind
 
 services:
-  vault:
+  vault-2:
     image: hashicorp/vault:1.21
     container_name: vault-2
     hostname: vault-2
     restart: unless-stopped
     networks:
-      docker-servers-net:
+      servers-net:
         ipv4_address: 192.168.59.9
     cap_add:
       - IPC_LOCK
@@ -41,6 +51,7 @@ services:
       com.centurylinklabs.watchtower.enable: "false"
       com.docker.stack: "vault-2"
       com.docker.service: "vault-2"
+      portainer.autodeploy: "false"
     deploy:
       resources:
         limits:

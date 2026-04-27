@@ -19,9 +19,15 @@ services:
         ipv4_address: 192.168.59.16
     expose:
       - 5000
+      # Phase 3a: debug HTTP listener for Prometheus /metrics scrape.
+      # Backed by http.debug block in /nfs/dockermaster/docker/registry/config.yml
+      # mounted below at /etc/docker/registry/config.yml. See
+      # https://distribution.github.io/distribution/about/configuration/#http
+      - 5001
     volumes:
       - /nfs/dockermaster/docker/registry/data:/var/lib/registry
       - /nfs/dockermaster/docker/registry/auth:/auth:ro
+      - /nfs/dockermaster/docker/registry/config.yml:/etc/docker/registry/config.yml:ro
     environment:
       REGISTRY_STORAGE_DELETE_ENABLED: "true"
       REGISTRY_AUTH: htpasswd

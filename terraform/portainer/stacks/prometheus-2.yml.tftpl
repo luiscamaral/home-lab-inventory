@@ -1,0 +1,214 @@
+name: prometheus-2
+
+# prometheus-2 + thanos-sidecar-2 + alertmanager-2 — Phase 2 HA replica.
+#
+# Runs on the Synology NAS (Portainer agent at 192.168.4.235:9001) on
+# the home-net macvlan. Survives a Proxmox outage independently of
+# prometheus-1 (which lives on ds-1 inside docker-servers-net).
+#
+# All three configs (prometheus.yml, alertmanager.yml, objstore.yml)
+# are injected via docker `configs:` with inline `content:` and
+# interpolated by terraform templatefile() at apply time. The same
+# pattern as pihole-3.yml.tftpl: change the source -> stack diff ->
+# Portainer redeploys. No host filesystem coupling.
+#
+# Macvlan-only containers cannot use Docker's embedded DNS (127.0.0.11).
+# Each service therefore declares an explicit `dns:` list pointing at
+# the LAN gateway and a public fallback; this matches the project
+# memory at feedback_macvlan_dns.md.
+#
+# IPs allocated from the home-net 192.168.4.232/29 pool:
+#   .237 -> prometheus-2
+#   .238 -> alertmanager-2
+#   .239 -> thanos-sidecar-2
+
+networks:
+  home-net:
+    name: home-net
+    external: true
+
+configs:
+  prometheus_yml:
+    content: |
+      ${indent(6, prometheus_config)}
+  alertmanager_yml:
+    content: |
+      ${indent(6, alertmanager_config)}
+  objstore_yml:
+    content: |
+      ${indent(6, objstore_config_nas)}
+  # Phase 3d — Home Assistant bearer token (mirror of prometheus-1).
+  # See prometheus.yml.tftpl for the wiring rationale + TODO.
+  ha_token:
+    content: "${ha_token}"
+  # Phase 3a — Watchtower HTTP API bearer token (mirror of prometheus-1).
+  # See prometheus.yml.tftpl for the wiring rationale.
+  watchtower_token:
+    content: "${watchtower_token}"
+  # Phase 3a — MinIO Prometheus bearer JWT (mirror of prometheus-1).
+  # See prometheus.yml.tftpl for the wiring rationale.
+  minio_jwt:
+    content: "${minio_jwt}"
+  # Phase 3f — Rundeck API bearer token (mirror of prometheus-1).
+  # See prometheus.yml.tftpl for the wiring rationale.
+  rundeck_token:
+    content: "${rundeck_token}"
+  # Phase 3h — blackbox_exporter file_sd target lists (mirror of prometheus-1).
+  # See prometheus.yml.tftpl for context. Phase 3f adds the tcp list.
+  blackbox_http_targets:
+    content: |
+      ${indent(6, blackbox_http_targets)}
+  blackbox_icmp_targets:
+    content: |
+      ${indent(6, blackbox_icmp_targets)}
+  blackbox_ssl_targets:
+    content: |
+      ${indent(6, blackbox_ssl_targets)}
+  blackbox_dns_targets:
+    content: |
+      ${indent(6, blackbox_dns_targets)}
+  blackbox_tcp_targets:
+    content: |
+      ${indent(6, blackbox_tcp_targets)}
+
+services:
+  prometheus-2:
+    image: quay.io/prometheus/prometheus:v3.11.2
+    hostname: prometheus-2
+    networks:
+      home-net:
+        ipv4_address: 192.168.4.237
+    dns:
+      - 192.168.4.1
+      - 1.1.1.1
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--storage.tsdb.min-block-duration=2h'
+      - '--storage.tsdb.max-block-duration=2h'
+      - '--web.enable-lifecycle'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    volumes:
+      - /volume2/docker/prometheus-2/data:/prometheus
+    configs:
+      - source: prometheus_yml
+        target: /etc/prometheus/prometheus.yml
+        mode: 0644
+      - source: ha_token
+        target: /etc/prometheus/tokens/ha_token
+        mode: 0444
+      - source: watchtower_token
+        target: /etc/prometheus/tokens/watchtower
+        mode: 0444
+      - source: minio_jwt
+        target: /etc/prometheus/tokens/minio_jwt
+        mode: 0444
+      - source: rundeck_token
+        target: /etc/prometheus/tokens/rundeck_api
+        mode: 0444
+      - source: blackbox_http_targets
+        target: /etc/prometheus/blackbox-targets/http-targets.json
+        mode: 0644
+      - source: blackbox_icmp_targets
+        target: /etc/prometheus/blackbox-targets/icmp-targets.json
+        mode: 0644
+      - source: blackbox_ssl_targets
+        target: /etc/prometheus/blackbox-targets/ssl-targets.json
+        mode: 0644
+      - source: blackbox_dns_targets
+        target: /etc/prometheus/blackbox-targets/dns-targets.json
+        mode: 0644
+      - source: blackbox_tcp_targets
+        target: /etc/prometheus/blackbox-targets/tcp-targets.json
+        mode: 0644
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "prometheus-2"
+      com.docker.service: "prometheus-2"
+      portainer.autodeploy: "false"
+
+  thanos-sidecar-2:
+    image: quay.io/thanos/thanos:v0.41.0
+    hostname: thanos-sidecar-2
+    networks:
+      home-net:
+        ipv4_address: 192.168.4.239
+    dns:
+      - 192.168.4.1
+      - 1.1.1.1
+    command:
+      - sidecar
+      - --prometheus.url=http://prometheus-2:9090
+      - --tsdb.path=/prometheus
+      - --objstore.config-file=/etc/thanos/objstore.yml
+      - --no-shipper.upload-compacted
+      - --grpc-address=0.0.0.0:10901
+      - --http-address=0.0.0.0:10902
+    volumes:
+      # Same TSDB directory as prometheus-2, mounted read-only. The
+      # sidecar only ships completed blocks; it never writes.
+      - /volume2/docker/prometheus-2/data:/prometheus:ro
+    configs:
+      - source: objstore_yml
+        target: /etc/thanos/objstore.yml
+        mode: 0644
+    depends_on:
+      - prometheus-2
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:10902/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "prometheus-2"
+      com.docker.service: "thanos-sidecar-2"
+      portainer.autodeploy: "false"
+
+  alertmanager-2:
+    image: quay.io/prometheus/alertmanager:v0.32.0
+    hostname: alertmanager-2
+    networks:
+      home-net:
+        ipv4_address: 192.168.4.238
+    dns:
+      - 192.168.4.1
+      - 1.1.1.1
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --cluster.peer=alertmanager-1.d.lcamaral.com:9094
+      - --cluster.advertise-address=192.168.4.238:9094
+      - --web.external-url=http://alertmanager-2.home.lcamaral.com:9093
+    volumes:
+      - /volume2/docker/alertmanager-2/data:/alertmanager
+    configs:
+      - source: alertmanager_yml
+        target: /etc/alertmanager/alertmanager.yml
+        mode: 0644
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "prometheus-2"
+      com.docker.service: "alertmanager-2"
+      portainer.autodeploy: "false"
