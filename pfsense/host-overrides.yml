@@ -116,7 +116,7 @@
   domain: home.lcamaral.com
   ip: 192.168.59.28
   aliases:
-    - host: rundesk-relay
+    - host: rustdesk-relay
       domain: home.lcamaral.com
     - host: tunnel
       domain: home.lcamaral.com
