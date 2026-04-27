@@ -1,5 +1,12 @@
 name: vault-3
 
+# ── Phase 3a: Prometheus scrape (TODO host-side config edit) ──────────
+# See vault.yml for the full instructions. On ds-2:
+#   sudo $EDITOR /nfs/dockermaster/docker/vault/vault-3/config/config.hcl
+#   Add a telemetry block with unauthenticated_metrics_access = true.
+#   Then `docker compose restart vault-3`.
+# ──────────────────────────────────────────────────────────────────────
+
 networks:
   servers-net:
     name: docker-servers-net

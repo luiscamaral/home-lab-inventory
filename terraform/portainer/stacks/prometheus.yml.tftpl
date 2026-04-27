@@ -28,6 +28,36 @@ configs:
   objstore_yml:
     content: |
       ${indent(6, objstore_config)}
+  # Phase 3d — Home Assistant bearer token rendered from Vault.
+  # The scrape config references /etc/prometheus/tokens/ha_token via
+  # `authorization.credentials_file`. This `configs:` block is the
+  # expedient option (token baked into the compose body). The
+  # alternative — a Vault-agent sidecar templating to tmpfs — adds a
+  # second container and is deferred until at least one of the other
+  # bearer-token plumbings (minio_jwt, watchtower) gets the same
+  # treatment so we wire them all at once.
+  # TODO: HA token wiring — migrate to Vault-agent sidecar once we
+  # design the shared template-renderer pattern (see vault.tf comment).
+  ha_token:
+    # No trailing newline — Prometheus reads the file as-is and any
+    # whitespace ends up in the Authorization header.
+    content: "${ha_token}"
+  # Phase 3h — blackbox_exporter file_sd target lists (4 categories).
+  # Rendered from locals.tf as JSON; mounted under
+  # /etc/prometheus/blackbox-targets/. Editing the locals re-renders this
+  # template, terraform sees the diff, Portainer redeploys.
+  blackbox_http_targets:
+    content: |
+      ${indent(6, blackbox_http_targets)}
+  blackbox_icmp_targets:
+    content: |
+      ${indent(6, blackbox_icmp_targets)}
+  blackbox_ssl_targets:
+    content: |
+      ${indent(6, blackbox_ssl_targets)}
+  blackbox_dns_targets:
+    content: |
+      ${indent(6, blackbox_dns_targets)}
 
 services:
   prometheus-1:
@@ -53,6 +83,21 @@ services:
     configs:
       - source: prometheus_yml
         target: /etc/prometheus/prometheus.yml
+        mode: 0644
+      - source: ha_token
+        target: /etc/prometheus/tokens/ha_token
+        mode: 0400
+      - source: blackbox_http_targets
+        target: /etc/prometheus/blackbox-targets/http-targets.json
+        mode: 0644
+      - source: blackbox_icmp_targets
+        target: /etc/prometheus/blackbox-targets/icmp-targets.json
+        mode: 0644
+      - source: blackbox_ssl_targets
+        target: /etc/prometheus/blackbox-targets/ssl-targets.json
+        mode: 0644
+      - source: blackbox_dns_targets
+        target: /etc/prometheus/blackbox-targets/dns-targets.json
         mode: 0644
     expose:
       - "9090"

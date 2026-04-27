@@ -101,3 +101,26 @@ data "vault_kv_secret_v2" "alertmanager_smtp" {
   mount = "secret"
   name  = "homelab/alertmanager/smtp"
 }
+
+# Proxmox API token for pve-exporter (Phase 3c). The exporter uses an
+# unprivileged read-only token `prometheus@pam!metrics` to walk the PVE
+# API. Fields: token_id (= prometheus@pam!metrics), token_secret.
+data "vault_kv_secret_v2" "proxmox_api_token" {
+  mount = "secret"
+  name  = "homelab/proxmox/api_token"
+}
+
+# Home Assistant long-lived access token used by Prometheus to scrape
+# /api/prometheus on ha.home.lcamaral.com (Phase 3d). Dedicated user
+# `prometheus-scrape` per DECISIONS.md Q8. Field: `token` (raw JWT).
+#
+# SECURITY NOTE: this token is rendered into the prometheus stack via
+# docker `configs:` (i.e. baked into the compose body that Portainer
+# stores). Acceptable for the homelab blast-radius and consistent with
+# how other secrets (twingate, github-runner, freeswitch) are handled.
+# A future hardening step would be a Vault-agent sidecar templating the
+# token to a tmpfs file at runtime — see TODO in prometheus templates.
+data "vault_kv_secret_v2" "ha_metrics_token" {
+  mount = "secret"
+  name  = "homelab/home-assistant/metrics_token"
+}

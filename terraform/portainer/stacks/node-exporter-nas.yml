@@ -1,0 +1,51 @@
+name: node-exporter-nas
+
+# node-exporter on the Synology NAS — host-level metrics for DSM.
+#
+# Differences from the vanilla Linux ds-1/ds-2/dockermaster stacks:
+#   - No `--collector.systemd` flag: DSM does not run systemd, so the
+#     systemd collector would error every scrape. DSM uses upstart-style
+#     init scripts under /usr/syno/etc.
+#   - No textfile_collector mount: /var/lib/node_exporter does not exist
+#     on DSM and creating it under the OS partition is fragile across
+#     DSM upgrades. The flag is also dropped.
+#   - filesystem mount-points-exclude regex extended with DSM-specific
+#     paths under /volume?, /volumeUSB?, /tmpRoot, and /initrd.
+#
+# /proc and /sys still live at the standard paths on DSM Linux subsystem,
+# so the host-mode mounts are unchanged. network_mode: host works on DSM.
+# Listens on 0.0.0.0:9100 — Prometheus scrapes via the NAS host IP
+# (192.168.4.235 on home-net).
+
+services:
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.11.1
+    hostname: node-exporter-nas
+    network_mode: host
+    pid: host
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/host/root'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|tmpRoot|initrd|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs|volume[0-9]+/@.+|volumeUSB[0-9]+/@.+)($$|/)'
+      - '--collector.processes'
+      - '--no-collector.wifi'
+      - '--no-collector.systemd'
+      - '--web.listen-address=:9100'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro,rslave
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9100/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "node-exporter-nas"
+      com.docker.service: "node-exporter"
+      portainer.autodeploy: "false"

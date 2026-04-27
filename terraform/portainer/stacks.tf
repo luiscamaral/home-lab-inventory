@@ -310,6 +310,13 @@ resource "portainer_stack" "prometheus" {
       access_key = data.vault_kv_secret_v2.thanos.data["access_key"]
       secret_key = data.vault_kv_secret_v2.thanos.data["secret_key"]
     })
+    # Phase 3d — Home Assistant scrape token (DECISIONS.md Q8).
+    ha_token = data.vault_kv_secret_v2.ha_metrics_token.data["token"]
+    # Phase 3h — blackbox file_sd target lists (rendered as JSON in locals.tf).
+    blackbox_http_targets = local.blackbox_http_targets
+    blackbox_icmp_targets = local.blackbox_icmp_targets
+    blackbox_ssl_targets  = local.blackbox_ssl_targets
+    blackbox_dns_targets  = local.blackbox_dns_targets
   })
 }
 
@@ -378,6 +385,82 @@ resource "portainer_stack" "cadvisor_ds1" {
   stack_file_content = file("${path.module}/stacks/cadvisor-ds1.yml")
 }
 
+# ──────────────────────────────────────────────
+# Phase 3b — node-exporter + cadvisor expansion (task #26)
+#
+# Deploy the same exporter pair on the three remaining hosts so every
+# Docker host (and the NAS) reports node + container metrics. Both
+# replicas of prometheus discover these via the static `node_exporters`
+# and `cadvisors` jobs — no per-host scrape config needed beyond a
+# target list.
+#
+# All exporters use network_mode: host, so no IP allocation from the
+# macvlan pool is required. NAS variants diverge from the Linux template
+# for DSM-specific paths (no /dev/disk, no systemd, docker root at
+# /volume2/@docker) — see the per-file headers for details.
+# ──────────────────────────────────────────────
+
+# node-exporter on dockermaster (host network mode).
+resource "portainer_stack" "node_exporter_dm" {
+  name            = "node-exporter-dm"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/node-exporter-dm.yml")
+}
+
+# node-exporter on ds-2 (host network mode).
+resource "portainer_stack" "node_exporter_ds2" {
+  name            = "node-exporter-ds2"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/node-exporter-ds2.yml")
+}
+
+# node-exporter on the Synology NAS (DSM, host network mode).
+resource "portainer_stack" "node_exporter_nas" {
+  name            = "node-exporter-nas"
+  endpoint_id     = portainer_environment.nas.id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/node-exporter-nas.yml")
+}
+
+# cadvisor on dockermaster (host network mode, privileged).
+resource "portainer_stack" "cadvisor_dm" {
+  name            = "cadvisor-dm"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/cadvisor-dm.yml")
+}
+
+# cadvisor on ds-2 (host network mode, privileged).
+resource "portainer_stack" "cadvisor_ds2" {
+  name            = "cadvisor-ds2"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/cadvisor-ds2.yml")
+}
+
+# cadvisor on the Synology NAS (DSM, host network mode, privileged).
+# Docker root mounted from /volume2/@docker (DSM-specific path).
+resource "portainer_stack" "cadvisor_nas" {
+  name            = "cadvisor-nas"
+  endpoint_id     = portainer_environment.nas.id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/cadvisor-nas.yml")
+}
+
 # snmp-exporter on ds-1. Bind-mounts the legacy ~17k-line snmp.yml from
 # /nfs/dockermaster/docker/snmp-exporter/snmp.yml — the orchestrator must
 # pre-stage this file before the legacy prometheus stack is destroyed in
@@ -389,6 +472,32 @@ resource "portainer_stack" "snmp_exporter" {
   method          = "string"
 
   stack_file_content = file("${path.module}/stacks/snmp-exporter.yml")
+}
+
+# pve-exporter on dockermaster (Phase 3c — Proxmox VE metrics).
+# Token credentials read from Vault; pve.yml rendered inline (single-host
+# config, no point in a separate template file). The Prometheus scrape job
+# `pve` lives in locals.tf and points at this exporter; relabel rewrites
+# __address__ from the PVE node target back to pve-exporter:9221.
+locals {
+  pve_exporter_config = <<-EOT
+    default:
+      user: prometheus@pam
+      token_name: metrics
+      token_value: ${data.vault_kv_secret_v2.proxmox_api_token.data["token_secret"]}
+      verify_ssl: false
+  EOT
+}
+
+resource "portainer_stack" "pve_exporter" {
+  name            = "pve-exporter"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/pve-exporter.yml.tftpl", {
+    pve_config = local.pve_exporter_config
+  })
 }
 
 # ──────────────────────────────────────────────
@@ -407,6 +516,12 @@ resource "portainer_stack" "watchtower" {
     name  = "WATCHTOWER_API_TOKEN"
     value = data.vault_kv_secret_v2.watchtower.data["api_token"]
   }
+
+  # Phase 3a: macvlan IP for Prometheus scrape of /v1/metrics on :8080
+  env {
+    name  = "WATCHTOWER_MACVLAN_IP"
+    value = "192.168.59.34"
+  }
 }
 
 # ──────────────────────────────────────────────
@@ -424,6 +539,12 @@ resource "portainer_stack" "watchtower_dm" {
   env {
     name  = "WATCHTOWER_API_TOKEN"
     value = data.vault_kv_secret_v2.watchtower.data["api_token"]
+  }
+
+  # Phase 3a: macvlan IP for Prometheus scrape of /v1/metrics on :8080
+  env {
+    name  = "WATCHTOWER_MACVLAN_IP"
+    value = "192.168.59.33"
   }
 }
 
@@ -775,6 +896,58 @@ resource "portainer_stack" "pihole_3" {
 }
 
 # ──────────────────────────────────────────────
+# Phase 3e — pihole-exporter × 3 (eko/pihole-exporter v1.2.0)
+#
+# One exporter per pihole instance, each running on the same physical
+# host as its target pihole. The PIHOLE_PASSWORD comes from Vault
+# (`secret/homelab/pihole`, key `admin_password`) — single shared
+# password across all three. Three separate stacks (rather than one
+# multi-target exporter) give each a clean lifecycle and a distinct
+# `instance:` label in Prometheus.
+#
+# Static IPs:
+#   pihole-exporter-1 (dm)   → 192.168.59.41 → scrapes pihole-1 (192.168.100.254)
+#   pihole-exporter-2 (ds-1) → 192.168.59.42 → scrapes pihole-2 (192.168.59.50)
+#   pihole-exporter-3 (NAS)  → 192.168.4.240 → scrapes pihole-3 (192.168.4.236)
+#
+# The Prometheus scrape job lives in locals.tf under `pihole`. Both
+# replicas pull it.
+# ──────────────────────────────────────────────
+
+resource "portainer_stack" "pihole_exporter_1" {
+  name            = "pihole-exporter-1"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/pihole-exporter-1.yml.tftpl", {
+    pihole_password = data.vault_kv_secret_v2.pihole.data["admin_password"]
+  })
+}
+
+resource "portainer_stack" "pihole_exporter_2" {
+  name            = "pihole-exporter-2"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/pihole-exporter-2.yml.tftpl", {
+    pihole_password = data.vault_kv_secret_v2.pihole.data["admin_password"]
+  })
+}
+
+resource "portainer_stack" "pihole_exporter_3" {
+  name            = "pihole-exporter-3"
+  endpoint_id     = portainer_environment.nas.id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/pihole-exporter-3.yml.tftpl", {
+    pihole_password = data.vault_kv_secret_v2.pihole.data["admin_password"]
+  })
+}
+
+# ──────────────────────────────────────────────
 # orbital-sync — DEFERRED
 #
 # Pi-hole v6 is not yet supported by orbital-sync (latest 1.8.4 still
@@ -843,5 +1016,38 @@ resource "portainer_stack" "prometheus_2" {
       access_key = data.vault_kv_secret_v2.thanos.data["access_key"]
       secret_key = data.vault_kv_secret_v2.thanos.data["secret_key"]
     })
+    # Phase 3d — Home Assistant scrape token (DECISIONS.md Q8).
+    ha_token = data.vault_kv_secret_v2.ha_metrics_token.data["token"]
+    # Phase 3h — blackbox file_sd target lists (rendered as JSON in locals.tf).
+    blackbox_http_targets = local.blackbox_http_targets
+    blackbox_icmp_targets = local.blackbox_icmp_targets
+    blackbox_ssl_targets  = local.blackbox_ssl_targets
+    blackbox_dns_targets  = local.blackbox_dns_targets
+  })
+}
+
+# ──────────────────────────────────────────────
+# Phase 3h: blackbox-exporter on dockermaster
+#
+# Provides HTTP/ICMP/TCP/SSL/DNS probes consumed by the `blackbox-*`
+# Prometheus jobs (defined in locals.tf for both replicas). Pinned image
+# v0.28.0 per generated/prometheus-thanos-monitoring/VERSIONS.md.
+#
+# Static IP 192.168.59.45 from the docker-servers-net free pool. Lives
+# on dockermaster (control-plane) so probes can reach the home-net
+# (NAS, pfSense, Pi-holes) and the cf-tunnel origins via the same edge
+# Prometheus reaches today.
+#
+# blackbox.yml is rendered from local.blackbox_config and injected via
+# docker `configs:` — same pattern as the rest of the monitoring stacks.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "blackbox_exporter" {
+  name            = "blackbox-exporter"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/blackbox-exporter.yml.tftpl", {
+    blackbox_config = local.blackbox_config
   })
 }

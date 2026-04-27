@@ -35,6 +35,13 @@ services:
       KC_CACHE: ispn
       KC_CACHE_STACK: jdbc-ping
       JAVA_OPTS_APPEND: "-Djgroups.dns.query=keycloak.d.lcamaral.com -Djgroups.bind_addr=192.168.59.13"
+      # Phase 3a: Prometheus scrape via Quarkus management interface on :9000
+      KC_METRICS_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+    expose:
+      # Quarkus management interface (metrics + health) — scraped by
+      # Prometheus on the macvlan IP. App traffic still uses :8080.
+      - 9000
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]

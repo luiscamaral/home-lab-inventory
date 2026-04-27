@@ -37,6 +37,24 @@ configs:
   objstore_yml:
     content: |
       ${indent(6, objstore_config_nas)}
+  # Phase 3d — Home Assistant bearer token (mirror of prometheus-1).
+  # See prometheus.yml.tftpl for the wiring rationale + TODO.
+  ha_token:
+    content: "${ha_token}"
+  # Phase 3h — blackbox_exporter file_sd target lists (mirror of prometheus-1).
+  # See prometheus.yml.tftpl for context.
+  blackbox_http_targets:
+    content: |
+      ${indent(6, blackbox_http_targets)}
+  blackbox_icmp_targets:
+    content: |
+      ${indent(6, blackbox_icmp_targets)}
+  blackbox_ssl_targets:
+    content: |
+      ${indent(6, blackbox_ssl_targets)}
+  blackbox_dns_targets:
+    content: |
+      ${indent(6, blackbox_dns_targets)}
 
 services:
   prometheus-2:
@@ -62,6 +80,21 @@ services:
     configs:
       - source: prometheus_yml
         target: /etc/prometheus/prometheus.yml
+        mode: 0644
+      - source: ha_token
+        target: /etc/prometheus/tokens/ha_token
+        mode: 0400
+      - source: blackbox_http_targets
+        target: /etc/prometheus/blackbox-targets/http-targets.json
+        mode: 0644
+      - source: blackbox_icmp_targets
+        target: /etc/prometheus/blackbox-targets/icmp-targets.json
+        mode: 0644
+      - source: blackbox_ssl_targets
+        target: /etc/prometheus/blackbox-targets/ssl-targets.json
+        mode: 0644
+      - source: blackbox_dns_targets
+        target: /etc/prometheus/blackbox-targets/dns-targets.json
         mode: 0644
     restart: unless-stopped
     healthcheck:

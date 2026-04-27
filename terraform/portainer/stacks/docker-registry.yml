@@ -19,6 +19,22 @@ services:
         ipv4_address: 192.168.59.16
     expose:
       - 5000
+      # Phase 3a: debug HTTP listener for Prometheus /metrics scrape.
+      # NOTE: The listener only binds when the registry's config.yml has
+      # `http.debug.addr=:5001` AND `http.debug.prometheus.enabled=true`.
+      # config.yml lives on the host (NOT in this repo) at:
+      #   /nfs/dockermaster/docker/registry/config.yml
+      # TODO: ssh dockermaster, edit that file to add:
+      #   http:
+      #     debug:
+      #       addr: :5001
+      #       prometheus:
+      #         enabled: true
+      #         path: /metrics
+      # Then `docker compose restart registry`. Until that is done, the
+      # `registry` Prometheus job will be up=0 (port closed). See
+      # https://distribution.github.io/distribution/about/configuration/#http
+      - 5001
     volumes:
       - /nfs/dockermaster/docker/registry/data:/var/lib/registry
       - /nfs/dockermaster/docker/registry/auth:/auth:ro

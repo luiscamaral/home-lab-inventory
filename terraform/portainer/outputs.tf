@@ -51,7 +51,18 @@ output "stacks" {
     thanos_store        = portainer_stack.thanos_store.name
     alertmanager_1      = portainer_stack.alertmanager_1.name
     node_exporter_ds1   = portainer_stack.node_exporter_ds1.name
+    node_exporter_ds2   = portainer_stack.node_exporter_ds2.name
+    node_exporter_dm    = portainer_stack.node_exporter_dm.name
+    node_exporter_nas   = portainer_stack.node_exporter_nas.name
     cadvisor_ds1        = portainer_stack.cadvisor_ds1.name
+    cadvisor_ds2        = portainer_stack.cadvisor_ds2.name
+    cadvisor_dm         = portainer_stack.cadvisor_dm.name
+    cadvisor_nas        = portainer_stack.cadvisor_nas.name
     snmp_exporter       = portainer_stack.snmp_exporter.name
+    pve_exporter        = portainer_stack.pve_exporter.name
+    blackbox_exporter   = portainer_stack.blackbox_exporter.name
+    pihole_exporter_1   = portainer_stack.pihole_exporter_1.name
+    pihole_exporter_2   = portainer_stack.pihole_exporter_2.name
+    pihole_exporter_3   = portainer_stack.pihole_exporter_3.name
   }
 }

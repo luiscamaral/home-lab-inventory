@@ -1,5 +1,26 @@
 name: vault
 
+# ── Phase 3a: Prometheus scrape (TODO host-side config edit) ──────────
+# Prometheus scrapes vault-1/2/3 at :8200/v1/sys/metrics. By default,
+# Vault gates that endpoint with auth AND followers 307-redirect away
+# unless `unauthenticated_metrics_access = true` is set.
+#
+# REQUIRED MANUAL EDIT (NOT IN REPO — config.hcl is on the host NFS):
+#   ssh dockermaster
+#   sudo $EDITOR /nfs/dockermaster/docker/vault/vault/config/config.hcl
+#   Add (or merge into existing telemetry block):
+#
+#     telemetry {
+#       unauthenticated_metrics_access = true
+#       prometheus_retention_time      = "12h"
+#       disable_hostname               = true
+#     }
+#
+#   Then `docker compose restart vault` (rolling restart across cluster).
+# Repeat the edit on ds-1:/nfs/dockermaster/docker/vault/vault-2/config/config.hcl
+# and ds-2:/nfs/dockermaster/docker/vault/vault-3/config/config.hcl.
+# ──────────────────────────────────────────────────────────────────────
+
 networks:
   rproxy:
     external: true
