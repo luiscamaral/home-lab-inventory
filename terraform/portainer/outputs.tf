@@ -46,6 +46,7 @@ output "stacks" {
     homelab_portal_2    = portainer_stack.homelab_portal_2.name
     pihole_2            = portainer_stack.pihole_2.name
     pihole_3            = portainer_stack.pihole_3.name
+    prometheus          = portainer_stack.prometheus.name
     prometheus_2        = portainer_stack.prometheus_2.name
     thanos_query        = portainer_stack.thanos_query.name
     thanos_store        = portainer_stack.thanos_store.name

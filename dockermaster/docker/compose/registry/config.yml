@@ -1,0 +1,29 @@
+version: 0.1
+log:
+  fields:
+    service: registry
+storage:
+  cache:
+    blobdescriptor: inmemory
+  filesystem:
+    rootdirectory: /var/lib/registry
+http:
+  addr: :5000
+  headers:
+    X-Content-Type-Options: [nosniff]
+  # Phase 3a: enable Prometheus /metrics on a separate http debug
+  # listener (port 5001). Mount this file via the registry stack at
+  # /etc/docker/registry/config.yml — see
+  # terraform/portainer/stacks/docker-registry.yml. Bound on host at
+  # /nfs/dockermaster/docker/registry/config.yml; this is the canonical
+  # source-of-truth for DR rebuilds.
+  debug:
+    addr: :5001
+    prometheus:
+      enabled: true
+      path: /metrics
+health:
+  storagedriver:
+    enabled: true
+    interval: 10s
+    threshold: 3

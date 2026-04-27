@@ -6,10 +6,12 @@ name: pihole-exporter-1
 # reach it without crossing the LXC's bridge boundary.
 #
 # Image pinned per generated/prometheus-thanos-monitoring/VERSIONS.md.
-# Password rendered from Vault (`secret/homelab/pihole`, key
-# `admin_password`) — there is one shared password across all three
-# pihole instances; we still split the exporter into 3 stacks so each
-# has its own lifecycle and a clear `instance:` label upstream.
+# Password injected via Portainer `env { PIHOLE_PASSWORD }` from Vault
+# (`secret/homelab/pihole`, key `admin_password`) — see stacks.tf. We
+# avoid templatefile() interpolation so a `$` in the rotated password
+# can't be re-evaluated by Compose (per memory feedback_env_file_credentials.md).
+# One shared password across all three pihole instances; we still split
+# the exporter into 3 stacks for separate lifecycles and `instance:` labels.
 #
 # IP allocation in 192.168.59.0/26 (free pool: .41,.42,.45-.47,.52,.53):
 #   192.168.59.41 -> pihole-exporter-1
@@ -28,7 +30,7 @@ services:
         ipv4_address: 192.168.59.41
     environment:
       PIHOLE_HOSTNAME: 192.168.100.254
-      PIHOLE_PASSWORD: ${pihole_password}
+      PIHOLE_PASSWORD: ${PIHOLE_PASSWORD}
       PORT: "9617"
       INTERVAL: 30s
     restart: unless-stopped

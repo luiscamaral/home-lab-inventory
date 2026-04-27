@@ -928,9 +928,12 @@ resource "portainer_stack" "pihole_exporter_1" {
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = templatefile("${path.module}/stacks/pihole-exporter-1.yml.tftpl", {
-    pihole_password = data.vault_kv_secret_v2.pihole.data["admin_password"]
-  })
+  stack_file_content = file("${path.module}/stacks/pihole-exporter-1.yml")
+
+  env {
+    name  = "PIHOLE_PASSWORD"
+    value = data.vault_kv_secret_v2.pihole.data["admin_password"]
+  }
 }
 
 resource "portainer_stack" "pihole_exporter_2" {
@@ -939,9 +942,12 @@ resource "portainer_stack" "pihole_exporter_2" {
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = templatefile("${path.module}/stacks/pihole-exporter-2.yml.tftpl", {
-    pihole_password = data.vault_kv_secret_v2.pihole.data["admin_password"]
-  })
+  stack_file_content = file("${path.module}/stacks/pihole-exporter-2.yml")
+
+  env {
+    name  = "PIHOLE_PASSWORD"
+    value = data.vault_kv_secret_v2.pihole.data["admin_password"]
+  }
 }
 
 resource "portainer_stack" "pihole_exporter_3" {
@@ -950,9 +956,12 @@ resource "portainer_stack" "pihole_exporter_3" {
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = templatefile("${path.module}/stacks/pihole-exporter-3.yml.tftpl", {
-    pihole_password = data.vault_kv_secret_v2.pihole.data["admin_password"]
-  })
+  stack_file_content = file("${path.module}/stacks/pihole-exporter-3.yml")
+
+  env {
+    name  = "PIHOLE_PASSWORD"
+    value = data.vault_kv_secret_v2.pihole.data["admin_password"]
+  }
 }
 
 # ──────────────────────────────────────────────

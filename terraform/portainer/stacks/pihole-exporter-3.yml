@@ -5,7 +5,8 @@ name: pihole-exporter-3
 # the pihole instance and survive a Proxmox outage independently.
 #
 # Image pinned per generated/prometheus-thanos-monitoring/VERSIONS.md.
-# Same shared password as the other two exporters.
+# Same shared password as the other two exporters, injected via
+# Portainer `env { PIHOLE_PASSWORD }` (see pihole-exporter-1.yml header).
 #
 # Macvlan-only containers cannot use Docker's embedded DNS (127.0.0.11) —
 # explicit `dns:` mirrors the pihole-3 / prometheus-2 pattern, per
@@ -39,7 +40,7 @@ services:
       - 1.1.1.1
     environment:
       PIHOLE_HOSTNAME: 192.168.4.236
-      PIHOLE_PASSWORD: ${pihole_password}
+      PIHOLE_PASSWORD: ${PIHOLE_PASSWORD}
       PORT: "9617"
       INTERVAL: 30s
     restart: unless-stopped

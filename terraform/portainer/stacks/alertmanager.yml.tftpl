@@ -39,7 +39,7 @@ services:
       - --cluster.advertise-address=192.168.59.27:9094
       # Phase 2 will resolve; until then AM logs a peer-connect failure
       # and continues with single-node behavior.
-      - --cluster.peer=alertmanager-2.home-net.lcamaral.com:9094
+      - --cluster.peer=alertmanager-2.home.lcamaral.com:9094
       - --web.external-url=http://alertmanager-1.d.lcamaral.com:9093
       - --log.level=info
     volumes:
