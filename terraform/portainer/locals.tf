@@ -381,19 +381,15 @@ locals {
             labels:
               instance: rundeck-1
 
-      # ── Phase 3f: Twingate exporter (Admin API poller) ──────────────
-      # Custom exporter that polls the Twingate Admin API for connector
-      # and tunnel state. Runs on dockermaster macvlan at .46:9090 — see
-      # twingate-exporter.yml.tftpl. Internal-only listener; no auth on
-      # the Prometheus side. T3 cadence (60s) — Twingate state changes
-      # slowly and the API is rate-limited.
-      - job_name: twingate
-        scrape_interval: 60s
-        metrics_path: /metrics
-        static_configs:
-          - targets: ['192.168.59.46:9090']
-            labels:
-              instance: twingate-exporter
+      # ── Phase 3f: Twingate (no scrape — see note) ───────────────────
+      # The connector exposes /metrics natively (TWINGATE_METRICS_PORT
+      # set in twingate-a.yml / twingate-b.yml) but binds [::]:9999 and
+      # our macvlan has IPv6 fully unloaded, so the listener never
+      # comes up. Connector itself stays Online. Re-enable this job the
+      # day docker-servers-net gets IPv6 (or we move the connector to a
+      # dual-stack bridge). Coverage gap is small — connector state
+      # changes rarely and the blackbox-tcp probe already covers
+      # control-plane reachability.
 
       # ── Phase 3f: blackbox TCP probes ───────────────────────────────
       # TCP-handshake-only probes for services with no native metrics
@@ -688,15 +684,7 @@ locals {
             labels:
               instance: rundeck-1
 
-      # ── Phase 3f: Twingate exporter ─────────────────────────────────
-      # Mirror of replica-A job. See replica-A comment for context.
-      - job_name: twingate
-        scrape_interval: 60s
-        metrics_path: /metrics
-        static_configs:
-          - targets: ['192.168.59.46:9090']
-            labels:
-              instance: twingate-exporter
+      # ── Phase 3f: Twingate (no scrape — see replica-A note) ─────────
 
       # ── Phase 3f: blackbox TCP probes ───────────────────────────────
       # Mirror of replica-A job. See replica-A comment for context.

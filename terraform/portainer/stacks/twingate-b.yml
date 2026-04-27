@@ -27,6 +27,9 @@ services:
       TWINGATE_LABEL_DEPLOYED_BY: "dockerserver-2"
       TWINGATE_ACCESS_TOKEN: ${TWINGATE_ACCESS_TOKEN}
       TWINGATE_REFRESH_TOKEN: ${TWINGATE_REFRESH_TOKEN}
+      # Phase 3f: native Prometheus metrics on connector v1.80+. See
+      # twingate-a.yml for the IPv6/macvlan caveat.
+      TWINGATE_METRICS_PORT: "9999"
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: "true"

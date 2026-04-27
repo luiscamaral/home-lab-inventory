@@ -1068,29 +1068,8 @@ resource "portainer_stack" "blackbox_exporter" {
   })
 }
 
-# ──────────────────────────────────────────────
-# Phase 3f: twingate-exporter on dockermaster
-#
-# Polls the Twingate Admin API for connector + tunnel state and exposes
-# Prometheus metrics on :9090. API key from Vault
-# (secret/homelab/twingate/api, field `token`) — placeholder until the
-# orchestrator populates it from the Twingate web UI (Account -> API
-# Keys, ReadOnly role).
-#
-# Static IP 192.168.59.46 from the docker-servers-net free pool (see
-# stacks.tf header). Picked dockermaster as the host because the API
-# endpoint is on the public internet (api.twingate.com) and dockermaster
-# is the existing scrape edge.
-#
-# TODO: verify the canonical exporter image — see template header.
-# ──────────────────────────────────────────────
-resource "portainer_stack" "twingate_exporter" {
-  name            = "twingate-exporter"
-  endpoint_id     = var.endpoint_id
-  deployment_type = "standalone"
-  method          = "string"
-
-  stack_file_content = templatefile("${path.module}/stacks/twingate-exporter.yml.tftpl", {
-    twingate_api_key = data.vault_kv_secret_v2.twingate_api.data["token"]
-  })
-}
+# Phase 3f: Twingate metrics are now scraped natively from the
+# connector containers (TWINGATE_METRICS_PORT=9999) — see twingate-a.yml
+# and twingate-b.yml. The earlier twingate-exporter stack (Admin-API
+# poller) was removed when we discovered (a) no upstream image exists
+# and (b) the connector itself exposes /metrics in v1.80+.

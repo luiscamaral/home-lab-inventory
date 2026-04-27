@@ -41,15 +41,6 @@ data "vault_kv_secret_v2" "rundeck" {
   # (placeholder until orchestrator populates from the Rundeck UI).
 }
 
-# Phase 3f — Twingate Admin API key used by twingate-exporter to poll
-# connector + tunnel state. Generated in the Twingate web UI under
-# Account -> API Keys with the ReadOnly role. Field: `token`
-# (placeholder until orchestrator populates).
-data "vault_kv_secret_v2" "twingate_api" {
-  mount = "secret"
-  name  = "homelab/twingate/api"
-}
-
 data "vault_kv_secret_v2" "watchtower" {
   mount = "secret"
   name  = "homelab/watchtower"
