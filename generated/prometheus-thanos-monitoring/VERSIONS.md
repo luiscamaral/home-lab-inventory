@@ -13,9 +13,9 @@ when the corresponding stack lands.
 | Grafana | `grafana/grafana-oss` | **`13.0.1`** | <https://github.com/grafana/grafana/releases/latest> |
 | Alertmanager | `quay.io/prometheus/alertmanager` | **`v0.32.0`** | <https://github.com/prometheus/alertmanager/releases/latest> |
 | node_exporter | `quay.io/prometheus/node-exporter` | **`v1.11.1`** | <https://github.com/prometheus/node_exporter/releases/latest> |
-| cadvisor | `gcr.io/cadvisor/cadvisor` | **`v0.56.2`** | <https://github.com/google/cadvisor/releases/latest> |
+| cadvisor | `gcr.io/cadvisor/cadvisor` | **`v0.55.1`** | <https://github.com/google/cadvisor/releases/latest> — Note: GitHub release stream is at v0.56.2 but `gcr.io` registry only has up to v0.55.1 (registry push lags GitHub releases). Re-check before bumping. |
 | blackbox_exporter | `quay.io/prometheus/blackbox-exporter` | **`v0.28.0`** | <https://github.com/prometheus/blackbox_exporter/releases/latest> |
-| snmp_exporter | `quay.io/prometheus/snmp-exporter` | **`v0.30.1`** | <https://github.com/prometheus/snmp_exporter/releases/latest> |
+| snmp_exporter | `quay.io/prometheus/snmp-exporter` | **`v0.29.0`** | <https://github.com/prometheus/snmp_exporter/releases/latest> — Pinned BELOW latest because the legacy `snmp.yml` (Mar 2023, ~17k lines) uses the pre-`modules:`-wrap schema. v0.30 rejects it; v0.29 also rejects it. **Stack is currently stopped**; will be rebuilt in Phase 3 with a freshly-generated v0.30 config. |
 
 ## Community / 3rd-party exporters
 

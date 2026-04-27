@@ -27,7 +27,7 @@ existing Prometheus stack so Phase 1 starts on a clean slate.
 - [x] Answer **09-open-questions.md** — done (see `DECISIONS.md`).
 - [x] Pin versions — done (see `VERSIONS.md`); re-verify on the day of
       each phase deploy.
-- [ ] **Audit existing Prometheus on `ds-1`:**
+- [x] **Audit existing Prometheus on `ds-1`:**
       - Capture image tag: `docker inspect prometheus | jq '.[0].Config.Image'`
       - Copy `prometheus.yml` and any rule files into
         `generated/prometheus-thanos-monitoring/legacy-prom-snapshot/`
@@ -38,17 +38,17 @@ existing Prometheus stack so Phase 1 starts on a clean slate.
       - Identify the Portainer stack name + Terraform definition file
         managing it (likely `terraform/portainer/stacks/prometheus.yml`
         or similar — confirm).
-- [ ] **Decommission existing Prometheus stack (Q10):**
+- [x] **Decommission existing Prometheus stack (Q10):**
       - Stop the container (Portainer or `docker stop`).
       - Remove the Terraform stack resource AND the underlying compose
         file in the same commit.
       - `terraform apply` to actually destroy the stack.
       - Delete the Prometheus persistent volume (only after the audit
         snapshot above is in repo).
-- [ ] Audit existing MinIO capacity. Confirm `minio-2` replication is
+- [x] Audit existing MinIO capacity. Confirm `minio-2` replication is
       bucket-level or document that it isn't (adjust plan).
-- [ ] Create Vault paths (empty for now) at the list in `07-secrets`.
-- [ ] Confirm Keycloak can issue an OIDC client for Grafana.
+- [x] Create Vault paths (empty for now) at the list in `07-secrets`.
+- [x] Confirm Keycloak can issue an OIDC client for Grafana.
 
 **Exit criteria:** DECISIONS.md and VERSIONS.md merged; legacy
 Prometheus snapshot saved in repo; legacy stack destroyed; Vault paths
@@ -60,22 +60,22 @@ exist; ds-1 has no `prometheus*` containers running.
 `thanos-query` + `thanos-store-gateway`, all with pinned versions from
 `VERSIONS.md`. No HA yet.
 
-- [ ] Create MinIO user `thanos`, bucket `thanos`, scoped policy. Save
+- [x] Create MinIO user `thanos`, bucket `thanos`, scoped policy. Save
       creds to `secret/homelab/thanos/s3`.
-- [ ] **New** Portainer stack `prometheus-1` on `ds-1`:
+- [x] **New** Portainer stack `prometheus-1` on `ds-1`:
       - Image: `quay.io/prometheus/prometheus:v3.11.2`
       - `external_labels: {cluster: homelab, replica: A, region: local}`
       - Local retention: `--storage.tsdb.retention.time=7d`
       - Scrape config seeded from the legacy snapshot (Phase 0) but
         with new job names matching the inventory in
         `02-inventory-and-scope.md`.
-- [ ] Same stack: `thanos-sidecar` container (image
+- [x] Same stack: `thanos-sidecar` container (image
       `quay.io/thanos/thanos:v0.41.0`) reading the Prom `tsdb.path`,
       uploading to MinIO via `objstore.yml` rendered from Vault.
-- [ ] New Terraform stack `thanos-query` on dockermaster
+- [x] New Terraform stack `thanos-query` on dockermaster
       (`quay.io/thanos/thanos:v0.41.0`).
-- [ ] New Terraform stack `thanos-store-gw` on ds-1 (same image).
-- [ ] Smoke test: from dockermaster, `curl thanos-query:10902/stores`
+- [x] New Terraform stack `thanos-store-gw` on ds-1 (same image).
+- [x] Smoke test: from dockermaster, `curl thanos-query:10902/stores`
       — sidecar-1 and store-gw both visible.
       `curl 'thanos-query:10902/api/v1/query?query=up'` — returns data.
 
@@ -87,25 +87,25 @@ stack.
 
 **Goal:** kill `prometheus-1`, lose nothing. Survive Proxmox outage.
 
-- [ ] **Firewall prep:** add pfSense rules allowing TCP from NAS
+- [x] **Firewall prep:** add pfSense rules allowing TCP from NAS
       (`192.168.4.236` / home-net) to every scrape-target port across
       SRVAN, HOMELAB, IOT, ADMIN VLANs. This is the delta over the
       existing ds-1→scrape-target rules.
-- [ ] New stack on NAS (via Portainer Edge endpoint `6`, same
+- [x] New stack on NAS (via Portainer Edge endpoint `6`, same
       mechanism as `pihole-3`):
       `prometheus-2` (`quay.io/prometheus/prometheus:v3.11.2`) +
       `thanos-sidecar-2` (`quay.io/thanos/thanos:v0.41.0`) +
       `alertmanager-2` (`quay.io/prometheus/alertmanager:v0.32.0`).
-- [ ] Scrape config identical to `prometheus-1`; only
+- [x] Scrape config identical to `prometheus-1`; only
       `external_labels.replica` differs (`B` vs `A`).
-- [ ] Add `alertmanager-2` to the gossip cluster (`--cluster.peer`
+- [x] Add `alertmanager-2` to the gossip cluster (`--cluster.peer`
       points at alertmanager-1).
-- [ ] Update `thanos-query` discovery to include sidecar-2.
-- [ ] Curl test: query via Thanos; result set has 1 series per target
+- [x] Update `thanos-query` discovery to include sidecar-2.
+- [x] Curl test: query via Thanos; result set has 1 series per target
       (dedupe working).
-- [ ] **Chaos test 1:** `docker stop prometheus-1`. Query still
+- [x] **Chaos test 1:** `docker stop prometheus-1`. Query still
       returns data. Restart; no gap.
-- [ ] **Chaos test 2 (the one Q3=B is for):** power-off a Proxmox VM
+- [x] **Chaos test 2 (the one Q3=B is for):** power-off a Proxmox VM
       (e.g., dockermaster) and confirm prometheus-2 keeps ingesting
       targets it can reach (pihole-3, WAN, NAS self).
 

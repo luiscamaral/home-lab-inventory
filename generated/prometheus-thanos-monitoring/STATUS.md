@@ -1,8 +1,10 @@
 # Phase 0/1/2 Implementation Status
 
-**Date:** 2026-04-24
+**Date:** 2026-04-25 (Gates 1 + 2 executed today)
 **Branch:** `feature/prometheus-thanos-plan`
-**Latest commit:** `a433bf1` (authoring) — plus this STATUS doc.
+**Latest commits:** `6b25815` (status doc) → `a433bf1` (authoring) → `a128555` (Gate 2 runtime fixes).
+**Phase status:** ✅ Phase 0 done (decommission). ✅ Phase 1 deployed. ✅ Phase 2 deployed.
+**Live state:** 9/10 monitoring containers healthy across ds-1 + dockermaster + NAS. snmp-exporter intentionally stopped pending v0.30 config regen (Phase 3).
 
 ## What's done (no further input needed)
 
@@ -33,11 +35,33 @@
 2. **Alertmanager DNS names** (`alertmanager-1.d.lcamaral.com`, `alertmanager-2.home.lcamaral.com`) used in `--cluster.peer` flags don't yet exist in DNS. AM tolerates an unreachable peer; gossip will work once both names resolve. Add to `pfsense/host-overrides.yml` later or rely on the IP-based scrape in the alerting block (which IS plumbed).
 3. **NAS Portainer agent** snapshotter not refreshing (last refresh 2026-04-22). Stack deploys still work; UI just doesn't show live container state. Cosmetic — not blocking.
 
-## Remaining gates (REQUIRE YOUR APPROVAL)
+## Gates — COMPLETED
 
-These are NOT reversible without rebuilding from scratch. Detailed below.
+Both gates executed 2026-04-25. Below kept for historical context.
 
-### Gate 1 — Decommission of bundled legacy services
+### Gate 1 — Decommission of bundled legacy services ✅ DONE 2026-04-24
+
+Stack id=70 stopped + deleted via Portainer API (HTTP 200 stop, 204 delete). All 5 bundled containers gone from ds-1. Volume `prometheus_prometheus_data` (3.1 GB legacy TSDB) intentionally retained — `docker volume rm` it any time to reclaim disk.
+
+### Gate 2 — terraform apply ✅ DONE 2026-04-25
+
+Apply ran from the worktree against a copy of main's state, which was synced back to main (with backup at `terraform/portainer/terraform.tfstate.gate2-backup-1777147525`). 8 new resources created.
+
+Live result (verified via Thanos Query):
+
+```
+sidecar (2)
+  192.168.59.20:10901  replica=A  status=OK
+  192.168.4.239:10901  replica=B  status=OK
+store (1)
+  192.168.59.21:10901  status=OK
+
+Sample query `up{} dedup=false`: 28 series (14 per replica) — HA pair active.
+```
+
+### Original Gate 1/2 detail (for posterity)
+
+#### Gate 1 — Decommission of bundled legacy services
 
 The existing `portainer_stack.prometheus` bundle on ds-1 contains 5 services: prometheus, node-exporter, snmp-exporter, alertmanager, cadvisor. The new authoring **replaces** the body of that resource with just `prometheus-1` + `thanos-sidecar-1`. When `terraform apply` runs the update:
 
