@@ -86,7 +86,7 @@ services:
         mode: 0644
       - source: ha_token
         target: /etc/prometheus/tokens/ha_token
-        mode: 0400
+        mode: 0444
       - source: blackbox_http_targets
         target: /etc/prometheus/blackbox-targets/http-targets.json
         mode: 0644
