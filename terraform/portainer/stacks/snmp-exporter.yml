@@ -9,12 +9,13 @@ name: snmp-exporter
 #
 # Config note: the generated snmp.yml is ~17k lines and tool-produced — too
 # large to inline via configs:. We bind-mount it from a stable path on the
-# ds-1 NFS share. The legacy file lives at
-# /nfs/dockermaster/docker/prometheus/snmp.yml today; on Phase 1 deploy it
-# must be copied (or symlinked) to /nfs/dockermaster/docker/snmp-exporter/
-# so the legacy stack can be torn down without breaking SNMP scrapes.
-#
-# TODO (orchestrator): pre-stage snmp.yml at the new path before apply.
+# ds-1 NFS share at /nfs/dockermaster/docker/snmp-exporter/snmp.yml. This
+# file was regenerated from the legacy v0.20-era snmp.yml by wrapping
+# modules under `modules:` and extracting per-module `auth:`/`version:`
+# blocks into a top-level `auths:` map (v0.30 schema, see
+# https://github.com/prometheus/snmp_exporter/blob/main/auth-split-migration.md).
+# `auths.public_v2.community` carries the pfSense community string so the
+# default (no `auth_module` param) prometheus scrape just works.
 
 networks:
   servers-net:
@@ -23,7 +24,7 @@ networks:
 
 services:
   snmp-exporter:
-    image: quay.io/prometheus/snmp-exporter:v0.29.0
+    image: quay.io/prometheus/snmp-exporter:v0.30.1
     hostname: snmp-exporter
     networks:
       servers-net:
@@ -33,7 +34,7 @@ services:
       - '--config.file=/etc/snmp_exporter/snmp.yml'
       - '--web.listen-address=:9116'
     volumes:
-      - /nfs/dockermaster/docker/prometheus/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
+      - /nfs/dockermaster/docker/snmp-exporter/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
     expose:
       - "9116"
     restart: unless-stopped

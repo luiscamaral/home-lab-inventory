@@ -28,6 +28,12 @@ services:
   pve-exporter:
     image: prompve/prometheus-pve-exporter:3.8.2
     hostname: pve-exporter
+    # Force IPv4 bind: docker-servers-net macvlan is IPv4-only, so the default
+    # `[::]:9221` listener fails with "Address family not supported by protocol"
+    # and gunicorn enters a restart loop. See feedback_pve_exporter_ipv4_bind.
+    command:
+      - --config.file=/etc/prometheus/pve.yml
+      - --web.listen-address=0.0.0.0:9221
     networks:
       servers-net:
         # IP picked from 192.168.59.0/26 free pool (see stacks.tf header)

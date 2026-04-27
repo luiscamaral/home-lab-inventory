@@ -36,6 +36,18 @@ data "vault_kv_secret_v2" "github_runner" {
 data "vault_kv_secret_v2" "rundeck" {
   mount = "secret"
   name  = "homelab/rundeck"
+  # Phase 3f — Prometheus scrapes Rundeck /metrics with a bearer-token
+  # API key kept in this same secret under the new field `api_token`
+  # (placeholder until orchestrator populates from the Rundeck UI).
+}
+
+# Phase 3f — Twingate Admin API key used by twingate-exporter to poll
+# connector + tunnel state. Generated in the Twingate web UI under
+# Account -> API Keys with the ReadOnly role. Field: `token`
+# (placeholder until orchestrator populates).
+data "vault_kv_secret_v2" "twingate_api" {
+  mount = "secret"
+  name  = "homelab/twingate/api"
 }
 
 data "vault_kv_secret_v2" "watchtower" {
@@ -123,4 +135,21 @@ data "vault_kv_secret_v2" "proxmox_api_token" {
 data "vault_kv_secret_v2" "ha_metrics_token" {
   mount = "secret"
   name  = "homelab/home-assistant/metrics_token"
+}
+
+# MinIO Prometheus bearer JWT (Phase 3a — minio scrape). Generated via
+# `mc admin prometheus generate <alias>` against the dedicated `metrics`
+# svcacct (access_key in secret/homelab/minio/metrics_svcacct). The same
+# svcacct credentials are present on m1 and m2 because root-owned
+# svcaccts do NOT replicate via MinIO site-replication — the svcacct was
+# created with identical access/secret keys on both deployments so a
+# single JWT is valid against both. The JWT is signed with the svcacct
+# secret-key; long-lived (year ~2126 exp). Rotate by regenerating
+# against the svcacct and `vault kv put`-ing this path.
+#
+# SECURITY NOTE: rendered into the prometheus stacks via docker
+# `configs:`, same caveat as ha_metrics_token above.
+data "vault_kv_secret_v2" "minio_metrics_jwt" {
+  mount = "secret"
+  name  = "homelab/minio/metrics_jwt"
 }

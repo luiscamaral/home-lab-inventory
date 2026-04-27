@@ -77,7 +77,7 @@ locals {
             labels: { instance: ds-2 }
           - targets: [192.168.48.44:9100]
             labels: { instance: dockermaster }
-          - targets: [192.168.4.233:9100]
+          - targets: [192.168.0.50:9100]
             labels: { instance: nas }
 
       # ── cadvisor — container metrics ────────────────────────────────
@@ -89,7 +89,7 @@ locals {
             labels: { instance: ds-2 }
           - targets: [192.168.48.44:8080]
             labels: { instance: dockermaster }
-          - targets: [192.168.4.233:8080]
+          - targets: [192.168.0.50:8080]
             labels: { instance: nas }
 
       # ── snmp_exporter — pfSense (T0) ────────────────────────────────
@@ -108,7 +108,7 @@ locals {
           - source_labels: [__param_target]
             target_label: instance
           - target_label: __address__
-            replacement: snmp-exporter:9116
+            replacement: 192.168.59.29:9116
 
       # ── Thanos self-scrape (sidecar-1, query, store-gw) ─────────────
       - job_name: thanos
@@ -362,6 +362,60 @@ locals {
           - targets: ['192.168.4.240:9617']
             labels:
               instance: pihole-3
+
+      # ── Phase 3f: Rundeck native /metrics endpoint ──────────────────
+      # Scrape directly at the rundeck container IP (192.168.59.22:4440)
+      # to avoid going through nginx-rproxy for an internal-only metric.
+      # Bearer token comes from a dedicated read-only Rundeck API token
+      # (Vault: secret/homelab/rundeck, field api_token), rendered to
+      # /etc/prometheus/tokens/rundeck_api via docker `configs:` (see
+      # prometheus.yml.tftpl). Same wiring pattern as ha_token /
+      # watchtower_token; will migrate to a Vault-agent sidecar when
+      # the shared template-renderer pattern lands.
+      - job_name: rundeck
+        scrape_interval: 60s
+        metrics_path: /api/40/metrics/metrics
+        bearer_token_file: /etc/prometheus/tokens/rundeck_api
+        static_configs:
+          - targets: ['192.168.59.22:4440']
+            labels:
+              instance: rundeck-1
+
+      # ── Phase 3f: Twingate exporter (Admin API poller) ──────────────
+      # Custom exporter that polls the Twingate Admin API for connector
+      # and tunnel state. Runs on dockermaster macvlan at .46:9090 — see
+      # twingate-exporter.yml.tftpl. Internal-only listener; no auth on
+      # the Prometheus side. T3 cadence (60s) — Twingate state changes
+      # slowly and the API is rate-limited.
+      - job_name: twingate
+        scrape_interval: 60s
+        metrics_path: /metrics
+        static_configs:
+          - targets: ['192.168.59.46:9090']
+            labels:
+              instance: twingate-exporter
+
+      # ── Phase 3f: blackbox TCP probes ───────────────────────────────
+      # TCP-handshake-only probes for services with no native metrics
+      # (FreeSWITCH SIP 5060, RustDesk hbbs/hbbr, Portainer 9443 etc.).
+      # Same relabel chain as the other blackbox-* jobs: __param_target
+      # carries the host:port from file_sd, __address__ is rewritten to
+      # the blackbox-exporter so the actual scrape goes to the prober,
+      # `instance` keeps the human-readable target.
+      - job_name: blackbox-tcp
+        scrape_interval: 60s
+        metrics_path: /probe
+        params:
+          module: [tcp_connect]
+        file_sd_configs:
+          - files: ['/etc/prometheus/blackbox-targets/tcp-targets.json']
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: 192.168.59.45:9115
   EOT
 
   # ──────────────────────────────────────────────
@@ -403,7 +457,7 @@ locals {
             labels: { instance: ds-2 }
           - targets: [192.168.48.44:9100]
             labels: { instance: dockermaster }
-          - targets: [192.168.4.233:9100]
+          - targets: [192.168.0.50:9100]
             labels: { instance: nas }
 
       - job_name: cadvisor
@@ -414,7 +468,7 @@ locals {
             labels: { instance: ds-2 }
           - targets: [192.168.48.44:8080]
             labels: { instance: dockermaster }
-          - targets: [192.168.4.233:8080]
+          - targets: [192.168.0.50:8080]
             labels: { instance: nas }
 
       - job_name: snmp-pfsense
@@ -432,7 +486,7 @@ locals {
           - source_labels: [__param_target]
             target_label: instance
           - target_label: __address__
-            replacement: snmp-exporter:9116
+            replacement: 192.168.59.29:9116
 
       - job_name: thanos
         static_configs:
@@ -622,6 +676,44 @@ locals {
           - targets: ['192.168.4.240:9617']
             labels:
               instance: pihole-3
+
+      # ── Phase 3f: Rundeck native /metrics ───────────────────────────
+      # Mirror of replica-A job. See replica-A comment for context.
+      - job_name: rundeck
+        scrape_interval: 60s
+        metrics_path: /api/40/metrics/metrics
+        bearer_token_file: /etc/prometheus/tokens/rundeck_api
+        static_configs:
+          - targets: ['192.168.59.22:4440']
+            labels:
+              instance: rundeck-1
+
+      # ── Phase 3f: Twingate exporter ─────────────────────────────────
+      # Mirror of replica-A job. See replica-A comment for context.
+      - job_name: twingate
+        scrape_interval: 60s
+        metrics_path: /metrics
+        static_configs:
+          - targets: ['192.168.59.46:9090']
+            labels:
+              instance: twingate-exporter
+
+      # ── Phase 3f: blackbox TCP probes ───────────────────────────────
+      # Mirror of replica-A job. See replica-A comment for context.
+      - job_name: blackbox-tcp
+        scrape_interval: 60s
+        metrics_path: /probe
+        params:
+          module: [tcp_connect]
+        file_sd_configs:
+          - files: ['/etc/prometheus/blackbox-targets/tcp-targets.json']
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: 192.168.59.45:9115
   EOT
 
   # ──────────────────────────────────────────────
@@ -800,6 +892,27 @@ locals {
         "192.168.59.50:53",   # pihole-2 (ds-1 macvlan)
         "192.168.4.236:53",   # pihole-3 (NAS)
         "192.168.4.1:53",     # pfSense Unbound
+      ]
+    }
+  ])
+
+  # Phase 3f — TCP-handshake probes for services with no native metrics.
+  # FreeSWITCH: native ESL exporter deferred (znerol/freeswitch_exporter
+  # is finicky); blackbox TCP on SIP 5060 is the pragmatic fallback.
+  # RustDesk hbbs/hbbr: no native metrics; tcp_connect against the well-
+  # known control + relay ports tells us the daemon is at least bound.
+  blackbox_tcp_targets = jsonencode([
+    {
+      targets = [
+        # FreeSWITCH SIP signalling (Phase 3f — native ESL exporter deferred)
+        "freeswitch.d.lcamaral.com:5060",
+        # RustDesk hbbs (NAT type test, ID server, TCP hole-punching)
+        "hbbs.d.lcamaral.com:21115",
+        "hbbs.d.lcamaral.com:21116",
+        "hbbs.d.lcamaral.com:21118",
+        # RustDesk hbbr (relay)
+        "hbbr.d.lcamaral.com:21117",
+        "hbbr.d.lcamaral.com:21119",
       ]
     }
   ])

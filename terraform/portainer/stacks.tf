@@ -312,11 +312,19 @@ resource "portainer_stack" "prometheus" {
     })
     # Phase 3d — Home Assistant scrape token (DECISIONS.md Q8).
     ha_token = data.vault_kv_secret_v2.ha_metrics_token.data["token"]
+    # Phase 3a — Watchtower HTTP API bearer token (scraped on :8080/v1/metrics).
+    watchtower_token = data.vault_kv_secret_v2.watchtower.data["api_token"]
+    # Phase 3a — MinIO Prometheus bearer JWT (scraped on /minio/v2/metrics/cluster).
+    minio_jwt = data.vault_kv_secret_v2.minio_metrics_jwt.data["token"]
+    # Phase 3f — Rundeck API bearer token (scraped on :4440/metrics).
+    rundeck_token = data.vault_kv_secret_v2.rundeck.data["api_token"]
     # Phase 3h — blackbox file_sd target lists (rendered as JSON in locals.tf).
+    # Phase 3f extends with the tcp list (FreeSWITCH SIP, RustDesk hbbs/hbbr).
     blackbox_http_targets = local.blackbox_http_targets
     blackbox_icmp_targets = local.blackbox_icmp_targets
     blackbox_ssl_targets  = local.blackbox_ssl_targets
     blackbox_dns_targets  = local.blackbox_dns_targets
+    blackbox_tcp_targets  = local.blackbox_tcp_targets
   })
 }
 
@@ -1018,11 +1026,19 @@ resource "portainer_stack" "prometheus_2" {
     })
     # Phase 3d — Home Assistant scrape token (DECISIONS.md Q8).
     ha_token = data.vault_kv_secret_v2.ha_metrics_token.data["token"]
+    # Phase 3a — Watchtower HTTP API bearer token (scraped on :8080/v1/metrics).
+    watchtower_token = data.vault_kv_secret_v2.watchtower.data["api_token"]
+    # Phase 3a — MinIO Prometheus bearer JWT (scraped on /minio/v2/metrics/cluster).
+    minio_jwt = data.vault_kv_secret_v2.minio_metrics_jwt.data["token"]
+    # Phase 3f — Rundeck API bearer token (scraped on :4440/metrics).
+    rundeck_token = data.vault_kv_secret_v2.rundeck.data["api_token"]
     # Phase 3h — blackbox file_sd target lists (rendered as JSON in locals.tf).
+    # Phase 3f extends with the tcp list (FreeSWITCH SIP, RustDesk hbbs/hbbr).
     blackbox_http_targets = local.blackbox_http_targets
     blackbox_icmp_targets = local.blackbox_icmp_targets
     blackbox_ssl_targets  = local.blackbox_ssl_targets
     blackbox_dns_targets  = local.blackbox_dns_targets
+    blackbox_tcp_targets  = local.blackbox_tcp_targets
   })
 }
 
@@ -1049,5 +1065,32 @@ resource "portainer_stack" "blackbox_exporter" {
 
   stack_file_content = templatefile("${path.module}/stacks/blackbox-exporter.yml.tftpl", {
     blackbox_config = local.blackbox_config
+  })
+}
+
+# ──────────────────────────────────────────────
+# Phase 3f: twingate-exporter on dockermaster
+#
+# Polls the Twingate Admin API for connector + tunnel state and exposes
+# Prometheus metrics on :9090. API key from Vault
+# (secret/homelab/twingate/api, field `token`) — placeholder until the
+# orchestrator populates it from the Twingate web UI (Account -> API
+# Keys, ReadOnly role).
+#
+# Static IP 192.168.59.46 from the docker-servers-net free pool (see
+# stacks.tf header). Picked dockermaster as the host because the API
+# endpoint is on the public internet (api.twingate.com) and dockermaster
+# is the existing scrape edge.
+#
+# TODO: verify the canonical exporter image — see template header.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "twingate_exporter" {
+  name            = "twingate-exporter"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/twingate-exporter.yml.tftpl", {
+    twingate_api_key = data.vault_kv_secret_v2.twingate_api.data["token"]
   })
 }

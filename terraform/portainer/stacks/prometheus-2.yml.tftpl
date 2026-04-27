@@ -41,8 +41,20 @@ configs:
   # See prometheus.yml.tftpl for the wiring rationale + TODO.
   ha_token:
     content: "${ha_token}"
+  # Phase 3a — Watchtower HTTP API bearer token (mirror of prometheus-1).
+  # See prometheus.yml.tftpl for the wiring rationale.
+  watchtower_token:
+    content: "${watchtower_token}"
+  # Phase 3a — MinIO Prometheus bearer JWT (mirror of prometheus-1).
+  # See prometheus.yml.tftpl for the wiring rationale.
+  minio_jwt:
+    content: "${minio_jwt}"
+  # Phase 3f — Rundeck API bearer token (mirror of prometheus-1).
+  # See prometheus.yml.tftpl for the wiring rationale.
+  rundeck_token:
+    content: "${rundeck_token}"
   # Phase 3h — blackbox_exporter file_sd target lists (mirror of prometheus-1).
-  # See prometheus.yml.tftpl for context.
+  # See prometheus.yml.tftpl for context. Phase 3f adds the tcp list.
   blackbox_http_targets:
     content: |
       ${indent(6, blackbox_http_targets)}
@@ -55,6 +67,9 @@ configs:
   blackbox_dns_targets:
     content: |
       ${indent(6, blackbox_dns_targets)}
+  blackbox_tcp_targets:
+    content: |
+      ${indent(6, blackbox_tcp_targets)}
 
 services:
   prometheus-2:
@@ -84,6 +99,15 @@ services:
       - source: ha_token
         target: /etc/prometheus/tokens/ha_token
         mode: 0444
+      - source: watchtower_token
+        target: /etc/prometheus/tokens/watchtower
+        mode: 0444
+      - source: minio_jwt
+        target: /etc/prometheus/tokens/minio_jwt
+        mode: 0444
+      - source: rundeck_token
+        target: /etc/prometheus/tokens/rundeck_api
+        mode: 0444
       - source: blackbox_http_targets
         target: /etc/prometheus/blackbox-targets/http-targets.json
         mode: 0644
@@ -95,6 +119,9 @@ services:
         mode: 0644
       - source: blackbox_dns_targets
         target: /etc/prometheus/blackbox-targets/dns-targets.json
+        mode: 0644
+      - source: blackbox_tcp_targets
+        target: /etc/prometheus/blackbox-targets/tcp-targets.json
         mode: 0644
     restart: unless-stopped
     healthcheck:

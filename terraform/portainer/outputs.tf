@@ -64,5 +64,6 @@ output "stacks" {
     pihole_exporter_1   = portainer_stack.pihole_exporter_1.name
     pihole_exporter_2   = portainer_stack.pihole_exporter_2.name
     pihole_exporter_3   = portainer_stack.pihole_exporter_3.name
+    twingate_exporter   = portainer_stack.twingate_exporter.name
   }
 }
