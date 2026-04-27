@@ -44,10 +44,9 @@ services:
       INTERVAL: 30s
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:9617/metrics"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+      # ekofr/pihole-exporter is distroless — no shell, no wget/curl. Disable
+      # health-checking entirely; Prometheus scrape itself confirms liveness.
+      disable: true
       start_period: 30s
     labels:
       loki.logging: "true"
