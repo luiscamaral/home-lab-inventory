@@ -1,5 +1,13 @@
 name: vault-2
 
+# ── Phase 3a: Prometheus scrape (TODO host-side config edit) ──────────
+# See terraform/portainer/stacks/vault.yml for the full instructions.
+# On ds-1 the Vault config lives at:
+#   /nfs/dockermaster/docker/vault/vault-2/config/config.hcl
+# Add a telemetry block with unauthenticated_metrics_access = true.
+# Then `docker compose restart vault-2`.
+# ──────────────────────────────────────────────────────────────────────
+
 networks:
   docker-servers-net:
     external: true

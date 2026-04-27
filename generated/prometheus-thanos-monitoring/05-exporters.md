@@ -34,7 +34,7 @@ the choice is explained.
 
 ### `pve-exporter` (Proxmox)
 
-- **Image:** `prompve/prometheus-pve-exporter:v3.8.2`.
+- **Image:** `prompve/prometheus-pve-exporter:3.8.2`.
 - **Auth:** dedicated Proxmox API token `prometheus@pam!metrics` with
   `PVEAuditor` role. Token stored in Vault at
   `secret/homelab/proxmox/api_token`.

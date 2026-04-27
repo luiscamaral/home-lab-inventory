@@ -24,7 +24,7 @@ when the corresponding stack lands.
 | pve-exporter | `prompve/prometheus-pve-exporter` | **`v3.8.2`** | <https://github.com/prometheus-pve/prometheus-pve-exporter/releases/latest> |
 | unpoller (Unifi) | `ghcr.io/unpoller/unpoller` | **`v2.39.0`** | <https://github.com/unpoller/unpoller/releases/latest> |
 | omada_exporter | `ghcr.io/charlie-haley/omada_exporter` | **`v0.13.1`** | <https://github.com/charlie-haley/omada_exporter/releases/latest> |
-| pihole-exporter | `ghcr.io/eko/pihole-exporter` | **`v1.2.0`** | <https://github.com/eko/pihole-exporter/releases/latest> |
+| pihole-exporter | `ekofr/pihole-exporter` | **`v1.2.0`** | <https://github.com/eko/pihole-exporter/releases/latest> |
 | nginx-prometheus-exporter | `nginx/nginx-prometheus-exporter` | **`v1.5.1`** | <https://github.com/nginx/nginx-prometheus-exporter/releases/latest> |
 | postgres_exporter | `quay.io/prometheuscommunity/postgres-exporter` | **`v0.19.1`** | <https://github.com/prometheus-community/postgres_exporter/releases/latest> |
 | ilo_exporter (HPE iLO) | `mauvesoftware/ilo_exporter` | **`1.0.3`** | <https://github.com/MauveSoftware/ilo_exporter/releases/latest> |
