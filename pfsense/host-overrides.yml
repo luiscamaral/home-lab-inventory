@@ -138,6 +138,33 @@
   domain: home.lcamaral.com
   ip: 192.168.59.40
 
+# ── Monitoring (Phase 1/2) ──────────────────────────────────────────
+# Used by Alertmanager --cluster.peer gossip + by Thanos Query.
+- host: alertmanager-1
+  domain: d.lcamaral.com
+  ip: 192.168.59.27
+  description: Alertmanager-1 (ds-1 macvlan, gossip cluster member)
+
+- host: alertmanager-2
+  domain: home.lcamaral.com
+  ip: 192.168.4.238
+  description: Alertmanager-2 (NAS macvlan, gossip cluster member)
+
+- host: prometheus-1
+  domain: d.lcamaral.com
+  ip: 192.168.59.19
+  description: Prometheus-1 (ds-1, replica A)
+
+- host: prometheus-2
+  domain: home.lcamaral.com
+  ip: 192.168.4.237
+  description: Prometheus-2 (NAS, replica B)
+
+- host: thanos-query
+  domain: d.lcamaral.com
+  ip: 192.168.59.26
+  description: Thanos Query (dockermaster, HA-aware Prom UI)
+
 - host: pihole
   domain: lab.home
   ip: 192.168.100.254
