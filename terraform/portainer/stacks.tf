@@ -125,6 +125,20 @@ resource "portainer_stack" "vault_3" {
 }
 
 # ──────────────────────────────────────────────
+# Vault Raft cluster — second peer (vault-2 on ds-1)
+# Brought under Portainer + Terraform after running as raw
+# `docker run` outside IaC. See stacks/vault-2.yml.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "vault_2" {
+  name            = "vault-2"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/vault-2.yml")
+}
+
+# ──────────────────────────────────────────────
 # HashiCorp Vault
 # Secret management — env vars for internal CLI only
 # ──────────────────────────────────────────────

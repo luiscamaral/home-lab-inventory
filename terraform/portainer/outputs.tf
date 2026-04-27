@@ -26,6 +26,7 @@ output "stacks" {
     reverse_proxy_2     = portainer_stack.reverse_proxy_2.name
     reverse_proxy_3     = portainer_stack.reverse_proxy_3.name
     vault               = portainer_stack.vault.name
+    vault_2             = portainer_stack.vault_2.name
     vault_3             = portainer_stack.vault_3.name
     twingate_a          = portainer_stack.twingate_a.name
     twingate_b          = portainer_stack.twingate_b.name
