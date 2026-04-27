@@ -93,3 +93,26 @@ container/stack before deploying the fresh pinned `prometheus-1` from
 
 All container images are pinned to specific tags. Re-check before each
 phase deploy and bump deliberately. No `latest` tags in any stack.
+
+## Phase 3 default decisions (locked 2026-04-25, can be overridden later)
+
+These were the four open questions in `PHASE-3-REVIEW.md`. Applying defaults to keep momentum:
+
+### HA cardinality budget — START PERMISSIVE
+
+Keep all metric classes initially. Apply `metric_relabel_configs: drop` ONLY for the obvious noise (`sun`, `update`, `weather` integrations, per-device `*_diagnostics` entities). Refine after first scrape against real cardinality numbers.
+
+### MinIO scrape svcacct — DEDICATED `metrics` (not reuse `thanos`)
+
+`thanos` is a write-path account; conflating it with read-only metrics scraping enlarges blast-radius if either credential leaks. Create `metrics` svcacct with read-only on the metrics endpoints.
+
+### Proxmox role — PVEAuditor (minimum-privilege)
+
+Sufficient for `pve-exporter` to read VM state, CPU/mem, storage. Replication and backup metrics need higher role; defer until a real need surfaces.
+
+### Sub-phase order — 3a → 3b → 3c → 3d → 3e → 3f → 3h → 3g → 3i
+
+Reasoning:
+- 3a–3f are highest-value-per-effort + don't need new exporter binaries
+- 3h (blackbox) is independent, single new container, fast
+- 3g (network fabric) and 3i (snmp regen) are research-heavy; saved for last
