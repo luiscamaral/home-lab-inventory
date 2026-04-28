@@ -38,6 +38,12 @@ services:
       # when rejoining as a standby after extended downtime. Default is 60s,
       # which is too short when replaying a large catch-up after clone.
       POSTGRESQL_PGCTLTIMEOUT: "600"
+      # Disable wal_sender_timeout so the standby's catch-up doesn't get
+      # killed mid-stream during very long WAL replay windows. Set on
+      # BOTH nodes (not just the current primary) so it survives a role
+      # swap. Was previously set live via ALTER SYSTEM only and lost on
+      # data-volume rebuild — see memory reference_bitnami_postgres_repmgr.md.
+      POSTGRESQL_EXTRA_FLAGS: "-c wal_sender_timeout=0"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s

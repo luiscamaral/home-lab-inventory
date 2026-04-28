@@ -36,6 +36,9 @@ services:
       # Same pg_ctl timeout extension as db-0 — used when this node is
       # rebuilt as standby after a long gap (see keycloak-db-0.yml).
       POSTGRESQL_PGCTLTIMEOUT: "600"
+      # See keycloak-db-0.yml — wal_sender_timeout=0 needs to survive a
+      # role swap, so set it on this node too.
+      POSTGRESQL_EXTRA_FLAGS: "-c wal_sender_timeout=0"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
