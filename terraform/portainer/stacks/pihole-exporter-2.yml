@@ -1,0 +1,42 @@
+name: pihole-exporter-2
+
+# pihole-exporter-2 — scrapes pihole-2 (Docker on dockerserver-1 at
+# 192.168.59.50). Runs alongside on ds-1 in docker-servers-net macvlan.
+#
+# Image pinned per generated/prometheus-thanos-monitoring/VERSIONS.md.
+# Same shared password as pihole-exporter-1, injected via Portainer
+# `env { PIHOLE_PASSWORD }` to dodge Compose's `$$` re-evaluation
+# pitfall (see pihole-exporter-1.yml header).
+#
+# IP allocation in 192.168.59.0/26 (free pool: .41,.42,.45-.47,.52,.53):
+#   192.168.59.42 -> pihole-exporter-2
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  pihole-exporter:
+    image: ekofr/pihole-exporter:v1.2.0
+    hostname: pihole-exporter-2
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.42
+    environment:
+      PIHOLE_HOSTNAME: 192.168.59.50
+      PIHOLE_PASSWORD: ${PIHOLE_PASSWORD}
+      PORT: "9617"
+      INTERVAL: 30s
+    restart: unless-stopped
+    healthcheck:
+      # ekofr/pihole-exporter is distroless — no shell, no wget/curl. Disable
+      # health-checking entirely; Prometheus scrape itself confirms liveness.
+      disable: true
+      start_period: 30s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "pihole-exporter-2"
+      com.docker.service: "pihole-exporter"
+      portainer.autodeploy: "false"

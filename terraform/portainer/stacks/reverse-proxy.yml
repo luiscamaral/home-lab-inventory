@@ -27,7 +27,7 @@ services:
       - /nfs/dockermaster/docker/nginx-rproxy/config/vhost.d:/etc/nginx/vhost.d:ro
       - /nfs/dockermaster/docker/nginx-rproxy/www:/var/www
       - /nfs/dockermaster/docker/nginx-rproxy/logs/nginx:/var/log/nginx
-    restart: on-failure:5
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost/"]
       interval: 5s
@@ -58,7 +58,7 @@ services:
       - /nfs/dockermaster/docker/nginx-rproxy/logs/nginx:/var/log/nginx:ro
       - /nfs/dockermaster/docker/nginx-rproxy/bin/start.sh:/usr/bin/start.sh
     entrypoint: ["/usr/bin/start.sh"]
-    restart: on-failure:5
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qO /dev/null http://localhost:9080/ready || exit 1"]
       interval: 5s

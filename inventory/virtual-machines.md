@@ -1,10 +1,11 @@
-# 🖥️ Virtual Machine Inventory
+# Virtual Machine Inventory
 
 ## Proxmox Virtual Machines
 
 ### Infrastructure Services
 
 #### VM 100 - Omada Controller
+
 - **Status**: ✅ Running
 - **CPU**: 2 cores (host)
 - **RAM**: 2 GB
@@ -15,7 +16,8 @@
 - **Auto-start**: Yes (startup delay: 180s)
 
 #### VM 110 - Laorion
-- **Status**: ✅ Running  
+
+- **Status**: ✅ Running
 - **CPU**: 4 cores (host)
 - **RAM**: 16 GB
 - **Storage**:
@@ -28,6 +30,7 @@
 - **Auto-start**: Yes
 
 #### VM 111 - Rootmaster
+
 - **Status**: ✅ Running
 - **CPU**: 2 cores (host)
 - **RAM**: 2 GB
@@ -38,17 +41,48 @@
 - **OS**: Linux
 - **Auto-start**: Yes
 
-#### VM 120 - Docker Master
+#### VM 120 - dockermaster (Docker Master)
+
 - **Status**: ✅ Running
-- **CPU**: 20 cores (2 sockets × 10 cores, host)
+- **CPU**: 20 cores (2 sockets × 10 cores, host), pinned to socket 0 (CPUs 0-9,20-29)
 - **RAM**: 64 GB
 - **Storage**: 196 GB SSD
 - **Network**: vmbr28
-- **OS**: Linux
-- **Purpose**: Main Docker container host
+- **IP**: 192.168.48.44
+- **OS**: Ubuntu Linux
+- **Purpose**: Control plane — Portainer, Nginx-1, Bind9-primary, vault-1, Docker Registry, cloudflared-1
 - **Auto-start**: Yes (startup delay: 30s)
 
+#### VM 123 - dockerserver-1 (short: ds-1)
+
+- **Status**: ✅ Running
+- **CPU**: 10 cores (host), pinned to socket 0 (CPUs 0-9,20-29)
+- **RAM**: 24 GB
+- **Storage**: 120 GB SSD (thin-pool)
+- **Network**: vmbr28
+- **IP**: 192.168.48.45
+- **OS**: Ubuntu Linux (clone of dockermaster)
+- **Purpose**: App Plane A — vault-2, GitHub Runner, Twingate A, Calibre, Rundeck, Prometheus, MinIO, Keycloak-1
+- **Portainer endpoint ID**: 9
+- **Auto-start**: Yes (startup delay: 30s)
+
+#### VM 124 - dockerserver-2 (short: ds-2)
+
+- **Status**: ✅ Running
+- **CPU**: 10 cores (host), pinned to socket 1 (CPUs 10-19,30-39)
+- **RAM**: 24 GB
+- **Storage**: 120 GB SSD (thin-pool)
+- **Network**: vmbr28
+- **IP**: 192.168.48.46
+- **MAC**: bc:24:11:84:bc:16
+- **OS**: Ubuntu Linux (clone of dockerserver-1, 2026-04-11)
+- **Purpose**: App Plane B — vault-3, Twingate B, Keycloak-2, Ollama, FreeSWITCH, RustDesk, Watchtower
+- **Portainer endpoint ID**: 13
+- **Portainer agent macvlan IP**: 192.168.59.46
+- **Auto-start**: Yes (startup order: 1, delay: 30s)
+
 #### VM 121 - Home Assistant
+
 - **Status**: ✅ Running
 - **CPU**: 4 cores (SandyBridge)
 - **RAM**: 16 GB
@@ -59,6 +93,7 @@
 - **Auto-start**: Yes (startup order: 1)
 
 #### VM 122 - UniFi Controller
+
 - **Status**: ✅ Running
 - **CPU**: 2 cores (host)
 - **RAM**: 2 GB
@@ -71,6 +106,7 @@
 - **Auto-start**: Yes (startup delay: 120s)
 
 #### VM 1000 - Lamint
+
 - **Status**: ✅ Running
 - **CPU**: 12 cores (host)
 - **RAM**: 32 GB
@@ -82,6 +118,7 @@
 ### Container Orchestration (Stopped)
 
 #### Docker Swarm Cluster
+
 - **VM 230 - Swarm Manager 1**
   - Status: 🔴 Stopped
   - CPU: 4 cores
@@ -104,6 +141,7 @@
   - Network: vmbr28
 
 #### Kubernetes Cluster
+
 - **VM 240 - Kubernetes Master 1**
   - Status: 🔴 Stopped
   - CPU: 4 cores
@@ -126,6 +164,7 @@
   - Network: vmbr28
 
 #### Talos Kubernetes Cluster
+
 - **VM 250 - TKMaster 1**
   - Status: 🔴 Stopped
   - CPU: 4 cores
@@ -150,6 +189,7 @@
 ### Templates & Testing
 
 #### VM 101 - Tiny
+
 - **Status**: 🔴 Stopped
 - **CPU**: 4 cores
 - **RAM**: 4 GB
@@ -158,6 +198,7 @@
 - **OS**: Linux
 
 #### VM 10001 - Ubuntu Server 22.04 Template
+
 - **Status**: 📋 Template
 - **CPU**: 4 cores
 - **RAM**: 4 GB
@@ -167,9 +208,10 @@
 - **Purpose**: VM template for cloning
 
 ## Summary
-- **Total VMs**: 18
-- **Running**: 7
+
+- **Total VMs**: 19
+- **Running**: 8
 - **Stopped**: 10
 - **Templates**: 1
-- **Total Allocated RAM**: ~195 GB
-- **Total Allocated Storage**: ~1.5 TB
+- **Total Allocated RAM**: ~219 GB
+- **Total Allocated Storage**: ~1.6 TB

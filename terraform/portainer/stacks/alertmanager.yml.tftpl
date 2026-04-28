@@ -1,0 +1,66 @@
+name: alertmanager
+
+# alertmanager-1 — Phase 1 alerting plane on ds-1.
+# Phase 2 adds alertmanager-2 on the NAS — both will form a gossip cluster
+# via --cluster.peer. The peer line below references alertmanager-2 by its
+# planned hostname even though it doesn't exist yet; Alertmanager tolerates
+# an unreachable peer (logs a connect-failure, retries) so this is safe to
+# leave in until Phase 2 brings the second node up.
+#
+# alertmanager.yml is rendered from Vault (recipient address) and injected
+# via configs:.
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+volumes:
+  alertmanager_data:
+    name: alertmanager_data
+
+configs:
+  alertmanager_yml:
+    content: |
+      ${indent(6, alertmanager_config)}
+
+services:
+  alertmanager-1:
+    image: quay.io/prometheus/alertmanager:v0.32.0
+    hostname: alertmanager-1
+    networks:
+      servers-net:
+        # IP picked from 192.168.59.0/26 free pool (see stacks.tf header)
+        ipv4_address: 192.168.59.27
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --cluster.listen-address=0.0.0.0:9094
+      - --cluster.advertise-address=192.168.59.27:9094
+      # Phase 2 will resolve; until then AM logs a peer-connect failure
+      # and continues with single-node behavior.
+      - --cluster.peer=alertmanager-2.home.lcamaral.com:9094
+      - --web.external-url=http://alertmanager-1.d.lcamaral.com:9093
+      - --log.level=info
+    volumes:
+      - alertmanager_data:/alertmanager
+    configs:
+      - source: alertmanager_yml
+        target: /etc/alertmanager/alertmanager.yml
+        mode: 0644
+    expose:
+      - "9093"
+      - "9094"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "alertmanager"
+      com.docker.service: "alertmanager-1"
+      portainer.autodeploy: "false"

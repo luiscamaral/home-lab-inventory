@@ -1,0 +1,9 @@
+[Match]
+Name=server-net-shim
+
+[Network]
+Address=192.168.59.33/32
+
+[Route]
+Destination=192.168.59.0/26
+Scope=link

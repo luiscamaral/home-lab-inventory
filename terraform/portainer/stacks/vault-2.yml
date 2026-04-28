@@ -1,0 +1,62 @@
+name: vault-2
+
+# vault-2 — Vault Raft cluster follower on ds-1 (192.168.59.9).
+# Mirrors the vault-1/vault-3 IaC pattern. Was previously running
+# as a raw `docker run` outside Portainer; brought under Terraform
+# management to close the IaC gap.
+#
+# Host-side config lives at /nfs/dockermaster/docker/vault/vault-2/config/
+# and is mounted read-only into the container. The auto-unseal systemd
+# unit on ds-1 unseals vault-2 on container restart.
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+volumes:
+  vault_raft:
+    driver: local
+    driver_opts:
+      type: none
+      device: /var/lib/vault/raft
+      o: bind
+
+services:
+  vault-2:
+    image: hashicorp/vault:1.21
+    container_name: vault-2
+    hostname: vault-2
+    restart: unless-stopped
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.9
+    cap_add:
+      - IPC_LOCK
+    entrypoint: ["vault"]
+    command:
+      - server
+      - -config=/vault/config/config.hcl
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8200/v1/sys/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - /nfs/dockermaster/docker/vault/vault-2/config:/vault/config
+      - vault_raft:/vault/raft
+      - /nfs/dockermaster/docker/vault/vault-2/logs:/vault/logs
+      - /nfs/dockermaster/docker/vault/vault/snapshots:/vault/snapshots
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "vault-2"
+      com.docker.service: "vault-2"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M

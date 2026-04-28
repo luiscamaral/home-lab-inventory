@@ -1,0 +1,54 @@
+name: homelab-portal-2
+
+# Second replica of homelab-portal on dockerserver-1.
+# Portal is stateless — sessions are encrypted cookies (SESSION_SECRET +
+# SESSION_ENCRYPTION_KEY) so requests can hit either replica without sticky.
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  portal:
+    image: registry.cf.lcamaral.com/homelab-portal:latest
+    container_name: homelab-portal-2
+    hostname: homelab-portal-2
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.38
+    environment:
+      KEYCLOAK_URL: http://192.168.59.43:8080
+      KEYCLOAK_PUBLIC_URL: https://auth.cf.lcamaral.com
+      KEYCLOAK_REALM: homelab
+      KEYCLOAK_CLIENT_ID: homelab-portal
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      SESSION_ENCRYPTION_KEY: ${SESSION_ENCRYPTION_KEY}
+      PUBLIC_BASE_URL: https://login.cf.lcamaral.com
+      NODE_ENV: production
+      PORT: "3000"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://localhost:3000/healthz',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "homelab-portal-2"
+      com.docker.service: "portal"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M

@@ -85,3 +85,4 @@ ignore: |
   .devcontainer/
   node_modules/
   __pycache__/
+  terraform/portainer/stacks/bind-dns.yml

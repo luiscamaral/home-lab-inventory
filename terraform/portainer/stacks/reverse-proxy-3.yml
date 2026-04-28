@@ -1,0 +1,52 @@
+name: reverse-proxy-3
+
+# Third nginx reverse proxy on dockerserver-2 for full 3-host edge HA.
+# Shares vhost.d + cert config via NFS with rproxy-1 (dm) and rproxy-2 (ds-1).
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+  rproxy:
+    name: rproxy
+    external: true
+
+services:
+  nginx-rproxy:
+    image: nginx:1.29-otel
+    container_name: rproxy-3
+    hostname: rproxy-3
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.49
+      rproxy:
+    expose:
+      - 80
+      - 443
+    command: [nginx, -c, /etc/nginx/nginx.conf, -g, 'daemon off;']
+    volumes:
+      - /nfs/dockermaster/docker/nginx-rproxy/config/conf/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /nfs/dockermaster/docker/nginx-rproxy/config/cert:/etc/nginx/cert:ro
+      - /nfs/dockermaster/docker/nginx-rproxy/config/vhost.d:/etc/nginx/vhost.d:ro
+      - /nfs/dockermaster/docker/nginx-rproxy/www:/var/www
+      - /nfs/dockermaster/docker/nginx-rproxy/logs/nginx-3:/var/log/nginx
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost/"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "reverse-proxy-3"
+      com.docker.service: "nginx-rproxy"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G

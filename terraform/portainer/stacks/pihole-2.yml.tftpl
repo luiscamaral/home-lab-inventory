@@ -1,0 +1,68 @@
+name: pihole-2
+
+# pihole-2 — second of three pihole instances for Pattern B HA migration
+# Runs on dockerserver-1 in docker-servers-net macvlan
+# Authoritative records for d.lcamaral.com injected via docker compose
+# `configs:` from the single source of truth at
+# pihole/dnsmasq.d/04-d-lcamaral-com.conf — interpolated by terraform
+# templatefile() at apply time. Stack re-deploys whenever the file changes.
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+configs:
+  dlc_zone:
+    content: |
+      ${indent(6, dnsmasq_content)}
+  home_zone:
+    content: |
+      ${indent(6, home_content)}
+  host_overrides:
+    content: |
+      ${indent(6, host_overrides_content)}
+
+services:
+  pihole:
+    image: pihole/pihole:2025.10.0
+    hostname: pihole-2
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.50
+    dns:
+      - 192.168.48.1
+      - 1.1.1.1
+    environment:
+      TZ: America/Denver
+      FTLCONF_webserver_api_password: $${WEBPASSWORD}
+      FTLCONF_dns_upstreams: 192.168.4.1
+      FTLCONF_misc_etc_dnsmasq_d: "true"
+      FTLCONF_misc_check_load: "false"
+      FTLCONF_resolver_resolveIPv6: "false"
+      FTLCONF_ntp_sync_active: "false"
+      FTLCONF_dns_listeningMode: "all"
+    volumes:
+      - /nfs/dockermaster/docker/pihole-2/etc-pihole:/etc/pihole
+    configs:
+      - source: dlc_zone
+        target: /etc/dnsmasq.d/04-d-lcamaral-com.conf
+        mode: 0644
+      - source: home_zone
+        target: /etc/dnsmasq.d/05-home.conf
+        mode: 0644
+      - source: host_overrides
+        target: /etc/dnsmasq.d/06-host-overrides.conf
+        mode: 0644
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "dig", "+short", "+tries=1", "+time=2", "@127.0.0.1", "pi.hole"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "pihole-2"
+      com.docker.service: "pihole"
+      portainer.autodeploy: "false"

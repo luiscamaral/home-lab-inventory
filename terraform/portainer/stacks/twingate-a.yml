@@ -4,26 +4,40 @@ networks:
   servers-net:
     name: docker-servers-net
     external: true
-  rproxy:
-    name: rproxy
-    external: true
 
 services:
   twingate:
     container_name: twingate-sepia-hornet
-    pull_policy: always
+    # Image updates handled by watchtower (label below); skip pull on every
+    # redeploy to avoid transient registry "Proxy failure" errors during
+    # `compose up`. Image cache survives container removal.
+    pull_policy: missing
     image: twingate/connector:1
     hostname: sepia-hornet
     networks:
-      rproxy:
       servers-net:
         ipv4_address: 192.168.59.12
+    # macvlan containers can't use docker's embedded dns at 127.0.0.11
+    # because that address is only routed inside bridge networks. without
+    # explicit dns, twingate's libsdwan/pubnub-lib can't resolve its
+    # control-plane endpoints and flaps Offline/Authentication/Online.
+    dns:
+      - 192.168.48.1  # pfSense Unbound on SRVAN — internal + public
+      - 1.1.1.1       # Cloudflare fallback
     environment:
       TWINGATE_NETWORK: "lamaral"
       TWINGATE_LABEL_HOSTNAME: "sepia-hornet"
-      TWINGATE_LABEL_DEPLOYED_BY: "dockermaster"
+      TWINGATE_LABEL_DEPLOYED_BY: "dockerserver-1"
       TWINGATE_ACCESS_TOKEN: ${TWINGATE_ACCESS_TOKEN}
       TWINGATE_REFRESH_TOKEN: ${TWINGATE_REFRESH_TOKEN}
+      # Phase 3f: native Prometheus metrics on connector v1.80+. The
+      # connector binds [::]:9999 (dual-stack) and our macvlan namespace
+      # has IPv6 fully unloaded (no /proc/sys/net/ipv6/...) so bind()
+      # fails with EAFNOSUPPORT — connector logs the error but stays
+      # Online. Variable is set so metrics light up automatically the
+      # day the network gains IPv6; until then prometheus has no scrape
+      # job for it. See locals.tf comment.
+      TWINGATE_METRICS_PORT: "9999"
     restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: "true"

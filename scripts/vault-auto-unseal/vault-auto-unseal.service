@@ -1,0 +1,17 @@
+[Unit]
+Description=Vault auto-unseal after docker start
+Documentation=https://github.com/luiscamaral/home-lab-inventory/tree/main/scripts/vault-auto-unseal
+After=docker.service
+Wants=docker.service
+ConditionPathExists=/etc/vault/unseal.key
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/vault-auto-unseal.sh
+TimeoutStartSec=300
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

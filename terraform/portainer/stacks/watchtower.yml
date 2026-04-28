@@ -1,7 +1,12 @@
 name: watchtower
 
 networks:
-  rproxy:
+  watchtower-internal:
+  # Phase 3a: dual-home onto macvlan so Prometheus can reach the HTTP API
+  # on :8080. The IP is per-host (.33 dm, .36 ds-1) — injected via the
+  # WATCHTOWER_MACVLAN_IP env var from Terraform. See stacks.tf.
+  servers-net:
+    name: docker-servers-net
     external: true
 
 services:
@@ -10,7 +15,9 @@ services:
     container_name: watchtower
     hostname: watchtower
     networks:
-      rproxy:
+      watchtower-internal:
+      servers-net:
+        ipv4_address: ${WATCHTOWER_MACVLAN_IP}
     environment:
       DOCKER_API_VERSION: "1.40"
       TZ: America/Denver
@@ -23,7 +30,7 @@ services:
       WATCHTOWER_HTTP_API_TOKEN: ${WATCHTOWER_API_TOKEN}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    restart: on-failure:5
+    restart: unless-stopped
     labels:
       com.centurylinklabs.watchtower.enable: "false"
       com.docker.stack: "watchtower"

@@ -1,0 +1,16 @@
+# Thanos object-store config for the NAS-side sidecar (replica B).
+# The NAS has no direct macvlan path to MinIO on docker-servers-net, so
+# this replica reaches MinIO via the public nginx-rproxy front door
+# (https://s3.d.lcamaral.com:443) using TLS. Credentials come from Vault
+# at secret/homelab/thanos/s3 and are interpolated by templatefile().
+#
+# This file is intentionally distinct from objstore-ds1 (Phase 1) which
+# can use the internal LAN endpoint http://192.168.59.17:9000.
+type: S3
+config:
+  bucket: thanos
+  endpoint: s3.d.lcamaral.com:443
+  access_key: ${access_key}
+  secret_key: ${secret_key}
+  insecure: false
+  signature_version2: false

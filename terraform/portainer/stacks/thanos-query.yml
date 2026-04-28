@@ -1,0 +1,50 @@
+name: thanos-query
+
+# thanos-query — Phase 1 read fan-out, runs on dockermaster.
+# In Phase 1 we only know two stores: sidecar-1 (ds-1) and store-gw (ds-1).
+# Phase 2 adds sidecar-2 on the NAS. When that lands, append a third
+# --store flag here and `terraform apply`.
+#
+# --query.replica-label=replica enables HA dedupe once we have two replicas.
+# --query.auto-downsampling lets the querier prefer downsampled blocks for
+# long ranges, served by the store gateway.
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  thanos-query:
+    image: quay.io/thanos/thanos:v0.41.0
+    hostname: thanos-query
+    networks:
+      servers-net:
+        # IP picked from 192.168.59.0/26 free pool (see stacks.tf header)
+        ipv4_address: 192.168.59.26
+    command:
+      - query
+      - --http-address=0.0.0.0:10902
+      - --grpc-address=0.0.0.0:10901
+      - --query.replica-label=replica
+      - --query.auto-downsampling
+      - --endpoint=192.168.59.20:10901
+      - --endpoint=192.168.59.21:10901
+      - --endpoint=192.168.4.239:10901
+      - --log.level=info
+    expose:
+      - "10901"
+      - "10902"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:10902/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "thanos-query"
+      com.docker.service: "thanos-query"
+      portainer.autodeploy: "false"

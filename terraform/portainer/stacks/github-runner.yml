@@ -8,15 +8,15 @@ services:
   runner:
     image: myoung34/github-runner:latest
     container_name: github-runner-homelab
-    hostname: dockermaster-runner
+    hostname: dockerserver-1-runner
     networks:
       docker-servers-net:
         ipv4_address: 192.168.59.4
     environment:
-      - RUNNER_NAME=dockermaster-runner
+      - RUNNER_NAME=dockerserver-1-runner
       - RUNNER_WORKDIR=/tmp/runner/work
       - RUNNER_GROUP=default
-      - LABELS=self-hosted,linux,x64,dockermaster,docker
+      - LABELS=self-hosted,linux,x64,dockerserver-1,docker
       - REPO_URL=https://github.com/luiscamaral/home-lab-inventory
       - ACCESS_TOKEN=${GITHUB_TOKEN}
       - EPHEMERAL=false

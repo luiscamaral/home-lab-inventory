@@ -1,0 +1,48 @@
+name: minio-2
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    hostname: minio-2
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.37
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_SERVER_URL: https://s3.cf.lcamaral.com
+      MINIO_BROWSER_REDIRECT_URL: https://minio.cf.lcamaral.com
+      MINIO_IDENTITY_OPENID_CONFIG_URL: https://keycloak.d.lcamaral.com/realms/homelab/.well-known/openid-configuration
+      MINIO_IDENTITY_OPENID_CLIENT_ID: minio
+      MINIO_IDENTITY_OPENID_CLIENT_SECRET: ${MINIO_OIDC_CLIENT_SECRET}
+      MINIO_IDENTITY_OPENID_DISPLAY_NAME: Login with Keycloak
+      MINIO_IDENTITY_OPENID_CLAIM_NAME: policy
+      MINIO_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC: "on"
+      MINIO_IDENTITY_OPENID_SCOPES: openid,email
+    volumes:
+      - /var/lib/minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:9000/minio/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: always
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "minio-2"
+      com.docker.service: "minio"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M

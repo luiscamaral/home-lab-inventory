@@ -95,6 +95,9 @@ fail_fast: false
 minimum_pre_commit_version: 3.0.0
 
 # Files to exclude from all hooks
+# NOTE: terraform/portainer/stacks/bind-dns.yml is git-deleted but Synology
+# Drive keeps re-materializing an unreadable HFS-compressed pointer that
+# fails every hook with "Stale NFS file handle" — exclude it permanently.
 exclude: |
   (?x)^(
     \.git/.*|
@@ -105,6 +108,7 @@ exclude: |
     node_modules/.*|
     __pycache__/.*|
     \.pytest_cache/.*|
+    terraform/portainer/stacks/bind-dns\.yml|
     .*\.log|
     .*\.tmp|
     .*\.bak

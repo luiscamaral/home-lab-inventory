@@ -1,0 +1,68 @@
+name: pihole-3
+
+# pihole-3 — third of three pihole instances for Pattern B HA migration
+# Runs on Synology NAS (Edge agent) in home-net macvlan
+# Survives loss of Proxmox host (different physical box from pihole-1/2)
+# Authoritative records for d.lcamaral.com injected via docker compose
+# `configs:` from the single source of truth at
+# pihole/dnsmasq.d/04-d-lcamaral-com.conf — interpolated by terraform
+# templatefile() at apply time. Stack re-deploys whenever the file changes.
+
+networks:
+  home-net:
+    name: home-net
+    external: true
+
+configs:
+  dlc_zone:
+    content: |
+      ${indent(6, dnsmasq_content)}
+  home_zone:
+    content: |
+      ${indent(6, home_content)}
+  host_overrides:
+    content: |
+      ${indent(6, host_overrides_content)}
+
+services:
+  pihole:
+    image: pihole/pihole:2025.10.0
+    hostname: pihole-3
+    networks:
+      home-net:
+        ipv4_address: 192.168.4.236
+    dns:
+      - 192.168.4.1
+      - 1.1.1.1
+    environment:
+      TZ: America/Denver
+      FTLCONF_webserver_api_password: $${WEBPASSWORD}
+      FTLCONF_dns_upstreams: 192.168.4.1
+      FTLCONF_misc_etc_dnsmasq_d: "true"
+      FTLCONF_misc_check_load: "false"
+      FTLCONF_resolver_resolveIPv6: "false"
+      FTLCONF_ntp_sync_active: "false"
+      FTLCONF_dns_listeningMode: "all"
+    volumes:
+      - /volume2/docker/pihole-3/etc-pihole:/etc/pihole
+    configs:
+      - source: dlc_zone
+        target: /etc/dnsmasq.d/04-d-lcamaral-com.conf
+        mode: 0644
+      - source: home_zone
+        target: /etc/dnsmasq.d/05-home.conf
+        mode: 0644
+      - source: host_overrides
+        target: /etc/dnsmasq.d/06-host-overrides.conf
+        mode: 0644
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "dig", "+short", "+tries=1", "+time=2", "@127.0.0.1", "pi.hole"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "pihole-3"
+      com.docker.service: "pihole"
+      portainer.autodeploy: "false"

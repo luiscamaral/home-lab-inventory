@@ -1,0 +1,17 @@
+# docker inspect prometheus-prometheus-1 → .Args
+# Captured: 2026-04-24
+# Host: dockerserver-1 (ds-1, 192.168.48.45)
+# Image: prom/prometheus:latest → resolved to prometheus v3.11.1 (build 20260407)
+# Image SHA: sha256:4a954d7f085360a55a1687f01a89ca7b17cf1b4856228de41514069751548609
+
+[
+  "--config.file=/etc/prometheus/prometheus.yml",
+  "--storage.tsdb.path=/prometheus",
+  "--web.console.libraries=/usr/share/prometheus/console_libraries",
+  "--web.console.templates=/usr/share/prometheus/consoles"
+]
+
+# IMPORTANT: No --storage.tsdb.retention.* flags set.
+# Prometheus default retention = 15 days (--storage.tsdb.retention.time=15d).
+# No --web.external-url, no --web.enable-lifecycle, no --web.enable-admin-api.
+# No remote_write configured (commented out in prometheus.yml).

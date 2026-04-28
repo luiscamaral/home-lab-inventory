@@ -1,12 +1,15 @@
 name: keycloak
 
+# Keycloak node 1 (on dockermaster) — part of a 2-node Infinispan cluster
+# with keycloak-2 on dockerserver-1. Peer discovery via JDBC_PING (shared DB
+# table in the keycloak-db HA cluster). No etcd/consul needed.
+
 networks:
   servers-net:
     name: docker-servers-net
     external: true
   rproxy:
     external: true
-  keycloak-internal:
 
 services:
   keycloak:
@@ -18,17 +21,27 @@ services:
       servers-net:
         ipv4_address: 192.168.59.13
       rproxy:
-      keycloak-internal:
     environment:
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME: https://${KC_HOSTNAME}
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_URL: jdbc:postgresql://192.168.59.44:5432,192.168.59.54:5432/keycloak?targetServerType=primary&loadBalanceHosts=false
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: ${KC_DB_PASSWORD}
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      # Infinispan clustering — JDBC_PING discovery protocol uses the shared DB
+      KC_CACHE: ispn
+      KC_CACHE_STACK: jdbc-ping
+      JAVA_OPTS_APPEND: "-Djgroups.dns.query=keycloak.d.lcamaral.com -Djgroups.bind_addr=192.168.59.13"
+      # Phase 3a: Prometheus scrape via Quarkus management interface on :9000
+      KC_METRICS_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+    expose:
+      # Quarkus management interface (metrics + health) — scraped by
+      # Prometheus on the macvlan IP. App traffic still uses :8080.
+      - 9000
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8080'"]
@@ -36,9 +49,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 120s
-    depends_on:
-      keycloak-db:
-        condition: service_healthy
     labels:
       com.centurylinklabs.watchtower.enable: "false"
       com.docker.stack: "keycloak"
@@ -52,37 +62,3 @@ services:
         reservations:
           cpus: '0.5'
           memory: 1250M
-
-  keycloak-db:
-    image: postgres:17
-    container_name: keycloak-db
-    hostname: keycloak-db
-    networks:
-      keycloak-internal:
-    environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: ${KC_DB_PASSWORD}
-      PGDATA: /var/lib/postgresql/data/pgdata
-    volumes:
-      - /nfs/dockermaster/docker/keycloak/postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "keycloak", "-d", "keycloak"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    labels:
-      com.centurylinklabs.watchtower.enable: "true"
-      com.docker.stack: "keycloak"
-      com.docker.service: "keycloak-db"
-      portainer.autodeploy: "false"
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 2G
-        reservations:
-          cpus: '0.5'
-          memory: 512M

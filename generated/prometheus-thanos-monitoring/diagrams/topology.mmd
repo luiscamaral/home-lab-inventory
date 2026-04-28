@@ -1,0 +1,76 @@
+%% Thanos + Prometheus monitoring topology — homelab
+%% Render with: https://mermaid.live  or any Mermaid-aware viewer
+
+flowchart LR
+    subgraph Exporters["Exporters (scattered)"]
+        ne[node_exporter × N]
+        cad[cadvisor × N]
+        pve[pve-exporter]
+        snmp[snmp_exporter]
+        bb[blackbox_exporter]
+        hapi[HA /api/prometheus]
+        unp[unpoller]
+        omd[omada-exporter]
+        ilo[hpilo-exporter]
+        nativ[Vault / Keycloak / MinIO / cloudflared /<br/>Registry / Rundeck / Watchtower<br/>— native /metrics]
+    end
+
+    subgraph DS1["ds-1 (Proxmox VM)"]
+        P1[prometheus-1<br/>external_labels: replica=A<br/>7d local TSDB]
+        SC1[thanos-sidecar-1]
+        SG[thanos-store-gateway]
+        AM1[alertmanager-1]
+        GF[Grafana<br/>Keycloak SSO]
+    end
+
+    subgraph NAS["NAS (Synology) — Proxmox-independent"]
+        P2[prometheus-2<br/>external_labels: replica=B<br/>7d local TSDB]
+        SC2[thanos-sidecar-2]
+        AM2[alertmanager-2]
+    end
+
+    subgraph DS2["ds-2 — batch plane"]
+        CMP[thanos-compactor<br/>— single instance —]
+        RUL[thanos-ruler<br/>— single instance —<br/>long-window rules]
+    end
+
+    subgraph DM["dockermaster"]
+        Q[thanos-query<br/>dedupe on replica label]
+        PF[postfix-relay<br/>SMTP out]
+    end
+
+    subgraph S3["MinIO (ds-1) ↔ MinIO-2 (ds-2)"]
+        B[(bucket: thanos)]
+    end
+
+    Exporters -. scrape .-> P1
+    Exporters -. scrape .-> P2
+
+    P1 --- SC1
+    P2 --- SC2
+
+    SC1 -- upload 2h blocks --> B
+    SC2 -- upload 2h blocks --> B
+    CMP -- compact + downsample --> B
+    SG -- read historical --> B
+
+    SC1 -- StoreAPI --> Q
+    SC2 -- StoreAPI --> Q
+    SG  -- StoreAPI --> Q
+
+    GF -- PromQL --> Q
+
+    P1 -- alerts (short-window) --> AM1
+    P2 -- alerts (short-window) --> AM2
+    RUL -- alerts (long-window) --> AM1
+    RUL -- alerts (long-window) --> AM2
+    RUL -- PromQL over Thanos --> Q
+    AM1 <-- gossip cluster --> AM2
+    AM1 -- SMTP --> PF
+    AM2 -- SMTP --> PF
+    PF -- email --> Receivers[(luiscamaral+homelab@gmail.com<br/>Q5=Email)]
+
+    classDef infra fill:#1e293b,stroke:#334155,color:#f1f5f9
+    classDef store fill:#0f172a,stroke:#475569,color:#f8fafc,stroke-dasharray: 5 5
+    class DS1,DS2,DM,NAS infra
+    class S3,B store

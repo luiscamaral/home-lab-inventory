@@ -1,0 +1,63 @@
+name: thanos-store
+
+# thanos-store-gw — historical block reader for the Thanos query path.
+# Runs on ds-1 colocated with prometheus-1 + sidecar-1. Reads MinIO over the
+# internal docker-servers-net (192.168.59.17:9000 — same path as the sidecar).
+# Local volume "thanos_store_cache" caches recently-read blocks (data-dir).
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+volumes:
+  thanos_store_cache:
+    name: thanos_store_cache
+
+configs:
+  objstore_yml:
+    content: |
+      ${indent(6, objstore_config)}
+
+services:
+  thanos-store-gw:
+    image: quay.io/thanos/thanos:v0.41.0
+    hostname: thanos-store-gw
+    # Run as root so the container can mkdir on the named volume which
+    # docker creates with root ownership.
+    user: "0:0"
+    networks:
+      servers-net:
+        # IP picked from 192.168.59.0/26 free pool (see stacks.tf header)
+        ipv4_address: 192.168.59.21
+    command:
+      - store
+      - --data-dir=/var/thanos/store
+      - --objstore.config-file=/etc/thanos/objstore.yml
+      - --grpc-address=0.0.0.0:10901
+      - --http-address=0.0.0.0:10902
+      - --index-cache-size=256MB
+      - --chunk-pool-size=2GB
+      - --log.level=info
+    volumes:
+      - thanos_store_cache:/var/thanos/store
+    configs:
+      - source: objstore_yml
+        target: /etc/thanos/objstore.yml
+        mode: 0644
+    expose:
+      - "10901"
+      - "10902"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:10902/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "thanos-store"
+      com.docker.service: "thanos-store-gw"
+      portainer.autodeploy: "false"

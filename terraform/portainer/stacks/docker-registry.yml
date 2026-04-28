@@ -4,6 +4,9 @@ networks:
   rproxy:
     name: rproxy
     external: true
+  servers-net:
+    name: docker-servers-net
+    external: true
 
 services:
   registry:
@@ -12,17 +15,25 @@ services:
     hostname: registry
     networks:
       rproxy:
+      servers-net:
+        ipv4_address: 192.168.59.16
     expose:
       - 5000
+      # Phase 3a: debug HTTP listener for Prometheus /metrics scrape.
+      # Backed by http.debug block in /nfs/dockermaster/docker/registry/config.yml
+      # mounted below at /etc/docker/registry/config.yml. See
+      # https://distribution.github.io/distribution/about/configuration/#http
+      - 5001
     volumes:
       - /nfs/dockermaster/docker/registry/data:/var/lib/registry
       - /nfs/dockermaster/docker/registry/auth:/auth:ro
+      - /nfs/dockermaster/docker/registry/config.yml:/etc/docker/registry/config.yml:ro
     environment:
       REGISTRY_STORAGE_DELETE_ENABLED: "true"
       REGISTRY_AUTH: htpasswd
       REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
       REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
-    restart: on-failure:5
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qS http://localhost:5000/v2/ 2>&1 | grep -q '200\\|401'"]
       interval: 10s

@@ -1,0 +1,84 @@
+services:
+  redis:
+    image: redis:8
+    command:
+      - /bin/sh
+      - -c
+      - redis-server --requirepass redispass
+    container_name: PaperlessNGX-REDIS
+    hostname: paper-redis
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    user: 1027:100
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping || exit 1"]
+    volumes:
+      - /var/services/homes/lamaral/docker/paperlessngx/redis:/data:rw
+    environment:
+      TZ: America/Denver
+    restart: on-failure:5
+
+  db:
+    image: postgres:18
+    container_name: PaperlessNGX-DB
+    hostname: paper-db
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "paperless", "-U", "paperlessuser"]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    volumes:
+      - /var/services/homes/lamaral/docker/paperlessngx/db:/var/lib/postgresql:rw
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperlessuser
+      POSTGRES_PASSWORD: ${PAPERLESS_DB_PASSWORD}
+    restart: on-failure:5
+
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: PaperlessNGX
+    hostname: paperless-ngx
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "-S", "--max-time", "2", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    ports:
+      - 8777:8000
+    volumes:
+      - /var/services/homes/lamaral/docker/paperlessngx/data:/usr/src/paperless/data:rw
+      - /var/services/homes/lamaral/docker/paperlessngx/media:/usr/src/paperless/media:rw
+      - /var/services/homes/lamaral/docker/paperlessngx/export:/usr/src/paperless/export:rw
+      - /var/services/homes/lamaral/docker/paperlessngx/consume:/usr/src/paperless/consume:rw
+      - /var/services/homes/lamaral/docker/paperlessngx/trash:/usr/src/paperless/trash:rw
+    environment:
+      PAPERLESS_REDIS: redis://:redispass@paper-redis:6379
+      PAPERLESS_DBENGINE: postgresql
+      PAPERLESS_DBHOST: paper-db
+      PAPERLESS_DBNAME: paperless
+      PAPERLESS_DBUSER: paperlessuser
+      PAPERLESS_DBPASS: ${PAPERLESS_DB_PASSWORD}
+      PAPERLESS_EMPTY_TRASH_DIR: ../trash
+      PAPERLESS_FILENAME_FORMAT: '{{ created_year }}/{{ correspondent }}/{{ document_type }}/{{ title }}'
+      PAPERLESS_OCR_ROTATE_PAGES_THRESHOLD: 6
+      PAPERLESS_TASK_WORKERS: 1
+      USERMAP_UID: 1027
+      USERMAP_GID: 100
+      PAPERLESS_TIME_ZONE: America/Denver
+      PAPERLESS_ADMIN_USER: lamaral
+      PAPERLESS_ADMIN_PASSWORD: ${PAPERLESS_ADMIN_PASSWORD}
+      PAPERLESS_URL: http://paperless-nas.home.lcamaral.com
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: http://paperless-nas.home.lcamaral.com
+      PAPERLESS_OCR_LANGUAGE: eng
+    restart: on-failure:5
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

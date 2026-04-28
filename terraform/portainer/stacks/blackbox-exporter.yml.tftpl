@@ -1,0 +1,59 @@
+name: blackbox-exporter
+
+# blackbox-exporter on dockermaster — Phase 3h.
+# Provides HTTP/ICMP/TCP/SSL/DNS probes for the Prometheus `blackbox_*` jobs.
+# Image pinned per generated/prometheus-thanos-monitoring/VERSIONS.md.
+#
+# Probe modules (http_2xx, http_2xx_strict, icmp, tcp_connect, ssl_expiry,
+# dns_lcamaral) are defined in blackbox.yml, injected via docker `configs:`
+# with inline content rendered from the `blackbox_config` template var by
+# terraform templatefile() at apply time. Same pattern as pihole-2/3 and
+# prometheus-1/2: change source -> stack diff -> Portainer redeploy. No
+# host filesystem coupling.
+#
+# NET_RAW capability is required for the icmp prober (raw socket pings).
+#
+# Static IP picked from 192.168.59.0/26 free pool (see stacks.tf header):
+#   .45 — blackbox-exporter
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+configs:
+  blackbox_yml:
+    content: |
+      ${indent(6, blackbox_config)}
+
+services:
+  blackbox-exporter:
+    image: quay.io/prometheus/blackbox-exporter:v0.28.0
+    hostname: blackbox-exporter
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.45
+    cap_add:
+      - NET_RAW
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
+      - '--web.listen-address=:9115'
+    configs:
+      - source: blackbox_yml
+        target: /etc/blackbox_exporter/config.yml
+        mode: 0644
+    expose:
+      - "9115"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9115/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "blackbox-exporter"
+      com.docker.service: "blackbox-exporter"
+      portainer.autodeploy: "false"

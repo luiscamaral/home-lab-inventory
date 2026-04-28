@@ -1,0 +1,47 @@
+name: cloudflare-tunnel-2
+
+# Second replica of the cloudflare tunnel (bologna) running on dockerserver-1.
+# Cloudflare load-balances across tunnel replicas automatically — this gives
+# active-active HA for inbound *.cf.lcamaral.com traffic.
+#
+# The rproxy bridge here is local to ds-1 (separate from the one on dm) and
+# hosts this cloudflared + rproxy-2. Docker DNS on this bridge resolves
+# `nginx-rproxy` to the local rproxy-2 container.
+
+networks:
+  rproxy:
+    name: rproxy
+    external: true
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  cloudflare:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflare-tunnel-2
+    command: tunnel --no-autoupdate --metrics 0.0.0.0:9080 run --token ${TUNNEL_TOKEN}
+    networks:
+      rproxy:
+      # Phase 3a: dual-home onto macvlan so Prometheus can reach :9080/metrics
+      servers-net:
+        ipv4_address: 192.168.59.31
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "cloudflared", "version"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "cloudflare-tunnel-2"
+      com.docker.service: "tunnel"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M

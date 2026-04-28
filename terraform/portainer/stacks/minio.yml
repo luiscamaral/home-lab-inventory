@@ -1,7 +1,8 @@
 name: minio
 
 networks:
-  rproxy:
+  servers-net:
+    name: docker-servers-net
     external: true
 
 services:
@@ -10,12 +11,20 @@ services:
     command: server /data --console-address ":9001"
     hostname: minio-dev
     networks:
-      rproxy:
+      servers-net:
+        ipv4_address: 192.168.59.17
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_SERVER_URL: https://s3.cf.lcamaral.com
       MINIO_BROWSER_REDIRECT_URL: https://minio.cf.lcamaral.com
+      MINIO_IDENTITY_OPENID_CONFIG_URL: https://keycloak.d.lcamaral.com/realms/homelab/.well-known/openid-configuration
+      MINIO_IDENTITY_OPENID_CLIENT_ID: minio
+      MINIO_IDENTITY_OPENID_CLIENT_SECRET: ${MINIO_OIDC_CLIENT_SECRET}
+      MINIO_IDENTITY_OPENID_DISPLAY_NAME: Login with Keycloak
+      MINIO_IDENTITY_OPENID_CLAIM_NAME: policy
+      MINIO_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC: "on"
+      MINIO_IDENTITY_OPENID_SCOPES: openid,email
     volumes:
       - /nfs/dockermaster/docker/MinIO/minio-data:/data
     healthcheck:
