@@ -69,7 +69,12 @@
   options:
     - name: NOTES
       value: |
-        Background: 2026-04-28 wrap-up flagged pihole-1/-2 401 auth-failure
-        spam with pihole-3 still healthy. Likely Pi-hole v6 rate-limit
-        which clears in 30 minutes. This 2-week follow-up confirms
-        recovery. If still failing, dig into pihole-1 LXC logs.
+        Updated 2026-04-28: ROOT CAUSE identified during the macvlan
+        diagnostic branch. ekofr/pihole-exporter:v1.2.0 is v5-only and
+        all three Pi-hole instances are v6 — the exporter hangs its
+        HTTP server in a retry loop against /admin/api.php which v6
+        returns 400 on. Pihole-exporter-3 appeared to work because it
+        served stale cached values. Real fix: swap exporter to
+        bazmonk/pihole6_exporter (separate workstream). This job will
+        keep failing until the swap lands; flip executionEnabled to
+        false at that point or delete the job entirely.
