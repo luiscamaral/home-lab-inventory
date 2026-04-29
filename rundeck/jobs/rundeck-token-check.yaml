@@ -1,0 +1,79 @@
+- name: rundeck-token-check
+  description: |
+    Monthly check of Rundeck API token expiration. Queries the postgres
+    auth_token table directly via docker exec into the postgres-rundeck
+    container; warns (job fails) when any non-expired admin token is
+    within 30 days of its expiration date. The Vault `api_token` field
+    backs Prometheus' rundeck scrape (when re-enabled with the
+    rundeck-prometheus-plugin) and any ad-hoc CLI scripts — keeping it
+    fresh prevents silent automation breakage.
+
+    Manual rotation procedure when this fires:
+      1. Log in https://rundeck.d.lcamaral.com (admin / Vault
+         secret/homelab/rundeck:admin_password).
+      2. Profile -> User API Tokens -> Generate Token (365d).
+      3. `vault kv patch secret/homelab/rundeck api_token=<NEW>` from a
+         host that has VAULT_TOKEN exported (or the laptop with
+         macOS Keychain `vault-root-token`).
+      4. `security add-generic-password -a "$USER" -s rundeck-api-token -w <NEW> -U`
+         on the laptop to refresh the Keychain copy.
+      5. Old token still works until natural expiration; revoke in
+         Rundeck UI when convenient.
+  loglevel: INFO
+  executionEnabled: true
+  scheduleEnabled: true
+  schedule:
+    time:
+      hour: '15'
+      minute: '0'
+      seconds: '0'
+    month: '*'
+    year: '*'
+    dayofmonth:
+      day: '1'
+  uuid: rundeck-token-check-monthly
+  group: maintenance
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+      - description: Query postgres-rundeck for impending token expiries
+        script: |-
+          #!/bin/bash
+          set -uo pipefail
+          # Direct DB query — Rundeck doesn't expose token expiration via
+          # API. We connect to postgres-rundeck via docker exec (the
+          # rundeck container has docker.sock mounted).
+          PGPW=$(docker exec rundeck printenv RUNDECK_DATABASE_PASSWORD 2>/dev/null || echo "")
+          if [ -z "$PGPW" ]; then
+              echo "Could not retrieve DB password — abort."
+              exit 2
+          fi
+          QUERY="SELECT name, expiration, (expiration - now())::interval AS time_left FROM auth_token WHERE expiration > now() ORDER BY expiration LIMIT 5;"
+          echo "=== Active tokens (not yet expired) ==="
+          docker exec -e PGPASSWORD="$PGPW" postgres-rundeck psql -U rundeck -d rundeck -c "$QUERY"
+          echo
+          # Count tokens that expire within 30 days
+          DUE_QUERY="SELECT count(*) FROM auth_token WHERE expiration > now() AND expiration < now() + interval '30 days';"
+          DUE=$(docker exec -e PGPASSWORD="$PGPW" postgres-rundeck psql -U rundeck -d rundeck -t -c "$DUE_QUERY" | tr -d ' \n')
+          echo "Tokens expiring within 30 days: $DUE"
+          # Also count truly expired tokens (could mean automation already broken)
+          STALE_QUERY="SELECT count(*) FROM auth_token WHERE expiration < now();"
+          STALE=$(docker exec -e PGPASSWORD="$PGPW" postgres-rundeck psql -U rundeck -d rundeck -t -c "$STALE_QUERY" | tr -d ' \n')
+          echo "Already-expired tokens still in DB: $STALE"
+          if [ "$DUE" -gt 0 ]; then
+              echo
+              echo "WARN — $DUE token(s) expire in less than 30 days."
+              echo "Rotate via the procedure in this job's description."
+              exit 1
+          fi
+          echo
+          echo "OK — no rotation needed this month."
+        keepgoingOnSuccess: false
+  options:
+    - name: NOTES
+      value: |
+        Vault paths touched on rotation:
+          secret/homelab/rundeck.api_token  (cleartext, used by automation)
+        macOS Keychain entries to refresh on rotation:
+          rundeck-api-token  (laptop only — homelab cron can't update this)
