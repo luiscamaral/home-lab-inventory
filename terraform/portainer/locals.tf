@@ -884,4 +884,66 @@ locals {
       ]
     }
   ])
+
+  # ──────────────────────────────────────────────
+  # Phase 5 (initial slice): cert-expiry alert rules
+  # ──────────────────────────────────────────────
+  # Rendered into both prometheus replicas at
+  # /etc/prometheus/rules/cert-expiry.yml. The TLS scrape targets in
+  # `blackbox_ssl_targets` already feed `probe_ssl_earliest_cert_expiry`
+  # — these rules turn that into actionable alerts. Two thresholds:
+  #   - Warning at 14 days remaining (leaves time for a calm renewal)
+  #   - Critical at 3 days OR already expired
+  # The 2026-04-29 incident (ha.home.lcamaral.com cert expired Mar 16
+  # and went unnoticed for 6 weeks) is exactly what these would catch.
+  # All `$` chars in Prometheus alert templates are doubled to `$$` so
+  # they survive Terraform's templatefile() interpolation and reach
+  # Prometheus's own Go template engine intact (which then resolves
+  # `$labels` and `$value` at alert-firing time).
+  prometheus_rules_yml = <<-EOT
+    groups:
+      - name: tls-certificates
+        interval: 5m
+        rules:
+          - alert: CertExpiringSoon
+            expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 14 and (probe_ssl_earliest_cert_expiry - time()) > 0
+            for: 1h
+            labels:
+              severity: warning
+              category: tls
+            annotations:
+              summary: "TLS cert for {{ $$labels.instance }} expires in less than 14 days"
+              description: |
+                Certificate served by {{ $$labels.instance }} expires in
+                {{ printf "%.1f" $$value }} days. Check pfSense ACME renewal
+                status and that the renewed cert propagated to nginx-rproxy.
+                Source-of-truth on pfSense: /conf/acme/<domain>.crt; deployed
+                copy: /nfs/dockermaster/docker/nginx-rproxy/config/cert/.
+          - alert: CertExpired
+            expr: (probe_ssl_earliest_cert_expiry - time()) <= 0
+            for: 5m
+            labels:
+              severity: critical
+              category: tls
+            annotations:
+              summary: "TLS cert for {{ $$labels.instance }} HAS EXPIRED"
+              description: |
+                Certificate served by {{ $$labels.instance }} has expired.
+                Browsers will refuse to load this URL. Pull the fresh cert
+                from pfSense (/conf/acme/<domain>.crt) to dockermaster
+                (/nfs/dockermaster/docker/nginx-rproxy/config/cert/) and
+                reload nginx-rproxy immediately.
+          - alert: CertProbeFailed
+            expr: probe_success{job="blackbox-ssl"} == 0
+            for: 15m
+            labels:
+              severity: warning
+              category: tls
+            annotations:
+              summary: "TLS probe to {{ $$labels.instance }} failing"
+              description: |
+                blackbox_exporter cannot establish a TLS handshake to
+                {{ $$labels.instance }} for the past 15 minutes. Either the
+                target is down or the listening cert/cipher set is broken.
+  EOT
 }
