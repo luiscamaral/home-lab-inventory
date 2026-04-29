@@ -140,6 +140,11 @@
 
 # ── Monitoring (Phase 1/2) ──────────────────────────────────────────
 # Used by Alertmanager --cluster.peer gossip + by Thanos Query.
+- host: grafana
+  domain: d.lcamaral.com
+  ip: 192.168.59.28
+  description: Grafana OSS — Phase 4 dashboards via nginx-rproxy. Upstream grafana.rproxy:3000.
+
 - host: alertmanager-1
   domain: d.lcamaral.com
   ip: 192.168.59.27

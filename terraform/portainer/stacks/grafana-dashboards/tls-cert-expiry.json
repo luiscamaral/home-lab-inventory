@@ -1,0 +1,59 @@
+{
+  "id": null,
+  "title": "TLS Cert Expiry",
+  "tags": ["tls", "homelab"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": {"from": "now-1h", "to": "now"},
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "Days remaining (per target)",
+      "targets": [
+        {
+          "expr": "(probe_ssl_earliest_cert_expiry - time()) / 86400",
+          "legendFormat": "{{instance}}",
+          "format": "table",
+          "instant": true,
+          "datasource": {"type": "prometheus", "uid": "thanos"}
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "red", "value": null},
+              {"color": "yellow", "value": 14},
+              {"color": "green", "value": 30}
+            ]
+          },
+          "unit": "d"
+        }
+      },
+      "transformations": [
+        {"id": "organize", "options": {"excludeByName": {"Time": true, "Value": false}, "renameByName": {"Value": "days remaining"}}}
+      ],
+      "datasource": {"type": "prometheus", "uid": "thanos"},
+      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 0}
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Days remaining over time",
+      "targets": [
+        {
+          "expr": "(probe_ssl_earliest_cert_expiry - time()) / 86400",
+          "legendFormat": "{{instance}}",
+          "datasource": {"type": "prometheus", "uid": "thanos"}
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "d", "min": 0, "max": 90}},
+      "datasource": {"type": "prometheus", "uid": "thanos"},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12}
+    }
+  ]
+}
