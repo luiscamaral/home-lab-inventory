@@ -70,6 +70,10 @@ configs:
   blackbox_tcp_targets:
     content: |
       ${indent(6, blackbox_tcp_targets)}
+  # Phase 5: cert-expiry alert rules (mirror of prometheus-1).
+  prometheus_rules_yml:
+    content: |
+      ${indent(6, prometheus_rules_yml)}
 
 services:
   prometheus-2:
@@ -122,6 +126,9 @@ services:
         mode: 0644
       - source: blackbox_tcp_targets
         target: /etc/prometheus/blackbox-targets/tcp-targets.json
+        mode: 0644
+      - source: prometheus_rules_yml
+        target: /etc/prometheus/rules/cert-expiry.yml
         mode: 0644
     restart: unless-stopped
     healthcheck:
