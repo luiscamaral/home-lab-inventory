@@ -957,9 +957,12 @@ resource "portainer_stack" "pihole_exporter_1" {
 
   stack_file_content = file("${path.module}/stacks/pihole-exporter-1.yml")
 
+  # Pi-hole v6 App Password (per-instance) — see Vault key
+  # `secret/homelab/pihole.pihole_1_app_password`. Generated via
+  # the Pi-hole web UI Settings → API → Configure App Password.
   env {
-    name  = "PIHOLE_PASSWORD"
-    value = data.vault_kv_secret_v2.pihole.data["admin_password"]
+    name  = "PIHOLE_API_KEY"
+    value = data.vault_kv_secret_v2.pihole.data["pihole_1_app_password"]
   }
 }
 
@@ -972,8 +975,8 @@ resource "portainer_stack" "pihole_exporter_2" {
   stack_file_content = file("${path.module}/stacks/pihole-exporter-2.yml")
 
   env {
-    name  = "PIHOLE_PASSWORD"
-    value = data.vault_kv_secret_v2.pihole.data["admin_password"]
+    name  = "PIHOLE_API_KEY"
+    value = data.vault_kv_secret_v2.pihole.data["pihole_2_app_password"]
   }
 }
 
@@ -986,8 +989,8 @@ resource "portainer_stack" "pihole_exporter_3" {
   stack_file_content = file("${path.module}/stacks/pihole-exporter-3.yml")
 
   env {
-    name  = "PIHOLE_PASSWORD"
-    value = data.vault_kv_secret_v2.pihole.data["admin_password"]
+    name  = "PIHOLE_API_KEY"
+    value = data.vault_kv_secret_v2.pihole.data["pihole_3_app_password"]
   }
 }
 
