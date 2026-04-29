@@ -996,7 +996,15 @@ resource "portainer_stack" "grafana" {
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/grafana.yml")
+  # Dashboard JSONs in stacks/grafana-dashboards/*.json get auto-rendered
+  # into Compose `configs:` blocks per file — no bind-mount, no manual scp.
+  # Add a dashboard: drop a JSON file in that dir, re-run `terraform apply`.
+  stack_file_content = templatefile("${path.module}/stacks/grafana.yml.tftpl", {
+    dashboards = {
+      for f in fileset("${path.module}/stacks/grafana-dashboards", "*.json") :
+      trimsuffix(f, ".json") => file("${path.module}/stacks/grafana-dashboards/${f}")
+    }
+  })
 
   env {
     name  = "GRAFANA_ADMIN_PASSWORD"
