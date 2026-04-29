@@ -1,9 +1,26 @@
 name: la-rundeck
 
+# realm.properties is the source of truth for Rundeck UI auth — Jetty
+# PropertyFileLoginModule reads it. Default container ships an
+# admin:admin entry; we override with a bcrypt-hashed password
+# rendered from Vault (`secret/homelab/rundeck`, key
+# `admin_password_bcrypt`). Cleartext stays in Vault as `admin_password`
+# for ops reference. The DataSourceLoginModule env vars from the
+# original config were silent no-ops (Rundeck OSS doesn't ship that
+# class) and have been removed.
+
 networks:
   servers-net:
     name: docker-servers-net
     external: true
+
+configs:
+  realm_properties:
+    content: |
+      # Managed by Terraform — do not edit on host.
+      # Format: <username>: <password>[,<role>...]
+      admin: ${realm_admin_line}
+      user: user,user
 
 services:
   rundeck:
@@ -15,18 +32,14 @@ services:
       RUNDECK_SERVER_UUID: 2356DEE1-1A12-463C-8ABB-D6A9F44161B4
       RUNDECK_DATABASE_DRIVER: org.postgresql.Driver
       RUNDECK_DATABASE_USERNAME: rundeck
-      RUNDECK_DATABASE_PASSWORD: ${RUNDECK_DB_PASSWORD}
+      RUNDECK_DATABASE_PASSWORD: $${RUNDECK_DB_PASSWORD}
       RUNDECK_DATABASE_URL: jdbc:postgresql://postgres-rundeck/rundeck?autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
       RUNDECK_GRAILS_URL: https://rundeck.d.lcamaral.com
       RUNDECK_SERVER_FORWARDED: true
-      RUNDECK_STORAGE_CONVERTER_1_CONFIG_PASSWORD: ${RUNDECK_STORAGE_PASSWORD}
-      RUNDECK_CONFIG_STORAGE_CONVERTER_1_CONFIG_PASSWORD: ${RUNDECK_STORAGE_PASSWORD}
+      RUNDECK_STORAGE_CONVERTER_1_CONFIG_PASSWORD: $${RUNDECK_STORAGE_PASSWORD}
+      RUNDECK_CONFIG_STORAGE_CONVERTER_1_CONFIG_PASSWORD: $${RUNDECK_STORAGE_PASSWORD}
       RUNDECK_PASSWORD_RESET_ENABLED: true
       RUNDECK_SECURITY_USEJAAS: true
-      RUNDECK_JAAS_LOGINMODULE_NAME: rundeckdb
-      RUNDECK_JAAS_LOGINMODULE_CONF_RUNDECKDB_0: org.rundeck.jaas.jetty.DataSourceLoginModule required
-      RUNDECK_JAAS_LOGINMODULE_CONF_RUNDECKDB_1: debug="true"
-      RUNDECK_JAAS_LOGINMODULE_CONF_RUNDECKDB_2: dataSourceName="dataSource"
     restart: always
     expose:
       - 4440
@@ -37,6 +50,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /nfs/dockermaster/docker/rundeck/data:/home/rundeck/server/data
       - /nfs/dockermaster/docker/rundeck/container-plugins:/home/rundeck/container-plugins
+    configs:
+      - source: realm_properties
+        target: /home/rundeck/server/config/realm.properties
+        mode: 0644
     depends_on:
       postgres:
         condition: service_healthy
@@ -65,7 +82,7 @@ services:
     environment:
       POSTGRES_DB: rundeck
       POSTGRES_USER: rundeck
-      POSTGRES_PASSWORD: ${RUNDECK_DB_PASSWORD}
+      POSTGRES_PASSWORD: $${RUNDECK_DB_PASSWORD}
     volumes:
       - /nfs/dockermaster/docker/rundeck/dbdata:/var/lib/postgresql/data
     healthcheck:

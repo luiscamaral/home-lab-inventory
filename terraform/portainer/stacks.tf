@@ -267,7 +267,20 @@ resource "portainer_stack" "rundeck" {
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/rundeck.yml")
+  stack_file_content = templatefile("${path.module}/stacks/rundeck.yml.tftpl", {
+    # admin user line for realm.properties: MD5-hashed password from
+    # Vault followed by the role list. Cleartext stays in Vault as
+    # `admin_password` for ops reference; bcrypt hash also kept in
+    # Vault as `admin_password_bcrypt` for the day we either build
+    # realm.properties into the rundeck image or land a bind-mount
+    # mechanism that doesn't traverse Compose's `$` interpolation.
+    # MD5 is cryptographically weaker than bcrypt but Jetty's
+    # PropertyFileLoginModule supports it natively, the format
+    # contains no `$` characters (so it survives Portainer + Compose
+    # interpolation), and it's still one-way — strictly better than
+    # the upstream default of plaintext `admin:admin`.
+    realm_admin_line = "${data.vault_kv_secret_v2.rundeck.data["admin_password_md5"]},user,admin"
+  })
 
   env {
     name  = "RUNDECK_DB_PASSWORD"

@@ -363,25 +363,16 @@ locals {
             labels:
               instance: pihole-3
 
-      # ── Phase 3f: Rundeck native /metrics endpoint ──────────────────
-      # Scrape directly at the rundeck container IP (192.168.59.22:4440)
-      # to avoid going through nginx-rproxy for an internal-only metric.
-      # Bearer token comes from a dedicated read-only Rundeck API token
-      # (Vault: secret/homelab/rundeck, field api_token), rendered to
-      # /etc/prometheus/tokens/rundeck_api via docker `configs:` (see
-      # prometheus.yml.tftpl). Same wiring pattern as ha_token /
-      # watchtower_token; will migrate to a Vault-agent sidecar when
-      # the shared template-renderer pattern lands.
-      - job_name: rundeck
-        scrape_interval: 60s
-        metrics_path: /api/40/metrics/metrics
-        bearer_token_file: /etc/prometheus/tokens/rundeck_api
-        static_configs:
-          - targets: ['192.168.59.22:4440']
-            labels:
-              instance: rundeck-1
-
-      # ── Phase 3f: Twingate (no scrape — see note) ───────────────────
+      # ── Phase 3f: Rundeck (no scrape — see note) ────────────────────
+      # Rundeck OSS 5.x exposes Dropwizard metrics at /metrics/metrics
+      # but gates that endpoint behind session-cookie auth — it does
+      # NOT accept the API bearer token. The /api/<v>/metrics/metrics
+      # path that older Rundeck versions used returns 404. So our
+      # original `bearer_token_file` scrape can't be made to work
+      # without installing the third-party rundeck-prometheus-plugin.
+      # Coverage gap is small: blackbox-tcp already probes :4440 for
+      # liveness, and the API token (Vault `api_token`) is preserved
+      # for ad-hoc CLI use. Re-enable this job once the plugin lands.
       # The connector exposes /metrics natively (TWINGATE_METRICS_PORT
       # set in twingate-a.yml / twingate-b.yml) but binds [::]:9999 and
       # our macvlan has IPv6 fully unloaded, so the listener never
@@ -673,18 +664,7 @@ locals {
             labels:
               instance: pihole-3
 
-      # ── Phase 3f: Rundeck native /metrics ───────────────────────────
-      # Mirror of replica-A job. See replica-A comment for context.
-      - job_name: rundeck
-        scrape_interval: 60s
-        metrics_path: /api/40/metrics/metrics
-        bearer_token_file: /etc/prometheus/tokens/rundeck_api
-        static_configs:
-          - targets: ['192.168.59.22:4440']
-            labels:
-              instance: rundeck-1
-
-      # ── Phase 3f: Twingate (no scrape — see replica-A note) ─────────
+      # ── Phase 3f: Rundeck (no scrape — see replica-A note) ──────────
 
       # ── Phase 3f: blackbox TCP probes ───────────────────────────────
       # Mirror of replica-A job. See replica-A comment for context.
