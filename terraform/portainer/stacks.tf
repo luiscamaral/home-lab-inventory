@@ -982,6 +982,36 @@ resource "portainer_stack" "pihole_exporter_2" {
   }
 }
 
+# ──────────────────────────────────────────────
+# Phase 4: Grafana on dockermaster
+#
+# Federated read of Thanos Query (192.168.59.26:10902) — single
+# datasource serving both prometheus replicas + thanos-store-gw history.
+# OIDC SSO via the `grafana` client in the Keycloak `homelab` realm.
+# Static break-glass admin password from Vault.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "grafana" {
+  name            = "grafana"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/grafana.yml")
+
+  env {
+    name  = "GRAFANA_ADMIN_PASSWORD"
+    value = data.vault_kv_secret_v2.grafana_admin.data["password"]
+  }
+  env {
+    name  = "GRAFANA_OIDC_CLIENT_ID"
+    value = data.vault_kv_secret_v2.grafana_oidc.data["client_id"]
+  }
+  env {
+    name  = "GRAFANA_OIDC_CLIENT_SECRET"
+    value = data.vault_kv_secret_v2.grafana_oidc.data["client_secret"]
+  }
+}
+
 resource "portainer_stack" "pihole_exporter_3" {
   name            = "pihole-exporter-3"
   endpoint_id     = portainer_environment.nas.id

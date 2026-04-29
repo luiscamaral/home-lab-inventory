@@ -66,6 +66,23 @@ data "vault_kv_secret_v2" "keycloak_clients" {
   name  = "homelab/keycloak/clients"
 }
 
+# Phase 4 — Grafana admin password (for static admin user; bypass for
+# OIDC SSO failures). Bootstrap-only — once Grafana's internal DB has
+# additional admin users, this can rotate without disruption.
+data "vault_kv_secret_v2" "grafana_admin" {
+  mount = "secret"
+  name  = "homelab/grafana/admin"
+}
+
+# Phase 4 — Grafana OIDC client credentials. Matches the Keycloak
+# `grafana` client in the `homelab` realm (created via Keycloak admin
+# API; not Terraform-provider-managed because the keycloak/keycloak
+# Terraform provider would conflict with the live realm).
+data "vault_kv_secret_v2" "grafana_oidc" {
+  mount = "secret"
+  name  = "homelab/grafana/oidc"
+}
+
 data "vault_kv_secret_v2" "registry" {
   mount = "secret"
   name  = "homelab/registry"
