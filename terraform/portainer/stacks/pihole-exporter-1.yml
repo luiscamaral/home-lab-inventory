@@ -5,16 +5,20 @@ name: pihole-exporter-1
 # both prometheus-1 (192.168.59.19) and prometheus-2 (192.168.4.237) can
 # reach it without crossing the LXC's bridge boundary.
 #
-# Image pinned per generated/prometheus-thanos-monitoring/VERSIONS.md.
-# Password injected via Portainer `env { PIHOLE_PASSWORD }` from Vault
-# (`secret/homelab/pihole`, key `admin_password`) — see stacks.tf. We
-# avoid templatefile() interpolation so a `$` in the rotated password
-# can't be re-evaluated by Compose (per memory feedback_env_file_credentials.md).
-# One shared password across all three pihole instances; we still split
-# the exporter into 3 stacks for separate lifecycles and `instance:` labels.
+# Image: amonacoos/pihole6_exporter — Pi-hole v6 native exporter.
+# Replaced ekofr/pihole-exporter:v1.2.0 (v5-only — would hang HTTP server
+# in retry loop against /admin/api.php which v6 returns 400 on).
+# See memory feedback_pihole_v6_exporter_incompat.md.
+#
+# Auth uses Pi-hole "App Password" (not the admin/UI password). Each
+# pihole has its own app password in Vault — generated interactively
+# in each Pi-hole web UI under Settings → API → Configure App Password.
+# Password injected via Portainer `env { PIHOLE_API_KEY }` to keep
+# `$` chars safe through Compose interpolation.
 #
 # IP allocation in 192.168.59.0/26 (free pool: .41,.42,.45-.47,.52,.53):
 #   192.168.59.41 -> pihole-exporter-1
+# Listens on port 9666 (was 9617 with the v5 exporter).
 
 networks:
   servers-net:
@@ -23,20 +27,20 @@ networks:
 
 services:
   pihole-exporter:
-    image: ekofr/pihole-exporter:v1.2.0
+    image: amonacoos/pihole6_exporter:latest
     hostname: pihole-exporter-1
     networks:
       servers-net:
         ipv4_address: 192.168.59.41
     environment:
-      PIHOLE_HOSTNAME: 192.168.100.254
-      PIHOLE_PASSWORD: ${PIHOLE_PASSWORD}
-      PORT: "9617"
-      INTERVAL: 30s
+      PIHOLE_HOST: 192.168.100.254
+      PIHOLE_API_KEY: ${PIHOLE_API_KEY}
+      PIHOLE_SCHEME: http
+      PIHOLE_PORT: "80"
     restart: unless-stopped
     healthcheck:
-      # ekofr/pihole-exporter is distroless — no shell, no wget/curl. Disable
-      # health-checking entirely; Prometheus scrape itself confirms liveness.
+      # Distroless image — disable healthcheck; Prometheus scrape itself
+      # confirms liveness.
       disable: true
       start_period: 30s
     labels:

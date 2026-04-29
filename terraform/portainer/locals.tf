@@ -353,13 +353,13 @@ locals {
       - job_name: pihole
         scrape_interval: 30s
         static_configs:
-          - targets: ['192.168.59.41:9617']
+          - targets: ['192.168.59.41:9666']
             labels:
               instance: pihole-1
-          - targets: ['192.168.59.42:9617']
+          - targets: ['192.168.59.42:9666']
             labels:
               instance: pihole-2
-          - targets: ['192.168.4.240:9617']
+          - targets: ['192.168.4.240:9666']
             labels:
               instance: pihole-3
 
@@ -654,13 +654,13 @@ locals {
       - job_name: pihole
         scrape_interval: 30s
         static_configs:
-          - targets: ['192.168.59.41:9617']
+          - targets: ['192.168.59.41:9666']
             labels:
               instance: pihole-1
-          - targets: ['192.168.59.42:9617']
+          - targets: ['192.168.59.42:9666']
             labels:
               instance: pihole-2
-          - targets: ['192.168.4.240:9617']
+          - targets: ['192.168.4.240:9666']
             labels:
               instance: pihole-3
 

@@ -4,24 +4,18 @@ name: pihole-exporter-3
 # 192.168.4.236). Runs on the NAS in home-net macvlan to stay close to
 # the pihole instance and survive a Proxmox outage independently.
 #
-# Image pinned per generated/prometheus-thanos-monitoring/VERSIONS.md.
-# Same shared password as the other two exporters, injected via
-# Portainer `env { PIHOLE_PASSWORD }` (see pihole-exporter-1.yml header).
+# Image: amonacoos/pihole6_exporter (Pi-hole v6 native).
+# Auth: Pi-hole "App Password" via Portainer env { PIHOLE_API_KEY },
+# sourced from Vault `secret/homelab/pihole.pihole_3_app_password`.
+# See pihole-exporter-1.yml for the full rationale.
 #
 # Macvlan-only containers cannot use Docker's embedded DNS (127.0.0.11) —
 # explicit `dns:` mirrors the pihole-3 / prometheus-2 pattern, per
 # project memory feedback_macvlan_dns.md.
 #
 # IP allocation: home-net's IPRange is 192.168.4.232/29 (.232-.239),
-# fully consumed by pihole-3, prometheus-2, alertmanager-2, thanos-
-# sidecar-2 and the NAS host aux-address. The macvlan parent is the
-# 192.168.4.0/24 HOME VLAN, so we allocate outside the IPRange but
-# inside the parent — 192.168.4.240. This sits above the existing pool
-# and below the DHCP range; pfSense static reservations confirm .240 is
-# unused.
-#
-# IP allocation in 192.168.4.0/24 (HOME VLAN):
-#   192.168.4.240 -> pihole-exporter-3 (outside home-net IPRange .232/29)
+# fully consumed. The macvlan parent is 192.168.4.0/24 (HOME VLAN), so
+# we allocate outside the IPRange but inside the parent — 192.168.4.240.
 
 networks:
   home-net:
@@ -30,7 +24,7 @@ networks:
 
 services:
   pihole-exporter:
-    image: ekofr/pihole-exporter:v1.2.0
+    image: amonacoos/pihole6_exporter:latest
     hostname: pihole-exporter-3
     networks:
       home-net:
@@ -39,14 +33,12 @@ services:
       - 192.168.4.1
       - 1.1.1.1
     environment:
-      PIHOLE_HOSTNAME: 192.168.4.236
-      PIHOLE_PASSWORD: ${PIHOLE_PASSWORD}
-      PORT: "9617"
-      INTERVAL: 30s
+      PIHOLE_HOST: 192.168.4.236
+      PIHOLE_API_KEY: ${PIHOLE_API_KEY}
+      PIHOLE_SCHEME: http
+      PIHOLE_PORT: "80"
     restart: unless-stopped
     healthcheck:
-      # ekofr/pihole-exporter is distroless — no shell, no wget/curl. Disable
-      # health-checking entirely; Prometheus scrape itself confirms liveness.
       disable: true
       start_period: 30s
     labels:
