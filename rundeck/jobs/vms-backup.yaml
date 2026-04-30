@@ -1,0 +1,77 @@
+- defaultTab: nodes
+  description: ''
+  executionEnabled: true
+  id: 1be173e2-c945-4ab7-9bc7-24dbf79dec35
+  loglevel: INFO
+  maxMultipleExecutions: '1'
+  name: VMs-Backup
+  nodeFilterEditable: false
+  nodefilters:
+    dispatch:
+      excludePrecedence: true
+      keepgoing: false
+      rankOrder: ascending
+      successOnEmptyNodeFilter: false
+      threadcount: '1'
+    filter: Xenserver.*
+  nodesSelectedByDefault: true
+  plugins:
+    ExecutionLifecycle:
+      killhandler:
+        killChilds: 'true'
+  scheduleEnabled: true
+  sequence:
+    commands:
+    - autoSecureInput: 'false'
+      passSecureInput: 'false'
+      script: "#!/bin/bash\n\n# Configuration\nTARGET_DIR=\"/snapshots/BACKUPS\"\n\
+        VM_LABELS=(\"Omada Controller\" \"UniFi-Controller\" \"lalnxdev1\" \"rootmaster\"\
+        \ \"dogenode\" \"unstable\" \"lab001\" \"ha\")  # Add your VM labels here\n\
+        \n# Create target directory if not exists\nmkdir -p \"$TARGET_DIR\"\n\n# Function\
+        \ to check task status\ncheck_task_status() {\n    local task_uuid=\"$1\"\n\
+        \    local status=$(xe task-list uuid=$task_uuid --minimal params=status)\n\
+        \    local progress=$(xe task-list uuid=$task_uuid --minimal params=progress)\n\
+        \    \n    while [ \"$status\" == \"pending\" ]; do\n        echo \" - Progress:\
+        \ $(echo \"$progress * 100\" | bc)%\"\n        sleep 10\n        status=$(xe\
+        \ task-list uuid=$task_uuid --minimal params=status)\n        progress=$(xe\
+        \ task-list uuid=$task_uuid --minimal params=progress)\n    done\n    \n \
+        \   if [ \"$status\" == \"success\" ] || [ -z \"$status\" ]; then\n      \
+        \  echo \" - Export completed successfully!\"\n    else\n        echo \" -\
+        \ Export failed with status: $status\"\n        exit 1\n    fi\n}\n\nperiod_days=10\n\
+        \n# Export VMs\nfor vm_label in \"${VM_LABELS[@]}\"; do\n    echo \"Processing\
+        \ VM: $vm_label\"\n    \n    # Get VM UUID\n    vm_uuid=$(xe vm-list name-label=\"\
+        $vm_label\" --minimal)\n    \n    # Check if VM exists\n    if [ -z \"$vm_uuid\"\
+        \ ]; then\n        echo \"Error: VM with label '$vm_label' not found\"\n \
+        \       exit 1\n    fi\n    \n    # Check for multiple UUIDs (duplicate names)\n\
+        \    if [[ $vm_uuid == *\",\"* ]]; then\n        echo \"Error: Multiple VMs\
+        \ found with label '$vm_label'\"\n        exit 1\n    fi\n    \n    # Check\
+        \ current power state\n    power_state=$(xe vm-param-get uuid=$vm_uuid param-name=power-state)\n\
+        \    was_suspended=false\n\n    # Suspend if running\n    if [ \"$power_state\"\
+        \ == \"running\" ]; then\n        echo \" - VM is running, suspending...\"\
+        \n        if ! xe vm-shutdown uuid=$vm_uuid; then\n            echo \" - Failed\
+        \ to suspend VM!\"\n            exit 1\n        fi\n        was_suspended=true\n\
+        \    fi\n\n    # Generate filename (replace spaces with hyphens)\n    filename=\"\
+        $TARGET_DIR/$(echo \"$vm_label\" | tr '[:upper:]' '[:lower:]' | tr ' ' '-').xva\"\
+        \n    \n    if [ -f \"$filename\" ]; then\n        # If the file exists and\
+        \ is older than $days\n        if [[ $(find \"$filename\" -type f -mtime +\"\
+        $period_days\") ]]; then\n            mv \"$filename\" \"${filename}.bkp\"\
+        \n        else\n            # If the file exists but is newer than $days\n\
+        \            echo \" - A $filename file already exist and is newer than $period_days\
+        \ days.\"\n            continue\n        fi\n    fi\n\n    echo \" - Starting\
+        \ export to: $filename\"\n    \n    # Start export and get task UUID\n   \
+        \ xe vm-export uuid=$vm_uuid filename=\"$filename\" compress=false include-snapshots=false\
+        \ 2>&1 >/dev/null &\n    sleep 10\n    task_uuid=$(xe task-list name-label=\"\
+        Export of VM\" name-description=$vm_uuid params=uuid --minimal)\n    \n  \
+        \  # Check if task started successfully\n    if [ -z \"$task_uuid\" ]; then\n\
+        \        echo \" - Failed to start export task\"\n        exit 1\n    fi\n\
+        \    \n    # Monitor export task\n    check_task_status \"$task_uuid\" ||\
+        \ task_failed=1\n\n    # Resume if suspended\n    if [ \"$was_suspended\"\
+        \ = true ]; then\n        echo \" - Resuming VM...\"\n        if ! xe vm-start\
+        \ uuid=$vm_uuid; then\n            echo \" - Failed to resume VM!\"\n    \
+        \        exit 1\n        fi\n    fi\n\n    # Exit if task failed after cleanup\n\
+        \    if [ -n \"$task_failed\" ]; then\n        exit 1\n    fi\ndone\n\necho\
+        \ \"All exports completed successfully!\""
+    keepgoing: false
+    strategy: node-first
+  user: admin
+  uuid: 1be173e2-c945-4ab7-9bc7-24dbf79dec35

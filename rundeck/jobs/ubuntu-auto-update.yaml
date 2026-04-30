@@ -1,0 +1,71 @@
+- defaultTab: nodes
+  description: ''
+  executionEnabled: true
+  id: 9e5ebe53-ce3a-41d6-a8a0-cf3d0a6c3fb8
+  loglevel: INFO
+  name: Ubuntu Auto-Update
+  nodeFilterEditable: false
+  nodefilters:
+    dispatch:
+      excludePrecedence: true
+      keepgoing: false
+      rankOrder: ascending
+      successOnEmptyNodeFilter: false
+      threadcount: '1'
+    filter: 'osName: /Ubuntu/ tags: /server/'
+  nodesSelectedByDefault: true
+  options:
+  - hidden: true
+    name: discord_key
+    required: true
+    secure: true
+    storagePath: keys/project/HomeNet/discord_webhook_key
+    valueExposed: true
+  plugins:
+    ExecutionLifecycle: {}
+  schedule:
+    month: '*'
+    time:
+      hour: '01'
+      minute: '36'
+      seconds: '0'
+    weekday:
+      day: '1,4,6'
+    year: '*'
+  scheduleEnabled: true
+  sequence:
+    commands:
+    - autoSecureInput: 'false'
+      passSecureInput: 'false'
+      script: "#!/bin/bash\n\n# Rundeck script to update Ubuntu servers and alert\
+        \ on failures or reboots.\n\nset -euo pipefail # Fail on errors, unset vars,\
+        \ and pipe failures\n\nDEBIAN_FRONTEND=noninteractive\n\n# Function to send\
+        \ a Discord message using curl\nsend_discord_message() {\n  local message_content=\"\
+        $1\"\n\n  # Get webhook URL from Rundeck Key Storage\n  WEBHOOK_KEY=\"@option.discord_key@\"\
+        \n  WEBHOOK_URL=https://discord.com/api/webhooks/$WEBHOOK_KEY\n\n  NODE_NAME=\"\
+        @node.name@\"\n  JOB_NAME=\"@job.name@\"\n  JOB_URL=\"@job.url@\" # URL to\
+        \ the Rundeck job execution\n\n  if [ -z \"WEBHOOK_KEY\" ]; then\n    echo\
+        \ \"Error: Webhook KEY not provided to send_discord_message function.\"\n\
+        \    return 1 # Indicate failure\n  fi\n\n  message=\"Rundeck Job Alert: ${message_content}\\\
+        nNode Name: ${NODE_NAME}\\nJob Name: ${JOB_NAME}\\nExecution Details: ${JOB_URL}\"\
+        \n\n  curl -H \"Content-Type: application/json\" -d \"{\\\"content\\\": \\\
+        \"$message\\\"}\" \"$WEBHOOK_URL\"\n  if [ $? -ne 0 ]; then\n    echo \"Error\
+        \ sending Discord message. curl command failed.\"\n    return 1 # Indicate\
+        \ curl command failure\n  fi\n  return 0 # Indicate success\n}\n\n\n# ---\
+        \ Main script starts here ---\n\n# Update package lists\nsudo apt-get update\n\
+        \n# Upgrade packages\nsudo apt-get -y dist-upgrade\n\n# Check for errors\n\
+        if [ $? -ne 0 ]; then\n  MESSAGE=\"ERROR: Package upgrade failed.\"\n  echo\
+        \ $MESSAGE\n\n  # Send message\n  send_discord_message \"$MESSAGE\"\n  exit\
+        \ 1 # Exit with error code to signal failure in Rundeck\nfi\n\n# Check if\
+        \ a reboot is required\nif [ -f /var/run/reboot-required ]; then\n  MESSAGE=\"\
+        WARNING: System reboot required.\"\n  echo $MESSAGE\n  \n  # Send message\n\
+        \  send_discord_message \"$MESSAGE\"\n\n  #Important: Do NOT reboot from this\
+        \ script, as it will terminate the Rundeck job.\n  #Instead, create a separate\
+        \ Rundeck job to handle reboots,\n  #that can be triggered based on the warning.\n\
+        fi\n\necho \"SUCCESS: Server update completed.\"\nexit 0 # Exit with success\
+        \ code"
+    keepgoing: false
+    strategy: node-first
+  timeZone: America/Denver
+  user: admin
+  uuid: 9e5ebe53-ce3a-41d6-a8a0-cf3d0a6c3fb8

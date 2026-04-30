@@ -1,5 +1,4 @@
-- name: pihole-auth-check
-  description: |
+- description: |
     One-time follow-up scheduled 2026-05-12 to verify pihole-exporter-1
     and pihole-exporter-2 have recovered from the 401 auth-failure spam
     observed 2026-04-28. Probes all 3 pihole-exporters; fails the job
@@ -7,74 +6,79 @@
 
     Failed runs are visible in the Rundeck UI under Job History; wire up
     SMTP via RUNDECK_MAIL_* env vars later if you want push alerts.
-  loglevel: INFO
   executionEnabled: true
-  scheduleEnabled: true
+  group: maintenance
+  id: pihole-auth-check-2026-05-12
+  loglevel: INFO
+  name: pihole-auth-check
+  nodeFilterEditable: true
+  options:
+  - name: NOTES
+    value: |
+      Updated 2026-04-28: ROOT CAUSE identified during the macvlan
+      diagnostic branch. ekofr/pihole-exporter:v1.2.0 is v5-only and
+      all three Pi-hole instances are v6 — the exporter hangs its
+      HTTP server in a retry loop against /admin/api.php which v6
+      returns 400 on. Pihole-exporter-3 appeared to work because it
+      served stale cached values. Real fix: swap exporter to
+      bazmonk/pihole6_exporter (separate workstream). This job will
+      keep failing until the swap lands; flip executionEnabled to
+      false at that point or delete the job entirely.
+  plugins:
+    ExecutionLifecycle: null
   schedule:
+    dayofmonth:
+      day: '12'
+    month: '5'
     time:
       hour: '15'
       minute: '0'
       seconds: '0'
-    month: '5'
     year: '2026'
-    dayofmonth:
-      day: '12'
-  uuid: pihole-auth-check-2026-05-12
-  group: maintenance
+  scheduleEnabled: true
   sequence:
+    commands:
+    - description: Probe pihole-exporters + Thanos up{job=pihole}
+      script: |-
+        #!/bin/bash
+        set -uo pipefail
+        DOWN=0
+        echo "=== Direct probes (HTTP 200 expected) ==="
+        for entry in "192.168.59.41:pihole-1" "192.168.59.42:pihole-2" "192.168.4.240:pihole-3"; do
+          IP="${entry%:*}"
+          NAME="${entry#*:}"
+          CODE=$(curl -sk -m 5 -o /dev/null -w "%{http_code}" "http://$IP:9617/metrics")
+          echo "  $NAME ($IP:9617): HTTP $CODE"
+          [ "$CODE" != "200" ] && DOWN=$((DOWN+1))
+        done
+        echo
+        echo "=== Thanos federated up{job=pihole} ==="
+        THANOS_RESP=$(curl -sk -m 8 -G --data-urlencode 'query=up{job="pihole"}' --data-urlencode 'dedup=false' http://192.168.59.26:10902/api/v1/query)
+        echo "$THANOS_RESP" | python3 -c "
+        import json, sys
+        d = json.load(sys.stdin)
+        for r in d['data']['result']:
+            m = r['metric']
+            print(f\"  replica={m.get('replica','?')} instance={m.get('instance','?'):10s} up={r['value'][1]}\")"
+        THANOS_DOWN=$(echo "$THANOS_RESP" | python3 -c "
+        import json, sys
+        d = json.load(sys.stdin)
+        print(sum(1 for r in d['data']['result'] if r['value'][1] != '1'))")
+        echo
+        echo "Direct probes failing: $DOWN"
+        echo "Thanos series with up != 1: $THANOS_DOWN"
+        if [ "$DOWN" -gt 0 ] || [ "$THANOS_DOWN" -gt 0 ]; then
+          echo
+          echo "FAIL — pihole-exporter coverage incomplete."
+          echo "Likely candidates:"
+          echo "  - Pi-hole v6 rate-limit lockout still active (auth 401)"
+          echo "  - Pi-hole admin password rotated on pihole-1 / pihole-2"
+          echo "  - macvlan transient network failure"
+          echo "Check container logs: docker logs --tail 30 pihole-exporter-1-pihole-exporter-1"
+          exit 1
+        fi
+        echo "PASS — all 3 pihole-exporters healthy on both replicas."
     keepgoing: false
     strategy: node-first
-    commands:
-      - description: Probe pihole-exporters + Thanos up{job=pihole}
-        script: |-
-          #!/bin/bash
-          set -uo pipefail
-          DOWN=0
-          echo "=== Direct probes (HTTP 200 expected) ==="
-          for entry in "192.168.59.41:pihole-1" "192.168.59.42:pihole-2" "192.168.4.240:pihole-3"; do
-            IP="${entry%:*}"
-            NAME="${entry#*:}"
-            CODE=$(curl -sk -m 5 -o /dev/null -w "%{http_code}" "http://$IP:9617/metrics")
-            echo "  $NAME ($IP:9617): HTTP $CODE"
-            [ "$CODE" != "200" ] && DOWN=$((DOWN+1))
-          done
-          echo
-          echo "=== Thanos federated up{job=pihole} ==="
-          THANOS_RESP=$(curl -sk -m 8 -G --data-urlencode 'query=up{job="pihole"}' --data-urlencode 'dedup=false' http://192.168.59.26:10902/api/v1/query)
-          echo "$THANOS_RESP" | python3 -c "
-          import json, sys
-          d = json.load(sys.stdin)
-          for r in d['data']['result']:
-              m = r['metric']
-              print(f\"  replica={m.get('replica','?')} instance={m.get('instance','?'):10s} up={r['value'][1]}\")"
-          THANOS_DOWN=$(echo "$THANOS_RESP" | python3 -c "
-          import json, sys
-          d = json.load(sys.stdin)
-          print(sum(1 for r in d['data']['result'] if r['value'][1] != '1'))")
-          echo
-          echo "Direct probes failing: $DOWN"
-          echo "Thanos series with up != 1: $THANOS_DOWN"
-          if [ "$DOWN" -gt 0 ] || [ "$THANOS_DOWN" -gt 0 ]; then
-            echo
-            echo "FAIL — pihole-exporter coverage incomplete."
-            echo "Likely candidates:"
-            echo "  - Pi-hole v6 rate-limit lockout still active (auth 401)"
-            echo "  - Pi-hole admin password rotated on pihole-1 / pihole-2"
-            echo "  - macvlan transient network failure"
-            echo "Check container logs: docker logs --tail 30 pihole-exporter-1-pihole-exporter-1"
-            exit 1
-          fi
-          echo "PASS — all 3 pihole-exporters healthy on both replicas."
-        keepgoingOnSuccess: false
-  options:
-    - name: NOTES
-      value: |
-        Updated 2026-04-28: ROOT CAUSE identified during the macvlan
-        diagnostic branch. ekofr/pihole-exporter:v1.2.0 is v5-only and
-        all three Pi-hole instances are v6 — the exporter hangs its
-        HTTP server in a retry loop against /admin/api.php which v6
-        returns 400 on. Pihole-exporter-3 appeared to work because it
-        served stale cached values. Real fix: swap exporter to
-        bazmonk/pihole6_exporter (separate workstream). This job will
-        keep failing until the swap lands; flip executionEnabled to
-        false at that point or delete the job entirely.
+  user: admin
+  uuid: pihole-auth-check-2026-05-12

@@ -1,0 +1,90 @@
+- defaultTab: nodes
+  description: Replicate calibre configuration to calibre web
+  executionEnabled: true
+  id: 682e675a-4ec3-435d-80e5-288c8cd1a316
+  loglevel: INFO
+  name: Calibre replication to Calibre-Web
+  nodeFilterEditable: false
+  nodefilters:
+    dispatch:
+      excludePrecedence: true
+      keepgoing: false
+      rankOrder: ascending
+      successOnEmptyNodeFilter: false
+      threadcount: '1'
+    filter: 'name: Dockermaster.local '
+  nodesSelectedByDefault: true
+  plugins:
+    ExecutionLifecycle: {}
+  schedule:
+    month: '*'
+    time:
+      hour: '22'
+      minute: '10'
+      seconds: '0'
+    weekday:
+      day: '*'
+    year: '*'
+  scheduleEnabled: true
+  sequence:
+    commands:
+    - autoSecureInput: 'false'
+      description: Replicate configuration and libraries
+      passSecureInput: 'false'
+      script: |+
+        #!/bin/bash
+
+        # Rundeck Job: Calibre replication to Calibre-Web
+        # Description: Replicate calibre files to the calibre-web folders
+        # Author: Luis Amaral
+        # Date: 2025-04-26
+        # Environment: Production
+
+        # Set strict error handling
+        set -euo pipefail
+
+        # Logging function
+        log() {
+            echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
+        }
+
+        # Start the script
+        log "Starting Rundeck job..."
+
+        # Define variables
+        TARGET_ENV="production"
+        CALIBRE_CONFIG_PATH="/nfs/calibre/config"
+        CALIBRE_WEB_CONFIG_PATH="/nfs/calibre/calibre-web/config"
+        CALIBRE_LIBRARY_PATH="/nfs/calibre/Library"
+        CALIBRE_WEB_LIBRARY_PATH="/nfs/calibre/calibre-web/Library"
+
+        # Check if running in the correct environment
+        if [ "$TARGET_ENV" != "production" ]; then
+            log "This script is intended for the production environment only."
+            exit 1
+        fi
+
+        # Execute config replication
+        log "Executing config replication to $CALIBRE_WEB_CONFIG_PATH"
+        rsync -a -v --partial --info=progress2 --exclude=".cache" $CALIBRE_CONFIG_PATH/ $CALIBRE_WEB_CONFIG_PATH
+
+        # Replicate Libraries
+        log "Executing libraries replication to $CALIBRE_WEB_LIBRARY_PATH"
+        rsync -a -v --partial --info=progress2 $CALIBRE_LIBRARY_PATH/ $CALIBRE_WEB_LIBRARY_PATH
+
+        # Completion message
+        log "Rundeck job completed successfully."
+
+
+    - description: Restart
+      jobref:
+        failOnDisable: true
+        group: ''
+        name: Calibre Restart
+        nodeStep: 'true'
+        uuid: 20007299-edab-4383-b416-12359ca5f294
+    keepgoing: false
+    strategy: node-first
+  timeZone: America/Denver
+  user: admin
+  uuid: 682e675a-4ec3-435d-80e5-288c8cd1a316
