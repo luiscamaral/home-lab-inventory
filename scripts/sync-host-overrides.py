@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
 """
 Sync DNS host overrides from `pfsense/host-overrides.yml` (single source
-of truth) to BOTH pihole (via a generated dnsmasq.d file) AND pfSense
-(via the REST API).
+of truth) to ALL pihole instances + pfSense Unbound:
+  * pihole-1 (LXC 10000 on proxmox) — pushed via `pct push`
+  * pihole-2 / pihole-3 (Docker on ds-1 / nas) — generated file picked up
+    by `terraform -chdir=terraform/portainer apply` (Compose configs:)
+  * pfSense Unbound — via the pfSense REST API
 
 Workflow:
     1. Edit `pfsense/host-overrides.yml`
     2. Run this script:
          scripts/sync-host-overrides.py            # dry run, show diff
-         scripts/sync-host-overrides.py --apply    # write file + push to pfSense
-    3. Run terraform to roll the dnsmasq.d file to pihole-2/-3:
+         scripts/sync-host-overrides.py --apply    # write file + push everywhere
+    3. For pihole-2/-3 (Docker), run terraform afterwards:
          terraform -chdir=terraform/portainer apply
-    4. Manually push to pihole-1 LXC (see pihole/README.md)
 
 Architecture:
     - YAML is canonical
     - This script generates `pihole/dnsmasq.d/06-host-overrides.conf` for piholes
     - This script reconciles pfSense Unbound host_overrides via the REST API
+    - This script pushes the same file to pihole-1 LXC and reloads pihole-FTL
     - pfSense API access is via `ssh pfsense 'curl ... 127.0.0.1:56880'`
       because the API is only bound to localhost on the admin subnet
+    - pihole-1 access is via `ssh proxmox 'sudo pct push 10000 ...'`
     - Auth token is pulled from macOS Keychain (`pfsense-api-token`)
 """
 
@@ -41,6 +45,11 @@ PFSENSE_API_BASE = "http://127.0.0.1:56880/api/v2"
 PFSENSE_OVERRIDES_PATH = "/services/dns_resolver/host_overrides"
 PFSENSE_OVERRIDE_PATH = "/services/dns_resolver/host_override"
 PFSENSE_APPLY_PATH = "/services/dns_resolver/apply"
+
+PIHOLE_LXC_VMID = 10000
+PIHOLE_LXC_TARGET = "/etc/dnsmasq.d/06-host-overrides.conf"
+PROXMOX_TMP_PATH = "/tmp/06-host-overrides.conf"
+PROXMOX_SUDO = "SUDO_ASKPASS=$HOME/.config/bin/answer.sh sudo -A"
 
 
 @dataclass(frozen=True)
@@ -286,10 +295,67 @@ def apply_diff(to_create, to_update, to_delete, token: str) -> None:
     pfsense_curl("POST", PFSENSE_APPLY_PATH, token)
 
 
+def fetch_pihole_lxc_content() -> str | None:
+    """Read the current dnsmasq.d file inside pihole-1 LXC. Returns None on miss."""
+    cmd = f"{PROXMOX_SUDO} pct exec {PIHOLE_LXC_VMID} -- cat {PIHOLE_LXC_TARGET}"
+    result = subprocess.run(["ssh", "proxmox", cmd], capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        # File missing or LXC unreachable — treat as "needs write"
+        return None
+    return result.stdout
+
+
+def push_pihole_lxc(content: str) -> None:
+    """Push content to pihole-1 LXC and reload pihole-FTL."""
+    # Step 1: write content to a tempfile on proxmox host (no sudo needed —
+    # /tmp is user-writable, and pct push runs as root via sudo afterwards)
+    write_cmd = f"cat > {PROXMOX_TMP_PATH}"
+    result = subprocess.run(
+        ["ssh", "proxmox", write_cmd],
+        input=content, capture_output=True, text=True, check=False,
+    )
+    if result.returncode != 0:
+        sys.exit(f"error: failed to stage file on proxmox: {result.stderr}")
+
+    # Step 2: pct push from proxmox host into the LXC's filesystem
+    push_cmd = f"{PROXMOX_SUDO} pct push {PIHOLE_LXC_VMID} {PROXMOX_TMP_PATH} {PIHOLE_LXC_TARGET} --perms 0644"
+    result = subprocess.run(["ssh", "proxmox", push_cmd], capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        sys.exit(f"error: pct push failed: {result.stderr or result.stdout}")
+
+    # Step 3: reload pihole-FTL inside the LXC so dnsmasq picks up the new file
+    reload_cmd = f"{PROXMOX_SUDO} pct exec {PIHOLE_LXC_VMID} -- systemctl reload pihole-FTL"
+    result = subprocess.run(["ssh", "proxmox", reload_cmd], capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        # Fall back to restart if reload failed
+        restart_cmd = f"{PROXMOX_SUDO} pct exec {PIHOLE_LXC_VMID} -- systemctl restart pihole-FTL"
+        result = subprocess.run(["ssh", "proxmox", restart_cmd], capture_output=True, text=True, check=False)
+        if result.returncode != 0:
+            sys.exit(f"error: pihole-FTL reload+restart both failed: {result.stderr or result.stdout}")
+
+
+def sync_pihole_lxc(content: str, apply: bool) -> None:
+    print("pihole-1 LXC (10000):", end=" ")
+    current = fetch_pihole_lxc_content()
+    if current == content:
+        print("up to date")
+        return
+    if current is None:
+        action = "would create"
+    else:
+        action = "would update"
+    if not apply:
+        print(f"{action} {PIHOLE_LXC_TARGET} (--apply to push)")
+        return
+    push_pihole_lxc(content)
+    print(f"PUSHED + reloaded pihole-FTL ({len(content.splitlines())} lines)")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--apply", action="store_true", help="Actually write files and call pfSense API (default: dry-run)")
-    parser.add_argument("--no-pfsense", action="store_true", help="Skip pfSense sync, only generate dnsmasq.d file")
+    parser.add_argument("--apply", action="store_true", help="Actually write files and call APIs (default: dry-run)")
+    parser.add_argument("--no-pfsense", action="store_true", help="Skip pfSense sync")
+    parser.add_argument("--no-lxc", action="store_true", help="Skip pihole-1 LXC sync")
     args = parser.parse_args()
 
     overrides = load_yaml()
@@ -314,6 +380,10 @@ def main() -> int:
             print(f"  {DNSMASQ_OUT_PATH.relative_to(REPO_ROOT)}: CREATED ({len(rendered.splitlines())} lines)")
         else:
             print(f"  {DNSMASQ_OUT_PATH.relative_to(REPO_ROOT)}: would create ({len(rendered.splitlines())} lines, --apply to write)")
+
+    # pihole-1 LXC sync (independent of pfSense)
+    if not args.no_lxc:
+        sync_pihole_lxc(rendered, args.apply)
 
     if args.no_pfsense:
         return 0
