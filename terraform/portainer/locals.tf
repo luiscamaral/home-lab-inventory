@@ -93,20 +93,27 @@ locals {
             labels: { instance: nas }
 
       # ── snmp_exporter — pfSense (T0) ────────────────────────────────
+      # Target is pfSense's docker-servers gateway IP (192.168.48.1)
+      # reachable from snmp-exporter on docker-servers-net. The
+      # `auth` param selects the pfsense_v2 auth block in snmp.yml
+      # (community string from Vault secret/homelab/pfsense/snmp).
+      # Original target `pfsense1.srv.lcamaral.com` was NXDOMAIN —
+      # switched to IP to avoid DNS dependency inside the container.
       - job_name: snmp-pfsense
         scrape_interval: 15s
         scrape_timeout: 10s
         metrics_path: /snmp
         params:
           module: [pfsense]
+          auth: [pfsense_v2]
         static_configs:
           - targets:
-              - pfsense1.srv.lcamaral.com
+              - 192.168.48.1
+            labels:
+              instance: pfsense
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
-          - source_labels: [__param_target]
-            target_label: instance
           - target_label: __address__
             replacement: 192.168.59.29:9116
 
@@ -464,14 +471,15 @@ locals {
         metrics_path: /snmp
         params:
           module: [pfsense]
+          auth: [pfsense_v2]
         static_configs:
           - targets:
-              - pfsense1.srv.lcamaral.com
+              - 192.168.48.1
+            labels:
+              instance: pfsense
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
-          - source_labels: [__param_target]
-            target_label: instance
           - target_label: __address__
             replacement: 192.168.59.29:9116
 
