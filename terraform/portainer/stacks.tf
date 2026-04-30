@@ -1,5 +1,8 @@
 # ──────────────────────────────────────────────
-# Docker Registry (already deployed via Portainer)
+# Docker Registry — config.yml via Compose configs (audit C3 part 3),
+# htpasswd content from Vault written via entrypoint shim (bcrypt hash
+# can not survive Compose `$` interpolation; see commentary in the
+# stack template).
 # ──────────────────────────────────────────────
 resource "portainer_stack" "docker_registry" {
   name            = "docker-registry"
@@ -7,7 +10,10 @@ resource "portainer_stack" "docker_registry" {
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/docker-registry.yml")
+  stack_file_content = templatefile("${path.module}/stacks/docker-registry.yml.tftpl", {
+    registry_config = file("${path.module}/stacks/docker-registry-config.yml")
+    htpasswd        = data.vault_kv_secret_v2.registry.data["htpasswd"]
+  })
 }
 
 # ──────────────────────────────────────────────
@@ -72,42 +78,78 @@ resource "portainer_stack" "cloudflare_tunnel_3" {
 # 05-home.conf for the new source of truth.
 
 # ──────────────────────────────────────────────
-# Nginx Reverse Proxy + Promtail (rproxy-1 on dockermaster)
-# All services route through this — certs managed by pfSense
+# Nginx Reverse Proxy stacks (rproxy on dm, rproxy-2 on ds-1, rproxy-3
+# on ds-2). All three serve the SAME set of vhost.d files, rendered from
+# dockermaster/docker/compose/nginx-rproxy/vhost.d/*.conf via Terraform
+# fileset+templatefile iteration. Drop a *.conf in the repo dir + run
+# `terraform apply` to roll the new vhost out across all 3 instances.
+#
+# Cert directory is still a bind-mount — pfSense ACME is the source of
+# truth, and the cert sync mechanism is its own tracked IaC gap (see
+# memory feedback_iac_first_principle.md).
 # ──────────────────────────────────────────────
+locals {
+  rproxy_vhosts = {
+    for f in fileset("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/vhost.d", "*.conf") :
+    f => file("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/vhost.d/${f}")
+  }
+  # nginx.conf, promtail-config.yml, and start.sh are also in the repo
+  # at dockermaster/docker/compose/nginx-rproxy/ — rendered via Compose
+  # configs: rather than bind-mounted (closes audit C3 for rproxy).
+  rproxy_nginx_conf      = file("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/conf/nginx.conf")
+  rproxy_promtail_config = file("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/promtail-config.yml")
+  rproxy_promtail_start  = file("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/bin/start.sh")
+}
+
 resource "portainer_stack" "reverse_proxy" {
   name            = "reverse-proxy"
   endpoint_id     = var.endpoint_id
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/reverse-proxy.yml")
+  stack_file_content = templatefile("${path.module}/stacks/reverse-proxy.yml.tftpl", {
+    vhosts           = local.rproxy_vhosts
+    nginx_conf       = local.rproxy_nginx_conf
+    promtail_config  = local.rproxy_promtail_config
+    start_sh         = local.rproxy_promtail_start
+  })
 }
 
-# ──────────────────────────────────────────────
-# Nginx Reverse Proxy (rproxy-2 on dockerserver-1)
-# Second instance for HA — shares the same vhost.d config via NFS
-# ──────────────────────────────────────────────
 resource "portainer_stack" "reverse_proxy_2" {
   name            = "reverse-proxy-2"
   endpoint_id     = var.ds1_endpoint_id
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/reverse-proxy-2.yml")
+  stack_file_content = templatefile("${path.module}/stacks/reverse-proxy-2.yml.tftpl", {
+    vhosts     = local.rproxy_vhosts
+    nginx_conf = local.rproxy_nginx_conf
+  })
 }
 
-# ──────────────────────────────────────────────
-# Nginx Reverse Proxy (rproxy-3 on dockerserver-2)
-# Third instance for HA — completes the 3-host edge
-# ──────────────────────────────────────────────
 resource "portainer_stack" "reverse_proxy_3" {
   name            = "reverse-proxy-3"
   endpoint_id     = var.ds2_endpoint_id
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/reverse-proxy-3.yml")
+  stack_file_content = templatefile("${path.module}/stacks/reverse-proxy-3.yml.tftpl", {
+    vhosts     = local.rproxy_vhosts
+    nginx_conf = local.rproxy_nginx_conf
+  })
+}
+
+# ──────────────────────────────────────────────
+# Vault Raft cluster — config.hcl is now rendered per-host via
+# stacks/vault-config.hcl.tftpl and injected via Compose `configs:`.
+# Closes audit C3 ("REQUIRED MANUAL EDIT") for vault.
+# ──────────────────────────────────────────────
+locals {
+  vault_configs = {
+    "vault-1" = templatefile("${path.module}/stacks/vault-config.hcl.tftpl", { node_id = "vault-1", node_ip = "192.168.59.25" })
+    "vault-2" = templatefile("${path.module}/stacks/vault-config.hcl.tftpl", { node_id = "vault-2", node_ip = "192.168.59.9" })
+    "vault-3" = templatefile("${path.module}/stacks/vault-config.hcl.tftpl", { node_id = "vault-3", node_ip = "192.168.59.15" })
+  }
 }
 
 # ──────────────────────────────────────────────
@@ -121,13 +163,15 @@ resource "portainer_stack" "vault_3" {
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/vault-3.yml")
+  stack_file_content = templatefile("${path.module}/stacks/vault-3.yml.tftpl", {
+    vault_config = local.vault_configs["vault-3"]
+  })
 }
 
 # ──────────────────────────────────────────────
 # Vault Raft cluster — second peer (vault-2 on ds-1)
 # Brought under Portainer + Terraform after running as raw
-# `docker run` outside IaC. See stacks/vault-2.yml.
+# `docker run` outside IaC. See stacks/vault-2.yml.tftpl.
 # ──────────────────────────────────────────────
 resource "portainer_stack" "vault_2" {
   name            = "vault-2"
@@ -135,7 +179,9 @@ resource "portainer_stack" "vault_2" {
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/vault-2.yml")
+  stack_file_content = templatefile("${path.module}/stacks/vault-2.yml.tftpl", {
+    vault_config = local.vault_configs["vault-2"]
+  })
 }
 
 # ──────────────────────────────────────────────
@@ -148,7 +194,9 @@ resource "portainer_stack" "vault" {
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/vault.yml")
+  stack_file_content = templatefile("${path.module}/stacks/vault.yml.tftpl", {
+    vault_config = local.vault_configs["vault-1"]
+  })
 
   env {
     name  = "VAULT_ADDR"
@@ -205,6 +253,64 @@ resource "portainer_stack" "twingate_b" {
     name  = "TWINGATE_REFRESH_TOKEN"
     value = data.vault_kv_secret_v2.twingate_golden_mussel.data["refresh_token"]
   }
+}
+
+# ──────────────────────────────────────────────
+# Twingate Connector C (fresh-marmoset) → NAS
+# Third connector for active-active redundancy across hosts. Tokens
+# from Vault. C1 in docs/iac-audit-2026-04-30.md was about this stack
+# being deployed via Synology Container Manager (plaintext tokens on
+# disk); now under TF.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "twingate_nas" {
+  name            = "twingate-nas"
+  endpoint_id     = portainer_environment.nas.id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/twingate-nas.yml")
+
+  env {
+    name  = "TWINGATE_NETWORK"
+    value = data.vault_kv_secret_v2.twingate_fresh_marmoset.data["network"]
+  }
+
+  env {
+    name  = "TWINGATE_ACCESS_TOKEN"
+    value = data.vault_kv_secret_v2.twingate_fresh_marmoset.data["access_token"]
+  }
+
+  env {
+    name  = "TWINGATE_REFRESH_TOKEN"
+    value = data.vault_kv_secret_v2.twingate_fresh_marmoset.data["refresh_token"]
+  }
+}
+
+# ──────────────────────────────────────────────
+# OpenSpeedTest → NAS — internal LAN speed-test tool. C1 in audit.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "openspeedtest" {
+  name            = "openspeedtest"
+  endpoint_id     = portainer_environment.nas.id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/openspeedtest.yml")
+}
+
+# ──────────────────────────────────────────────
+# netboot.xyz → NAS — netboot menu server (TFTP/HTTP). C1 in audit.
+# Bind-mounts /volume2/docker/netbootxyz/{config,assets} for state and
+# downloaded boot images (out-of-scope to fold into IaC — many GBs of
+# managed-by-netboot.xyz content).
+# ──────────────────────────────────────────────
+resource "portainer_stack" "netbootxyz" {
+  name            = "netbootxyz"
+  endpoint_id     = portainer_environment.nas.id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/netbootxyz.yml")
 }
 
 # ──────────────────────────────────────────────

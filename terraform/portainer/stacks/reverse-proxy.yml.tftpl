@@ -1,5 +1,14 @@
 name: reverse-proxy
 
+# vhost.d, nginx.conf, promtail-config.yml, and start.sh all flow
+# through Compose `configs:` rendered from
+# dockermaster/docker/compose/nginx-rproxy/ via templatefile() in
+# stacks.tf. No bind-mount, no scp — drop a *.conf in the repo dir
+# + terraform apply.
+#
+# Cert directory remains a bind-mount — pfSense ACME is source of
+# truth and pushes via the post-renewal hook (see Gap 1 commit).
+
 networks:
   servers-net:
     name: docker-servers-net
@@ -7,6 +16,22 @@ networks:
   rproxy:
     name: rproxy
     external: true
+
+configs:
+  nginx_conf:
+    content: |
+      ${indent(6, replace(nginx_conf, "$", "$$"))}
+  promtail_config:
+    content: |
+      ${indent(6, replace(promtail_config, "$", "$$"))}
+  promtail_start_sh:
+    content: |
+      ${indent(6, replace(start_sh, "$", "$$"))}
+%{ for name, content in vhosts ~}
+  vhost_${replace(replace(name, ".", "_"), "-", "_")}:
+    content: |
+      ${indent(6, replace(content, "$", "$$"))}
+%{ endfor ~}
 
 services:
   nginx-rproxy:
@@ -22,11 +47,18 @@ services:
       - 443
     command: [nginx, -c, /etc/nginx/nginx.conf, -g, 'daemon off;']
     volumes:
-      - /nfs/dockermaster/docker/nginx-rproxy/config/conf/nginx.conf:/etc/nginx/nginx.conf:ro
       - /nfs/dockermaster/docker/nginx-rproxy/config/cert:/etc/nginx/cert:ro
-      - /nfs/dockermaster/docker/nginx-rproxy/config/vhost.d:/etc/nginx/vhost.d:ro
       - /nfs/dockermaster/docker/nginx-rproxy/www:/var/www
       - /nfs/dockermaster/docker/nginx-rproxy/logs/nginx:/var/log/nginx
+    configs:
+      - source: nginx_conf
+        target: /etc/nginx/nginx.conf
+        mode: 0644
+%{ for name, _ in vhosts ~}
+      - source: vhost_${replace(replace(name, ".", "_"), "-", "_")}
+        target: /etc/nginx/vhost.d/${name}
+        mode: 0644
+%{ endfor ~}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost/"]
@@ -53,10 +85,15 @@ services:
     networks:
       rproxy:
     volumes:
-      - /nfs/dockermaster/docker/nginx-rproxy/config/promtail-config.yml:/etc/promtail/config.yml
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /nfs/dockermaster/docker/nginx-rproxy/logs/nginx:/var/log/nginx:ro
-      - /nfs/dockermaster/docker/nginx-rproxy/bin/start.sh:/usr/bin/start.sh
+    configs:
+      - source: promtail_config
+        target: /etc/promtail/config.yml
+        mode: 0644
+      - source: promtail_start_sh
+        target: /usr/bin/start.sh
+        mode: 0755
     entrypoint: ["/usr/bin/start.sh"]
     restart: unless-stopped
     healthcheck:

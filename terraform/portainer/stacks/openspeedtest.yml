@@ -1,0 +1,32 @@
+name: openspeedtest
+
+# OpenSpeedTest on NAS — internal LAN speed-test tool. Pinned to
+# 192.168.4.234/02:42:c0:a8:04:ea on `home-net` macvlan to keep ARP
+# caches stable across container recreates (see
+# feedback_macvlan_ip_collisions.md).
+
+networks:
+  home-net:
+    external: true
+
+services:
+  speedtest:
+    image: openspeedtest/latest
+    container_name: openspeedtest
+    pull_policy: missing
+    # MAC pinning not supported on this NAS Docker (API 1.43; needs
+    # 1.44 for per-network mac_address, and service-level appears to
+    # also be rewritten by Portainer to the per-network form). Stable
+    # IP via ipv4_address is the best we can do until DSM updates the
+    # bundled docker engine.
+    networks:
+      home-net:
+        ipv4_address: 192.168.4.234
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "openspeedtest"
+      com.docker.service: "speedtest"
+      portainer.autodeploy: "false"
+    # No `deploy.resources` block: NAS Synology kernel lacks CPU CFS
+    # quotas, Docker rejects NanoCPUs limits.

@@ -66,8 +66,11 @@ giving locality and isolation.
   `forward-addr` lines, Unbound picks the fastest and fails over on timeout.
 - **Records source of truth:** repo files in `pihole/dnsmasq.d/*.conf`
   injected into pihole-2/-3 via Terraform `templatefile()` + Docker Compose
-  `configs: content:`; pihole-1 LXC is manual push via `pct` (documented
-  in `pihole/README.md`).
+  `configs: content:`; pihole-1 LXC receives ALL three files
+  (`04-d-lcamaral-com.conf`, `05-home.conf`, `06-host-overrides.conf`)
+  automatically via `scripts/sync-host-overrides.py --apply` (handles
+  per-file `pct push` + a single pihole-FTL reload). No manual `pct`
+  invocations remain.
 - **Gravity/adlist sync:** not HA yet — see "Still-to-do" section.
 - **Retired:** bind9 (container `bind-dns-bind9-1` on dm); authority moved
   to piholes on 2026-04-15 (commit `99d51b0`).

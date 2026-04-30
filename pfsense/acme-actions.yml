@@ -1,0 +1,22 @@
+# Source of truth for pfSense ACME post-renewal actions (a_actionlist).
+# Reconciled to pfSense via scripts/sync-pfsense-acme-actions.py.
+#
+# Each entry binds an ACME certificate (matched by `cert.name`) to a
+# list of shell commands that should run after every renewal. The
+# script CLAIMS only the listed commands — any commands present on
+# pfSense that don't match a YAML entry are left untouched (so the
+# pre-existing webgui/haproxy hooks survive).
+#
+# Status values: active | disabled (per pfSense API contract).
+
+- cert: d.lcamaral.com
+  actions:
+    - command: /root/sync-certs-to-rproxy.sh d.lcamaral.com
+      method: shellcommand
+      status: active
+
+- cert: home.lcamaral.com
+  actions:
+    - command: /root/sync-certs-to-rproxy.sh home.lcamaral.com
+      method: shellcommand
+      status: active

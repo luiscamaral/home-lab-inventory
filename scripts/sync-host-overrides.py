@@ -1,25 +1,28 @@
 #!/usr/bin/env python3
 """
-Sync DNS host overrides from `pfsense/host-overrides.yml` (single source
-of truth) to BOTH pihole (via a generated dnsmasq.d file) AND pfSense
-(via the REST API).
+Sync DNS state to ALL pihole instances + pfSense Unbound from the
+authoritative repo files:
+  * pihole-1 (LXC 10000 on proxmox) — `pct push` of every file in
+    `pihole/dnsmasq.d/` listed in `PIHOLE_LXC_FILES`, then pihole-FTL
+    reload (covers 04-d-lcamaral-com.conf, 05-home.conf, and the
+    generated 06-host-overrides.conf).
+  * pihole-2 / pihole-3 (Docker on ds-1 / nas) — same files picked up
+    via `terraform -chdir=terraform/portainer apply` (Compose configs:).
+  * pfSense Unbound — host overrides reconciled via the pfSense REST API.
+
+Source of truth for host overrides: `pfsense/host-overrides.yml`.
+04 / 05 are hand-curated zone files in `pihole/dnsmasq.d/`.
 
 Workflow:
-    1. Edit `pfsense/host-overrides.yml`
+    1. Edit either the YAML (host overrides) or the static .conf files
     2. Run this script:
          scripts/sync-host-overrides.py            # dry run, show diff
-         scripts/sync-host-overrides.py --apply    # write file + push to pfSense
-    3. Run terraform to roll the dnsmasq.d file to pihole-2/-3:
+         scripts/sync-host-overrides.py --apply    # push everywhere
+    3. For pihole-2/-3 (Docker), run terraform afterwards:
          terraform -chdir=terraform/portainer apply
-    4. Manually push to pihole-1 LXC (see pihole/README.md)
 
-Architecture:
-    - YAML is canonical
-    - This script generates `pihole/dnsmasq.d/06-host-overrides.conf` for piholes
-    - This script reconciles pfSense Unbound host_overrides via the REST API
-    - pfSense API access is via `ssh pfsense 'curl ... 127.0.0.1:56880'`
-      because the API is only bound to localhost on the admin subnet
-    - Auth token is pulled from macOS Keychain (`pfsense-api-token`)
+Auth: macOS Keychain (`pfsense-api-token`).
+LXC access: `ssh proxmox 'sudo pct push 10000 ...'`.
 """
 
 from __future__ import annotations
@@ -41,6 +44,16 @@ PFSENSE_API_BASE = "http://127.0.0.1:56880/api/v2"
 PFSENSE_OVERRIDES_PATH = "/services/dns_resolver/host_overrides"
 PFSENSE_OVERRIDE_PATH = "/services/dns_resolver/host_override"
 PFSENSE_APPLY_PATH = "/services/dns_resolver/apply"
+
+PIHOLE_LXC_VMID = 10000
+PIHOLE_DNSMASQ_DIR = REPO_ROOT / "pihole" / "dnsmasq.d"
+PIHOLE_LXC_DNSMASQ_DIR = "/etc/dnsmasq.d"
+# Files that the script keeps in lockstep on the LXC. 06 is generated
+# by render_dnsmasq() (host overrides); 04 and 05 are hand-curated zone
+# files but pushed by the same flow so the LXC mirrors what the
+# Compose `configs:` mechanism injects into pihole-2/-3.
+PIHOLE_LXC_FILES = ["04-d-lcamaral-com.conf", "05-home.conf", "06-host-overrides.conf"]
+PROXMOX_SUDO = "SUDO_ASKPASS=$HOME/.config/bin/answer.sh sudo -A"
 
 
 @dataclass(frozen=True)
@@ -286,10 +299,85 @@ def apply_diff(to_create, to_update, to_delete, token: str) -> None:
     pfsense_curl("POST", PFSENSE_APPLY_PATH, token)
 
 
+def fetch_pihole_lxc_file(filename: str) -> str | None:
+    """Read one dnsmasq.d file from the pihole-1 LXC. Returns None on miss."""
+    target = f"{PIHOLE_LXC_DNSMASQ_DIR}/{filename}"
+    cmd = f"{PROXMOX_SUDO} pct exec {PIHOLE_LXC_VMID} -- cat {target}"
+    result = subprocess.run(["ssh", "proxmox", cmd], capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        return None
+    return result.stdout
+
+
+def push_pihole_lxc_file(filename: str, content: str) -> None:
+    """Stage content on proxmox, pct push it into the LXC. Caller reloads FTL once at the end."""
+    tmp_path = f"/tmp/{filename}"
+    target = f"{PIHOLE_LXC_DNSMASQ_DIR}/{filename}"
+    # Step 1: write content to a tempfile on proxmox (lamaral-writable)
+    result = subprocess.run(
+        ["ssh", "proxmox", f"cat > {tmp_path}"],
+        input=content, capture_output=True, text=True, check=False,
+    )
+    if result.returncode != 0:
+        sys.exit(f"error: stage to proxmox /tmp/{filename} failed: {result.stderr}")
+
+    # Step 2: pct push into the LXC filesystem
+    push_cmd = f"{PROXMOX_SUDO} pct push {PIHOLE_LXC_VMID} {tmp_path} {target} --perms 0644"
+    result = subprocess.run(["ssh", "proxmox", push_cmd], capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        sys.exit(f"error: pct push {filename} failed: {result.stderr or result.stdout}")
+
+
+def reload_pihole_ftl_lxc() -> None:
+    """Reload pihole-FTL inside the LXC; falls back to restart if reload fails."""
+    reload_cmd = f"{PROXMOX_SUDO} pct exec {PIHOLE_LXC_VMID} -- systemctl reload pihole-FTL"
+    result = subprocess.run(["ssh", "proxmox", reload_cmd], capture_output=True, text=True, check=False)
+    if result.returncode == 0:
+        return
+    restart_cmd = f"{PROXMOX_SUDO} pct exec {PIHOLE_LXC_VMID} -- systemctl restart pihole-FTL"
+    result = subprocess.run(["ssh", "proxmox", restart_cmd], capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        sys.exit(f"error: pihole-FTL reload+restart both failed: {result.stderr or result.stdout}")
+
+
+def sync_pihole_lxc(rendered_06: str, apply: bool) -> None:
+    """Compare each PIHOLE_LXC_FILES entry on the LXC vs the repo and push diffs."""
+    print(f"pihole-1 LXC ({PIHOLE_LXC_VMID}):")
+    pushed = []
+    for filename in PIHOLE_LXC_FILES:
+        if filename == "06-host-overrides.conf":
+            target_content = rendered_06
+        else:
+            repo_path = PIHOLE_DNSMASQ_DIR / filename
+            if not repo_path.exists():
+                print(f"  {filename}: SKIP (not in repo)")
+                continue
+            target_content = repo_path.read_text()
+
+        current = fetch_pihole_lxc_file(filename)
+        if current == target_content:
+            print(f"  {filename}: up to date")
+            continue
+
+        verb = "create" if current is None else "update"
+        if not apply:
+            print(f"  {filename}: would {verb} ({len(target_content.splitlines())} lines, --apply to push)")
+            continue
+
+        push_pihole_lxc_file(filename, target_content)
+        pushed.append(filename)
+        print(f"  {filename}: PUSHED ({len(target_content.splitlines())} lines)")
+
+    if pushed and apply:
+        reload_pihole_ftl_lxc()
+        print(f"  pihole-FTL reloaded after pushing {len(pushed)} file(s)")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--apply", action="store_true", help="Actually write files and call pfSense API (default: dry-run)")
-    parser.add_argument("--no-pfsense", action="store_true", help="Skip pfSense sync, only generate dnsmasq.d file")
+    parser.add_argument("--apply", action="store_true", help="Actually write files and call APIs (default: dry-run)")
+    parser.add_argument("--no-pfsense", action="store_true", help="Skip pfSense sync")
+    parser.add_argument("--no-lxc", action="store_true", help="Skip pihole-1 LXC sync")
     args = parser.parse_args()
 
     overrides = load_yaml()
@@ -314,6 +402,10 @@ def main() -> int:
             print(f"  {DNSMASQ_OUT_PATH.relative_to(REPO_ROOT)}: CREATED ({len(rendered.splitlines())} lines)")
         else:
             print(f"  {DNSMASQ_OUT_PATH.relative_to(REPO_ROOT)}: would create ({len(rendered.splitlines())} lines, --apply to write)")
+
+    # pihole-1 LXC sync (independent of pfSense)
+    if not args.no_lxc:
+        sync_pihole_lxc(rendered, args.apply)
 
     if args.no_pfsense:
         return 0

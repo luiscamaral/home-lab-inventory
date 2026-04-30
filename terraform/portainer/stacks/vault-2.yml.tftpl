@@ -5,9 +5,8 @@ name: vault-2
 # as a raw `docker run` outside Portainer; brought under Terraform
 # management to close the IaC gap.
 #
-# Host-side config lives at /nfs/dockermaster/docker/vault/vault-2/config/
-# and is mounted read-only into the container. The auto-unseal systemd
-# unit on ds-1 unseals vault-2 on container restart.
+# config.hcl rendered via templatefile() from stacks/vault-config.hcl.tftpl
+# and injected via Compose `configs:`. Audit C3 closed.
 
 networks:
   servers-net:
@@ -21,6 +20,11 @@ volumes:
       type: none
       device: /var/lib/vault/raft
       o: bind
+
+configs:
+  vault_config:
+    content: |
+      ${indent(6, replace(vault_config, "$", "$$"))}
 
 services:
   vault-2:
@@ -42,8 +46,11 @@ services:
       interval: 10s
       timeout: 3s
       retries: 10
+    configs:
+      - source: vault_config
+        target: /vault/config/config.hcl
+        mode: 0644
     volumes:
-      - /nfs/dockermaster/docker/vault/vault-2/config:/vault/config
       - vault_raft:/vault/raft
       - /nfs/dockermaster/docker/vault/vault-2/logs:/vault/logs
       - /nfs/dockermaster/docker/vault/vault/snapshots:/vault/snapshots

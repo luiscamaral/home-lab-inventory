@@ -85,7 +85,14 @@ services:
     networks:
       rproxy:
       servers-net:
-        ipv4_address: 192.168.59.43
+        ipv4_address: 192.168.59.39
+        # Stable MAC keeps ARP caches valid across container recreates.
+        # Originally was .43 + random MAC, but that collided with
+        # keycloak-2 on ds-1 (also .43); briefly tried .40, but that
+        # collides with freeswitch on ds-2. .39 is the first IP that's
+        # genuinely free across all 3 docker-servers-net macvlan hosts
+        # (verified via arping -I server-net-shim).
+        mac_address: 02:42:c0:a8:3b:27
     user: "472:472"
     environment:
       GF_SERVER_ROOT_URL: https://grafana.d.lcamaral.com/

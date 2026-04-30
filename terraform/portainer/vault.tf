@@ -18,6 +18,14 @@ data "vault_kv_secret_v2" "twingate_golden_mussel" {
   name  = "homelab/twingate/golden-mussel"
 }
 
+# Twingate connector C — "fresh-marmoset" on NAS (C1 in audit
+# 2026-04-30). Migrated from Synology Container Manager where the
+# tokens were sitting plaintext on the NAS filesystem.
+data "vault_kv_secret_v2" "twingate_fresh_marmoset" {
+  mount = "secret"
+  name  = "homelab/twingate/fresh-marmoset"
+}
+
 data "vault_kv_secret_v2" "vault" {
   mount = "secret"
   name  = "homelab/vault"
@@ -75,9 +83,11 @@ data "vault_kv_secret_v2" "grafana_admin" {
 }
 
 # Phase 4 — Grafana OIDC client credentials. Matches the Keycloak
-# `grafana` client in the `homelab` realm (created via Keycloak admin
-# API; not Terraform-provider-managed because the keycloak/keycloak
-# Terraform provider would conflict with the live realm).
+# `grafana` client in the `homelab` realm. As of Gap 4 (2026-04-29),
+# the client itself IS Terraform-managed via the keycloak/keycloak
+# provider (see keycloak.tf) — only the client_secret rotation is
+# kept out of TF state for now (Vault remains source of truth so the
+# grafana stack and Keycloak stay in sync without a circular dep).
 data "vault_kv_secret_v2" "grafana_oidc" {
   mount = "secret"
   name  = "homelab/grafana/oidc"

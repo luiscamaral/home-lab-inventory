@@ -4,7 +4,7 @@
 repos:
   # Built-in pre-commit hooks for general file hygiene
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       # File formatting and cleanup
       - id: trailing-whitespace
@@ -12,7 +12,7 @@ repos:
       - id: end-of-file-fixer
       - id: mixed-line-ending
         args: [--fix=lf]
-      - id: check-byte-order-marker
+      - id: fix-byte-order-marker
 
       # File size and merge conflicts
       - id: check-added-large-files
@@ -33,7 +33,7 @@ repos:
 
   # YAML linting with yamllint
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.35.1
+    rev: v1.38.0
     hooks:
       - id: yamllint
         args: [-c=.yamllint.yml]
@@ -41,7 +41,7 @@ repos:
 
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.39.0
+    rev: v0.48.0
     hooks:
       - id: markdownlint
         args: [--config=.markdownlint.json]
@@ -50,14 +50,14 @@ repos:
 
   # Dockerfile linting with hadolint
   - repo: https://github.com/hadolint/hadolint
-    rev: v2.12.0
+    rev: v2.14.0
     hooks:
       - id: hadolint-docker
         args: [--ignore=DL3008, --ignore=DL3009, --ignore=DL3015]
 
   # Shell script linting with shellcheck
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
+    rev: v0.11.0.1
     hooks:
       - id: shellcheck
         args: [-e, SC1091, -e, SC2034, -e, SC2154]
@@ -65,7 +65,7 @@ repos:
 
   # Git security: check for secrets
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.18.4
+    rev: v8.30.1
     hooks:
       - id: gitleaks
 
@@ -90,7 +90,7 @@ repos:
         require_serial: false
 
 # Global configuration
-default_stages: [commit]
+default_stages: [pre-commit]
 fail_fast: false
 minimum_pre_commit_version: 3.0.0
 

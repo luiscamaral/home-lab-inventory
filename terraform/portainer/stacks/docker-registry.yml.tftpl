@@ -1,0 +1,89 @@
+name: docker-registry
+
+# config.yml is rendered via Compose `configs:` from the inline tmpl
+# below — no /nfs bind-mount, no manual edit. Audit C3 closed.
+#
+# htpasswd is the OUTLIER: bcrypt's `$2y$05$<salt>` hash gets eaten by
+# Compose `configs.content` interpolation (the `$<alpha>` salt prefix
+# looks like a var name to one of the substitution passes — see
+# memory feedback_compose_configs_dollar_interpolation.md). Workaround:
+# pass the htpasswd contents in via the env block (Vault → env vars
+# survive interpolation cleanly because Compose evaluates them once
+# from the stack's env list rather than via shell-style substitution)
+# and write the file via a sh entrypoint shim before exec'ing the
+# registry binary.
+
+networks:
+  rproxy:
+    name: rproxy
+    external: true
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+configs:
+  registry_config:
+    content: |
+      ${indent(6, replace(registry_config, "$", "$$"))}
+
+services:
+  registry:
+    image: registry:2
+    container_name: registry
+    hostname: registry
+    networks:
+      rproxy:
+      servers-net:
+        ipv4_address: 192.168.59.16
+    expose:
+      - 5000
+      # Phase 3a: debug HTTP listener for Prometheus /metrics scrape.
+      # See http.debug block in the registry_config above.
+      - 5001
+    volumes:
+      - /nfs/dockermaster/docker/registry/data:/var/lib/registry
+    configs:
+      - source: registry_config
+        target: /etc/docker/registry/config.yml
+        mode: 0644
+    environment:
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: "Registry Realm"
+      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+      # The htpasswd content is interpolated into the rendered yaml at
+      # `terraform apply` time (NOT via Compose env-var substitution),
+      # because Compose's env-block does a substitution pass on the
+      # value itself — which mangles bcrypt hashes (`$<alpha>` salt
+      # reads as a shell var). Each $ here is doubled below to survive
+      # ONE Compose-level substitution pass; we deliberately don't
+      # double again because Portainer doesn't take a second pass on
+      # `environment:` values (only on `configs.content`).
+      HTPASSWD_CONTENT: "${replace(htpasswd, "$", "$$")}"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /auth && \
+        printf '%s\n' "$$HTPASSWD_CONTENT" > /auth/htpasswd && \
+        chmod 0600 /auth/htpasswd && \
+        exec /entrypoint.sh /etc/docker/registry/config.yml
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qS http://localhost:5000/v2/ 2>&1 | grep -q '200\\|401'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "registry"
+      com.docker.service: "registry"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M

@@ -141,13 +141,12 @@ for stack in 85; do
   curl -sk -X POST "https://192.168.59.2:9443/api/stacks/$stack/start?endpointId=9" -H "Authorization: Bearer $JWT" >/dev/null
 done
 
-# Push to pihole-1 LXC (manual)
-for f in 04-d-lcamaral-com.conf 05-home.conf 06-host-overrides.conf; do
-  scp pihole/dnsmasq.d/$f proxmox:/tmp/$f
-  ssh proxmox "SUDO_ASKPASS=\$HOME/.config/bin/answer.sh sudo -A pct push 10000 /tmp/$f /etc/dnsmasq.d/$f && \
-    SUDO_ASKPASS=\$HOME/.config/bin/answer.sh sudo -A pct exec 10000 -- systemctl restart pihole-FTL && \
-    rm /tmp/$f"
-done
+# pihole-1 LXC (FULLY AUTOMATIC via sync-host-overrides.py)
+# The script pushes ALL files listed in PIHOLE_LXC_FILES (currently
+# 04-d-lcamaral-com.conf, 05-home.conf, 06-host-overrides.conf) to
+# pihole-1 LXC and reloads pihole-FTL once at the end. Idempotent —
+# only files whose content differs from the LXC are pushed.
+scripts/sync-host-overrides.py --apply
 ```
 
 ## Diagnostic plan for Phase 3c (next session)
