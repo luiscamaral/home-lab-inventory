@@ -1,11 +1,8 @@
 name: vault-3
 
-# ── Phase 3a: Prometheus scrape (TODO host-side config edit) ──────────
-# See vault.yml for the full instructions. On ds-2:
-#   sudo $EDITOR /nfs/dockermaster/docker/vault/vault-3/config/config.hcl
-#   Add a telemetry block with unauthenticated_metrics_access = true.
-#   Then `docker compose restart vault-3`.
-# ──────────────────────────────────────────────────────────────────────
+# vault-3 — Vault Raft cluster follower on ds-2 (192.168.59.15).
+# config.hcl rendered via templatefile() from stacks/vault-config.hcl.tftpl
+# and injected via Compose `configs:`. Audit C3 closed.
 
 networks:
   servers-net:
@@ -19,6 +16,11 @@ volumes:
       type: none
       device: /var/lib/vault/raft
       o: bind
+
+configs:
+  vault_config:
+    content: |
+      ${indent(6, replace(vault_config, "$", "$$"))}
 
 services:
   vault-3:
@@ -40,8 +42,11 @@ services:
       interval: 10s
       timeout: 3s
       retries: 10
+    configs:
+      - source: vault_config
+        target: /vault/config/config.hcl
+        mode: 0644
     volumes:
-      - /nfs/dockermaster/docker/vault/vault-3/config:/vault/config
       - vault_raft:/vault/raft
       - /nfs/dockermaster/docker/vault/vault-3/logs:/vault/logs
       - /nfs/dockermaster/docker/vault/vault/snapshots:/vault/snapshots

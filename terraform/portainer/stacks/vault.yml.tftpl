@@ -1,25 +1,10 @@
 name: vault
 
-# ── Phase 3a: Prometheus scrape (TODO host-side config edit) ──────────
-# Prometheus scrapes vault-1/2/3 at :8200/v1/sys/metrics. By default,
-# Vault gates that endpoint with auth AND followers 307-redirect away
-# unless `unauthenticated_metrics_access = true` is set.
-#
-# REQUIRED MANUAL EDIT (NOT IN REPO — config.hcl is on the host NFS):
-#   ssh dockermaster
-#   sudo $EDITOR /nfs/dockermaster/docker/vault/vault/config/config.hcl
-#   Add (or merge into existing telemetry block):
-#
-#     telemetry {
-#       unauthenticated_metrics_access = true
-#       prometheus_retention_time      = "12h"
-#       disable_hostname               = true
-#     }
-#
-#   Then `docker compose restart vault` (rolling restart across cluster).
-# Repeat the edit on ds-1:/nfs/dockermaster/docker/vault/vault-2/config/config.hcl
-# and ds-2:/nfs/dockermaster/docker/vault/vault-3/config/config.hcl.
-# ──────────────────────────────────────────────────────────────────────
+# Vault Raft cluster — primary node (vault-1 on dockermaster, .59.25).
+# config.hcl is rendered via templatefile() from
+# stacks/vault-config.hcl.tftpl (per-host node_id + node_ip), then
+# injected via Compose `configs:`. No bind-mount, no manual edit.
+# Audit C3 closed.
 
 networks:
   rproxy:
@@ -35,6 +20,11 @@ volumes:
       device: /var/lib/vault/raft
       o: bind
 
+configs:
+  vault_config:
+    content: |
+      ${indent(6, replace(vault_config, "$", "$$"))}
+
 services:
   vault:
     image: hashicorp/vault:1.21
@@ -48,8 +38,8 @@ services:
     cap_add:
       - IPC_LOCK
     environment:
-      - VAULT_ADDR=${VAULT_ADDR}
-      - VAULT_TOKEN=${VAULT_TOKEN}
+      - VAULT_ADDR=$${VAULT_ADDR}
+      - VAULT_TOKEN=$${VAULT_TOKEN}
     entrypoint: ["vault"]
     command:
       - server
@@ -59,8 +49,11 @@ services:
       interval: 10s
       timeout: 3s
       retries: 10
+    configs:
+      - source: vault_config
+        target: /vault/config/config.hcl
+        mode: 0644
     volumes:
-      - /nfs/dockermaster/docker/vault/vault/config:/vault/config
       - vault_raft:/vault/raft
       - /nfs/dockermaster/docker/vault/vault/logs:/vault/logs
       - /nfs/dockermaster/docker/vault/vault/snapshots:/vault/snapshots

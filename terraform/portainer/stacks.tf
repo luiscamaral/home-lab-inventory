@@ -134,6 +134,19 @@ resource "portainer_stack" "reverse_proxy_3" {
 }
 
 # ──────────────────────────────────────────────
+# Vault Raft cluster — config.hcl is now rendered per-host via
+# stacks/vault-config.hcl.tftpl and injected via Compose `configs:`.
+# Closes audit C3 ("REQUIRED MANUAL EDIT") for vault.
+# ──────────────────────────────────────────────
+locals {
+  vault_configs = {
+    "vault-1" = templatefile("${path.module}/stacks/vault-config.hcl.tftpl", { node_id = "vault-1", node_ip = "192.168.59.25" })
+    "vault-2" = templatefile("${path.module}/stacks/vault-config.hcl.tftpl", { node_id = "vault-2", node_ip = "192.168.59.9" })
+    "vault-3" = templatefile("${path.module}/stacks/vault-config.hcl.tftpl", { node_id = "vault-3", node_ip = "192.168.59.15" })
+  }
+}
+
+# ──────────────────────────────────────────────
 # Vault Node 3 → dockerserver-2
 # Third Raft peer — gives cluster quorum protection
 # No secrets needed; joins existing cluster on first boot
@@ -144,13 +157,15 @@ resource "portainer_stack" "vault_3" {
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/vault-3.yml")
+  stack_file_content = templatefile("${path.module}/stacks/vault-3.yml.tftpl", {
+    vault_config = local.vault_configs["vault-3"]
+  })
 }
 
 # ──────────────────────────────────────────────
 # Vault Raft cluster — second peer (vault-2 on ds-1)
 # Brought under Portainer + Terraform after running as raw
-# `docker run` outside IaC. See stacks/vault-2.yml.
+# `docker run` outside IaC. See stacks/vault-2.yml.tftpl.
 # ──────────────────────────────────────────────
 resource "portainer_stack" "vault_2" {
   name            = "vault-2"
@@ -158,7 +173,9 @@ resource "portainer_stack" "vault_2" {
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/vault-2.yml")
+  stack_file_content = templatefile("${path.module}/stacks/vault-2.yml.tftpl", {
+    vault_config = local.vault_configs["vault-2"]
+  })
 }
 
 # ──────────────────────────────────────────────
@@ -171,7 +188,9 @@ resource "portainer_stack" "vault" {
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/vault.yml")
+  stack_file_content = templatefile("${path.module}/stacks/vault.yml.tftpl", {
+    vault_config = local.vault_configs["vault-1"]
+  })
 
   env {
     name  = "VAULT_ADDR"
