@@ -72,42 +72,54 @@ resource "portainer_stack" "cloudflare_tunnel_3" {
 # 05-home.conf for the new source of truth.
 
 # ──────────────────────────────────────────────
-# Nginx Reverse Proxy + Promtail (rproxy-1 on dockermaster)
-# All services route through this — certs managed by pfSense
+# Nginx Reverse Proxy stacks (rproxy on dm, rproxy-2 on ds-1, rproxy-3
+# on ds-2). All three serve the SAME set of vhost.d files, rendered from
+# dockermaster/docker/compose/nginx-rproxy/vhost.d/*.conf via Terraform
+# fileset+templatefile iteration. Drop a *.conf in the repo dir + run
+# `terraform apply` to roll the new vhost out across all 3 instances.
+#
+# Cert directory is still a bind-mount — pfSense ACME is the source of
+# truth, and the cert sync mechanism is its own tracked IaC gap (see
+# memory feedback_iac_first_principle.md).
 # ──────────────────────────────────────────────
+locals {
+  rproxy_vhosts = {
+    for f in fileset("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/vhost.d", "*.conf") :
+    f => file("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/vhost.d/${f}")
+  }
+}
+
 resource "portainer_stack" "reverse_proxy" {
   name            = "reverse-proxy"
   endpoint_id     = var.endpoint_id
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/reverse-proxy.yml")
+  stack_file_content = templatefile("${path.module}/stacks/reverse-proxy.yml.tftpl", {
+    vhosts = local.rproxy_vhosts
+  })
 }
 
-# ──────────────────────────────────────────────
-# Nginx Reverse Proxy (rproxy-2 on dockerserver-1)
-# Second instance for HA — shares the same vhost.d config via NFS
-# ──────────────────────────────────────────────
 resource "portainer_stack" "reverse_proxy_2" {
   name            = "reverse-proxy-2"
   endpoint_id     = var.ds1_endpoint_id
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/reverse-proxy-2.yml")
+  stack_file_content = templatefile("${path.module}/stacks/reverse-proxy-2.yml.tftpl", {
+    vhosts = local.rproxy_vhosts
+  })
 }
 
-# ──────────────────────────────────────────────
-# Nginx Reverse Proxy (rproxy-3 on dockerserver-2)
-# Third instance for HA — completes the 3-host edge
-# ──────────────────────────────────────────────
 resource "portainer_stack" "reverse_proxy_3" {
   name            = "reverse-proxy-3"
   endpoint_id     = var.ds2_endpoint_id
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/reverse-proxy-3.yml")
+  stack_file_content = templatefile("${path.module}/stacks/reverse-proxy-3.yml.tftpl", {
+    vhosts = local.rproxy_vhosts
+  })
 }
 
 # ──────────────────────────────────────────────

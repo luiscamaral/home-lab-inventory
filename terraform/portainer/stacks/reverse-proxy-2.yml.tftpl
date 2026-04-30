@@ -1,8 +1,9 @@
 name: reverse-proxy-2
 
 # Second nginx reverse proxy on dockerserver-1 for HA.
-# Shares the same vhost.d + cert config from NFS as rproxy-1 on dockermaster.
-# All upstreams are macvlan IPs (no rproxy bridge dependency).
+# vhost.d files mirror rproxy-1 — same templatefile var (vhosts) so all
+# 3 instances always serve the same vhost set. Cert dir still bind-mount
+# from pfSense ACME (separate IaC gap).
 
 networks:
   servers-net:
@@ -11,6 +12,13 @@ networks:
   rproxy:
     name: rproxy
     external: true
+
+configs:
+%{ for name, content in vhosts ~}
+  vhost_${replace(replace(name, ".", "_"), "-", "_")}:
+    content: |
+      ${indent(6, replace(content, "$", "$$"))}
+%{ endfor ~}
 
 services:
   nginx-rproxy:
@@ -28,9 +36,14 @@ services:
     volumes:
       - /nfs/dockermaster/docker/nginx-rproxy/config/conf/nginx.conf:/etc/nginx/nginx.conf:ro
       - /nfs/dockermaster/docker/nginx-rproxy/config/cert:/etc/nginx/cert:ro
-      - /nfs/dockermaster/docker/nginx-rproxy/config/vhost.d:/etc/nginx/vhost.d:ro
       - /nfs/dockermaster/docker/nginx-rproxy/www:/var/www
       - /nfs/dockermaster/docker/nginx-rproxy/logs/nginx-2:/var/log/nginx
+    configs:
+%{ for name, _ in vhosts ~}
+      - source: vhost_${replace(replace(name, ".", "_"), "-", "_")}
+        target: /etc/nginx/vhost.d/${name}
+        mode: 0644
+%{ endfor ~}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost/"]

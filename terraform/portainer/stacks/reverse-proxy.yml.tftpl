@@ -1,5 +1,14 @@
 name: reverse-proxy
 
+# vhost.d files flow through Compose `configs:` rendered from
+# dockermaster/docker/compose/nginx-rproxy/vhost.d/*.conf via
+# templatefile() + fileset() iteration in stacks.tf. No bind-mount,
+# no scp — drop a *.conf in the repo dir + terraform apply.
+#
+# Cert directory remains a bind-mount — pfSense ACME is source of
+# truth and still pushes via manual scp. Separate tracked IaC gap
+# (see feedback_iac_first_principle.md).
+
 networks:
   servers-net:
     name: docker-servers-net
@@ -7,6 +16,13 @@ networks:
   rproxy:
     name: rproxy
     external: true
+
+configs:
+%{ for name, content in vhosts ~}
+  vhost_${replace(replace(name, ".", "_"), "-", "_")}:
+    content: |
+      ${indent(6, replace(content, "$", "$$"))}
+%{ endfor ~}
 
 services:
   nginx-rproxy:
@@ -24,9 +40,14 @@ services:
     volumes:
       - /nfs/dockermaster/docker/nginx-rproxy/config/conf/nginx.conf:/etc/nginx/nginx.conf:ro
       - /nfs/dockermaster/docker/nginx-rproxy/config/cert:/etc/nginx/cert:ro
-      - /nfs/dockermaster/docker/nginx-rproxy/config/vhost.d:/etc/nginx/vhost.d:ro
       - /nfs/dockermaster/docker/nginx-rproxy/www:/var/www
       - /nfs/dockermaster/docker/nginx-rproxy/logs/nginx:/var/log/nginx
+    configs:
+%{ for name, _ in vhosts ~}
+      - source: vhost_${replace(replace(name, ".", "_"), "-", "_")}
+        target: /etc/nginx/vhost.d/${name}
+        mode: 0644
+%{ endfor ~}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost/"]
