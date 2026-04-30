@@ -71,7 +71,7 @@ jobs:
       # Install Python for yamllint and other tools
       - name: Set up Python
         if: matrix.linter == 'yaml' || matrix.linter == 'json'
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
@@ -195,7 +195,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
