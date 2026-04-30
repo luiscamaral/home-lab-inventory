@@ -1,5 +1,8 @@
 # ──────────────────────────────────────────────
-# Docker Registry (already deployed via Portainer)
+# Docker Registry — config.yml via Compose configs (audit C3 part 3),
+# htpasswd content from Vault written via entrypoint shim (bcrypt hash
+# can not survive Compose `$` interpolation; see commentary in the
+# stack template).
 # ──────────────────────────────────────────────
 resource "portainer_stack" "docker_registry" {
   name            = "docker-registry"
@@ -7,7 +10,10 @@ resource "portainer_stack" "docker_registry" {
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/docker-registry.yml")
+  stack_file_content = templatefile("${path.module}/stacks/docker-registry.yml.tftpl", {
+    registry_config = file("${path.module}/stacks/docker-registry-config.yml")
+    htpasswd        = data.vault_kv_secret_v2.registry.data["htpasswd"]
+  })
 }
 
 # ──────────────────────────────────────────────
