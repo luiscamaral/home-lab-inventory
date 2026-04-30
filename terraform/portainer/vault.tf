@@ -18,6 +18,14 @@ data "vault_kv_secret_v2" "twingate_golden_mussel" {
   name  = "homelab/twingate/golden-mussel"
 }
 
+# Twingate connector C — "fresh-marmoset" on NAS (C1 in audit
+# 2026-04-30). Migrated from Synology Container Manager where the
+# tokens were sitting plaintext on the NAS filesystem.
+data "vault_kv_secret_v2" "twingate_fresh_marmoset" {
+  mount = "secret"
+  name  = "homelab/twingate/fresh-marmoset"
+}
+
 data "vault_kv_secret_v2" "vault" {
   mount = "secret"
   name  = "homelab/vault"

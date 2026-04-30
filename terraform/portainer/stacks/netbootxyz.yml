@@ -1,0 +1,41 @@
+name: netbootxyz
+
+# netboot.xyz on NAS — netboot menu server (TFTP UDP/69, web UI on 3000,
+# iPXE boot loader on 8080). State lives at
+# /volume2/docker/netbootxyz/{config,assets} on the NAS — those host
+# paths are bind-mounted directly. Bringing them under Compose configs
+# is out of scope: the assets dir contains many MB of downloaded boot
+# images that are managed by netboot.xyz itself.
+#
+# Pinned to 192.168.4.232/02:42:c0:a8:04:e8 on `home-net` macvlan to
+# keep ARP caches stable across container recreates.
+
+networks:
+  home-net:
+    external: true
+
+services:
+  netbootxyz:
+    image: ghcr.io/linuxserver/netbootxyz:0.7.6
+    container_name: netbootxyz
+    pull_policy: missing
+    environment:
+      PUID: "1027"
+      PGID: "100"
+      TZ: America/Denver
+    volumes:
+      - /volume2/docker/netbootxyz/config:/config
+      - /volume2/docker/netbootxyz/assets:/assets
+    # MAC pinning not supported by NAS Docker engine (API 1.43); see
+    # openspeedtest.yml for context. Stable IP only.
+    networks:
+      home-net:
+        ipv4_address: 192.168.4.232
+    restart: unless-stopped
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "netbootxyz"
+      com.docker.service: "netbootxyz"
+      portainer.autodeploy: "false"
+    # No `deploy.resources` block: NAS Synology kernel lacks CPU CFS
+    # quotas, Docker rejects NanoCPUs limits.

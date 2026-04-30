@@ -220,6 +220,64 @@ resource "portainer_stack" "twingate_b" {
 }
 
 # ──────────────────────────────────────────────
+# Twingate Connector C (fresh-marmoset) → NAS
+# Third connector for active-active redundancy across hosts. Tokens
+# from Vault. C1 in docs/iac-audit-2026-04-30.md was about this stack
+# being deployed via Synology Container Manager (plaintext tokens on
+# disk); now under TF.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "twingate_nas" {
+  name            = "twingate-nas"
+  endpoint_id     = portainer_environment.nas.id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/twingate-nas.yml")
+
+  env {
+    name  = "TWINGATE_NETWORK"
+    value = data.vault_kv_secret_v2.twingate_fresh_marmoset.data["network"]
+  }
+
+  env {
+    name  = "TWINGATE_ACCESS_TOKEN"
+    value = data.vault_kv_secret_v2.twingate_fresh_marmoset.data["access_token"]
+  }
+
+  env {
+    name  = "TWINGATE_REFRESH_TOKEN"
+    value = data.vault_kv_secret_v2.twingate_fresh_marmoset.data["refresh_token"]
+  }
+}
+
+# ──────────────────────────────────────────────
+# OpenSpeedTest → NAS — internal LAN speed-test tool. C1 in audit.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "openspeedtest" {
+  name            = "openspeedtest"
+  endpoint_id     = portainer_environment.nas.id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/openspeedtest.yml")
+}
+
+# ──────────────────────────────────────────────
+# netboot.xyz → NAS — netboot menu server (TFTP/HTTP). C1 in audit.
+# Bind-mounts /volume2/docker/netbootxyz/{config,assets} for state and
+# downloaded boot images (out-of-scope to fold into IaC — many GBs of
+# managed-by-netboot.xyz content).
+# ──────────────────────────────────────────────
+resource "portainer_stack" "netbootxyz" {
+  name            = "netbootxyz"
+  endpoint_id     = portainer_environment.nas.id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/netbootxyz.yml")
+}
+
+# ──────────────────────────────────────────────
 # Calibre (calibre + calibre-web) → dockerserver-1
 # Ebook server — password from Vault
 # ──────────────────────────────────────────────
