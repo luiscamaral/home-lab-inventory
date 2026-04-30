@@ -10,6 +10,10 @@
 # Source-of-truth: terraform/pfsense/scripts/sync-certs-to-rproxy.sh
 # Sync to /root/sync-certs-to-rproxy.sh on pfSense via:
 #   scripts/sync-pfsense-scripts.py --apply
+#
+# NOTE: NAS pihole-3 (192.168.4.236) does not currently receive certs.
+# When pihole-3 needs HTTPS admin UI, add NAS as a fourth target here.
+# See IaC audit N6.
 
 DOMAIN="${1:-d.lcamaral.com}"
 DEST_HOST="192.168.48.44"

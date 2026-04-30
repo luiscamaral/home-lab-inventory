@@ -28,7 +28,7 @@ alias, so the override files are necessary, not redundant.
 ## Files per host
 
 | Path | Purpose |
-|---|---|
+| --- | --- |
 | `10-ens19.network` | Static IP on the primary interface + declares macvlan child |
 | `10-server-net-shim.netdev` | Creates the macvlan virtual interface (identical on all 3 hosts) |
 | `10-server-net-shim.network` | Assigns the host-side macvlan IP (one per `docker-servers-net` subnet) |
@@ -36,7 +36,7 @@ alias, so the override files are necessary, not redundant.
 ## Canonical values
 
 | Host | ens19 | macvlan shim |
-|---|---|---|
+| --- | --- | --- |
 | dockermaster | `192.168.48.44/20` | `192.168.59.1/32` |
 | dockerserver-1 | `192.168.48.45/20` | `192.168.59.33/32` |
 | dockerserver-2 | `192.168.48.46/20` | `192.168.59.46/32` |
@@ -66,6 +66,14 @@ Expected output for ds-2:
 ens19            inet 192.168.48.46/20 ...
 server-net-shim  inet 192.168.59.46/32 ...
 ```
+
+## Netplan status
+
+Each host has `/etc/netplan/00-installer-config.yaml` from the original Ubuntu
+install. These files are **not version-controlled** and are intentionally
+unmanaged. The systemd-network override files above take full precedence — netplan
+is effectively shadowed and inert. If a future Ubuntu upgrade changes netplan
+behaviour, verify that the systemd-network files still win. See IaC audit N4.
 
 ## When cloning a new VM from one of these hosts
 
