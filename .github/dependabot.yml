@@ -1,0 +1,143 @@
+# Dependabot configuration for home-lab-inventory.
+#
+# Why dependabot (not Renovate): no extra app install, no extra token,
+# no third-party config repo dance. GitHub-native, zero credential
+# surface. Trade-off: less granular than Renovate (no per-image
+# group rules, no auto-merge for patches without a workflow).
+#
+# What it watches:
+#   - GitHub Actions in .github/workflows/
+#   - Docker image tags in dockermaster/ Compose files (the .yml files;
+#     dependabot does NOT parse .tftpl Terraform templates today —
+#     pinning those is on us until Renovate or a hook is added)
+#   - npm devDependencies in package.json
+#   - pip dependencies declared in pyproject.toml
+#
+# Schedule: weekly Mondays. Patch + minor PRs are grouped per ecosystem
+# to keep PR noise low. Major bumps land as separate PRs so they can
+# be reviewed individually (and rejected for stateful services).
+#
+# Stateful images that should NOT be auto-bumped to a new major are
+# explicitly ignored below: vault, keycloak, postgresql-repmgr,
+# prometheus, alertmanager, thanos, minio, postgres, registry.
+
+version: 2
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Denver"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      gha-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Docker images in dockermaster compose tree (the live source for
+  # services not yet migrated to terraform/portainer/stacks/).
+  - package-ecosystem: "docker"
+    directory: "/dockermaster/docker/compose"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Denver"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+    ignore:
+      # Stateful — coordinated upgrades only, never auto-bump majors.
+      - dependency-name: "hashicorp/vault"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "keycloak/keycloak"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "postgres"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "bitnami/postgresql-repmgr"
+      - dependency-name: "bitnamilegacy/postgresql-repmgr"
+      - dependency-name: "minio/minio"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "registry"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "prom/prometheus"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "prom/alertmanager"
+        update-types: ["version-update:semver-major"]
+
+  # NAS-side compose tree (Synology agent + small stacks)
+  - package-ecosystem: "docker"
+    directory: "/nas/docker"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Denver"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # npm devDependencies (commitlint, husky)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Denver"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+    groups:
+      commitlint:
+        patterns:
+          - "@commitlint/*"
+      npm-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Python tooling pinned in pyproject.toml — currently has only
+  # build/lint config, no runtime deps, but reserve the slot for when
+  # scripts/ grows real Python deps.
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Denver"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
