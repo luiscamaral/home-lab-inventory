@@ -1,6 +1,6 @@
 # Docker Container Inventory
 
-> **Last refreshed:** 2026-04-17 after NAS Direct Agent switch + pihole HA completion
+> **Last refreshed:** 2026-04-30 after NAS Direct Agent switch + pihole HA completion
 > **Source of truth:** `terraform/portainer/stacks.tf` (Portainer-managed) + on-host `docker ps`
 > **HA topology:** see `docs/ha-architecture.md`
 
@@ -21,7 +21,7 @@
   (bootstrap-only, not Terraform-managed since Terraform would need the
   agent to be up before managing anything on NAS)
 
-### Running Containers on NAS (5 stacks + 1 agent)
+### Running Containers on NAS (4 stacks + 1 agent)
 
 #### Portainer Docker Agent
 
@@ -33,37 +33,33 @@
 
 #### NAS Portainer Stacks (Endpoint ID 14)
 
-##### Twingate Connector (Stack ID: 28)
+##### Twingate Connector (TF-managed: `portainer_stack.twingate_nas`)
 
 - **twingate-connector**
   - Network: macvlan
   - IP: 192.168.1.4
   - Compose: `nas/docker/twingate-connector/`
+  - Terraform: `portainer_stack.twingate_nas` in `terraform/portainer/stacks.tf`
   - Purpose: Twingate zero-trust network connector on NAS
 
-##### Speed Test (Stack ID: 29)
+##### Speed Test (TF-managed: `portainer_stack.openspeedtest`)
 
 - **speed-test**
   - Image: openspeedtest/openspeedtest
   - Network: macvlan
   - IP: 192.168.4.234
   - Compose: `nas/docker/speed-test/`
+  - Terraform: `portainer_stack.openspeedtest` in `terraform/portainer/stacks.tf`
   - Purpose: OpenSpeedTest local network speed test server
 
-##### Paperless-NGX (Stack ID: 32)
-
-- **paperlessngx** + **PostgreSQL** + **Redis**
-  - Compose: `nas/docker/paperlessngx/`
-  - Secrets: `secret/homelab/paperlessngx`
-  - Purpose: Document management system with OCR (Paperless-NGX + PostgreSQL + Redis)
-
-##### NetBoot.xyz (Stack ID: 34)
+##### NetBoot.xyz (TF-managed: `portainer_stack.netbootxyz`)
 
 - **netbootxyz**
   - Image: lscr.io/linuxserver/netbootxyz (v0.7.6)
   - Network: macvlan
   - IP: 192.168.4.232
   - Compose: `nas/docker/netbootxyz/`
+  - Terraform: `portainer_stack.netbootxyz` in `terraform/portainer/stacks.tf`
   - Purpose: Network boot server for PXE booting
 
 ##### pihole-3 (Stack ID: 93, Terraform-managed)
@@ -104,7 +100,7 @@
 
 - **rproxy** — `nginx:1.29-otel`
   - Networks: `docker-servers-net` (192.168.59.28) + `rproxy` bridge (172.24.0.6)
-  - Volumes: `/nfs/dockermaster/docker/nginx-rproxy/nginx-rproxy` → `/etc/nginx`
+  - Configs: Nginx configuration delivered via Compose `configs:` directive (no NFS bind-mount)
   - **HA:** 1 of 3 (paired with rproxy-2 on ds-1, rproxy-3 on ds-2); shared vhost.d via NFS
   - Purpose: Nginx reverse proxy + SSL termination for `*.d.lcamaral.com`
 
@@ -165,6 +161,29 @@
 - **watchtower** — `containrrr/watchtower:latest`
   - Network: internal bridge
   - Purpose: Auto-update opted-in images at 04:00 daily
+
+#### Monitoring
+
+- **cadvisor-dm-cadvisor-1** — `gcr.io/cadvisor/cadvisor:v0.55.1`
+  - Terraform: `portainer_stack.cadvisor_dm`
+  - Purpose: Container metrics for dockermaster
+
+- **Grafana** (`grafana-grafana-1`) — `grafana/grafana-oss:13.0.1`
+  - Network: `docker-servers-net` (192.168.59.39)
+  - Terraform: `portainer_stack.grafana`
+  - Purpose: Monitoring dashboards
+
+- **pihole-exporter-1-pihole-exporter-1** — `ekofr/pihole-exporter:v1.2.0`
+  - Terraform: `portainer_stack.pihole_exporter_1`
+  - Purpose: Pi-hole metrics exporter
+
+- **pve-exporter-pve-exporter-1** — `prompve/prometheus-pve-exporter:3.8.2`
+  - Terraform: `portainer_stack.pve_exporter`
+  - Purpose: Proxmox VE metrics exporter
+
+- **thanos-query-thanos-query-1** — `quay.io/thanos/thanos:v0.41.0`
+  - Terraform: `portainer_stack.thanos_query`
+  - Purpose: Thanos query frontend (federated Prometheus queries)
 
 ---
 
@@ -271,8 +290,13 @@
   - Purpose: Container resource metrics
 - `prometheus-node-exporter-1` — `quay.io/prometheus/node-exporter:latest`
   - Purpose: Host metrics
-- `prometheus-snmp-exporter-1` — `prom/snmp-exporter:v0.20.0`
-  - Purpose: SNMP metrics for network devices
+
+#### SNMP Exporter (standalone)
+
+- **snmp-exporter** — `quay.io/prometheus/snmp-exporter:v0.30.1`
+  - Network: `docker-servers-net` (192.168.59.29)
+  - Terraform: `portainer_stack.snmp_exporter`
+  - Purpose: SNMP metrics for network devices (pfSense, Synology, Raritan)
 
 #### DNS tier
 
@@ -369,7 +393,7 @@
 ## Network / IP assignments (`docker-servers-net`, 192.168.59.0/26)
 
 | IP | Container | Host |
-|---|---|---|
+| --- | --- | --- |
 | .1 | gateway / dockermaster macvlan shim | dm |
 | .2 | portainer | dm |
 | .3 | bind-dns-bind9-1 | dm |
@@ -390,16 +414,19 @@
 | .24 | twingate-golden-mussel | ds-2 |
 | .25 | vault | dm |
 | .28 | rproxy (edge 1/3) | dm |
+| .29 | snmp-exporter | ds-1 |
 | .33 | server-net-shim (ds-1 & ds-2 host shim) | ds-1, ds-2 |
 | .34 | portainer-agent | ds-1 |
 | .37 | minio-2-minio-1 | ds-2 |
 | .38 | homelab-portal-2 | ds-1 |
+| .39 | Grafana | dm |
 | .40 | freeswitch | ds-2 |
 | .43 | keycloak-2 | ds-1 |
 | .44 | keycloak-db-0 | dm |
 | .46 | portainer-agent | ds-2 |
 | .48 | rproxy-2 (edge 2/3) | ds-1 |
 | .49 | rproxy-3 (edge 3/3) | ds-2 |
+| .50 | pihole-2 | ds-1 |
 | .54 | keycloak-db-1 | ds-1 |
 
 ## Removed services (since last refresh)
@@ -407,7 +434,7 @@
 The following services were present in the pre-HA inventory and have been removed or superseded:
 
 | Service | Reason |
-|---|---|
+| --- | --- |
 | chisel | Removed — replaced by Twingate + Cloudflare tunnel |
 | ldap-lcamaral-com (openldap, lemonldap, phpldapadmin) | Removed — superseded by Keycloak |
 | ollama | Removed |
@@ -416,13 +443,14 @@ The following services were present in the pre-HA inventory and have been remove
 | `ansible-observability`, `docker-dns`, `docker-vault`, `litellm`, `n8n-stack`, `puppet` | Removed (were already stopped) |
 | vault on NAS | Superseded by 3-node Vault Raft cluster |
 | ocr-photo-tag on NAS | Removed (non-portable) |
+| paperless-ngx on NAS | Removed — zombie stack (endpoint 6) deleted in commit `43dde4b` |
 
 ## Terraform-managed Portainer stacks
 
 Authoritative list in `terraform/portainer/stacks.tf`:
 
 | Stack | Endpoint |
-|---|---|
+| --- | --- |
 | `docker-registry` | dm |
 | `cloudflare-tunnel`, `cloudflare-tunnel-2`, `cloudflare-tunnel-3` | dm, ds-1, ds-2 |
 | `bind-dns` | dm |
@@ -441,6 +469,19 @@ Authoritative list in `terraform/portainer/stacks.tf`:
 | `keycloak`, `keycloak-2` | dm, ds-1 |
 | `postfix-relay` | dm |
 | `homelab-portal`, `homelab-portal-2` | dm, ds-1 |
+| `grafana` | dm |
+| `snmp-exporter` | ds-1 |
+| `cadvisor-dm` | dm |
+| `node-exporter-dm` | dm |
+| `pihole-exporter-1` | dm |
+| `pve-exporter` | dm |
+| `thanos-query` | dm |
+| `pihole-2` | ds-1 |
+| `pihole-3` | nas |
+| `openspeedtest` | nas |
+| `netbootxyz` | nas |
+| `twingate-nas` | nas |
+| `node-exporter-nas` | nas |
 
 Portainer itself (on dm, `192.168.59.2`) is bootstrap and not Terraform-managed.
 

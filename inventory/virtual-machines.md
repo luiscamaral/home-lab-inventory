@@ -107,13 +107,37 @@
 
 #### VM 1000 - Lamint
 
-- **Status**: ✅ Running
+- **Status**: 🔴 Stopped
 - **CPU**: 12 cores (host)
 - **RAM**: 32 GB
 - **Storage**: 64 GB SSD
 - **Network**: vmbr10 (MTU 9000)
 - **OS**: Linux
 - **Auto-start**: Yes
+
+### Proxmox LXC Containers
+
+#### LXC 10000 - pihole
+
+- **Status**: ✅ Running
+- **CPU**: allocated via Proxmox default
+- **Network**: macvlan
+- **OS**: Linux
+- **Purpose**: Pi-hole DNS (HA node 1 of 3)
+
+#### LXC 10010 - openclaw
+
+- **Status**: ✅ Running
+- **CPU**: 6 cores
+- **RAM**: 8 GB (8128 MB)
+- **Storage**: 236 GB SSD (thin-pool)
+- **Network**: vmbr0, IP 192.168.100.244/24, GW 192.168.100.1
+- **OS**: Debian 12 (bookworm)
+- **Features**: nesting=1, unprivileged
+- **Auto-start**: Yes
+- **Purpose**: Nginx reverse proxy for openclaw/byte application (backend at 127.0.0.1:18789)
+- **Server names**: `openclaw.lab.home`, `byte.lab.home`
+- **Security note**: Bearer token in Nginx config should be moved to Vault at `secret/homelab/openclaw/canvas_token`
 
 ### Container Orchestration (Stopped)
 
@@ -210,8 +234,9 @@
 ## Summary
 
 - **Total VMs**: 19
-- **Running**: 8
-- **Stopped**: 10
+- **LXC Containers**: 2
+- **Running**: 7
+- **Stopped**: 11
 - **Templates**: 1
 - **Total Allocated RAM**: ~219 GB
 - **Total Allocated Storage**: ~1.6 TB
