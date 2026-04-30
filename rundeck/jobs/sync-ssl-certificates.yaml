@@ -1,0 +1,47 @@
+- defaultTab: nodes
+  description: Sync SSL certificates from pfSense ACME to nginx reverse proxy
+  executionEnabled: true
+  group: Infrastructure
+  id: cert-sync-pfsense-nginx
+  loglevel: INFO
+  name: Sync SSL Certificates
+  nodeFilterEditable: false
+  nodefilters:
+    dispatch:
+      excludePrecedence: true
+      keepgoing: false
+      rankOrder: ascending
+      successOnEmptyNodeFilter: false
+      threadcount: '1'
+    filter: 'name: rundeck-local'
+  nodesSelectedByDefault: true
+  notification:
+    onfailure:
+      email:
+        attachLog: true
+        attachLogInFile: true
+        recipients: admin@lcamaral.com
+  notifyAvgDurationThreshold: null
+  plugins:
+    ExecutionLifecycle: null
+  schedule:
+    dayofmonth:
+      day: '*'
+    month: '*'
+    time:
+      hour: '0'
+      minute: '0'
+      seconds: '0'
+    year: '*'
+  scheduleEnabled: true
+  sequence:
+    commands:
+    - description: Run certificate sync script
+      script: |
+        #!/bin/bash
+        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null lamaral@192.168.59.1 \
+          'bash /nfs/dockermaster/docker/rundeck/scripts/sync-certs-to-rproxy.sh'
+    keepgoing: false
+    strategy: node-first
+  user: admin
+  uuid: cert-sync-pfsense-nginx

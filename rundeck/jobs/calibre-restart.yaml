@@ -1,0 +1,73 @@
+- defaultTab: nodes
+  description: ''
+  executionEnabled: true
+  id: 20007299-edab-4383-b416-12359ca5f294
+  loglevel: INFO
+  name: Calibre Restart
+  nodeFilterEditable: false
+  nodefilters:
+    dispatch:
+      excludePrecedence: true
+      keepgoing: false
+      rankOrder: ascending
+      successOnEmptyNodeFilter: false
+      threadcount: '1'
+    filter: 'name: Dockermaster.local '
+  nodesSelectedByDefault: true
+  plugins:
+    ExecutionLifecycle: {}
+  scheduleEnabled: true
+  sequence:
+    commands:
+    - autoSecureInput: 'false'
+      passSecureInput: 'false'
+      script: |+
+        #!/bin/bash
+
+        # Rundeck Job: Calibre restart
+        # Description: Restart calibre and calibre web using Docker Compose
+        # Author: Luis Amaral
+        # Date: 2025-04-26
+        # Environment: Production
+
+        # Set strict error handling
+        set -euo pipefail
+
+        # Logging function
+        log() {
+            echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
+        }
+
+        # Start the script
+        log "Starting Rundeck job..."
+
+        # Define variables
+        TARGET_ENV="production"
+        CALIBRE_COMPOSE_PATH="/nfs/dockermaster/docker/calibre-server"
+
+        # Check if running in the correct environment
+        if [ "$TARGET_ENV" != "production" ]; then
+            log "This script is intended for the production environment only."
+            exit 1
+        fi
+
+        # Set execution folder
+        cd $CALIBRE_COMPOSE_PATH
+
+        # Stop calibre services
+        log "Stop calibre services $CALIBRE_COMPOSE_PATH"
+        docker compose stop
+
+        sleep 3
+
+        # Restart calibre services
+        docker compose up -d
+
+        # Completion message
+        log "Rundeck job completed successfully."
+
+
+    keepgoing: false
+    strategy: node-first
+  user: admin
+  uuid: 20007299-edab-4383-b416-12359ca5f294

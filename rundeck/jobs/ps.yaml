@@ -1,0 +1,43 @@
+- defaultTab: nodes
+  description: Processes Snapshot
+  executionEnabled: true
+  id: 12b5296b-846d-43aa-85b1-559d794b6326
+  loglevel: INFO
+  loglimit: '10000'
+  loglimitAction: truncate
+  maxMultipleExecutions: '1'
+  name: PS
+  nodeFilterEditable: false
+  nodefilters:
+    dispatch:
+      excludePrecedence: true
+      keepgoing: false
+      rankOrder: ascending
+      successOnEmptyNodeFilter: false
+      threadcount: '1'
+    filter: 'tags: /server/'
+    filterExclude: 'tags: /xenserver*/'
+  nodesSelectedByDefault: true
+  plugins:
+    ExecutionLifecycle: {}
+  schedule:
+    month: '*'
+    time:
+      hour: '*'
+      minute: 0/30
+      seconds: '0'
+    weekday:
+      day: '*'
+    year: '*'
+  scheduleEnabled: true
+  sequence:
+    commands:
+    - description: Time stamp
+      exec: date
+    - description: ps
+      exec: ps auxww
+    keepgoing: false
+    strategy: node-first
+  timeout: 30s
+  user: admin
+  uuid: 12b5296b-846d-43aa-85b1-559d794b6326
