@@ -1,0 +1,37 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: dockerlogs
+          __path__: /var/lib/docker/containers/*/*log # Scrape all Docker container logs
+    pipeline_stages:
+      - docker: {} # Extract labels from Docker metadata
+      - match:
+          selector: '{container_name="nginx"}' # Filter for Nginx container
+          stages:
+            - regex:
+                # yamllint disable-line rule:line-length
+                expression: '^(?P<time>\S+) (?P<host>\S+) (?P<remote_addr>\S+) \S+ \[(?P<timestamp>[^\]]+)\] "(?P<method>\S+) (?P<request>\S+) \S+" (?P<status>\S+) (?P<body_bytes_sent>\S+) "(?P<referrer>[^"]*)" "(?P<user_agent>[^"]*)"'
+            - labels:
+                time:
+                host:
+                remote_addr:
+                timestamp:
+                method:
+                request:
+                status:
+                body_bytes_sent:
+                referrer:
+                user_agent:

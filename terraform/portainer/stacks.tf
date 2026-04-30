@@ -87,6 +87,12 @@ locals {
     for f in fileset("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/vhost.d", "*.conf") :
     f => file("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/vhost.d/${f}")
   }
+  # nginx.conf, promtail-config.yml, and start.sh are also in the repo
+  # at dockermaster/docker/compose/nginx-rproxy/ — rendered via Compose
+  # configs: rather than bind-mounted (closes audit C3 for rproxy).
+  rproxy_nginx_conf      = file("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/conf/nginx.conf")
+  rproxy_promtail_config = file("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/promtail-config.yml")
+  rproxy_promtail_start  = file("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/bin/start.sh")
 }
 
 resource "portainer_stack" "reverse_proxy" {
@@ -96,7 +102,10 @@ resource "portainer_stack" "reverse_proxy" {
   method          = "string"
 
   stack_file_content = templatefile("${path.module}/stacks/reverse-proxy.yml.tftpl", {
-    vhosts = local.rproxy_vhosts
+    vhosts           = local.rproxy_vhosts
+    nginx_conf       = local.rproxy_nginx_conf
+    promtail_config  = local.rproxy_promtail_config
+    start_sh         = local.rproxy_promtail_start
   })
 }
 
@@ -107,7 +116,8 @@ resource "portainer_stack" "reverse_proxy_2" {
   method          = "string"
 
   stack_file_content = templatefile("${path.module}/stacks/reverse-proxy-2.yml.tftpl", {
-    vhosts = local.rproxy_vhosts
+    vhosts     = local.rproxy_vhosts
+    nginx_conf = local.rproxy_nginx_conf
   })
 }
 
@@ -118,7 +128,8 @@ resource "portainer_stack" "reverse_proxy_3" {
   method          = "string"
 
   stack_file_content = templatefile("${path.module}/stacks/reverse-proxy-3.yml.tftpl", {
-    vhosts = local.rproxy_vhosts
+    vhosts     = local.rproxy_vhosts
+    nginx_conf = local.rproxy_nginx_conf
   })
 }
 
