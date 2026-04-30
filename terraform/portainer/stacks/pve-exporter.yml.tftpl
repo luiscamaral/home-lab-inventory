@@ -26,7 +26,7 @@ configs:
 
 services:
   pve-exporter:
-    image: prompve/prometheus-pve-exporter:3.8.2
+    image: prompve/prometheus-pve-exporter:3.8.3
     hostname: pve-exporter
     # Force IPv4 bind: docker-servers-net macvlan is IPv4-only, so the default
     # `[::]:9221` listener fails with "Address family not supported by protocol"
