@@ -18,7 +18,9 @@ concurrency:
 # Environment variables
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NODE_VERSION: "18"
+  # Bumped 18 -> 20 because markdownlint-cli@0.48.0 (pinned in
+  # .pre-commit-config.yaml) requires Node >=20 and EBADENGINEs on 18.
+  NODE_VERSION: "20"
   PYTHON_VERSION: "3.11"
 
 # Define permissions for the workflow
