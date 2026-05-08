@@ -445,66 +445,75 @@ jobs:
     if: always()
     runs-on: [self-hosted, dockermaster]
     steps:
+      # All `>> $GITHUB_STEP_SUMMARY` redirects are wrapped in `{ … } >> $GHS`
+      # blocks (was 4x SC2129 from shellcheck) and the inner `read` uses `-r`
+      # (was SC2162). No semantic change.
       - name: Generate health status report
+        env:
+          CHECK_TYPE: ${{ github.event_name == 'schedule' && 'Scheduled' || 'Manual' }}
+          SERVICES_STATUS: ${{ needs.health-assessment.outputs.services-status }}
+          CRITICAL_SERVICES: ${{ needs.health-assessment.outputs.critical-services }}
+          REPO: ${{ github.repository }}
         run: |
-          echo "## 🏥 Service Health Status Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Check Time:** $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)" >> $GITHUB_STEP_SUMMARY
-          echo "**Check Type:** ${{ github.event_name == 'schedule' && 'Scheduled' || 'Manual' }}" \
-            >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🏥 Service Health Status Report"
+            echo ""
+            echo "**Check Time:** $(date -u +%Y-%m-%d\ %H:%M:%S\ UTC)"
+            echo "**Check Type:** ${CHECK_TYPE}"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
-          SERVICES_STATUS='${{ needs.health-assessment.outputs.services-status }}'
-          CRITICAL_SERVICES='${{ needs.health-assessment.outputs.critical-services }}'
-          UNHEALTHY_SERVICES='${{ needs.health-assessment.outputs.unhealthy-services }}'
-
-          if [ "$SERVICES_STATUS" != "" ] && [ "$SERVICES_STATUS" != "null" ]; then
-            echo "### 📊 Service Status Overview" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-
+          if [ -n "$SERVICES_STATUS" ] && [ "$SERVICES_STATUS" != "null" ]; then
             TOTAL_SERVICES=$(echo "$SERVICES_STATUS" | jq 'keys | length')
             HEALTHY_COUNT=$(echo "$SERVICES_STATUS" | jq '[.[] | select(.status == "healthy")] | length')
             DEGRADED_COUNT=$(echo "$SERVICES_STATUS" | jq '[.[] | select(.status == "degraded")] | length')
             DOWN_COUNT=$(echo "$SERVICES_STATUS" | jq '[.[] | select(.status == "down")] | length')
 
-            echo "- **Total Services:** $TOTAL_SERVICES" >> $GITHUB_STEP_SUMMARY
-            echo "- **Healthy:** $HEALTHY_COUNT ✅" >> $GITHUB_STEP_SUMMARY
-            echo "- **Degraded:** $DEGRADED_COUNT ⚠️" >> $GITHUB_STEP_SUMMARY
-            echo "- **Down:** $DOWN_COUNT ❌" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
+            {
+              echo "### 📊 Service Status Overview"
+              echo ""
+              echo "- **Total Services:** $TOTAL_SERVICES"
+              echo "- **Healthy:** $HEALTHY_COUNT ✅"
+              echo "- **Degraded:** $DEGRADED_COUNT ⚠️"
+              echo "- **Down:** $DOWN_COUNT ❌"
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
 
             if [ "$CRITICAL_SERVICES" != "[]" ]; then
-              echo "### 🚨 Critical Alerts" >> $GITHUB_STEP_SUMMARY
-              echo "$CRITICAL_SERVICES" | jq -r '.[]' | while read service; do
-                echo "- $service" >> $GITHUB_STEP_SUMMARY
-              done
-              echo "" >> $GITHUB_STEP_SUMMARY
+              {
+                echo "### 🚨 Critical Alerts"
+                echo "$CRITICAL_SERVICES" | jq -r '.[]' | while read -r service; do
+                  echo "- $service"
+                done
+                echo ""
+              } >> "$GITHUB_STEP_SUMMARY"
             fi
 
-            echo "### 📋 Detailed Status" >> $GITHUB_STEP_SUMMARY
-            echo "| Service | Status | Containers | Issues |" >> $GITHUB_STEP_SUMMARY
-            echo "|---------|--------|------------|--------|" >> $GITHUB_STEP_SUMMARY
-
-            echo "$SERVICES_STATUS" | jq -r 'to_entries[] | \
-              "\(.key)|\(.value.status)|\(.value.containers.running)/" + \
-              "\(.value.containers.total)|\(.value.issues | length)"' | \
-              while IFS='|' read -r service status containers issues; do
-              STATUS_EMOJI="❓"
-              case $status in
-                "healthy") STATUS_EMOJI="✅" ;;
-                "degraded") STATUS_EMOJI="⚠️" ;;
-                "down") STATUS_EMOJI="❌" ;;
-              esac
-              echo "| $service | $STATUS_EMOJI $status | $containers | $issues |" >> $GITHUB_STEP_SUMMARY
-            done
+            {
+              echo "### 📋 Detailed Status"
+              echo "| Service | Status | Containers | Issues |"
+              echo "|---------|--------|------------|--------|"
+              echo "$SERVICES_STATUS" | jq -r 'to_entries[] | \
+                "\(.key)|\(.value.status)|\(.value.containers.running)/" + \
+                "\(.value.containers.total)|\(.value.issues | length)"' | \
+                while IFS='|' read -r service status containers issues; do
+                STATUS_EMOJI="❓"
+                case $status in
+                  "healthy") STATUS_EMOJI="✅" ;;
+                  "degraded") STATUS_EMOJI="⚠️" ;;
+                  "down") STATUS_EMOJI="❌" ;;
+                esac
+                echo "| $service | $STATUS_EMOJI $status | $containers | $issues |"
+              done
+            } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "⚠️ No services found for health checking" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ No services found for health checking" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔗 Management Links" >> $GITHUB_STEP_SUMMARY
-          echo "- [Portainer Dashboard](https://192.168.59.2:9000)" >> $GITHUB_STEP_SUMMARY
-          echo "- [Vault UI](http://vault.d.lcamaral.com/ui)" >> $GITHUB_STEP_SUMMARY
-          echo "- [Manual Health Check]" \
-               "(https://github.com/${{ github.repository }}/actions/workflows/service-health-monitor.yml)" \
-               >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "### 🔗 Management Links"
+            echo "- [Portainer Dashboard](https://192.168.59.2:9000)"
+            echo "- [Vault UI](http://vault.d.lcamaral.com/ui)"
+            echo "- [Manual Health Check](https://github.com/${REPO}/actions/workflows/service-health-monitor.yml)"
+          } >> "$GITHUB_STEP_SUMMARY"

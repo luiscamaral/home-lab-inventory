@@ -1,10 +1,12 @@
 # Watchtower Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or
+> superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Deploy Watchtower as a Terraform-managed Portainer stack with opt-in auto-updates for 15 containers.
 
-**Architecture:** Single Watchtower container on rproxy bridge network, monitoring Docker socket, running on a daily 4 AM cron schedule. Uses standard `com.centurylinklabs.watchtower.enable` labels for opt-in. API token from Vault.
+**Architecture:** Single Watchtower container on rproxy bridge network, monitoring Docker socket, running on a daily 4
+AM cron schedule. Uses standard `com.centurylinklabs.watchtower.enable` labels for opt-in. API token from Vault.
 
 **Tech Stack:** Docker Compose, Terraform (portainer + vault providers), HashiCorp Vault
 
@@ -12,7 +14,7 @@
 
 ---
 
-### Task 1: Store Watchtower API token in Vault
+## Task 1: Store Watchtower API token in Vault
 
 **Files:** None (Vault CLI operation)
 
@@ -35,9 +37,10 @@ Expected: `api_token` field with 64-char hex string.
 
 ---
 
-### Task 2: Create Watchtower compose and Terraform files
+## Task 2: Create Watchtower compose and Terraform files
 
 **Files:**
+
 - Create: `terraform/portainer/stacks/watchtower.yml`
 - Create: `dockermaster/docker/compose/watchtower/docker-compose.yml`
 - Create: `dockermaster/docker/compose/watchtower/.env.example`
@@ -101,7 +104,7 @@ cp terraform/portainer/stacks/watchtower.yml dockermaster/docker/compose/watchto
 
 Write `dockermaster/docker/compose/watchtower/.env.example`:
 
-```
+```dotenv
 # Watchtower API token
 # Retrieve from Vault: vault kv get -field=api_token secret/homelab/watchtower
 WATCHTOWER_API_TOKEN=
@@ -156,11 +159,13 @@ Expected: `Success! The configuration is valid.`
 
 ---
 
-### Task 3: Migrate labels on auto-update stacks (set true)
+## Task 3: Migrate labels on auto-update stacks (set true)
 
-These 8 stack files need `com.lcamaral.home.watchtower.enable: "false"` replaced with `com.centurylinklabs.watchtower.enable: "true"` on the specified services.
+These 8 stack files need `com.lcamaral.home.watchtower.enable: "false"` replaced with
+`com.centurylinklabs.watchtower.enable: "true"` on the specified services.
 
 **Files to modify (Portainer stacks):**
+
 - `terraform/portainer/stacks/docker-registry.yml` — registry service
 - `terraform/portainer/stacks/cloudflare-tunnel.yml` — cloudflare service
 - `terraform/portainer/stacks/twingate-a.yml` — twingate service
@@ -168,60 +173,74 @@ These 8 stack files need `com.lcamaral.home.watchtower.enable: "false"` replaced
 - `terraform/portainer/stacks/calibre.yml` — calibre AND calibre-web services (both)
 - `terraform/portainer/stacks/github-runner.yml` — runner service
 - `terraform/portainer/stacks/rustdesk.yml` — hbbs AND hbbr services (both)
-- `terraform/portainer/stacks/prometheus.yml` — prometheus, node-exporter, snmp-exporter, alertmanager, cadvisor services (all 5, including the one without a label)
+- `terraform/portainer/stacks/prometheus.yml` — Prometheus, node-exporter, snmp-exporter,
+  alertmanager, cadvisor services (all 5, including the one without a label)
 
 For rundeck stack (`terraform/portainer/stacks/rundeck.yml`):
+
 - `postgres` service: change to `com.centurylinklabs.watchtower.enable: "true"`
 - `rundeck` service: change to `com.centurylinklabs.watchtower.enable: "false"` (manual — custom image)
 
 - [ ] **Step 1: Bulk replace across all files**
 
 For each file listed above, replace every occurrence of:
+
 ```yaml
       com.lcamaral.home.watchtower.enable: "false"  # Manual updates only
 ```
+
 or:
+
 ```yaml
       com.lcamaral.home.watchtower.enable: "false"
 ```
+
 with:
+
 ```yaml
       com.centurylinklabs.watchtower.enable: "true"
 ```
 
 Exception: `rundeck.yml` rundeck service gets `"false"` instead of `"true"`.
 
-- [ ] **Step 2: Add labels to prometheus services missing them**
+- [ ] **Step 2: Add labels to Prometheus services missing them**
 
-Some prometheus services (node-exporter, snmp-exporter, alertmanager, cadvisor) may not have any watchtower label. Add `com.centurylinklabs.watchtower.enable: "true"` to their labels blocks.
+Some Prometheus services (node-exporter, snmp-exporter, alertmanager, cadvisor) may not have any watchtower label. Add
+`com.centurylinklabs.watchtower.enable: "true"` to their labels blocks.
 
 ---
 
-### Task 4: Migrate labels on manual-only stacks (set false)
+## Task 4: Migrate labels on manual-only stacks (set false)
 
 **Files:**
+
 - `terraform/portainer/stacks/bind-dns.yml` — bind9 service
 - `terraform/portainer/stacks/vault.yml` — vault service
-- `terraform/portainer/stacks/reverse-proxy.yml` — nginx-rproxy AND promtail services (both)
+- `terraform/portainer/stacks/reverse-proxy.yml` — Nginx-rproxy AND promtail services (both)
 
 - [ ] **Step 1: Replace label**
 
 For each file, replace:
+
 ```yaml
       com.lcamaral.home.watchtower.enable: "false"  # Manual updates only
 ```
+
 or:
+
 ```yaml
       com.lcamaral.home.watchtower.enable: "false"
 ```
+
 with:
+
 ```yaml
       com.centurylinklabs.watchtower.enable: "false"
 ```
 
 ---
 
-### Task 5: Sync inventory compose files
+## Task 5: Sync inventory compose files
 
 - [ ] **Step 1: Copy all modified Portainer stacks to inventory compose files**
 
@@ -249,7 +268,7 @@ diff terraform/portainer/stacks/calibre.yml dockermaster/docker/compose/calibre-
 
 ---
 
-### Task 6: Deploy via Terraform
+## Task 6: Deploy via Terraform
 
 - [ ] **Step 1: Terraform plan**
 
@@ -303,7 +322,7 @@ Then redeploy the affected stack via `terraform apply`.
 
 ---
 
-### Task 7: Verify deployment
+## Task 7: Verify deployment
 
 - [ ] **Step 1: Check all Portainer stacks active**
 
@@ -337,7 +356,8 @@ ssh dockermaster 'for c in $(docker ps --format "{{.Names}}"); do
 done'
 ```
 
-Expected: all Portainer-managed containers have `new=true` or `new=false` with `old=` (empty). No container should still have the old `com.lcamaral.home.watchtower.enable` label.
+Expected: all Portainer-managed containers have `new=true` or `new=false` with `old=` (empty). No container should still
+have the old `com.lcamaral.home.watchtower.enable` label.
 
 - [ ] **Step 5: Verify all containers healthy**
 
@@ -357,7 +377,7 @@ Expected: `No changes.`
 
 ---
 
-### Task 8: Cleanup and sync remote
+## Task 8: Cleanup and sync remote
 
 - [ ] **Step 1: Stop old crashed watchtower container**
 
@@ -389,11 +409,12 @@ done
 
 ---
 
-### Task 9: Update docs, commit, push
+## Task 9: Update docs, commit, push
 
 - [ ] **Step 1: Update STATUS.md**
 
-Add watchtower to the Terraform-managed stacks table (13 total). Remove rust-server, la-rundeck, prometheus from standalone table if still listed.
+Add watchtower to the Terraform-managed stacks table (13 total). Remove rust-server, la-rundeck, Prometheus from
+standalone table if still listed.
 
 - [ ] **Step 2: Update CLAUDE.md**
 

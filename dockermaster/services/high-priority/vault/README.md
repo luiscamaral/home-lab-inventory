@@ -10,13 +10,15 @@
 
 ## 🚀 Description
 
-HashiCorp Vault service providing centralized secret management for the dockermaster infrastructure. This service stores and manages sensitive data such as API keys, passwords, certificates, and other secrets used by various services in the homelab environment.
+HashiCorp Vault service providing centralized secret management for the dockermaster infrastructure. This service stores
+and manages sensitive data such as API keys, passwords, certificates, and other secrets used by various services in the
+homelab environment.
 
 ## 🔧 Configuration
 
 ### Docker Compose Location
 
-```
+```text
 /nfs/dockermaster/docker/vault/docker-compose.yml
 ```
 

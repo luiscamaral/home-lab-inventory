@@ -68,6 +68,10 @@ jobs:
       services-matrix: ${{ steps.prepare-services.outputs.matrix }}
       deployment-id: ${{ steps.create-deployment.outputs.deployment-id }}
       backup-id: ${{ steps.backup-state.outputs.backup-id }}
+      # Set by the `Authenticate with Vault` step; consumed by the
+      # downstream secrets-loading step. Was missing from outputs even
+      # though it's referenced — actionlint flagged the use site.
+      vault_available: ${{ steps.vault-auth.outputs.vault_available }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -169,6 +173,12 @@ jobs:
 
       - name: Create deployment record
         id: create-deployment
+        # DEPLOY_ENV is computed in env to avoid double-quote-inside-expression
+        # syntax inside the inline JS — actionlint flagged the prior pattern
+        # `'${{ ... || "production" }}'` because GitHub expressions only
+        # accept single-quote string literals.
+        env:
+          DEPLOY_ENV: ${{ github.event.inputs.environment || 'production' }}
         uses: actions/github-script@v7
         with:
           script: |
@@ -176,7 +186,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: context.sha,
-              environment: '${{ github.event.inputs.environment || "production" }}',
+              environment: process.env.DEPLOY_ENV,
               description: 'Dockermaster deployment pipeline',
               auto_merge: false,
               required_contexts: []

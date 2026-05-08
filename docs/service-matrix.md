@@ -1,6 +1,9 @@
 # Service Inventory Matrix
 
-> **SUPERSEDED (2026-04-09):** This document was created during the Dockermaster Recovery project (2025-08-28) and is no longer the authoritative service inventory. The current source of truth for managed services is `terraform/portainer/stacks.tf` (9 Terraform-managed Portainer stacks) and `dockermaster/docker/compose/STATUS.md` for all services. This file is retained for historical reference only.
+> **SUPERSEDED (2026-04-09):** This document was created during the Dockermaster Recovery project (2025-08-28) and is no
+> longer the authoritative service inventory. The current source of truth for managed services is
+> `terraform/portainer/stacks.tf` (9 Terraform-managed Portainer stacks) and `dockermaster/docker/compose/STATUS.md` for
+> all services. This file is retained for historical reference only.
 
 **Project:** Dockermaster Recovery - Documentation Framework
 **Last Updated:** 2025-08-28 (archived)

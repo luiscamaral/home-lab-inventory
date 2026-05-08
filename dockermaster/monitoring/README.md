@@ -12,11 +12,13 @@ This directory contains monitoring configurations and dashboards.
 ## 📊 Monitoring Stack
 
 ### Core Components
+
 - **Prometheus**: Metrics collection and storage
 - **Grafana**: Visualization and dashboards
 - **Alertmanager**: Alert routing and notifications
 
 ### Key Metrics
+
 - Container resource usage
 - Service availability
 - Network performance
@@ -25,11 +27,13 @@ This directory contains monitoring configurations and dashboards.
 ## 🚨 Alerting
 
 ### Alert Categories
+
 - **Critical**: Service down, high resource usage
 - **Warning**: Performance degradation, capacity issues
 - **Info**: Scheduled maintenance, updates
 
 ### Notification Channels
+
 - Email alerts
 - Slack notifications
 - PagerDuty integration
@@ -37,6 +41,7 @@ This directory contains monitoring configurations and dashboards.
 ## 📈 Dashboards
 
 ### Available Dashboards
+
 - Docker Host Overview
 - Service Status Dashboard
 - Network Performance
@@ -46,10 +51,11 @@ This directory contains monitoring configurations and dashboards.
 ## 🔧 Configuration
 
 ### Adding New Services
+
 1. Add service to Prometheus scrape config
 2. Create service-specific dashboard
 3. Define relevant alerts
 4. Test monitoring setup
 
 ---
-*Last Updated: 2025-08-28*
+**Last Updated:** 2025-08-28

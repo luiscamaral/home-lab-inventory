@@ -12,6 +12,7 @@
       }
     ]
   },
+  "description": "Simple exporter for cadvisor only",
   "editable": true,
   "gnetId": 14282,
   "graphTooltip": 0,
@@ -811,6 +812,5 @@
   "timepicker": {},
   "timezone": "",
   "title": "Cadvisor exporter",
-  "version": 1,
-  "description": "Simple exporter for cadvisor only"
+  "version": 1
 }

@@ -12,21 +12,25 @@ This directory contains scripts for managing dockermaster services and infrastru
 ## 🚀 Common Scripts
 
 ### Deployment Scripts
+
 - Service deployment automation
 - Environment setup
 - Configuration validation
 
 ### Maintenance Scripts
+
 - Log rotation
 - Container updates
 - Volume cleanup
 
 ### Backup Scripts
+
 - Volume backups
 - Configuration backups
 - Database dumps
 
 ### Monitoring Scripts
+
 - Health checks
 - Resource monitoring
 - Alert scripts
@@ -39,4 +43,4 @@ This directory contains scripts for managing dockermaster services and infrastru
 4. Test scripts in development before production use
 
 ---
-*Last Updated: 2025-08-28*
+**Last Updated:** 2025-08-28

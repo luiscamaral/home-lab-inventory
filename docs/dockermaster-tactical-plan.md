@@ -19,6 +19,7 @@
 ## 🚨 Phase 1: Git Recovery (2 hours) - CRITICAL PATH
 
 ### 1.1 Initial Assessment (15 min)
+
 ```bash
 # Commands to execute
 cd ~/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory
@@ -29,11 +30,13 @@ git diff HEAD
 ```
 
 **Success Criteria:**
+
 - ✅ Current branch identified
 - ✅ Conflict files listed
 - ✅ Remote branch status confirmed
 
 ### 1.2 Backup Critical Files (30 min)
+
 ```bash
 # Create backup directory
 mkdir -p ~/backup/dockermaster-$(date +%Y%m%d)
@@ -49,11 +52,13 @@ tar -czf dockermaster-backup-$(date +%Y%m%d-%H%M%S).tar.gz *
 ```
 
 **Files to Preserve:**
+
 - `docs/dockermaster-sync-report.md`
 - `CLAUDE.md` (updated service notes)
 - `.gitignore` (with new exclusions)
 
 ### 1.3 Resolve Git Conflicts (45 min)
+
 ```bash
 # Option A: If in rebase
 git rebase --abort
@@ -83,6 +88,7 @@ git commit -m "fix: preserve documentation from conflict resolution
 ```
 
 ### 1.4 Validate Resolution (30 min)
+
 ```bash
 # Verify clean state
 git status
@@ -94,6 +100,7 @@ git push -u origin dockermaster-recovery-$(date +%Y%m%d)
 ```
 
 **Validation Checklist:**
+
 - [ ] No merge/rebase in progress
 - [ ] Working tree clean
 - [ ] All documentation preserved
@@ -102,6 +109,7 @@ git push -u origin dockermaster-recovery-$(date +%Y%m%d)
 ## 🧹 Phase 2: Repository Cleanup (4 hours)
 
 ### 2.1 Remove Unnecessary Directories (1 hour)
+
 ```bash
 # Identify large directories
 du -sh * | sort -h
@@ -130,6 +138,7 @@ git commit -m "chore: remove unnecessary sync directories
 ```
 
 ### 2.2 Create Documentation Templates (1.5 hours)
+
 ```bash
 # Create templates directory
 mkdir -p docs/templates
@@ -221,6 +230,7 @@ EOF
 ```
 
 ### 2.3 Organize Repository Structure (1.5 hours)
+
 ```bash
 # Create organized structure
 mkdir -p inventory/services/{high-priority,medium-priority,low-priority,deprecated}
@@ -266,6 +276,7 @@ git commit -m "refactor: organize repository structure
 ### 3.1 High Priority Services (4 hours)
 
 #### GitHub Runner Documentation
+
 ```bash
 # SSH to dockermaster
 ssh dockermaster
@@ -281,12 +292,14 @@ exit
 ```
 
 **Documentation Tasks:**
+
 1. Create `inventory/services/high-priority/github-runner.md`
 2. Document webhook configuration
 3. Map environment variables
 4. Note ACCESS_TOKEN location
 
 #### Vault Service Documentation
+
 ```bash
 ssh dockermaster
 cd /nfs/dockermaster/docker/vault
@@ -298,12 +311,14 @@ exit
 ```
 
 **Documentation Tasks:**
+
 1. Create `inventory/services/high-priority/vault.md`
 2. Document unhealthy status cause
 3. List initialization requirements
 4. Map storage backend config
 
 #### Keycloak Service Documentation
+
 ```bash
 ssh dockermaster
 cd /nfs/dockermaster/docker/keycloak
@@ -313,12 +328,14 @@ exit
 ```
 
 **Documentation Tasks:**
+
 1. Create `inventory/services/high-priority/keycloak.md`
 2. Document PostgreSQL dependency
 3. List realm configurations
 4. Note integration points
 
 #### Prometheus Documentation
+
 ```bash
 ssh dockermaster
 cd /nfs/dockermaster/docker/prometheus
@@ -330,6 +347,7 @@ exit
 ### 3.2 Medium Priority Services (2 hours)
 
 #### RabbitMQ Documentation
+
 ```bash
 ssh dockermaster
 cd /nfs/dockermaster/docker/rabbitmq
@@ -341,6 +359,7 @@ exit
 ### 3.3 Low Priority Services (4 hours)
 
 **Parallel Documentation Process:**
+
 ```bash
 # Generate service list
 ssh dockermaster "ls -1 /nfs/dockermaster/docker/" > services.txt
@@ -353,6 +372,7 @@ done
 ```
 
 ### 3.4 Documentation Validation (2 hours)
+
 ```bash
 # Count documented services
 find inventory/services -name "*.md" | wc -l
@@ -369,6 +389,7 @@ done
 ## 🔐 Phase 4: Vault Integration (6 hours) - REQUIRES USER
 
 ### 4.1 Fix Vault Health (2 hours)
+
 ```bash
 # SSH to dockermaster
 ssh dockermaster
@@ -388,6 +409,7 @@ curl -s http://192.168.59.25:8200/v1/sys/health
 ```
 
 ### 4.2 Initialize Vault (1 hour) - INTERACTIVE
+
 ```bash
 # Initialize Vault (USER REQUIRED)
 docker exec -it vault vault operator init \
@@ -407,6 +429,7 @@ docker exec vault vault login [root-token]
 ```
 
 ### 4.3 Configure Vault Policies (1.5 hours)
+
 ```bash
 # Create service policies
 cat > configs/vault-policies/dockermaster-services.hcl << 'EOF'
@@ -430,6 +453,7 @@ docker exec vault vault write auth/userpass/users/github-runner \
 ```
 
 ### 4.4 Migrate Secrets (1.5 hours)
+
 ```bash
 # Extract current secrets from services
 for service in github-runner keycloak rabbitmq; do
@@ -448,6 +472,7 @@ done
 ## 🚀 Phase 5: Portainer GitOps Configuration (4 hours)
 
 ### 5.1 Configure Portainer Webhooks (1.5 hours)
+
 ```bash
 # Access Portainer UI
 echo "Open browser: http://192.168.59.2:9000"
@@ -466,6 +491,7 @@ curl -X PUT "http://192.168.59.2:9000/api/stacks/1/webhook" \
 ```
 
 ### 5.2 Create Stack Definitions (1.5 hours)
+
 ```bash
 # For each service, create Portainer stack config
 for service in github-runner vault keycloak prometheus; do
@@ -480,6 +506,7 @@ done
 ```
 
 ### 5.3 Test Deployment Pipeline (1 hour)
+
 ```bash
 # Make test change
 cd inventory
@@ -498,6 +525,7 @@ curl http://192.168.59.2:9000/api/webhooks/[webhook-id]/logs
 ## ✅ Phase 6: CI/CD Pipeline Enhancement (6 hours) - COMPLETED
 
 ### 6.1 Configure GitHub Actions (2 hours)
+
 ```bash
 # Create workflow file
 mkdir -p .github/workflows
@@ -547,6 +575,7 @@ git commit -m "feat: add CI/CD deployment workflow"
 ```
 
 ### 6.2 Setup Monitoring (2 hours)
+
 ```bash
 # Create monitoring script
 cat > scripts/monitoring/health-check.sh << 'EOF'
@@ -579,6 +608,7 @@ ssh dockermaster "crontab" < current-cron
 ```
 
 ### 6.3 Create Rollback Procedures (2 hours)
+
 ```bash
 # Rollback script
 cat > scripts/deployment/rollback.sh << 'EOF'
@@ -615,36 +645,42 @@ chmod +x scripts/deployment/rollback.sh
 ## 📋 Validation Checkpoints
 
 ### Phase 1 Validation
+
 - [ ] Git status clean
 - [ ] No conflicts present
 - [ ] Documentation preserved
 - [ ] Branch pushed to remote
 
 ### Phase 2 Validation
+
 - [ ] Repository size reduced by 700MB+
 - [ ] Templates created
 - [ ] Structure organized
 - [ ] .gitignore updated
 
 ### Phase 3 Validation
+
 - [ ] 32/32 services documented
 - [ ] All templates filled
 - [ ] Dependencies mapped
 - [ ] Vault paths defined
 
 ### Phase 4 Validation
+
 - [ ] Vault service healthy
 - [ ] Vault initialized and unsealed
 - [ ] Policies configured
 - [ ] Test secret retrieval successful
 
 ### Phase 5 Validation
+
 - [ ] Webhooks configured
 - [ ] Test deployment successful
 - [ ] Stacks visible in Portainer
 - [ ] Automated trigger working
 
 ### Phase 6 Validation - ✅ COMPLETED
+
 - [x] GitHub Actions workflows created and configured
 - [x] Health monitoring system implemented  
 - [x] Emergency rollback system with 4 strategies
@@ -655,17 +691,23 @@ chmod +x scripts/deployment/rollback.sh
 ## 🚦 Go/No-Go Decision Points
 
 ### After Phase 1
+
 **Decision:** Continue only if git repository is clean
+
 - ✅ **Go:** No conflicts, documentation preserved
 - ❌ **No-Go:** Conflicts remain, data loss risk
 
 ### After Phase 3
+
 **Decision:** Proceed to Vault only if documentation > 80%
+
 - ✅ **Go:** Critical services documented
 - ❌ **No-Go:** Insufficient documentation for automation
 
 ### After Phase 4
+
 **Decision:** GitOps requires healthy Vault
+
 - ✅ **Go:** Vault operational, secrets accessible
 - ❌ **No-Go:** Vault unhealthy, manual secret management
 
@@ -682,26 +724,33 @@ chmod +x scripts/deployment/rollback.sh
 ## 🎯 Daily Execution Schedule
 
 ### Day 1 (6 hours)
+
 - **Morning (2h):** Phase 1 - Git Recovery
 - **Afternoon (4h):** Phase 2 - Repository Cleanup
 
 ### Day 2 (6 hours)
+
 - **All Day:** Phase 3 - Service Documentation (Part 1)
 
 ### Day 3 (6 hours)
+
 - **All Day:** Phase 3 - Service Documentation (Part 2)
 
 ### Day 4 (6 hours)
+
 - **All Day:** Phase 4 - Vault Integration (USER REQUIRED)
 
 ### Day 5 (6 hours)
+
 - **Morning (4h):** Phase 5 - GitOps Configuration
 - **Afternoon (2h):** Phase 6 - CI/CD Pipeline (Part 1)
 
 ### Day 6 (4 hours)
+
 - **Morning (4h):** Phase 6 - CI/CD Pipeline (Part 2)
 
 ### Day 7 (Buffer)
+
 - Final testing
 - Documentation review
 - Handover preparation
@@ -709,6 +758,7 @@ chmod +x scripts/deployment/rollback.sh
 ## 🆘 Emergency Procedures
 
 ### Git Recovery Failure
+
 ```bash
 # If all else fails, clone fresh
 cd ~/temp
@@ -722,6 +772,7 @@ git push -u origin emergency-recovery
 ```
 
 ### Vault Corruption
+
 ```bash
 # Restore from backup
 docker compose -f /nfs/dockermaster/docker/vault/docker-compose.yml down
@@ -730,6 +781,7 @@ docker compose -f /nfs/dockermaster/docker/vault/docker-compose.yml up -d
 ```
 
 ### Service Outage
+
 ```bash
 # Quick recovery
 SERVICE=$1
@@ -750,24 +802,28 @@ docker restart $SERVICE || \
 ## ✅ Project Completion Checklist
 
 ### Documentation
+
 - [ ] All 32 services documented
 - [ ] Templates standardized
 - [ ] Runbooks created
 - [ ] Architecture diagrams updated
 
 ### Infrastructure
+
 - [ ] Vault operational
 - [ ] Secrets migrated
 - [ ] GitOps configured
 - [ ] Monitoring active
 
 ### Automation
+
 - [ ] CI/CD pipeline functional
 - [ ] Webhooks configured
 - [ ] Health checks automated
 - [ ] Rollback tested
 
 ### Knowledge Transfer
+
 - [ ] User trained on Vault
 - [ ] Documentation reviewed
 - [ ] Emergency procedures tested

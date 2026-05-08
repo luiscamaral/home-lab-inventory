@@ -6,20 +6,24 @@
 - **Category**: Authentication & Identity Management
 - **Status**: Starting (Database Authentication Issues)
 - **IP Address**: 192.168.59.13
-- **External URL**: https://keycloak.d.lcamaral.com
+- **External URL**: <https://keycloak.d.lcamaral.com>
 
 ## 🚀 Description
 
-Keycloak identity and access management service providing single sign-on (SSO), user authentication, authorization, and identity brokering for the homelab infrastructure. This service centralizes authentication for all connected applications and services, supporting multiple protocols including OAuth 2.0, OpenID Connect, and SAML.
+Keycloak identity and access management service providing single sign-on (SSO), user authentication, authorization, and
+identity brokering for the homelab infrastructure. This service centralizes authentication for all connected
+applications and services, supporting multiple protocols including OAuth 2.0, OpenID Connect, and SAML.
 
 ## 🔧 Configuration
 
 ### Docker Compose Location
-```
+
+```text
 /nfs/dockermaster/docker/keycloak/docker-compose.yml
 ```
 
 ### Environment Variables
+
 - **Required**:
   - `KC_DB_PASSWORD`: PostgreSQL database password for keycloak user
   - `KEYCLOAK_ADMIN_PASSWORD`: Admin console password for 'admin' user
@@ -28,17 +32,19 @@ Keycloak identity and access management service providing single sign-on (SSO), 
   - `KC_HTTP_ENABLED`: true (HTTP enabled for internal access)
   - `KC_HOSTNAME`: keycloak.d.lcamaral.com
   - `KC_DB`: postgres (using PostgreSQL backend)
-  - `KC_DB_URL`: jdbc:postgresql://postgres:5432/keycloak
+  - `KC_DB_URL`: jdbc:PostgreSQL://postgres:5432/keycloak
   - `KC_DB_USERNAME`: keycloak
   - `KEYCLOAK_ADMIN`: admin
 
 ### Volumes
+
 - `./keycloak_data:/opt/keycloak/data/h2`: Keycloak data storage
 - `./postgres_data:/var/lib/postgresql/data`: PostgreSQL database files
 
 ### Network Configuration
+
 - **Networks**:
-  - docker-servers-net (macvlan): 192.168.59.13
+  - Docker-servers-net (macvlan): 192.168.59.13
   - bridge (keycloak): Internal communication with PostgreSQL
 - **Ports**:
   - Internal: 8080 (HTTP)
@@ -47,6 +53,7 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 ## 🗄️ Database Configuration
 
 ### PostgreSQL Backend
+
 - **Image**: postgres:17
 - **Container**: postgres
 - **Database**: keycloak
@@ -55,6 +62,7 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 - **Data Location**: `./postgres_data`
 
 ### Database Status
+
 - **Connection**: Database exists and user can connect
 - **Health**: PostgreSQL container is healthy
 - **Issue**: Keycloak experiencing authentication failures during startup
@@ -62,16 +70,19 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 ## 🔐 Security
 
 ### Authentication
+
 - **Admin User**: admin
 - **Admin Password**: Stored in environment (should migrate to Vault)
 - **Database Password**: Stored in environment (should migrate to Vault)
 
 ### Access Control
-- **Reverse Proxy**: Expected to be behind nginx with TLS termination
+
+- **Reverse Proxy**: Expected to be behind Nginx with TLS termination
 - **HTTP Enabled**: For internal communication
 - **Proxy Headers**: Configured to trust X-Forwarded headers
 
 ### **⚠️ SECURITY CONCERNS**
+
 1. **Passwords in plaintext**: Environment file contains sensitive passwords
 2. **Admin credentials**: Default admin user with fixed password
 3. **No TLS encryption**: Internal HTTP communication (acceptable if behind proxy)
@@ -79,6 +90,7 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 ## 📈 Monitoring
 
 ### Health Checks
+
 - **Keycloak Endpoint**: `http://keycloak:8080/health/ready`
 - **Interval**: 10s
 - **Timeout**: 5s
@@ -87,6 +99,7 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 - **Current Status**: Health check starting (authentication issues preventing startup)
 
 ### PostgreSQL Health Checks
+
 - **Endpoint**: `pg_isready -U keycloak -d keycloak`
 - **Interval**: 10s
 - **Timeout**: 5s
@@ -95,13 +108,16 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 - **Current Status**: Healthy
 
 ### Resource Limits
+
 **Keycloak**:
+
 - CPU Limit: 2 cores
 - Memory Limit: 4GB
 - CPU Reservation: 0.5 cores
 - Memory Reservation: 1.25GB
 
 **PostgreSQL**:
+
 - CPU Limit: 2 cores
 - Memory Limit: 2GB
 - CPU Reservation: 0.5 cores
@@ -110,12 +126,14 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 ## 🚨 Current Issues
 
 ### 1. Database Authentication Failure
+
 - **Problem**: Keycloak cannot authenticate to PostgreSQL database
 - **Error**: `FATAL: password authentication failed for user "keycloak"`
 - **Impact**: Service cannot start, authentication services unavailable
 - **Investigation Status**: Database exists and manual connection works
 
 ### 2. Potential Causes
+
 - **Environment Variable Mismatch**: Password in .env may not match PostgreSQL user
 - **Container Network Issues**: Communication between keycloak and postgres containers
 - **Startup Timing**: PostgreSQL may not be fully ready when Keycloak connects
@@ -124,12 +142,14 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 ## 🔄 Backup Strategy
 
 ### Data Backup
+
 - **Method**: Manual PostgreSQL dumps recommended
 - **Frequency**: Should be daily
 - **Location**: Not currently configured
 - **Command**: `docker exec postgres pg_dump -U keycloak keycloak > keycloak_backup.sql`
 
 ### Configuration Backup
+
 - **Keycloak Data**: Stored in `./keycloak_data` volume
 - **PostgreSQL Data**: Stored in `./postgres_data` volume
 - **Environment**: Partially backed up (excluding sensitive data)
@@ -152,16 +172,19 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 
 3. **Network Connectivity Issues**
    - **Symptoms**: Cannot reach service from external URL
-   - **Investigation**: Check nginx proxy configuration
+   - **Investigation**: Check Nginx proxy configuration
    - **Solution**: Verify reverse proxy setup and DNS resolution
 
 ### Log Locations
+
 - **Keycloak logs**: `docker logs keycloak`
 - **PostgreSQL logs**: `docker logs postgres`
 - **Health check logs**: Available in container logs
 
 ### Recovery Procedures
+
 1. **Fix database authentication**:
+
    ```bash
    cd /nfs/dockermaster/docker/keycloak
    docker exec postgres psql -U keycloak -d keycloak -c "ALTER USER keycloak PASSWORD 'pera6Cantar';"
@@ -169,12 +192,14 @@ Keycloak identity and access management service providing single sign-on (SSO), 
    ```
 
 2. **Reset admin password**:
+
    ```bash
    # After service is running
    docker exec keycloak /opt/keycloak/bin/kc.sh export --users realm_file
    ```
 
 3. **Complete rebuild**:
+
    ```bash
    docker compose down
    docker compose up -d
@@ -183,6 +208,7 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 ## 📝 Maintenance
 
 ### Critical Actions Needed
+
 1. **Fix database authentication**: Resolve password mismatch issue
 2. **Migrate secrets to Vault**: Remove passwords from environment files
 3. **Configure backup strategy**: Implement automated database backups
@@ -190,13 +216,15 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 5. **Monitoring integration**: Add Keycloak metrics to Prometheus
 
 ### Updates
+
 - **Current Version**: Keycloak 26.3
 - **PostgreSQL Version**: 17
 - **Update schedule**: Manual (Watchtower disabled)
 - **Update procedure**: Test database compatibility, backup first
 
 ### Dependencies
-- **Required services**: PostgreSQL database, docker-servers-net network
+
+- **Required services**: PostgreSQL database, Docker-servers-net network
 - **Required by**: All applications using SSO authentication
 - **Integration points**: OAuth/OIDC clients, SAML applications
 
@@ -220,6 +248,7 @@ Keycloak identity and access management service providing single sign-on (SSO), 
 ### High Priority Fixes
 
 1. **Resolve Database Authentication**
+
    ```bash
    # Check current database password
    cd /nfs/dockermaster/docker/keycloak
@@ -233,6 +262,7 @@ Keycloak identity and access management service providing single sign-on (SSO), 
    ```
 
 2. **Verify Network Connectivity**
+
    ```bash
    # Test connection from keycloak to postgres
    docker exec keycloak ping postgres
@@ -240,6 +270,7 @@ Keycloak identity and access management service providing single sign-on (SSO), 
    ```
 
 3. **Monitor Startup Process**
+
    ```bash
    # Follow logs during startup
    docker logs -f keycloak
@@ -249,6 +280,7 @@ Keycloak identity and access management service providing single sign-on (SSO), 
    ```
 
 ### Configuration Verification
+
 ```bash
 # Environment variables should match:
 KC_DB_PASSWORD=pera6Cantar  # From .env file
@@ -256,6 +288,6 @@ KC_DB_PASSWORD=pera6Cantar  # From .env file
 ```
 
 ---
-*Template Version: 1.0*
-*Last Updated: 2025-08-28*
-*Service Status: Starting - Database Authentication Issue*
+_Template Version: 1.0_
+_Last Updated: 2025-08-28_
+_Service Status: Starting - Database Authentication Issue_

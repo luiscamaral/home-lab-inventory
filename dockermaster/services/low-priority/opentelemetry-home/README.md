@@ -10,23 +10,29 @@
 
 ## 🚀 Description
 
-OpenTelemetry Home is a comprehensive observability stack that provides distributed tracing, metrics collection, and monitoring capabilities for the home infrastructure. It includes OpenTelemetry Collector, Jaeger for tracing, Prometheus for metrics, and Grafana for visualization, creating a complete observability solution.
+OpenTelemetry Home is a comprehensive observability stack that provides distributed tracing, metrics collection, and
+monitoring capabilities for the home infrastructure. It includes OpenTelemetry Collector, Jaeger for tracing, Prometheus
+for metrics, and Grafana for visualization, creating a complete observability solution.
 
 ## 🔧 Configuration
 
 ### Docker Compose Location
-```
+
+```text
 /nfs/dockermaster/docker/opentelemetry-home/docker-compose.yaml
 ```
 
 ### Service Architecture
+
 The stack consists of four interconnected services:
+
 - **otelcol**: OpenTelemetry Collector for data collection and processing
 - **jaeger**: Distributed tracing backend with UI
-- **prometheus**: Metrics collection and storage
-- **grafana**: Visualization and dashboards
+- **Prometheus**: Metrics collection and storage
+- **Grafana**: Visualization and dashboards
 
 ### Environment Variables
+
 - **OpenTelemetry Collector**:
   - `OTEL_COLLECTOR_IP`: 192.168.59.31
   - `OTEL_COLLECTOR_HOST`: otelcol
@@ -41,7 +47,7 @@ The stack consists of four interconnected services:
 - **Prometheus**:
   - `PROMETHEUS_IP`: 192.168.59.34
   - `PROMETHEUS_SERVICE_PORT`: 9090
-  - `PROMETHEUS_ADDR`: prometheus:9090
+  - `PROMETHEUS_ADDR`: Prometheus:9090
 
 - **Grafana**:
   - `GRAFANA_IP`: 192.168.59.33
@@ -52,13 +58,15 @@ The stack consists of four interconnected services:
   - `OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE`: cumulative
 
 ### Volumes
+
 - `/nfs/dockermaster/docker/opentelemetry-home/otel-collector`: Collector configuration
 - `/nfs/dockermaster/docker/opentelemetry-home/grafana/cfg`: Grafana configuration
 - `/nfs/dockermaster/docker/opentelemetry-home/grafana/provisioning`: Dashboard provisioning
 - `/nfs/dockermaster/docker/opentelemetry-home/prometheus`: Prometheus configuration
 
 ### Network Configuration
-- **Network**: docker-servers-net (macvlan)
+
+- **Network**: Docker-servers-net (macvlan)
 - **IP Addresses**:
   - OpenTelemetry Collector: 192.168.59.31
   - Jaeger: 192.168.59.32
@@ -74,21 +82,25 @@ The stack consists of four interconnected services:
 ## 🔐 Security
 
 ### Secrets Management
+
 - Configuration files stored in mounted volumes
 - No explicit authentication configured (internal network)
 
 ### Access Control
-- **Network access**: Limited to docker-servers-net
+
+- **Network access**: Limited to Docker-servers-net
 - **Authentication**: Default service authentication (if any)
 
 ## 📈 Monitoring
 
 ### Health Checks
+
 - **Current**: No explicit health checks configured
 - **Service monitoring**: Self-monitoring through the stack itself
 - **Endpoints**: Each service provides its own health/status endpoints
 
 ### Metrics
+
 - **Prometheus**: Central metrics collection
 - **OTLP metrics**: Collected via OpenTelemetry Collector
 - **Service metrics**: Available on port 9464 (Collector) and 8888 (metrics endpoint)
@@ -96,17 +108,20 @@ The stack consists of four interconnected services:
 ## 🔄 Backup Strategy
 
 ### Data Backup
+
 - **Configuration files**: Stored in mounted directories
 - **Time-series data**: Prometheus data (1h retention configured)
 - **Traces**: Jaeger data (10,000 max traces in memory)
 
 ### Configuration Backup
+
 - **Git repository**: Yes - all configuration files included
 - **Provisioning**: Grafana dashboards and data sources
 
 ## 🚨 Troubleshooting
 
 ### Common Issues
+
 1. **Issue**: OpenTelemetry Collector not receiving data
    - **Symptoms**: No traces or metrics appearing
    - **Solution**: Check OTLP endpoint configuration and network connectivity
@@ -120,6 +135,7 @@ The stack consists of four interconnected services:
    - **Solution**: Check Prometheus data source configuration
 
 ### Log Locations
+
 - **Container logs**:
   - `docker logs otel-col`
   - `docker logs jaeger`
@@ -128,6 +144,7 @@ The stack consists of four interconnected services:
 - **Log configuration**: JSON file driver with 5MB max size, 2 files
 
 ### Recovery Procedures
+
 1. **Service restart**: `docker compose restart <service>`
 2. **Full rebuild**: `docker compose down && docker compose up -d`
 3. **Configuration reload**: Prometheus supports hot reload via API
@@ -136,6 +153,7 @@ The stack consists of four interconnected services:
 ## 📝 Maintenance
 
 ### Updates
+
 - **OpenTelemetry Collector**: v0.76.1
 - **Jaeger**: Latest (all-in-one)
 - **Prometheus**: v2.43.0
@@ -143,11 +161,13 @@ The stack consists of four interconnected services:
 - **Update procedure**: Update image tags and recreate containers
 
 ### Dependencies
-- **Service startup order**: jaeger → otelcol → prometheus, grafana
+
+- **Service startup order**: jaeger → otelcol → Prometheus, Grafana
 - **Cross-service dependencies**: Configured via environment variables
 - **Required by**: Applications using OpenTelemetry instrumentation
 
 ### Resource Limits
+
 - **OpenTelemetry Collector**: 125MB memory limit
 - **Jaeger**: 300MB memory limit, 10,000 max traces
 - **Prometheus**: 300MB memory limit, 1h retention
@@ -156,26 +176,30 @@ The stack consists of four interconnected services:
 ## 🔧 Features
 
 ### OpenTelemetry Collector
+
 - **Protocols**: OTLP gRPC and HTTP
-- **Configuration**: /etc/cfg/config.devhome.yaml
+- **Configuration**: /etc/cfg/config.devhome.YAML
 - **Exporters**: Jaeger and Prometheus integration
 
 ### Jaeger Features
+
 - **Tracing**: Distributed trace collection and analysis
 - **UI**: Web interface on port 16686
 - **Storage**: In-memory with configurable limits
 - **Integration**: Prometheus metrics integration
 
 ### Prometheus Features
+
 - **Metrics**: Time-series metrics collection
 - **Retention**: 1 hour (configured for testing)
 - **Features**: Exemplar storage enabled
 - **Web interface**: Available on port 9090
 
 ### Grafana Features
+
 - **Dashboards**: Pre-provisioned dashboards
 - **Data sources**: Prometheus and Jaeger integration
-- **Configuration**: Custom grafana.ini
+- **Configuration**: Custom Grafana.ini
 - **Visualizations**: Complete observability dashboards
 
 ## 🔗 Related Links
@@ -192,5 +216,5 @@ The stack consists of four interconnected services:
 | 2025-08-28 | Initial documentation | Documentation Team |
 
 ---
-*Template Version: 1.0*
-*Last Updated: 2025-08-28*
+_Template Version: 1.0_
+_Last Updated: 2025-08-28_

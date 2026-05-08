@@ -10,13 +10,15 @@
 
 ## 🚀 Description
 
-RabbitMQ is a message broker service that implements the Advanced Message Queuing Protocol (AMQP). It serves as the central messaging system for the home infrastructure, supporting both AMQP and MQTT protocols for reliable message queuing and publishing/subscribing patterns.
+RabbitMQ is a message broker service that implements the Advanced Message Queuing Protocol (AMQP). It serves as the
+central messaging system for the home infrastructure, supporting both AMQP and MQTT protocols for reliable message
+queuing and publishing/subscribing patterns.
 
 ## 🔧 Configuration
 
 ### Docker Compose Location
 
-```
+```text
 /nfs/dockermaster/docker/rabbitmq/docker-compose.yml
 ```
 
@@ -144,7 +146,7 @@ RabbitMQ is a message broker service that implements the Advanced Message Queuin
 
 ### Configuration Files
 
-```
+```text
 config/
 ├── rabbitmq.conf          # Main configuration
 └── enabled_plugins        # Plugin configuration

@@ -15,8 +15,10 @@
       }
     ]
   },
+  "description": "A dashboard for the pihole6_exporter.",
   "editable": true,
   "fiscalYearStartMonth": 0,
+  "gnetId": 21043,
   "graphTooltip": 0,
   "id": null,
   "links": [],
@@ -1586,7 +1588,5 @@
   "timezone": "browser",
   "title": "Pi-hole ver6 Stats",
   "version": 23,
-  "weekStart": "",
-  "gnetId": 21043,
-  "description": "A dashboard for the pihole6_exporter."
+  "weekStart": ""
 }

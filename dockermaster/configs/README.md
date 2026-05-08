@@ -4,29 +4,33 @@ This directory contains global configuration files for dockermaster infrastructu
 
 ## 📁 Directory Structure
 
-- **nginx/**: Reverse proxy configurations
-- **prometheus/**: Monitoring configurations
-- **grafana/**: Dashboard configurations
+- **Nginx/**: Reverse proxy configurations
+- **Prometheus/**: Monitoring configurations
+- **Grafana/**: Dashboard configurations
 - **vault/**: Secret management configurations
 - **network/**: Network configuration files
 
 ## 🔧 Configuration Types
 
-### Reverse Proxy (nginx)
+### Reverse Proxy (Nginx)
+
 - Site configurations
 - SSL certificates
 - Upstream definitions
 
 ### Monitoring (Prometheus/Grafana)
+
 - Scrape configurations
 - Alerting rules
 - Dashboard definitions
 
 ### Security (Vault)
+
 - Policy definitions
 - Auth method configurations
 
 ### Network
+
 - Docker network definitions
 - Firewall rules
 - DNS configurations
@@ -39,4 +43,4 @@ This directory contains global configuration files for dockermaster infrastructu
 - Use `.example` files for templates
 
 ---
-*Last Updated: 2025-08-28*
+**Last Updated:** 2025-08-28

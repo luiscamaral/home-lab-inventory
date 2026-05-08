@@ -66,6 +66,10 @@ jobs:
       services-to-rollback: ${{ steps.prepare.outputs.services }}
       rollback-plan: ${{ steps.prepare.outputs.rollback-plan }}
       emergency-id: ${{ steps.prepare.outputs.emergency-id }}
+      # Set by `create-emergency-deployment` via core.setOutput — was
+      # consumed downstream as `needs.rollback-preparation.outputs.deployment-id`
+      # but never declared, which actionlint flagged.
+      deployment-id: ${{ steps.create-emergency-deployment.outputs.deployment-id }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

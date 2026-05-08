@@ -269,6 +269,6 @@ curl -s http://192.168.59.31:9090/api/v1/query?query=up | jq '.data.result[] | {
 5. **Set up backup strategy for metrics data**
 
 ---
-*Template Version: 1.0*
-*Last Updated: 2025-08-28*
-*Service Status: NOT DEPLOYED - CRITICAL OPERATIONAL ISSUE*
+_Template Version: 1.0_
+_Last Updated: 2025-08-28_
+_Service Status: NOT DEPLOYED - CRITICAL OPERATIONAL ISSUE_

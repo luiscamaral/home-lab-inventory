@@ -96,26 +96,28 @@ jobs:
           path: gitleaks.sarif
           retention-days: 30
 
-# Workflow-level cleanup job
-cleanup:
-  name: Cleanup Resources
-  runs-on: ubuntu-latest
-  needs: [performance-monitoring, notification]
-  if: always()
-  steps:
-    - name: Summary
-      run: |
-        echo "🏁 Security scanning workflow completed"
-        echo "All security scans have been executed and results are available in:"
-        echo "- GitHub Security tab"
-        echo "- Workflow artifacts"
-        echo "- SARIF reports uploaded to code scanning"
-        echo ""
-        echo "Next steps:"
-        echo "1. Review any security findings"
-        echo "2. Address critical and high-priority issues"
-        echo "3. Monitor the Security tab for ongoing threats"
-        echo "4. Keep dependencies and base images updated"
+  # Cleanup / summary job — was previously declared at workflow-level
+  # (top-level `cleanup:`), which actionlint flagged as a syntax error.
+  # Re-indented under `jobs:` where it belongs.
+  cleanup:
+    name: Cleanup Resources
+    runs-on: ubuntu-latest
+    needs: [performance-monitoring, notification]
+    if: always()
+    steps:
+      - name: Summary
+        run: |
+          echo "🏁 Security scanning workflow completed"
+          echo "All security scans have been executed and results are available in:"
+          echo "- GitHub Security tab"
+          echo "- Workflow artifacts"
+          echo "- SARIF reports uploaded to code scanning"
+          echo ""
+          echo "Next steps:"
+          echo "1. Review any security findings"
+          echo "2. Address critical and high-priority issues"
+          echo "3. Monitor the Security tab for ongoing threats"
+          echo "4. Keep dependencies and base images updated"
 
   # Job 2: Dockerfile Security Linting with Hadolint
   dockerfile-lint:

@@ -1,9 +1,9 @@
 # Calibre to Portainer Migration - Validation Checklist
 
-**Migration Date**: ___________  
-**Performed by**: ___________  
-**Start Time**: ___________  
-**End Time**: ___________  
+**Migration Date**: `_______`  
+**Performed by**: `_______`  
+**Start Time**: `_______`  
+**End Time**: `_______`  
 
 ## 🔍 Pre-Migration Validation
 
@@ -181,45 +181,45 @@
 
 ### Issues Encountered
 
-Issue 1: ________________________________
-Resolution: ____________________________
+Issue 1: `_______`
+Resolution: `_______`
 Time Lost: ______ minutes
 
-Issue 2: ________________________________
-Resolution: ____________________________
+Issue 2: `_______`
+Resolution: `_______`
 Time Lost: ______ minutes
 
-Issue 3: ________________________________
-Resolution: ____________________________
+Issue 3: `_______`
+Resolution: `_______`
 Time Lost: ______ minutes
 
 ### Migration Notes
 
-- ________________________________________
-- ________________________________________
-- ________________________________________
+- `_______`
+- `_______`
+- `_______`
 
 ### Lessons Learned
 
-- ________________________________________
-- ________________________________________
-- ________________________________________
+- `_______`
+- `_______`
+- `_______`
 
 ### Recommendations for Next Migration
 
-- ________________________________________
-- ________________________________________
-- ________________________________________
+- `_______`
+- `_______`
+- `_______`
 
 ## ✅ Sign-off
 
 **Migration Completed Successfully**: [ ] Yes [ ] No
 
-**Technical Lead Approval**: ___________________ Date: ___________
+**Technical Lead Approval**: `_______` Date: `_______`
 
-**Service Owner Approval**: ___________________ Date: ___________
+**Service Owner Approval**: `_______` Date: `_______`
 
-**Post-Migration Review Scheduled**: [ ] Yes Date: ___________
+**Post-Migration Review Scheduled**: [ ] Yes Date: `_______`
 
 ---
 **Total Migration Time**: _____ hours _____ minutes  

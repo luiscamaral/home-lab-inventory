@@ -87,3 +87,6 @@ ignore: |
   __pycache__/
   terraform/portainer/stacks/bind-dns.yml
   rundeck/jobs/
+  # Frozen as-captured snapshot of the legacy Prometheus deploy on ds-1
+  # (see RECON-FINDINGS.md). Kept verbatim for reference, not a config.
+  generated/prometheus-thanos-monitoring/legacy-prom-snapshot/

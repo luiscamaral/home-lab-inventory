@@ -2,7 +2,9 @@
 
 ## 📊 Overview
 
-The Dockermaster CI/CD Pipeline provides comprehensive automated deployment, health monitoring, and rollback capabilities for all dockermaster services. This pipeline integrates with GitHub Actions, Vault secret management, and self-hosted runners to deliver reliable and secure deployments.
+The Dockermaster CI/CD Pipeline provides comprehensive automated deployment, health monitoring, and rollback
+capabilities for all dockermaster services. This pipeline integrates with GitHub Actions, Vault secret management, and
+self-hosted runners to deliver reliable and secure deployments.
 
 ## 🏗️ Architecture
 
@@ -55,6 +57,7 @@ graph TD
 ### Main Deployment Workflow: `dockermaster-deployment.yml`
 
 #### Stage 1: Pre-deployment Validation
+
 - **Duration**: 2-3 minutes
 - **Activities**:
   - Environment validation (Docker, network, disk space)
@@ -63,6 +66,7 @@ graph TD
   - Backup creation of current state
 
 #### Stage 2: Parallel Service Deployment
+
 - **Duration**: 5-10 minutes (depending on service count)
 - **Strategy**: Maximum 3 services in parallel
 - **Activities**:
@@ -72,6 +76,7 @@ graph TD
   - Resource usage monitoring
 
 #### Stage 3: Health Checks & Validation
+
 - **Duration**: 2-5 minutes
 - **Activities**:
   - Container health verification
@@ -80,6 +85,7 @@ graph TD
   - Extended validation for critical services
 
 #### Stage 4: Rollback (if needed)
+
 - **Duration**: 3-5 minutes
 - **Triggers**: Deployment failure or health check failure
 - **Activities**:
@@ -88,6 +94,7 @@ graph TD
   - Rollback verification
 
 #### Stage 5: Notifications & Reporting
+
 - **Duration**: 1-2 minutes
 - **Activities**:
   - GitHub deployment status updates
@@ -118,6 +125,7 @@ enable_rollback:
 ### Service Discovery
 
 The pipeline automatically discovers services based on:
+
 - Presence of `docker-compose.yml` files in `/nfs/dockermaster/docker/`
 - Active container status
 - Service configuration validation
@@ -127,6 +135,7 @@ The pipeline automatically discovers services based on:
 ### Continuous Health Monitoring: `service-health-monitor.yml`
 
 #### Monitoring Schedule
+
 - **Frequency**: Every 15 minutes (configurable)
 - **Coverage**: All active dockermaster services
 - **Alerting**: Automatic issue creation for failures
@@ -160,12 +169,14 @@ The pipeline automatically discovers services based on:
 ### Health Check Results
 
 Results are available in multiple formats:
+
 - **Table**: Human-readable status overview
 - **JSON**: Machine-readable for automation
 - **Summary**: Brief status counts
 
 Example health check output:
-```
+
+```text
 Service              Status        Containers   Endpoint     Network    CPU%
 --------            -------       -----------   --------     -------    ----
 vault               ✅ healthy    2/2          healthy      healthy    15.2
@@ -221,7 +232,7 @@ gh workflow run emergency-rollback.yml \
 
 ### Secret Management Architecture
 
-```
+```text
 secret/dockermaster/
 ├── github-runner/
 │   ├── github-token
@@ -241,12 +252,14 @@ secret/dockermaster/
 ### Vault Authentication Methods
 
 1. **AppRole Authentication** (Recommended for CI/CD)
+
    ```bash
    # Setup AppRole for service
    scripts/cicd/vault-integration.sh setup-approle github-runner
    ```
 
 2. **Token Authentication** (Manual operations)
+
    ```bash
    # Authenticate with token
    VAULT_TOKEN=hvs.xxx scripts/cicd/vault-integration.sh auth
@@ -294,6 +307,7 @@ scripts/cicd/vault-integration.sh generate-env github-runner -o .env
 ### Performance Tracking
 
 1. **Deployment Reports**
+
    ```json
    {
      "service": "vault",
@@ -343,6 +357,7 @@ scripts/cicd/deploy-service.sh --dry-run --skip-backup nginx-rproxy
 ```
 
 #### Features
+
 - ✅ Environment validation
 - ✅ Vault secret integration
 - ✅ Automatic backup creation
@@ -370,6 +385,7 @@ scripts/cicd/health-check.sh --format json > /tmp/health-status.json
 ```
 
 #### Features
+
 - ✅ Multi-service health checking
 - ✅ Container and endpoint validation
 - ✅ Resource usage metrics
@@ -398,6 +414,7 @@ scripts/cicd/vault-integration.sh generate-env portainer -o /tmp/portainer.env
 ```
 
 #### Features
+
 - ✅ Multiple authentication methods
 - ✅ CRUD operations for secrets
 - ✅ AppRole management
@@ -426,7 +443,7 @@ scripts/cicd/vault-integration.sh generate-env portainer -o /tmp/portainer.env
 
 ### Alert Escalation
 
-```
+```text
 Level 1: Service Degraded
 ├── Continue monitoring
 └── Warning notification
@@ -445,6 +462,7 @@ Level 3: Critical Service Down
 ### Notification Templates
 
 #### Health Alert Issue Template
+
 ```markdown
 # 🚨 Service Health Alert: 2 Critical Services
 
@@ -472,6 +490,7 @@ Level 3: Critical Service Down
 ```
 
 #### Emergency Rollback Issue Template
+
 ```markdown
 # 🚨 EMERGENCY ROLLBACK ✅ - vault, portainer
 
@@ -564,6 +583,7 @@ Level 3: Critical Service Down
 #### Deployment Failures
 
 **Issue**: Deployment times out during image pull
+
 ```bash
 # Solution 1: Check network connectivity
 docker exec github-runner-homelab ping -c 3 registry-1.docker.io
@@ -576,6 +596,7 @@ docker compose pull --ignore-pull-failures
 ```
 
 **Issue**: Container fails to start after deployment
+
 ```bash
 # Check container logs
 docker compose logs --tail=50 service-name
@@ -590,6 +611,7 @@ docker compose config
 #### Health Check Failures
 
 **Issue**: Service endpoint unreachable
+
 ```bash
 # Test endpoint manually
 curl -v http://vault.d.lcamaral.com:8200/v1/sys/health
@@ -602,6 +624,7 @@ docker compose ps --format table
 ```
 
 **Issue**: Network connectivity problems
+
 ```bash
 # Test external connectivity
 docker exec container-name ping -c 3 8.8.8.8
@@ -616,6 +639,7 @@ docker network inspect docker-servers-net
 #### Vault Integration Issues
 
 **Issue**: Vault authentication fails
+
 ```bash
 # Check Vault health
 curl -s http://vault.d.lcamaral.com:8200/v1/sys/health | jq .
@@ -633,6 +657,7 @@ curl -H "X-Vault-Token: $VAULT_TOKEN" \
 #### Complete Service Outage
 
 1. **Immediate Response**
+
    ```bash
    # Trigger emergency rollback for all services
    gh workflow run emergency-rollback.yml \
@@ -654,6 +679,7 @@ curl -H "X-Vault-Token: $VAULT_TOKEN" \
 #### Rollback Failure
 
 1. **Manual Rollback**
+
    ```bash
    # Navigate to service directory
    cd /nfs/dockermaster/docker/service-name
@@ -669,6 +695,7 @@ curl -H "X-Vault-Token: $VAULT_TOKEN" \
    ```
 
 2. **Verification**
+
    ```bash
    # Check service health
    scripts/cicd/health-check.sh service-name
@@ -680,17 +707,20 @@ curl -H "X-Vault-Token: $VAULT_TOKEN" \
 ## 📚 References
 
 ### Documentation Links
+
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [Docker Compose Reference](https://docs.docker.com/compose/)
 - [HashiCorp Vault Documentation](https://www.vaultproject.io/docs)
 - [Portainer Documentation](https://docs.portainer.io/)
 
 ### Internal Documentation
+
 - [Service Matrix](./service-matrix.md) - Complete service inventory
 - [Vault Integration Plan](./vault-integration-plan.md) - Vault setup guide
 - [Portainer GitOps](./portainer-gitops.md) - Portainer integration
 
 ### Quick Access Links
+
 - [GitHub Actions Workflows](https://github.com/luiscamaral/home-lab-inventory/actions)
 - [Portainer Dashboard](https://192.168.59.2:9000)
 - [Vault UI](http://vault.d.lcamaral.com/ui)

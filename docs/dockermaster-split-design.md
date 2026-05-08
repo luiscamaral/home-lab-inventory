@@ -89,7 +89,7 @@ Proxmox Hypervisor (20C/40T, 243 GB RAM)
 - **dockermaster stays** — lean control plane, not decommissioned
 - **Clone strategy** — clone dockermaster → ds-1 (carries NFS mounts, Docker config);
   clone dockerserver-1 → ds-2 then prune to app-only services
-  *(Note: ds-2 was cloned from dockerserver-1, not dockermaster)*
+  _(Note: ds-2 was cloned from dockerserver-1, not dockermaster)_
 - **NFS mount point** — `/nfs/dockermaster` on all three servers, same NAS export
   (`tnas:/volume2/servers/dockermaster`). No path changes in compose files.
 - **Watchtower** — one instance per app server (ds-1, ds-2); removed from dockermaster
@@ -457,7 +457,7 @@ Can be right-sized down to 8 vCPU / 16 GB in a future maintenance window if desi
 
 ### Phase 1b — Provision dockerserver-2 (infrastructure ready ✅, vault-3 pending)
 
-*Executed out of planned order — ds-2 infrastructure was provisioned before Phase 2 migration.*
+_Executed out of planned order — ds-2 infrastructure was provisioned before Phase 2 migration._
 
 - [x] Clone VM 123 (dockerserver-1) → VM 124 in Proxmox
 - [x] Boot, set hostname to `dockerserver-2`, change host IP to 192.168.48.46
@@ -543,7 +543,7 @@ terraform/
     └── cf-service/      # unchanged
 ```
 
-*Future refactor (post-Phase 2)*: split `portainer/` into per-server subdirectories
+_Future refactor (post-Phase 2)_: split `portainer/` into per-server subdirectories
 (`dockermaster/`, `ds1/`, `ds2/`) once stack ownership is clear.
 
 ## Portainer Network Management
