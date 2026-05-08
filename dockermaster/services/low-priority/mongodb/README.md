@@ -10,13 +10,15 @@
 
 ## 🚀 Description
 
-MongoDB is a document-oriented NoSQL database that provides high performance, high availability, and easy scalability. This service includes both the MongoDB database server and Mongo Express, a web-based MongoDB admin interface for database management and monitoring.
+MongoDB is a document-oriented NoSQL database that provides high performance, high availability, and easy scalability.
+This service includes both the MongoDB database server and Mongo Express, a web-based MongoDB admin interface for
+database management and monitoring.
 
 ## 🔧 Configuration
 
 ### Docker Compose Location
 
-```
+```text
 /nfs/dockermaster/docker/mongodb/docker-compose.yaml
 ```
 

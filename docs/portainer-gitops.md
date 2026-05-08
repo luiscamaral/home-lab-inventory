@@ -1,6 +1,7 @@
 # Portainer GitOps Configuration Guide
 
-> **Note:** This document describes a webhook-based GitOps approach that was not implemented. The actual deployment model uses Terraform to manage Portainer stacks. See `terraform/portainer/README.md` for the current workflow.
+> **Note:** This document describes a webhook-based GitOps approach that was not implemented. The actual deployment
+> model uses Terraform to manage Portainer stacks. See `terraform/portainer/README.md` for the current workflow.
 
 **Project**: Dockermaster Recovery - Phase 5  
 **Created**: 2025-08-29  
@@ -9,7 +10,9 @@
 
 ## 📊 Executive Summary
 
-This document provides comprehensive guidance for implementing GitOps workflows using Portainer stack management. The solution enables automatic deployment of Docker services from Git repository changes, centralizing container management while maintaining infrastructure as code principles.
+This document provides comprehensive guidance for implementing GitOps workflows using Portainer stack management. The
+solution enables automatic deployment of Docker services from Git repository changes, centralizing container management
+while maintaining infrastructure as code principles.
 
 ### Key Benefits
 
@@ -23,7 +26,7 @@ This document provides comprehensive guidance for implementing GitOps workflows 
 
 ### Components
 
-```
+```text
 GitHub Repository ──→ Webhook ──→ Portainer ──→ Docker Daemon ──→ Services
      ↑                    ↓           ↑             ↓            ↑
      │                    └───────────┘             └────────────┘
@@ -41,7 +44,7 @@ GitHub Repository ──→ Webhook ──→ Portainer ──→ Docker Daemon 
 
 ## 📁 Directory Structure
 
-```
+```text
 inventory/
 ├── dockermaster/
 │   ├── docker/
@@ -299,7 +302,7 @@ Automated backups run:
 
 ### 4.3 Backup Locations
 
-```
+```text
 /nfs/dockermaster/backups/portainer/
 ├── stack-backup-20250829_140000/
 │   ├── backup-manifest.json

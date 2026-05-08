@@ -6,7 +6,8 @@
 
 ## 🎯 Overview
 
-SSH multiplexing allows multiple SSH sessions to share a single connection, dramatically improving performance for automation scripts that need to execute multiple commands on dockermaster.
+SSH multiplexing allows multiple SSH sessions to share a single connection, dramatically improving performance for
+automation scripts that need to execute multiple commands on dockermaster.
 
 ## 📝 Required SSH Configuration
 
@@ -27,7 +28,7 @@ Host dockermaster
 ## 🔧 Configuration Explanation
 
 - **ControlMaster auto**: Automatically creates master connection when needed
-- **ControlPath ~/.ssh/master-%r@%h:%p**: Socket file location for connection sharing
+- **ControlPath ~/.SSH/master-%r@%h:%p**: Socket file location for connection sharing
 - **ControlPersist 10m**: Keep connection alive for 10 minutes after last use
 - **ServerAliveInterval 60**: Send keepalive every 60 seconds
 - **ServerAliveCountMax 3**: Close connection after 3 failed keepalives
@@ -83,6 +84,7 @@ With SSH multiplexing enabled:
 The `scripts/ssh-dockermaster.sh` script provides convenient commands:
 
 ### Connection Management
+
 ```bash
 ./scripts/ssh-dockermaster.sh connect      # Establish persistent connection
 ./scripts/ssh-dockermaster.sh disconnect   # Close connection
@@ -90,6 +92,7 @@ The `scripts/ssh-dockermaster.sh` script provides convenient commands:
 ```
 
 ### Command Execution
+
 ```bash
 ./scripts/ssh-dockermaster.sh exec "docker ps"
 ./scripts/ssh-dockermaster.sh exec "ls /nfs/dockermaster/docker/"
@@ -97,6 +100,7 @@ The `scripts/ssh-dockermaster.sh` script provides convenient commands:
 ```
 
 ### Testing and Troubleshooting
+
 ```bash
 ./scripts/ssh-dockermaster.sh test         # Full functionality test
 ./scripts/ssh-dockermaster.sh help         # Show usage information
@@ -140,11 +144,12 @@ ssh -O exit -S ~/.ssh/master-test dockermaster  # Close connection
 
 The SSH multiplexing setup is designed to work with the documentation automation tools:
 
-1. **extract-compose.sh** - Extract docker-compose.yml files
+1. **extract-compose.sh** - Extract Docker-compose.yml files
 2. **parse-env.sh** - Parse environment variables
 3. **find-deps.sh** - Identify service dependencies
 
-These scripts will automatically use the multiplexed connection when available, providing significant performance improvements during bulk documentation tasks.
+These scripts will automatically use the multiplexed connection when available, providing significant performance
+improvements during bulk documentation tasks.
 
 ## 📋 Validation Checklist
 
@@ -167,4 +172,5 @@ Once SSH multiplexing is configured and tested:
 
 ---
 
-**Note**: This setup is part of the dockermaster-recovery documentation framework and is essential for efficient bulk documentation tasks.
+**Note**: This setup is part of the dockermaster-recovery documentation framework and is essential for efficient bulk
+documentation tasks.

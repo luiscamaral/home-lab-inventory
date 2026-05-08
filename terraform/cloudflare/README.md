@@ -4,7 +4,7 @@ Terraform configuration for managing Cloudflare and DreamHost DNS resources in t
 
 ## Architecture
 
-```
+```text
 DreamHost (authoritative NS for lcamaral.com)
   *.cf.lcamaral.com  CNAME  bologna.cf.lcamaral.com.cdn.cloudflare.net.
        |
@@ -69,7 +69,7 @@ terraform apply
 
 ## File Structure
 
-```
+```text
 cloudflare/
   provider.tf    # Cloudflare v5 + DreamHost v0.3 providers
   variables.tf   # Input variables (account_id, zone_id, tokens)

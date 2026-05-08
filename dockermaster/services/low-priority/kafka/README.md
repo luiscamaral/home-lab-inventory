@@ -10,21 +10,26 @@
 
 ## 🚀 Description
 
-Apache Kafka is a distributed streaming platform that handles real-time data feeds. This service runs Kafka in KRaft mode (Kafka Raft), which eliminates the need for Apache Zookeeper by using Kafka's internal consensus protocol. It provides high-throughput, fault-tolerant stream processing capabilities.
+Apache Kafka is a distributed streaming platform that handles real-time data feeds. This service runs Kafka in KRaft
+mode (Kafka Raft), which eliminates the need for Apache Zookeeper by using Kafka's internal consensus protocol. It
+provides high-throughput, fault-tolerant stream processing capabilities.
 
 ## 🔧 Configuration
 
 ### Docker Compose Location
-```
+
+```text
 /nfs/dockermaster/docker/kafka/docker-compose.yaml
 ```
 
 ### Service Architecture
+
 - **kafka**: Single-node Kafka broker running in KRaft mode
 - **Version**: Bitnami Kafka 3.4
 - **Mode**: KRaft (no Zookeeper required)
 
 ### Environment Variables
+
 - **Core Configuration**:
   - `ALLOW_PLAINTEXT_LISTENER`: true (no encryption)
   - `KAFKA_BROKER_ID`: 1
@@ -42,10 +47,12 @@ Apache Kafka is a distributed streaming platform that handles real-time data fee
   - `KAFKA_IP`: 192.168.59.35 (from .env file)
 
 ### Volumes
+
 - `kafka_data`: Persistent storage for Kafka data and logs (mapped to /bitnami)
 
 ### Network Configuration
-- **Network**: docker-servers-net (macvlan)
+
+- **Network**: Docker-servers-net (macvlan)
 - **IP**: 192.168.59.35
 - **Ports**:
   - 9092: Default Kafka port
@@ -55,22 +62,26 @@ Apache Kafka is a distributed streaming platform that handles real-time data fee
 ## 🔐 Security
 
 ### Secrets Management
+
 - **Current setup**: Plaintext listeners enabled (no authentication)
 - **Security level**: Low (internal network only)
 
 ### Access Control
+
 - **Authentication**: None (plaintext listeners)
 - **Authorization**: Not configured
-- **Network access**: Limited to docker-servers-net
+- **Network access**: Limited to Docker-servers-net
 
 ## 📈 Monitoring
 
 ### Health Checks
+
 - **Current**: No explicit health checks configured
 - **Monitoring**: Available through Kafka JMX metrics
 - **Debug logs**: Enabled via BITNAMI_DEBUG
 
 ### Metrics
+
 - **JMX**: Available on default Kafka JMX ports
 - **Prometheus**: Not explicitly configured
 - **Custom dashboards**: Would require external monitoring setup
@@ -78,17 +89,20 @@ Apache Kafka is a distributed streaming platform that handles real-time data fee
 ## 🔄 Backup Strategy
 
 ### Data Backup
+
 - **Method**: Volume backup of kafka_data volume
 - **Frequency**: Depends on volume backup schedule
 - **Location**: Docker local volume
 
 ### Configuration Backup
-- **Git repository**: Yes - docker-compose.yaml and .env included
+
+- **Git repository**: Yes - Docker-compose.YAML and .env included
 - **Topic configuration**: Auto-created topics defined in environment
 
 ## 🚨 Troubleshooting
 
 ### Common Issues
+
 1. **Issue**: Kafka broker fails to start
    - **Symptoms**: Container exits or restart loops
    - **Solution**: Check logs for KRaft initialization issues
@@ -102,10 +116,12 @@ Apache Kafka is a distributed streaming platform that handles real-time data fee
    - **Solution**: Check network connectivity and listener configuration
 
 ### Log Locations
+
 - **Container logs**: `docker logs <kafka-container-name>`
 - **Kafka logs**: Available in kafka_data volume under /bitnami/kafka/logs
 
 ### Recovery Procedures
+
 1. **Service restart**: `docker compose restart kafka`
 2. **Full rebuild**: `docker compose down && docker compose up -d`
 3. **Data recovery**: Restore from kafka_data volume backup
@@ -114,6 +130,7 @@ Apache Kafka is a distributed streaming platform that handles real-time data fee
 ## 📝 Maintenance
 
 ### Updates
+
 - **Current version**: Bitnami Kafka 3.4
 - **Update schedule**: Manual updates recommended
 - **Update procedure**:
@@ -124,11 +141,13 @@ Apache Kafka is a distributed streaming platform that handles real-time data fee
   5. Verify topic integrity
 
 ### Dependencies
-- **Required services**: docker-servers-net network
+
+- **Required services**: Docker-servers-net network
 - **Required by**: Applications using Kafka streaming
 - **External dependencies**: None (KRaft mode)
 
 ### Topic Management
+
 - **Pre-created topics**:
   - `User`: 1 partition, replication factor 3
   - `Project`: 1 partition, replication factor 1, compacted
@@ -137,18 +156,21 @@ Apache Kafka is a distributed streaming platform that handles real-time data fee
 ## 🔧 Features
 
 ### Kafka Configuration
+
 - **Mode**: KRaft (no Zookeeper)
 - **Replication**: Single-node setup
 - **Partitioning**: Configurable per topic
 - **Compression**: Available (not specifically configured)
 
 ### Topic Features
+
 - **Auto-creation**: Enabled
 - **Compaction**: Available (Project topic uses compaction)
 - **Retention**: Default Kafka retention policies
 - **Multiple partitions**: Supported
 
 ### Performance
+
 - **Single broker**: Optimized for development/testing
 - **Local storage**: Uses Docker volumes for persistence
 - **Debug mode**: Enabled for troubleshooting
@@ -167,5 +189,5 @@ Apache Kafka is a distributed streaming platform that handles real-time data fee
 | 2025-08-28 | Initial documentation | Documentation Team |
 
 ---
-*Template Version: 1.0*
-*Last Updated: 2025-08-28*
+_Template Version: 1.0_
+_Last Updated: 2025-08-28_

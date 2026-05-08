@@ -4,7 +4,8 @@
 
 ## 📊 Overview
 
-Complete monitoring configuration for Calibre services migrated to Portainer, including health checks, resource monitoring, auto-updates, and alerting.
+Complete monitoring configuration for Calibre services migrated to Portainer, including health checks, resource
+monitoring, auto-updates, and alerting.
 
 ## 🔧 Portainer Alert Configuration Steps
 
@@ -64,18 +65,21 @@ services:
 ### Performance Indicators
 
 #### 🟢 Healthy State
+
 - **Startup Time**: < 60s for Calibre, < 30s for Calibre-Web
 - **Response Time**: < 2s for web interface
 - **Memory Growth**: Stable, no continuous increase
 - **CPU**: Spikes during book processing, idle < 20%
 
 #### 🟡 Warning Indicators
+
 - **Memory**: > 80% of allocated resources
 - **CPU**: > 85% sustained for 5+ minutes  
 - **Response Time**: > 5s consistently
 - **Disk Space**: > 80% of volume capacity
 
 #### 🔴 Critical Issues
+
 - **Container Down**: > 2 minutes unresponsive
 - **Memory**: > 95% allocation
 - **Disk Space**: > 90% volume capacity
@@ -170,18 +174,21 @@ docker run -d \
 ## 🔔 Alert Configuration
 
 ### Critical Alerts (Immediate Response)
+
 - Container down > 2 minutes
 - Volume usage > 90%
 - Memory usage > 95%
 - Failed database connections
 
 ### Warning Alerts (Monitor Closely)
+
 - Memory usage > 80%
 - CPU usage > 85% for 5+ minutes
 - Response time > 5 seconds
 - Volume usage > 80%
 
 ### Info Alerts (FYI)
+
 - Container restarts
 - Successful updates
 - Weekly resource reports
@@ -189,24 +196,28 @@ docker run -d \
 ## 🛠️ Implementation Checklist
 
 ### Initial Setup
+
 - [ ] Deploy monitoring-config.yml to Portainer
 - [ ] Configure watchtower with auto-update schedule
 - [ ] Set up health check endpoints
 - [ ] Configure notification channels
 
 ### Portainer Configuration
+
 - [ ] Enable container monitoring
 - [ ] Set up webhook endpoints
 - [ ] Configure alert thresholds
 - [ ] Test notification delivery
 
 ### GitHub Integration
+
 - [ ] Create repository webhook
 - [ ] Configure auto-deploy workflow
 - [ ] Set environment secrets
 - [ ] Test deployment pipeline
 
 ### Monitoring Validation
+
 - [ ] Verify health checks working
 - [ ] Test alert triggers
 - [ ] Confirm auto-updates scheduled
@@ -217,6 +228,7 @@ docker run -d \
 ### Common Issues
 
 #### Health Checks Failing
+
 ```bash
 # Debug health check
 docker exec calibre-server curl -f http://localhost:8080/
@@ -224,6 +236,7 @@ docker logs calibre-server --tail 50
 ```
 
 #### High Memory Usage
+
 ```bash
 # Check memory allocation
 docker stats calibre-server
@@ -231,6 +244,7 @@ docker exec calibre-server free -h
 ```
 
 #### Update Failures
+
 ```bash
 # Check watchtower logs
 docker logs watchtower
@@ -239,6 +253,7 @@ docker pull linuxserver/calibre-web:latest
 ```
 
 ### Performance Optimization
+
 1. **Memory**: Increase container memory limits if consistently high
 2. **CPU**: Consider resource scheduling during peak hours
 3. **Storage**: Implement log rotation and cleanup policies
@@ -247,18 +262,21 @@ docker pull linuxserver/calibre-web:latest
 ## 📝 Maintenance Schedule
 
 ### Daily (Automated)
+
 - Health check monitoring
 - Resource usage tracking
 - Log rotation
 - Auto-updates (4 AM)
 
 ### Weekly (Manual Review)
+
 - Performance metrics review
 - Alert threshold evaluation
 - Backup verification
 - Security updates check
 
 ### Monthly (Comprehensive)
+
 - Monitoring configuration review
 - Baseline adjustment
 - Performance optimization
@@ -267,12 +285,14 @@ docker pull linuxserver/calibre-web:latest
 ## 🔐 Security Considerations
 
 ### Monitoring Security
+
 - Secure webhook endpoints with authentication
 - Encrypt notification channels
 - Limit monitoring access permissions
 - Regular monitoring credential rotation
 
 ### Container Security
+
 - Enable security scanning in updates
 - Monitor for CVE alerts
 - Implement least-privilege access

@@ -27,6 +27,7 @@
   "description": "Proxmox Virtual Environment Dashboard",
   "editable": true,
   "fiscalYearStartMonth": 0,
+  "gnetId": 10347,
   "graphTooltip": 0,
   "id": null,
   "links": [],
@@ -1935,6 +1936,5 @@
   "timezone": "",
   "title": "Proxmox via Prometheus",
   "version": 4,
-  "weekStart": "",
-  "gnetId": 10347
+  "weekStart": ""
 }

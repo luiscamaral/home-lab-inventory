@@ -4,7 +4,7 @@ Terraform configurations for managing the homelab infrastructure.
 
 ## Architecture
 
-```
+```text
                    DreamHost (registrar + authoritative NS)
                        |
                        | *.cf.lcamaral.com CNAME wildcard
@@ -29,7 +29,7 @@ Terraform configurations for managing the homelab infrastructure.
 
 ## Directory Structure
 
-```
+```text
 terraform/
   cloudflare/              # Cloudflare zone, DNS, tunnels + DreamHost delegation
   portainer/               # Portainer stacks, settings, registries

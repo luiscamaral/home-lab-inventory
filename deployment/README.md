@@ -1,10 +1,12 @@
 # CI/CD Pipeline for Home Lab Docker Infrastructure
 
-This directory contains the complete CI/CD setup for automated building and deployment of Docker containers to your home lab infrastructure.
+This directory contains the complete CI/CD setup for automated building and deployment of Docker containers to your home
+lab infrastructure.
 
 ## 🏗️ Architecture Overview
 
-Since your server is on a **restricted LAN without incoming internet access**, this setup uses a **pull-based deployment strategy**:
+Since your server is on a **restricted LAN without incoming internet access**, this setup uses a **pull-based deployment
+strategy**:
 
 1. **GitHub Actions** builds Docker images when code changes
 2. Images are pushed to **GitHub Container Registry** (ghcr.io)
@@ -15,7 +17,7 @@ Since your server is on a **restricted LAN without incoming internet access**, t
 
 ## 📁 Directory Structure
 
-```
+```text
 deployment/
 ├── README.md                # This file
 ├── watchtower/             # Watchtower auto-update configuration
@@ -92,12 +94,14 @@ services:
 Watchtower automatically pulls and updates containers when new images are available.
 
 **Pros:**
+
 - Fully automatic
 - No external access needed
 - Monitors specific containers via labels
 - Cleans up old images
 
 **Configuration:**
+
 ```yaml
 services:
   myservice:
@@ -111,11 +115,13 @@ services:
 The `github-sync.sh` script runs every 5 minutes to check for updates.
 
 **Pros:**
+
 - More control over deployment
 - Can check GitHub commits
 - Logs all deployment activities
 
 **Check status:**
+
 ```bash
 # View cron jobs
 crontab -l
@@ -163,14 +169,14 @@ docker login ghcr.io -u YOUR_GITHUB_USERNAME
 1. **Never commit secrets** to the repository
 2. Use environment variables for sensitive data:
 
-```yaml
-# docker-compose.yml
-environment:
-  PASSWORD: ${SERVICE_PASSWORD:-default}
+   ```yaml
+   # docker-compose.yml
+   environment:
+     PASSWORD: ${SERVICE_PASSWORD:-default}
 
-# .env file (not committed)
-SERVICE_PASSWORD=actual-secret-password
-```
+   # .env file (not committed)
+   SERVICE_PASSWORD=actual-secret-password
+   ```
 
 3. **GitHub Secrets** for CI/CD:
    - Go to Settings → Secrets → Actions
@@ -183,11 +189,13 @@ SERVICE_PASSWORD=actual-secret-password
 ### build-images.yml
 
 Automatically builds and pushes Docker images when:
+
 - Code is pushed to main branch
 - Dockerfile changes are detected
 - Manual trigger via GitHub UI
 
 **Features:**
+
 - Matrix builds for multiple services
 - Automatic tagging (latest, commit SHA, branch name)
 - Caching for faster builds
@@ -196,6 +204,7 @@ Automatically builds and pushes Docker images when:
 ### deploy.yml
 
 Triggers deployment after successful builds:
+
 - Webhook notification
 - SSH deployment (requires setup)
 - Watchtower trigger
@@ -203,6 +212,7 @@ Triggers deployment after successful builds:
 ## 🏷️ Image Tagging Strategy
 
 Images are tagged with:
+
 - `latest` - Latest build from main branch
 - `main` - Main branch builds
 - `pr-123` - Pull request builds
@@ -214,36 +224,42 @@ Images are tagged with:
 ### Watchtower Not Updating
 
 1. Check Watchtower logs:
-```bash
-docker logs watchtower
-```
+
+   ```bash
+   docker logs watchtower
+   ```
 
 2. Verify label is set:
-```bash
-docker inspect mycontainer | grep watchtower
-```
+
+   ```bash
+   docker inspect mycontainer | grep watchtower
+   ```
 
 3. Check image availability:
-```bash
-docker pull ghcr.io/luiscamaral/myservice:latest
-```
+
+   ```bash
+   docker pull ghcr.io/luiscamaral/myservice:latest
+   ```
 
 ### Sync Script Issues
 
 1. Check script logs:
-```bash
-tail -f /var/log/docker-deploy.log
-```
+
+   ```bash
+   tail -f /var/log/docker-deploy.log
+   ```
 
 2. Run manually with debug:
-```bash
-bash -x /usr/local/bin/github-sync.sh
-```
+
+   ```bash
+   bash -x /usr/local/bin/github-sync.sh
+   ```
 
 3. Verify GitHub API access:
-```bash
-curl https://api.github.com/repos/luiscamaral/home-lab-inventory/commits/main
-```
+
+   ```bash
+   curl https://api.github.com/repos/luiscamaral/home-lab-inventory/commits/main
+   ```
 
 ### Permission Issues
 
@@ -288,18 +304,21 @@ services:
 
 1. **Test locally first** before pushing to main
 2. **Use staging labels** for gradual rollout:
+
    ```yaml
    labels:
      com.centurylinklabs.watchtower.enable: "false"  # Set to true when ready
    ```
 
 3. **Monitor after deployment**:
+
    ```bash
    docker compose ps
    docker compose logs -f
    ```
 
 4. **Backup before major updates**:
+
    ```bash
    docker compose down
    tar -czf backup-$(date +%Y%m%d).tar.gz ./
@@ -321,12 +340,14 @@ Since your server can't receive incoming connections:
 1. **Use pull-based updates** (Watchtower or cron)
 2. **Consider a VPN** for management access
 3. **Use GitHub's RSS feeds** for monitoring:
-   ```
+
+   ```text
    https://github.com/luiscamaral/home-lab-inventory/commits/main.atom
    ```
+
 4. **Set up email notifications** in Watchtower for deployment alerts
 5. **Use Portainer** for visual management after deployment
 
 ---
 
-*For questions or issues, check the repository issues or documentation.*
+_For questions or issues, check the repository issues or documentation._

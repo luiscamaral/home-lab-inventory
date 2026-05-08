@@ -198,6 +198,11 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      # `secrets` may not be referenced in `if:` at step level (actionlint
+      # `expression`), but is fine at job-`env:` time. Compute once here
+      # so the conditional steps below can read it from `env`.
+      DOCKER_HUB_AVAILABLE: ${{ secrets.DOCKER_HUB_USERNAME != '' && 'true' || 'false' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -219,7 +224,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        if: github.event_name != 'pull_request' && secrets.DOCKER_HUB_USERNAME != ''
+        if: github.event_name != 'pull_request' && env.DOCKER_HUB_AVAILABLE == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
@@ -243,7 +248,9 @@ jobs:
             type=raw,value={{date 'YYYYMMDD'}}-{{sha}}
 
       - name: Cache Docker layers
-        uses: actions/cache@v3
+        # @v3 was flagged by actionlint as "too old to run on GitHub
+        # Actions"; @v4 is the current major.
+        uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ matrix.name }}-${{ github.sha }}

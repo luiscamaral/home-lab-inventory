@@ -1,0 +1,7 @@
+self-hosted-runner:
+  # Self-hosted runner labels declared so actionlint doesn't flag them
+  # as unknown. The runner lives on the dockermaster VM; the GitHub
+  # runner service is the Terraform-managed Portainer stack
+  # `terraform/portainer/stacks/github-runner.yml`.
+  labels:
+    - dockermaster

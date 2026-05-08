@@ -2,7 +2,8 @@
 
 ## Overview
 
-This document describes the migration of Rundeck from local Docker build to Portainer-managed deployment using registry images.
+This document describes the migration of Rundeck from local Docker build to Portainer-managed
+deployment using registry images.
 
 ## Migration Status
 

@@ -2,11 +2,12 @@
 
 **Date**: 2025-08-28  
 **Version**: Vault v1.16.3  
-**Location**: dockermaster:/nfs/dockermaster/docker/vault/  
+**Location**: dockermaster:/nfs/dockermaster/Docker/vault/  
 
 ## Summary
 
-Vault service is **FUNCTIONAL** but has **CONFIGURATION ISSUES** that cause misleading "unhealthy" status and TLS-related errors.
+Vault service is **FUNCTIONAL** but has **CONFIGURATION ISSUES** that cause misleading "unhealthy" status and
+TLS-related errors.
 
 ## Current Status
 
@@ -21,11 +22,13 @@ Vault service is **FUNCTIONAL** but has **CONFIGURATION ISSUES** that cause misl
 ### 1. TLS Configuration Mismatch ⚠️
 
 **Problem**: Configuration file contains conflicting TLS settings:
+
 - `api_addr = "https://vault.d.lcamaral.com"` (HTTPS)
 - `cluster_addr = "https://192.168.59.25:8201"` (HTTPS)
 - `tls_disable = 1` (TLS disabled)
 
 **Impact**:
+
 - Commands using `VAULT_ADDR=https://vault.d.lcamaral.com` fail with TLS certificate errors
 - Health checks may report incorrect status
 - Unseal scripts require workarounds
@@ -35,10 +38,12 @@ Vault service is **FUNCTIONAL** but has **CONFIGURATION ISSUES** that cause misl
 ### 2. Missing Configuration File in Host Directory ⚠️
 
 **Problem**: `/nfs/dockermaster/docker/vault/config/config.hcl` does not exist on host
+
 - Configuration exists only inside container at `/vault/config/config.hcl`
 - Host directory only contains policy files
 
 **Impact**:
+
 - Configuration cannot be edited from host
 - Version control of configuration not possible
 
@@ -47,6 +52,7 @@ Vault service is **FUNCTIONAL** but has **CONFIGURATION ISSUES** that cause misl
 ### 3. Security Issues 🚨
 
 **Critical Issues Found**:
+
 - Root token stored in plaintext in `.env` file
 - Service token stored in plaintext in `.env` file
 - Unseal keys stored in plaintext in `.env` file
@@ -58,6 +64,7 @@ Vault service is **FUNCTIONAL** but has **CONFIGURATION ISSUES** that cause misl
 ### 4. Health Check Configuration 📊
 
 **Current Health Check**:
+
 ```bash
 wget --no-verbose --tries=1 --spider http://127.0.0.1:8200/v1/sys/health
 ```
@@ -67,6 +74,7 @@ wget --no-verbose --tries=1 --spider http://127.0.0.1:8200/v1/sys/health
 ## Test Results
 
 ### API Connectivity ✅
+
 ```bash
 # HTTP - Working
 curl -k http://192.168.59.25:8200/v1/sys/health
@@ -78,8 +86,10 @@ curl -k https://vault.d.lcamaral.com/v1/sys/health
 ```
 
 ### Vault Status ✅
+
 After manual unseal using HTTP address:
-```
+
+```text
 Seal Type               shamir
 Initialized             true
 Sealed                  false
@@ -93,6 +103,7 @@ HA Mode                 standby
 ## Immediate Fixes Required
 
 ### Priority 1: TLS Configuration Consistency
+
 ```hcl
 # Option 1: Use HTTP consistently (Quick fix)
 api_addr     = "http://192.168.59.25:8200"
@@ -109,6 +120,7 @@ listener "tcp" {
 ```
 
 ### Priority 2: Configuration File Management
+
 ```bash
 # Copy config from container to host
 docker cp vault:/vault/config/config.hcl /nfs/dockermaster/docker/vault/config/
@@ -117,6 +129,7 @@ docker cp vault:/vault/config/config.hcl /nfs/dockermaster/docker/vault/config/
 ```
 
 ### Priority 3: Security Remediation
+
 1. Remove tokens from `.env` file
 2. Use Vault auth methods instead of static tokens
 3. Store unseal keys securely offline
@@ -158,6 +171,6 @@ docker exec vault cat /vault/config/config.hcl
 ```
 
 ---
-*Report Generated*: 2025-08-28  
-*Next Review*: After TLS configuration fix  
-*Status*: Issues Identified - Ready for Remediation  
+_Report Generated_: 2025-08-28  
+_Next Review_: After TLS configuration fix  
+_Status_: Issues Identified - Ready for Remediation  

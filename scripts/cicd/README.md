@@ -15,6 +15,7 @@ This directory contains comprehensive CI/CD automation scripts for dockermaster 
 ## 🚀 Common Operations
 
 ### Deploy a Service
+
 ```bash
 # Basic deployment
 ./deploy-service.sh vault
@@ -27,6 +28,7 @@ This directory contains comprehensive CI/CD automation scripts for dockermaster 
 ```
 
 ### Check Service Health
+
 ```bash
 # Check all services
 ./health-check.sh
@@ -39,6 +41,7 @@ This directory contains comprehensive CI/CD automation scripts for dockermaster 
 ```
 
 ### Manage Secrets with Vault
+
 ```bash
 # Authenticate with Vault
 ./vault-integration.sh auth
@@ -56,6 +59,7 @@ This directory contains comprehensive CI/CD automation scripts for dockermaster 
 ## ⚡ Quick Troubleshooting
 
 ### Service Won't Start
+
 ```bash
 # Check service status
 ./health-check.sh service-name
@@ -69,6 +73,7 @@ docker compose logs --tail=50
 ```
 
 ### Health Check Failures
+
 ```bash
 # Detailed health check with debugging
 ./health-check.sh --verbose --detailed service-name
@@ -78,6 +83,7 @@ docker compose logs --tail=50
 ```
 
 ### Vault Issues
+
 ```bash
 # Check Vault health
 ./vault-integration.sh health-check
@@ -89,6 +95,7 @@ docker compose logs --tail=50
 ## 🔧 Script Options
 
 ### deploy-service.sh Options
+
 - `--verbose` - Enable detailed output
 - `--dry-run` - Show what would be deployed
 - `--force` - Deploy even if health checks fail
@@ -97,6 +104,7 @@ docker compose logs --tail=50
 - `--timeout SECONDS` - Deployment timeout
 
 ### health-check.sh Options
+
 - `--json` - JSON output format
 - `--detailed` - Include resource metrics
 - `--continuous` - Continuous monitoring mode
@@ -104,7 +112,8 @@ docker compose logs --tail=50
 - `--exit-on-unhealthy` - Exit with error if unhealthy
 
 ### vault-integration.sh Options
-- `--format FORMAT` - Output format (json, env, yaml)
+
+- `--format FORMAT` - Output format (JSON, env, YAML)
 - `--output FILE` - Write to file
 - `--verbose` - Detailed logging
 - `--force` - Skip confirmations
@@ -112,6 +121,7 @@ docker compose logs --tail=50
 ## 📊 Output Examples
 
 ### Health Check JSON Output
+
 ```json
 {
   "timestamp": "2025-08-29T14:30:15Z",
@@ -130,6 +140,7 @@ docker compose logs --tail=50
 ```
 
 ### Deployment Report
+
 ```json
 {
   "service": "vault",
@@ -149,6 +160,7 @@ docker compose logs --tail=50
 ## 🚨 Emergency Commands
 
 ### Emergency Rollback
+
 ```bash
 # Rollback specific services to last known good state
 gh workflow run emergency-rollback.yml \
@@ -158,6 +170,7 @@ gh workflow run emergency-rollback.yml \
 ```
 
 ### Manual Service Recovery
+
 ```bash
 # Stop service
 cd /nfs/dockermaster/docker/service-name
@@ -175,6 +188,7 @@ docker compose up -d
 These scripts are designed to work with GitHub Actions workflows:
 
 ### In Workflows
+
 ```yaml
 - name: Deploy service
   run: |
@@ -190,6 +204,7 @@ These scripts are designed to work with GitHub Actions workflows:
 ```
 
 ### Environment Variables
+
 ```bash
 # Common environment variables used by scripts
 export DEPLOY_PATH="/nfs/dockermaster/docker"

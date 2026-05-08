@@ -462,7 +462,9 @@ EOF
             "mermaid")
                 while IFS= read -r service; do
                     if [[ -n "$service" ]]; then
-                        echo "    $service[$service]" >> "$graph_file"
+                        # Braces disambiguate from `$service[idx]` (array
+                        # access) — both expansions are intentional here.
+                        echo "    ${service}[${service}]" >> "$graph_file"
                     fi
                 done < /tmp/all_services.txt
 

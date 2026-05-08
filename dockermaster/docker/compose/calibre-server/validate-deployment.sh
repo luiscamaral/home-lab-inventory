@@ -103,7 +103,8 @@ test_docker_compose_syntax() {
     if docker compose -f "$COMPOSE_FILE" config >/dev/null 2>&1; then
         record_test "compose_syntax" "pass" "Docker Compose syntax is valid"
     else
-        local error_output=$(docker compose -f "$COMPOSE_FILE" config 2>&1 || true)
+        local error_output
+        error_output=$(docker compose -f "$COMPOSE_FILE" config 2>&1 || true)
         record_test "compose_syntax" "fail" "Docker Compose syntax error: $error_output"
     fi
 }
@@ -183,7 +184,9 @@ test_environment_variables() {
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
         [[ -z "${line// }" ]] && continue
 
-        # Export the variable
+        # Export the variable. The value of $line is the full KEY=VALUE
+        # pair, so SC2163 (which expects an explicit name) is intentional.
+        # shellcheck disable=SC2163
         export "$line" 2>/dev/null || true
     done < "$ENV_FILE"
 
@@ -299,6 +302,7 @@ test_security_configuration() {
 
     # Check for password configuration
     if [[ -f "$ENV_FILE" ]]; then
+        # shellcheck source=/dev/null
         source "$ENV_FILE"
         if [[ -z "${CALIBRE_PASSWORD:-}" ]]; then
             security_issues+=("CALIBRE_PASSWORD not set")
@@ -327,7 +331,8 @@ test_security_configuration() {
 test_healthchecks() {
     log_info "Testing health check configuration..."
 
-    local healthcheck_count=$(grep -c "healthcheck:" "$COMPOSE_FILE" || echo "0")
+    local healthcheck_count
+    healthcheck_count=$(grep -c "healthcheck:" "$COMPOSE_FILE" || echo "0")
 
     if [[ "$healthcheck_count" -gt 0 ]]; then
         record_test "healthchecks" "pass" "Health checks configured for services"
@@ -462,7 +467,9 @@ EOF
 EOF
 }
 
-# Cleanup function
+# Cleanup is invoked via `trap cleanup EXIT` below; SC2317/SC2329 are
+# false positives for trap-only callers.
+# shellcheck disable=SC2317,SC2329
 cleanup() {
     [[ -f "$TEST_RESULTS_FILE" ]] && rm -f "$TEST_RESULTS_FILE"
 }

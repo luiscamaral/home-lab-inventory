@@ -1,10 +1,13 @@
 # Vault Integration Plan for Dockermaster Services
 
 ## Overview
-HashiCorp Vault is active at https://vault.d.lcamaral.com/ and will provide centralized secret management for all dockermaster services.
+
+HashiCorp Vault is active at <https://vault.d.lcamaral.com/> and will provide centralized secret management for all
+dockermaster services.
 
 ## Secret Organization Structure
-```
+
+```text
 secrets/
 └── homelab/
     ├── portainer/
@@ -25,11 +28,13 @@ secrets/
 ## Authentication Strategy
 
 ### Primary: AppRole Authentication
+
 - Each service gets its own AppRole with specific policies
-- Role ID embedded in docker-compose
+- Role ID embedded in Docker-compose
 - Secret ID injected at runtime via init container
 
 ### Init Container Approach
+
 ```yaml
 services:
   vault-init:
@@ -54,6 +59,7 @@ services:
 ## Migration Priority
 
 ### Phase 1 - Critical Services (Immediate)
+
 1. **Portainer** - Central container management
    - Admin credentials
    - API keys
@@ -66,16 +72,19 @@ services:
    - Realm configurations
 
 ### Phase 2 - High Priority Services
-3. **GitHub Runner** - CI/CD credentials
-4. **Vault** - Self-management tokens
-5. **Prometheus** - Monitoring credentials
+
+1. **GitHub Runner** - CI/CD credentials
+2. **Vault** - Self-management tokens
+3. **Prometheus** - Monitoring credentials
 
 ### Phase 3 - Standard Services
+
 - All remaining services alphabetically
 
 ## Integration Templates
 
 ### Docker Compose Template with Vault
+
 ```yaml
 name: service-name
 
@@ -108,6 +117,7 @@ services:
 ```
 
 ### Vault Agent Configuration (agent.hcl)
+
 ```hcl
 vault {
   address = "https://vault.d.lcamaral.com"
@@ -138,30 +148,34 @@ template {
 
 ## Implementation Steps
 
-### For Each Service:
+### For Each Service
+
 1. Create AppRole in Vault
 2. Define policy for service-specific secrets
 3. Create secret path: `secrets/homelab/<service-name>/`
-4. Add init container to docker-compose
+4. Add init container to Docker-compose
 5. Update environment variables to read from mounted secrets
 6. Test service startup with Vault integration
 7. Document emergency fallback procedures
 
 ## Emergency Procedures
 
-### If Vault is Unavailable:
-1. Check Vault service status at https://vault.d.lcamaral.com/
+### If Vault is Unavailable
+
+1. Check Vault service status at <https://vault.d.lcamaral.com/>
 2. Use emergency sealed env files (encrypted with GPG)
 3. Fallback to local .env files (temporary)
 4. Alert procedures documented per service
 
-### Secret Rotation:
+### Secret Rotation
+
 1. Update secret in Vault
-2. Restart service with docker-compose
+2. Restart service with Docker-compose
 3. Verify service health
 4. Update backup sealed files
 
 ## Security Considerations
+
 - Never commit actual secrets to Git
 - Use `.env.example` files with placeholders
 - Implement secret rotation schedule
@@ -169,6 +183,7 @@ template {
 - Backup Vault data regularly
 
 ## Next Steps
+
 1. ✅ Document Vault integration approach (this document)
 2. ⏳ Create AppRoles for Portainer and Keycloak
 3. ⏳ Migrate Portainer secrets to Vault
@@ -177,10 +192,11 @@ template {
 6. ⏳ Test emergency procedures
 
 ## Related Documentation
+
 - [Vault Service Documentation](../dockermaster/services/high-priority/vault/README.md)
 - [Service Migration Status](./service-migration-status.md)
 - [Emergency Procedures](./emergency-procedures.md)
 
 ---
-*Last Updated: 2025-08-28*
-*Status: Planning Phase*
+_Last Updated: 2025-08-28_
+_Status: Planning Phase_

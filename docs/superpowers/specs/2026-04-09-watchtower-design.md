@@ -5,7 +5,8 @@ Status: Approved
 
 ## Overview
 
-Deploy Watchtower as a Terraform-managed Portainer stack to automatically pull and restart containers with updated images on a daily schedule. Opt-in model using standard Watchtower labels.
+Deploy Watchtower as a Terraform-managed Portainer stack to automatically pull and restart containers with updated
+images on a daily schedule. Opt-in model using standard Watchtower labels.
 
 ## Architecture
 
@@ -23,16 +24,16 @@ Deploy Watchtower as a Terraform-managed Portainer stack to automatically pull a
 
 | Stack | Containers | Rationale |
 |---|---|---|
-| docker-registry | registry | Official image, stateless |
+| Docker-registry | registry | Official image, stateless |
 | cloudflare-tunnel | cloudflare | Official image, stateless |
 | twingate-a | twingate-sepia-hornet | Official image, stateless |
 | twingate-b | twingate-golden-mussel | Official image, stateless |
 | calibre | calibre, calibre-web | Official linuxserver images |
-| github-runner | github-runner-homelab | Needs latest runner version |
+| GitHub-runner | GitHub-runner-homelab | Needs latest runner version |
 | la-rundeck | postgres-rundeck | Official postgres image |
 | rust-server | hbbs, hbbr | Official rustdesk images |
-| prometheus | prometheus, node-exporter, alertmanager, cadvisor | Official Prometheus ecosystem |
-| prometheus | snmp-exporter | Pinned to v0.20.0 -- will not update until tag is changed to :latest |
+| Prometheus | Prometheus, node-exporter, alertmanager, cadvisor | Official Prometheus ecosystem |
+| Prometheus | snmp-exporter | Pinned to v0.20.0 -- will not update until tag is changed to :latest |
 
 ### Manual-only (5 containers)
 
@@ -49,7 +50,7 @@ New Vault path: `secret/homelab/watchtower`
 
 | Key | Purpose | Source |
 |---|---|---|
-| api_token | HTTP API authentication for on-demand update triggers | Generate new token |
+| API_token | HTTP API authentication for on-demand update triggers | Generate new token |
 
 ## Compose Definition
 
@@ -95,19 +96,24 @@ services:
           memory: 128M
 ```
 
-Note: Private registry auth (Docker Hub + GHCR credentials) is deferred. All auto-updated images are public. When needed, add `DOCKER_CONFIG: /config` env var and mount a config.json with registry credentials.
+Note: Private registry auth (Docker Hub + GHCR credentials) is deferred. All auto-updated images are public. When
+needed, add `DOCKER_CONFIG: /config` env var and mount a config.JSON with registry credentials.
 
 ## Label Migration
 
 All 12 existing Portainer stacks must replace the custom label:
+
 - Remove: `com.lcamaral.home.watchtower.enable: "false"`
 - Add: `com.centurylinklabs.watchtower.enable: "true"` or `"false"` per the update policy above
 
-This is a bulk edit across all `terraform/portainer/stacks/*.yml` and corresponding `dockermaster/docker/compose/*/docker-compose.{yml,yaml}` files.
+This is a bulk edit across all `terraform/portainer/stacks/*.yml` and corresponding
+`dockermaster/docker/compose/*/docker-compose.{yml,yaml}` files.
 
 ## GitHub Actions Integration
 
-The existing `.github/workflows/deploy.yml` has a `notify-watchtower` job, but it runs on `ubuntu-latest` (GitHub cloud) and cannot reach Watchtower's internal network. Making this work requires either a Cloudflare tunnel ingress rule for watchtower or changing the workflow to run on the self-hosted runner. This is deferred to a follow-up task.
+The existing `.github/workflows/deploy.yml` has a `notify-watchtower` job, but it runs on `ubuntu-latest` (GitHub cloud)
+and cannot reach Watchtower's internal network. Making this work requires either a Cloudflare tunnel ingress rule for
+watchtower or changing the workflow to run on the self-hosted runner. This is deferred to a follow-up task.
 
 ## Terraform Resources
 
@@ -155,7 +161,7 @@ resource "portainer_stack" "watchtower" {
 ## Deployment Order
 
 1. Store secrets in Vault (`secret/homelab/watchtower`)
-2. Update labels on all 12 existing stacks + deploy watchtower stack (single terraform apply)
+2. Update labels on all 12 existing stacks + deploy watchtower stack (single Terraform apply)
 3. Unseal Vault (container restarts during label update will seal it)
 4. Verify: all containers healthy, watchtower running, labels correct
 5. Sync remote compose files
@@ -165,7 +171,8 @@ resource "portainer_stack" "watchtower" {
 ## Out of Scope
 
 - Email/Slack notifications (can be added later via env vars)
-- Private registry auth via config.json mount and DOCKER_CONFIG env var (can be added later; public images update without it)
+- Private registry auth via config.JSON mount and Docker_CONFIG env var (can be added later; public images update
+  without it)
 - GitHub Actions `notify-watchtower` integration (needs tunnel ingress or workflow change)
 - Watchtower monitoring dashboard in Grafana
 - Automatic Vault unseal after watchtower-triggered restarts

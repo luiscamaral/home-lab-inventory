@@ -15,14 +15,21 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
-    env_file: .env
+    env_file:
+      # `required: false` keeps `docker compose config` happy in CI where
+      # the host-local .env (gitignored) doesn't exist; the file is still
+      # consumed normally on the runtime host.
+      - path: .env
+        required: false
     volumes:
       - pgdata:/var/lib/postgresql/data
 
   n8n:
     image: n8nio/n8n:latest
     restart: unless-stopped
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres

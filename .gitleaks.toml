@@ -99,4 +99,3 @@ paths = [
     '''CLAUDE\.md''',                        # Project instructions file
     '''.*\.example\..*''',                   # Example configuration files
 ]
-

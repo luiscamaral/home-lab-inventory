@@ -34,7 +34,7 @@ To bring an existing compose project under Portainer management:
 
 ## File Structure
 
-```
+```text
 portainer/
   provider.tf       # Portainer provider ~> 1.11, HashiCorp Vault provider ~> 4.0
   variables.tf      # Endpoint ID, credentials

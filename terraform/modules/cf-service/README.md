@@ -13,7 +13,7 @@ module "registry" {
 }
 ```
 
-The tunnel ingress and nginx vhost must be configured separately.
+The tunnel ingress and Nginx vhost must be configured separately.
 
 ## Inputs
 
