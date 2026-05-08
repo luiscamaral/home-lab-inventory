@@ -82,7 +82,10 @@ jobs:
           config-path: .gitleaks.toml # Optional: custom config
 
       - name: Upload Gitleaks SARIF report
-        if: always()
+        # gitleaks-action only writes gitleaks.sarif when leaks are
+        # found. Don't try to upload a non-existent file (was producing
+        # "Path does not exist: gitleaks.sarif" failures on every run).
+        if: always() && hashFiles('gitleaks.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: gitleaks.sarif
@@ -167,7 +170,11 @@ jobs:
 
           merged_sarif = {
               'version': '2.1.0',
-              'schema': 'https://json.schemastore.org/sarif-2.1.0.json',
+              # SARIF spec uses `$schema`, not `schema`. The
+              # codeql-action/upload-sarif validator rejected the file
+              # with "instance is not allowed to have the additional
+              # property 'schema'" until this was fixed.
+              '$schema': 'https://json.schemastore.org/sarif-2.1.0.json',
               'runs': []
           }
 
@@ -307,22 +314,23 @@ jobs:
       - name: Find recently built images
         id: find-images
         run: |
-          # Get list of images that might have been built
-          IMAGES=""
-
-          # Check for calibre-server (has Dockerfile)
+          # Build list of images to scan, one per line.
+          POTENTIAL_IMAGES=""
           if [ -f "dockermaster/docker/compose/calibre-server/Dockerfile" ]; then
-            IMAGES="$IMAGES ghcr.io/${{ env.IMAGE_PREFIX }}/calibre-server:latest"
+            POTENTIAL_IMAGES="ghcr.io/${{ env.IMAGE_PREFIX }}/calibre-server:latest"
           fi
 
-          # Add other images that might be built
-          # This list should match what's built in build-multi-type-images.yml
-          POTENTIAL_IMAGES="
-          ghcr.io/${{ env.IMAGE_PREFIX }}/calibre-server:latest
-          "
-
           echo "Potential images to scan: $POTENTIAL_IMAGES"
-          echo "images=$POTENTIAL_IMAGES" >> $GITHUB_OUTPUT
+
+          # Multiline values must use the heredoc form to land in
+          # $GITHUB_OUTPUT — the previous single-`echo` approach produced
+          # "Invalid format 'ghcr.io/...'" errors when the body
+          # contained a newline.
+          {
+            echo 'images<<EOF'
+            echo "$POTENTIAL_IMAGES"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Scan built images with Trivy
         if: steps.find-images.outputs.images != ''
@@ -365,57 +373,13 @@ jobs:
           path: image-scan-results/
           retention-days: 30
 
-  # Job 5: CodeQL Analysis for code security
-  codeql-analysis:
-    name: CodeQL Security Analysis
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        # CodeQL supports: cpp, csharp, go, java, javascript, python, ruby, swift
-        # Analyzing shell scripts and configuration files
-        language: [ 'javascript' ] # Using JS for shell script analysis capabilities
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # Cache CodeQL database for faster analysis
-      - name: Cache CodeQL database
-        uses: actions/cache@v4
-        with:
-          path: /home/runner/work/_temp/codeql_databases
-          key: codeql-${{ runner.os }}-${{ matrix.language }}-${{ github.sha }}
-          restore-keys: |
-            codeql-${{ runner.os }}-${{ matrix.language }}-
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-          # Override built-in queries with custom security-focused queries
-          queries: +security-and-quality
-          # Enable extended analysis for better coverage
-          config: |
-            paths-ignore:
-              - '**/.git/**'
-              - '**/node_modules/**'
-              - '**/.history/**'
-              - '**/.cache/**'
-
-      # Autobuild attempts to build any compiled languages (none in this repo)
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{matrix.language}}"
+  # Job 5 (CodeQL Analysis) was removed. The repo has no JavaScript/
+  # TypeScript code; the `javascript` matrix entry was consistently
+  # failing with "Only found JavaScript or TypeScript files that were
+  # empty or contained syntax errors". The original comment claimed
+  # JS was being used "for shell script analysis capabilities", but
+  # CodeQL doesn't analyze shell — the job never produced useful
+  # output. Re-add when there's a real language to scan.
 
   # Job 6: Dependency Vulnerability Scanning
   dependency-scan:
@@ -475,7 +439,7 @@ jobs:
   security-report:
     name: Generate Security Report
     runs-on: ubuntu-latest
-    needs: [secret-scan, dockerfile-lint, container-scan, built-image-scan, codeql-analysis]
+    needs: [secret-scan, dockerfile-lint, container-scan, built-image-scan]
     if: always() && github.event_name == 'pull_request'
     steps:
       - name: Checkout repository
@@ -690,7 +654,7 @@ jobs:
   security-gate:
     name: Security Gate
     runs-on: ubuntu-latest
-    needs: [secret-scan, dockerfile-lint, container-scan, built-image-scan, codeql-analysis, security-report]
+    needs: [secret-scan, dockerfile-lint, container-scan, built-image-scan, security-report]
     if: always()
     steps:
       - name: Checkout repository
@@ -814,7 +778,7 @@ jobs:
   performance-monitoring:
     name: Performance Monitoring
     runs-on: ubuntu-latest
-    needs: [secret-scan, dockerfile-lint, container-scan, built-image-scan, codeql-analysis, security-gate]
+    needs: [secret-scan, dockerfile-lint, container-scan, built-image-scan, security-gate]
     if: always()
     steps:
       - name: Calculate performance metrics
@@ -826,7 +790,6 @@ jobs:
           echo "- Dockerfile Linting: ${{ needs.dockerfile-lint.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Container Scan: ${{ needs.container-scan.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Built Image Scan: ${{ needs.built-image-scan.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- CodeQL Analysis: ${{ needs.codeql-analysis.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Security Gate: ${{ needs.security-gate.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -852,7 +815,7 @@ jobs:
   notification:
     name: Notification & Integration
     runs-on: ubuntu-latest
-    needs: [secret-scan, dockerfile-lint, container-scan, built-image-scan, codeql-analysis, security-gate]
+    needs: [secret-scan, dockerfile-lint, container-scan, built-image-scan, security-gate]
     if: always() && (github.event_name == 'schedule' || needs.security-gate.result == 'failure')
     steps:
       - name: Send notification on issues
