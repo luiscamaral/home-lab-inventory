@@ -117,15 +117,31 @@ locals {
           - target_label: __address__
             replacement: 192.168.59.29:9116
 
-      # ── Thanos self-scrape (sidecar-1, query, store-gw) ─────────────
+      # ── Thanos self-scrape (sidecar-1+2, query, store-gw) ───────────
       - job_name: thanos
         static_configs:
           - targets: [192.168.59.20:10902]
             labels: { instance: thanos-sidecar-1 }
+          - targets: [192.168.4.239:10902]
+            labels: { instance: thanos-sidecar-2 }
           - targets: [192.168.59.21:10902]
             labels: { instance: thanos-store-gw }
           - targets: [192.168.59.26:10902]
             labels: { instance: thanos-query }
+
+      # ── Alertmanager HA pair self-scrape ────────────────────────────
+      # Both AMs are alert *receivers* (see alerting block above) but
+      # were never scraped → no visibility into notification failures,
+      # gossip cluster health, or active-silence count.
+      # Endpoints verified 2026-05-07: both expose alertmanager_*
+      # metrics on /metrics with no auth.
+      - job_name: alertmanager
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.27:9093]
+            labels: { instance: alertmanager-1 }
+          - targets: [192.168.4.238:9093]
+            labels: { instance: alertmanager-2 }
 
       # ── Phase 3a: Vault (3-node Raft cluster) ───────────────────────
       # Listener is plain HTTP on the macvlan IP (TLS terminates at
@@ -487,10 +503,22 @@ locals {
         static_configs:
           - targets: [192.168.59.20:10902]
             labels: { instance: thanos-sidecar-1 }
+          - targets: [192.168.4.239:10902]
+            labels: { instance: thanos-sidecar-2 }
           - targets: [192.168.59.21:10902]
             labels: { instance: thanos-store-gw }
           - targets: [192.168.59.26:10902]
             labels: { instance: thanos-query }
+
+      # ── Alertmanager HA pair self-scrape ────────────────────────────
+      # Mirror of replica-A job. See replica-A comment for context.
+      - job_name: alertmanager
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.27:9093]
+            labels: { instance: alertmanager-1 }
+          - targets: [192.168.4.238:9093]
+            labels: { instance: alertmanager-2 }
 
       # ── Phase 3a: Vault (3-node Raft cluster) ───────────────────────
       # Mirror of replica-A job. See replica-A comment for context.
