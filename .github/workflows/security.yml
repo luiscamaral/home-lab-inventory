@@ -162,35 +162,38 @@ jobs:
 
       - name: Merge Hadolint SARIF reports
         if: steps.find-dockerfiles.outputs.dockerfiles != ''
+        # Use a single-quoted heredoc (`'PY'`) so the shell doesn't
+        # expand `$schema` (would produce `'': '...'` in Python and
+        # then a SyntaxError) or eat the inline double quotes inside
+        # the comment text.
         run: |
-          python3 -c "
+          python3 <<'PY'
           import json
-          import os
           import glob
 
           merged_sarif = {
-              'version': '2.1.0',
-              # SARIF spec uses `$schema`, not `schema`. The
+              "version": "2.1.0",
+              # SARIF 2.1.0 uses `$schema`, not `schema`. The
               # codeql-action/upload-sarif validator rejected the file
               # with "instance is not allowed to have the additional
               # property 'schema'" until this was fixed.
-              '$schema': 'https://json.schemastore.org/sarif-2.1.0.json',
-              'runs': []
+              "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+              "runs": [],
           }
 
-          for sarif_file in glob.glob('hadolint-results/*.sarif'):
+          for sarif_file in glob.glob("hadolint-results/*.sarif"):
               try:
-                  with open(sarif_file, 'r') as f:
+                  with open(sarif_file) as f:
                       data = json.load(f)
-                      if 'runs' in data:
-                          merged_sarif['runs'].extend(data['runs'])
+                  if "runs" in data:
+                      merged_sarif["runs"].extend(data["runs"])
               except json.JSONDecodeError:
-                  print(f'Warning: Could not parse {sarif_file}')
+                  print(f"Warning: Could not parse {sarif_file}")
                   continue
 
-          with open('hadolint-merged.sarif', 'w') as f:
+          with open("hadolint-merged.sarif", "w") as f:
               json.dump(merged_sarif, f, indent=2)
-          "
+          PY
 
       - name: Upload Hadolint SARIF report
         if: always() && steps.find-dockerfiles.outputs.dockerfiles != ''
