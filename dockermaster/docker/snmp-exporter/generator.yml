@@ -1,0 +1,162 @@
+# snmp_exporter generator config — regenerate the bind-mounted snmp.yml
+# at /nfs/dockermaster/docker/snmp-exporter/snmp.yml.
+#
+# Generated output: ./snmp.yml (run from this directory)
+# Regen command:
+#   cd dockermaster/docker/snmp-exporter
+#   docker run --rm -v "$PWD:/opt" --network host \
+#     quay.io/prometheus/snmp-generator:v0.30.1 generate \
+#     -g generator.yml -o snmp.yml
+#
+# Then deploy:
+#   scp snmp.yml dockermaster:/nfs/dockermaster/docker/snmp-exporter/snmp.yml
+#   ssh 192.168.48.45 'docker restart snmp-exporter-snmp-exporter-1'
+#
+# Auth values are placeholders — the live community string is replaced
+# from Vault by the snmp-exporter stack at deploy time, NOT in this
+# checked-in file. Keep this committed; the generator only uses `auths:`
+# for documentation and to know SNMP version. The runtime community
+# string is selected by the Prometheus scrape job's `auth:` param
+# matching one of the keys here, then resolved by snmp-exporter from
+# the auth block. (See snmp-exporter.yml stack file for the bind-mount
+# pattern.)
+
+auths:
+  pfsense_v2:
+    version: 2
+    community: public  # placeholder; live value injected at deploy time
+
+modules:
+  pfsense:
+    # Walk only what pfSense's bsnmpd actually exposes:
+    # - mibII   → SNMPv2-MIB (sysUpTime, sysName, sysDescr) + IF-MIB
+    # - pf      → BEGEMOT-PF-MIB (pfStateTable*, pfStatus*, pfInterfacesIf*)
+    # - hostres → HOST-RESOURCES-MIB (hrSystem*, hrStorage*, hrProcessorLoad)
+    #
+    # Modules NOT enabled on pfSense bsnmpd (would time out):
+    # - UCD-SNMP-MIB (laTable / systemStats / memory / dskTable) — not in bsnmpd
+    # - net-snmp specific modules — bsnmpd, not net-snmp
+    walk:
+      # SNMP v2 MIB basics
+      - sysUpTime
+      - sysName
+      - sysDescr
+      - sysContact
+      - sysLocation
+
+      # IF-MIB — interface counters (use HC variants for 64-bit counters)
+      - ifNumber
+      - ifIndex
+      - ifDescr
+      - ifType
+      - ifMtu
+      - ifSpeed
+      - ifPhysAddress
+      - ifAdminStatus
+      - ifOperStatus
+      - ifLastChange
+      - ifInDiscards
+      - ifInErrors
+      - ifInUnknownProtos
+      - ifOutDiscards
+      - ifOutErrors
+      - ifName
+      - ifInMulticastPkts
+      - ifInBroadcastPkts
+      - ifOutMulticastPkts
+      - ifOutBroadcastPkts
+      - ifHCInOctets
+      - ifHCInUcastPkts
+      - ifHCInMulticastPkts
+      - ifHCInBroadcastPkts
+      - ifHCOutOctets
+      - ifHCOutUcastPkts
+      - ifHCOutMulticastPkts
+      - ifHCOutBroadcastPkts
+      - ifHighSpeed
+      - ifAlias
+
+      # BEGEMOT-PF-MIB — pfSense-specific firewall metrics. Walk specific
+      # subtrees, NOT the whole pfMib (1.3.6.1.4.1.12325.1.200) — that
+      # would pull in `pfTablesAddrTable` which has ~3000 per-IP entries
+      # × 12 columns = 36k metric lines per scrape (mostly noise from
+      # bogon/abusers/RFC1918 lists). Same with pfLabels (per-PF-rule
+      # label counters, niche), pfAltq (Altq is deprecated on pfSense),
+      # and pfSrcNodes (per-source-IP, can also explode).
+      #
+      # The MIB tree under begemotPfObjects (1.3.6.1.4.1.12325.1.200.1):
+      #   .1 pfStatus       — daemon Running/Runtime/Debug/HostId
+      #   .2 pfCounter      — global Match/BadOffset/Fragment/Short/Normalize/MemDrop counters
+      #   .3 pfStateTable   — pfStateTableCount + insert/remove/search counters
+      #   .4 pfSrcNodes     — per-source-IP (skip — can explode)
+      #   .5 pfLimits       — pfLimitsStates/SrcNodes/Frags (capacity planning)
+      #   .6 pfTimeouts     — TCP/UDP/ICMP timeout settings (config snapshot)
+      #   .7 pfLogInterface — log iface stats
+      #   .8 pfInterfaces   — pfInterfacesIfNumber + pfInterfacesIfTable (per-iface block/pass byte/pkt counters)
+      #   .9 pfTables       — only walk .1 (tbl count) and .2 (tbl summary), NOT .3 (per-addr)
+      #   .10 pfAltq         — Altq queues (deprecated on pfSense, all 0)
+      #   .11 pfLabels       — per-PF-rule label counters (niche)
+      - 1.3.6.1.4.1.12325.1.200.1.1    # pfStatus
+      - 1.3.6.1.4.1.12325.1.200.1.2    # pfCounter
+      - 1.3.6.1.4.1.12325.1.200.1.3    # pfStateTable
+      - 1.3.6.1.4.1.12325.1.200.1.5    # pfLimits
+      - 1.3.6.1.4.1.12325.1.200.1.6    # pfTimeouts
+      - 1.3.6.1.4.1.12325.1.200.1.7    # pfLogInterface
+      - 1.3.6.1.4.1.12325.1.200.1.8    # pfInterfaces
+      - 1.3.6.1.4.1.12325.1.200.1.9.1  # pfTablesTblNumber
+      - 1.3.6.1.4.1.12325.1.200.1.9.2  # pfTablesTblTable (per-table summary)
+
+      # HOST-RESOURCES-MIB — system-level metrics from hostres module
+      - hrSystemUptime
+      - hrSystemDate
+      - hrSystemNumUsers
+      - hrSystemProcesses
+      - hrSystemMaxProcesses
+      - hrMemorySize
+      - hrStorageType
+      - hrStorageDescr
+      - hrStorageAllocationUnits
+      - hrStorageSize
+      - hrStorageUsed
+      - hrStorageAllocationFailures
+      - hrDeviceType
+      - hrDeviceDescr
+      - hrDeviceStatus
+      - hrDeviceErrors
+      - hrProcessorLoad
+      # hrSWRun*  — skipped: returns the full process table (~128
+      #             entries with hex-encoded names from bsnmpd's
+      #             FreeBSD-quirky output); not useful as long-term
+      #             time-series, drop to keep scrape size manageable.
+
+    lookups:
+      # Annotate interface metrics with ifName and ifAlias so dashboards
+      # don't have to join via ifIndex.
+      - source_indexes: [ifIndex]
+        lookup: ifAlias
+      - source_indexes: [ifIndex]
+        lookup: ifDescr
+      - source_indexes: [ifIndex]
+        lookup: ifName
+      # Annotate hrStorage metrics with the mount-point description.
+      - source_indexes: [hrStorageIndex]
+        lookup: hrStorageDescr
+      # Annotate hrProcessor metrics with the device descr (CPU model).
+      - source_indexes: [hrDeviceIndex]
+        lookup: hrDeviceDescr
+
+    overrides:
+      # ifAlias → string (DisplayString) keeps the textual interface
+      # description on metrics rather than dropping it.
+      ifAlias:
+        type: DisplayString
+      ifName:
+        type: DisplayString
+      hrStorageDescr:
+        type: DisplayString
+      hrDeviceDescr:
+        type: DisplayString
+      sysName:
+        type: DisplayString
+      sysDescr:
+        type: DisplayString

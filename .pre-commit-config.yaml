@@ -59,13 +59,17 @@ repos:
         # DL3007 (use specific tag, not :latest) and DL3027 (apt vs
         # apt-get) currently flag the calibre-server Dockerfile; both
         # require Dockerfile rewrites that are out of scope for the CI
-        # cleanup. Tracked for follow-up.
+        # cleanup. DL3002 (last USER not root) is fine for build-time
+        # helper images like snmp-generator-with-mibs that produce a
+        # config artifact at build and never run as a long-lived service.
+        # Tracked for follow-up.
         args:
           - --ignore=DL3008
           - --ignore=DL3009
           - --ignore=DL3015
           - --ignore=DL3007
           - --ignore=DL3027
+          - --ignore=DL3002
 
   # Shell script linting with shellcheck
   # `--severity=error` matches the CI workflow `Lint Validation (shell)` job.

@@ -90,3 +90,7 @@ ignore: |
   # Frozen as-captured snapshot of the legacy Prometheus deploy on ds-1
   # (see RECON-FINDINGS.md). Kept verbatim for reference, not a config.
   generated/prometheus-thanos-monitoring/legacy-prom-snapshot/
+  # snmp_exporter generator output — formatting matches the upstream
+  # tool's quirks (2-space indent for sub-mappings, etc.) that yamllint's
+  # default profile rejects. Regen via dockermaster/docker/snmp-exporter/regen.sh.
+  dockermaster/docker/snmp-exporter/snmp.yml

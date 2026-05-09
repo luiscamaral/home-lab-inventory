@@ -1,0 +1,20 @@
+# Trivy ignore list for misconfiguration findings on build-time-only
+# helper images. See .github/workflows/security.yml `dependency-scan` job.
+#
+# Format: one rule ID per line; trailing whitespace and `# comment`
+# tails are allowed.
+
+# --- Build-time helper images (no long-lived runtime container) ---
+# dockermaster/docker/snmp-exporter/Dockerfile.generator runs apt-get +
+# download-mibs as root to seed /var/lib/mibs/, then exits. It's used
+# only by ./regen.sh to produce snmp.yml at build time and never serves
+# traffic, so the "USER should not be root" and "no HEALTHCHECK" rules
+# are misapplied to it.
+#
+# These ignores apply repo-wide; the calibre-server Dockerfile flagged
+# by the same rules (alerts #15-22 on the GitHub Security tab) was
+# already accepted as out-of-scope debt in PR #34's hadolint config
+# (.pre-commit-config.yaml: --ignore=DL3002,DL3007,DL3027). Tracked
+# for follow-up cleanup.
+DS-0002    # Image user should not be 'root'
+DS-0026    # No HEALTHCHECK defined
