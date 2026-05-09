@@ -165,7 +165,9 @@
         "monitoring",
         "backup",
         "network",
-        "storage"
+        "storage",
+        "deps",
+        "deps-dev"
       ]
     ],
     "subject-case": [
