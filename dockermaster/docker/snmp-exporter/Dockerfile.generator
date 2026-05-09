@@ -1,0 +1,30 @@
+# Helper Dockerfile to build a snmp-generator image preloaded with the
+# IETF/IANA standard MIBs (via Debian's snmp-mibs-downloader) and our
+# pfSense BEGEMOT MIBs (in mibs/). Used only at regen time; the runtime
+# container is the upstream snmp-exporter image bind-mounting the
+# generated snmp.yml.
+#
+# Build: docker build -f Dockerfile.generator -t local/snmp-generator-with-mibs .
+FROM quay.io/prometheus/snmp-generator:v0.30.1
+
+# hadolint ignore=DL3002
+# Root is required to run apt-get + write to /var/lib/mibs. This image
+# is used only at build/regen time to produce snmp.yml — it's never run
+# as a long-lived service container, so the "last USER should not be
+# root" guidance doesn't apply.
+USER root
+# `snmp-mibs-downloader` is in `non-free` (license-restricted IETF MIB
+# distribution). It installs to /var/lib/mibs/{ietf,iana,site}.
+RUN echo 'deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware' \
+      > /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends snmp snmp-mibs-downloader ca-certificates \
+    && download-mibs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Drop the BEGEMOT pfSense MIBs into the site-local search path.
+COPY mibs/*.txt /var/lib/mibs/site/
+
+# Make the comprehensive MIB tree visible to the snmp_exporter generator.
+ENV MIBDIRS=/var/lib/mibs/ietf:/var/lib/mibs/iana:/var/lib/mibs/site:/usr/share/snmp/mibs
+ENV MIBS=ALL
