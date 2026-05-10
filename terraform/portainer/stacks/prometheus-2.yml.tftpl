@@ -147,6 +147,16 @@ services:
   thanos-sidecar-2:
     image: quay.io/thanos/thanos:v0.41.0
     hostname: thanos-sidecar-2
+    # Same UID as prometheus-2 (nobody / 65534). Needed because the
+    # shipper hardlinks block files into /prometheus/thanos/upload/
+    # before uploading; with `protected_hardlinks=1` (Linux default)
+    # the linker must own the source file. The block files are written
+    # by prometheus-2 as nobody:nobody, so the sidecar must match.
+    # Same root cause as sidecar-1's fix in PR #42, just surfaced as a
+    # different error message ("hard link: operation not permitted")
+    # because the NAS bind-mount is 0777 — the kernel let us past the
+    # mkdir but blocked the hardlink.
+    user: "65534:65534"
     networks:
       home-net:
         ipv4_address: 192.168.4.239
