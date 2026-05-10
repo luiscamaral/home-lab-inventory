@@ -68,8 +68,13 @@ services:
       - --label=region="local"
       # Query layer to evaluate rules against — go directly to thanos-query
       # on dockermaster (HA fan-out across both prometheus replicas + the
-      # store gateway).
-      - --query=thanos-query.servers-net:10902
+      # store gateway). Use the macvlan IP rather than DNS because the
+      # network's actual name is `docker-servers-net` (not `servers-net`,
+      # which is just the local alias inside this stack); the
+      # network-scoped FQDN `thanos-query.servers-net` would only resolve
+      # if Docker's embedded DNS knew the network by that local alias,
+      # which it doesn't.
+      - --query=192.168.59.26:10902
       # Both alertmanagers; gossip handles dedup.
       - --alertmanagers.url=http://192.168.59.27:9093
       - --alertmanagers.url=http://192.168.4.238:9093
