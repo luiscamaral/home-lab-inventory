@@ -162,9 +162,17 @@ services:
       - --grpc-address=0.0.0.0:10901
       - --http-address=0.0.0.0:10902
     volumes:
-      # Same TSDB directory as prometheus-2, mounted read-only. The
-      # sidecar only ships completed blocks; it never writes.
-      - /volume2/docker/prometheus-2/data:/prometheus:ro
+      # Same TSDB directory as prometheus-2, mounted RW. The sidecar's
+      # shipper writes `thanos.shipper.json` bookkeeping in the TSDB
+      # root and creates a `thanos/` upload-staging dir — the original
+      # `:ro` comment ("only ships completed blocks; never writes") was
+      # wrong about the shipper internals. Production logs showed
+      # "create upload dir: read-only file system" every 30s for 13+
+      # days as a result. Same root cause as sidecar-1's UID issue
+      # (fixed in PR #42), but here it's the mount mode rather than
+      # the UID — the NAS path is owned 1027:users with 0777 perms so
+      # any UID can write once the mount is RW.
+      - /volume2/docker/prometheus-2/data:/prometheus:rw
     configs:
       - source: objstore_yml
         target: /etc/thanos/objstore.yml
