@@ -75,7 +75,7 @@ jobs:
       # when the cache folder is empty rather than skipping.
       - name: Set up Python
         if: matrix.linter == 'yaml' || matrix.linter == 'json'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -219,7 +219,7 @@ jobs:
       # cache files rather than skipping. Pre-commit caches its own envs
       # via the `Cache pre-commit` step below.
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
