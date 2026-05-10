@@ -1,0 +1,83 @@
+name: thanos-compact
+
+# thanos-compactor — single instance on ds-2 (TWO compactors against the
+# same bucket WILL corrupt blocks, per upstream docs). Owns:
+#   - block compaction (merge 2h prom-emitted blocks into bigger units)
+#   - downsampling (raw → 5m → 1h resolution tiers)
+#   - retention enforcement (delete blocks past retention threshold)
+#   - replica-label dedup (merge replica=A and replica=B into one
+#     time-series before downsampling — saves storage)
+#
+# Why ds-2: colocated with minio-2 on the same host, so reads during
+# downsampling go through the local TCP loopback path. Also keeps the
+# heaviest batch job off the dockermaster control plane.
+#
+# Local data dir is a working scratch area for in-flight compactions —
+# Thanos writes uncompressed intermediate blocks here; sized for the
+# largest block expected (~5GB raw 2h * 2 replicas = ~10GB peak,
+# rounded up).
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+volumes:
+  thanos_compact_data:
+    name: thanos_compact_data
+
+configs:
+  objstore_yml:
+    content: |
+      ${indent(6, objstore_config)}
+
+services:
+  thanos-compact:
+    image: quay.io/thanos/thanos:v0.41.0
+    hostname: thanos-compact
+    # Run as root so the named-volume mkdir works on first boot
+    # (docker creates named volumes root-owned). Same pattern as
+    # thanos-store-gw.
+    user: "0:0"
+    networks:
+      servers-net:
+        # IP picked from 192.168.59.0/26 free pool
+        ipv4_address: 192.168.59.51
+    command:
+      - compact
+      - --wait
+      - --data-dir=/var/thanos/compact
+      - --objstore.config-file=/etc/thanos/objstore.yml
+      - --retention.resolution-raw=90d
+      - --retention.resolution-5m=365d
+      - --retention.resolution-1h=730d
+      - --deduplication.replica-label=replica
+      # Keep compactor concurrency conservative — ds-2 is shared with
+      # minio-2 + future ruler. Bump if compaction falls behind.
+      - --compact.concurrency=1
+      - --downsample.concurrency=1
+      - --http-address=0.0.0.0:10902
+      - --log.level=info
+    volumes:
+      - thanos_compact_data:/var/thanos/compact
+    configs:
+      - source: objstore_yml
+        target: /etc/thanos/objstore.yml
+        mode: 0644
+    expose:
+      - "10902"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:10902/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      # Compactor's first cycle can take a while if it has to scan the
+      # whole bucket — give it 5 minutes before the healthcheck panics.
+      start_period: 300s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "thanos-compact"
+      com.docker.service: "thanos-compact"
+      portainer.autodeploy: "false"

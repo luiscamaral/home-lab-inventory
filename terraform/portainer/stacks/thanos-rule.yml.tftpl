@@ -1,0 +1,98 @@
+name: thanos-rule
+
+# thanos-ruler — single instance on ds-2 (per design — no HA pair).
+# Evaluates alert rules over Thanos data via the Querier, so rules can
+# span time windows longer than any local Prometheus retention
+# (e.g., "disk growth > 5 GB/month for the last 6 months").
+#
+# Rule placement policy:
+#   - rules/prometheus/*.yml — short-window high-urgency alerts; loaded
+#     by BOTH prometheus-1 and prometheus-2 (no SPOF; alertmanagers
+#     dedupe).
+#   - rules/thanos/*.yml — long-window or cross-replica alerts; loaded
+#     by Ruler only. If ds-2 is down, these rules don't evaluate.
+#
+# Alertmanager wiring: --alertmanagers.url is repeated for both AM
+# replicas; the AM cluster gossip dedupes the alerts.
+#
+# Ruler also writes its own evaluation result blocks back to the
+# objstore (--objstore.config-file) so the Querier can read recorded
+# rules from history.
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+volumes:
+  thanos_rule_data:
+    name: thanos_rule_data
+
+configs:
+  objstore_yml:
+    content: |
+      ${indent(6, objstore_config)}
+  # Phase 1 placeholder rules file. Real long-window rules go here in a
+  # follow-up PR (capacity trends, cert-expiry beyond 30d, SLO burn
+  # rates). Kept as an empty `groups:` so the ruler boots cleanly.
+  thanos_rules:
+    content: |
+      groups: []
+
+services:
+  thanos-rule:
+    image: quay.io/thanos/thanos:v0.41.0
+    hostname: thanos-rule
+    user: "0:0"
+    networks:
+      servers-net:
+        # IP picked from 192.168.59.0/26 free pool
+        ipv4_address: 192.168.59.52
+    command:
+      - rule
+      - --data-dir=/var/thanos/rule
+      - --objstore.config-file=/etc/thanos/objstore.yml
+      - --rule-file=/etc/thanos/rules/*.yml
+      # Single ruler instance, but still set a replica label so the AM
+      # cluster's dedup hash includes it (defensive — supports a future
+      # second ruler without rule churn).
+      - --label=replica="ruler-1"
+      - --label=cluster="homelab"
+      - --label=region="local"
+      # Query layer to evaluate rules against — go directly to thanos-query
+      # on dockermaster (HA fan-out across both prometheus replicas + the
+      # store gateway).
+      - --query=thanos-query.servers-net:10902
+      # Both alertmanagers; gossip handles dedup.
+      - --alertmanagers.url=http://192.168.59.27:9093
+      - --alertmanagers.url=http://192.168.4.238:9093
+      # Eval cadence — 1 minute is plenty for long-window rules.
+      - --eval-interval=1m
+      - --http-address=0.0.0.0:10902
+      - --grpc-address=0.0.0.0:10901
+      - --log.level=info
+    volumes:
+      - thanos_rule_data:/var/thanos/rule
+    configs:
+      - source: objstore_yml
+        target: /etc/thanos/objstore.yml
+        mode: 0644
+      - source: thanos_rules
+        target: /etc/thanos/rules/placeholder.yml
+        mode: 0644
+    expose:
+      - "10901"
+      - "10902"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:10902/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "thanos-rule"
+      com.docker.service: "thanos-rule"
+      portainer.autodeploy: "false"

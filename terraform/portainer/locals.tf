@@ -117,7 +117,7 @@ locals {
           - target_label: __address__
             replacement: 192.168.59.29:9116
 
-      # ── Thanos self-scrape (sidecar-1+2, query, store-gw) ───────────
+      # ── Thanos self-scrape (sidecar-1+2, query, store-gw, compact, rule) ─
       - job_name: thanos
         static_configs:
           - targets: [192.168.59.20:10902]
@@ -128,6 +128,10 @@ locals {
             labels: { instance: thanos-store-gw }
           - targets: [192.168.59.26:10902]
             labels: { instance: thanos-query }
+          - targets: [192.168.59.51:10902]
+            labels: { instance: thanos-compact }
+          - targets: [192.168.59.52:10902]
+            labels: { instance: thanos-rule }
 
       # ── Alertmanager HA pair self-scrape ────────────────────────────
       # Both AMs are alert *receivers* (see alerting block above) but

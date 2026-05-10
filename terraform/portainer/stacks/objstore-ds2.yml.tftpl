@@ -1,0 +1,16 @@
+# Thanos object-store config for the ds-2 plane (compactor + ruler).
+# Both processes are on docker-servers-net and reach MinIO via its
+# internal LAN address. Prefers minio-2 (192.168.59.37:9000) because
+# minio-2 is colocated on ds-2 — saves cross-host bandwidth during
+# downsampling. Site replication keeps minio-1 in sync.
+#
+# Distinct from objstore-ds1 (ds-1 plane → minio-1) and objstore-nas
+# (NAS plane → public TLS LB).
+type: S3
+config:
+  bucket: thanos
+  endpoint: 192.168.59.37:9000
+  access_key: ${access_key}
+  secret_key: ${secret_key}
+  insecure: true
+  signature_version2: false
