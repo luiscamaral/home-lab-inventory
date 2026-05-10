@@ -1,0 +1,143 @@
+# Thanos Ruler — long-window / cross-replica alert rules.
+#
+# Rules in this file evaluate against the Thanos Querier (HA fan-out
+# across both prometheus replicas + the store gateway), so they can
+# span time windows longer than any single Prometheus replica's local
+# 7-day retention.
+#
+# Placement policy (per generated/prometheus-thanos-monitoring/03-thanos-design.md):
+# rules HERE are exclusively the ones that REQUIRE Thanos data — i.e.
+# they need >7d of history OR they consume series that are only complete
+# after sidecar dedup (replica=A + replica=B merged). Short-window
+# urgent alerts (node down, container restart, disk 85% full) belong
+# in rules/prometheus/*.yml on each Prometheus replica, NOT here.
+#
+# To add a rule: append to this file, `terraform apply`, then
+# `./scripts/portainer-redeploy.py thanos-rule`. The ruler's
+# `--rule-file=/etc/thanos/rules/*.yml` glob picks it up at the next
+# eval cycle (1 min cadence).
+
+groups:
+  - name: thanos-long-window
+    interval: 1m
+    rules:
+
+      # MinIO bucket capacity — 30-day forecast from 7-day linear regression.
+      # Triggers when the regression predicts free bytes will go negative
+      # within 30 days. Memory `feedback_iac_first_principle.md` notes the
+      # MinIO bucket lives on m1 (NFS) + m2 (local disk) with site
+      # replication, so each instance has its own capacity ceiling.
+      - alert: MinIOBucketCapacityForecastExhausted
+        expr: |
+          predict_linear(minio_cluster_capacity_usable_free_bytes[7d], 30 * 86400) < 0
+        for: 1h
+        labels:
+          severity: warning
+          owner: homelab
+          team: storage
+        annotations:
+          summary: 'MinIO {{ $labels.instance }} predicted to fill within 30 days'
+          description: |
+            7-day linear regression on minio_cluster_capacity_usable_free_bytes
+            on {{ $labels.instance }} predicts free space will reach zero
+            within 30 days. Current free bytes (rate-projected): {{ $value | humanize1024 }}.
+            Action: prune old data, tighten Thanos retention
+            (--retention.resolution-raw etc), or grow the underlying disk.
+
+      # TLS cert expiry — 30-day heads-up. The 7-day urgent rule lives in
+      # rules/prometheus/cert-expiry.yml on each replica; this one is the
+      # "schedule a renewal" warning a long way out, where having both
+      # replicas' history dedup'd reduces flap noise from blackbox-ssl
+      # transient failures (a single replica missing a probe makes
+      # min_over_time on JUST that replica look like the cert disappeared).
+      - alert: TLSCertExpiryLongHorizon
+        expr: |
+          min_over_time(probe_ssl_earliest_cert_expiry[1h]) - time() < 30 * 86400
+          and
+          min_over_time(probe_ssl_earliest_cert_expiry[1h]) - time() > 7 * 86400
+        for: 5m
+        labels:
+          severity: warning
+          owner: homelab
+          team: platform
+        annotations:
+          summary: 'TLS cert {{ $labels.instance }} expires in <30d'
+          description: |
+            min_over_time(probe_ssl_earliest_cert_expiry[1h]) shows
+            {{ $value | humanizeDuration }} until expiry on
+            {{ $labels.instance }}. The 7-day-urgent rule lives in
+            prometheus-side rules; this one fires the "schedule a renewal"
+            window.
+
+      # Bitnami repmgr replication lag — sustained drift that escapes the
+      # short-window definition of "lag spike". Memory
+      # reference_bitnami_postgres_repmgr.md captured a case where standby
+      # silently fell behind for hours because the "healthy" container
+      # status didn't reflect pg_stat_replication state.
+      - alert: KeycloakDBRepmgrLagPersistent
+        expr: |
+          avg_over_time(pg_replication_lag_seconds{job="postgres",instance=~"keycloak-db.*"}[6h]) > 30
+        for: 30m
+        labels:
+          severity: warning
+          owner: homelab
+          team: data
+        annotations:
+          summary: 'keycloak-db {{ $labels.instance }} replication lag > 30s sustained over 6h'
+          description: |
+            avg(pg_replication_lag_seconds[6h]) = {{ $value }}s on
+            {{ $labels.instance }}. Catches slow drift before it becomes
+            failover-relevant. Tuning hint: bump
+            POSTGRESQL_PGCTLTIMEOUT and wal_sender_timeout per memory
+            reference_bitnami_postgres_repmgr.md.
+
+      # Targets that flap or fail intermittently over 24h — single
+      # Prometheus replica can miss this if its scrapes happen to land in
+      # the up windows. Thanos dedup across both replicas makes this
+      # signal more honest.
+      - alert: PrometheusScrapeFailureSustained
+        expr: |
+          avg_over_time(up[24h]) < 0.95
+          and
+          up == 0
+        for: 1h
+        labels:
+          severity: warning
+          owner: homelab
+          team: platform
+        annotations:
+          summary: '{{ $labels.job }}/{{ $labels.instance }} flapping (UP < 95% over 24h)'
+          description: |
+            avg(up[24h]) = {{ $value }} for job={{ $labels.job }} /
+            instance={{ $labels.instance }}. Target is reachable but not
+            consistently — often pre-incident signal. Common causes:
+            container OOM, slow init, intermittent network (memory:
+            feedback_macvlan_ip_collisions.md is the canonical example).
+
+      # Thanos sidecar shipping pipeline — if a sidecar stops shipping
+      # blocks for >4 hours, raise critical. Prometheus emits a 2-hour
+      # block every 2 hours, so 4h of zero uploads means the shipper has
+      # broken. We just spent today fixing exactly this (PR #42, #44 —
+      # bucket was empty for 13 days before the UID fix). This rule
+      # ensures we catch the next regression early.
+      - alert: ThanosBucketUploadsStalled
+        expr: |
+          sum by (instance) (
+            rate(thanos_objstore_bucket_operations_total{
+              instance=~"thanos-sidecar-1|thanos-sidecar-2",
+              operation="upload"
+            }[4h])
+          ) == 0
+        for: 30m
+        labels:
+          severity: critical
+          owner: homelab
+          team: observability
+        annotations:
+          summary: 'Sidecar {{ $labels.instance }} has not uploaded a block in 4h'
+          description: |
+            rate(thanos_objstore_bucket_operations_total{operation="upload"}[4h])
+            is 0 for {{ $labels.instance }}. Prometheus emits a 2h block
+            every 2h, so 4h of zero uploads means shipping is broken.
+            Last regression: 2026-04-25 (UID 1001 vs nobody:nobody on the
+            shared TSDB volume — see PR #42 / PR #44).

@@ -32,12 +32,13 @@ configs:
   objstore_yml:
     content: |
       ${indent(6, objstore_config)}
-  # Phase 1 placeholder rules file. Real long-window rules go here in a
-  # follow-up PR (capacity trends, cert-expiry beyond 30d, SLO burn
-  # rates). Kept as an empty `groups:` so the ruler boots cleanly.
+  # Long-window / cross-replica alert rules. Source-of-truth lives at
+  # terraform/portainer/stacks/thanos-rules.yml (loaded via file() in
+  # stacks.tf). Edit the rules file, terraform apply, then
+  # ./scripts/portainer-redeploy.py thanos-rule to push.
   thanos_rules:
     content: |
-      groups: []
+      ${indent(6, thanos_rules_yml)}
 
 services:
   thanos-rule:
