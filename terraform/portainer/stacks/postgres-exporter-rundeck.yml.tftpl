@@ -1,0 +1,40 @@
+name: postgres-exporter-rundeck
+
+# postgres_exporter for postgres-rundeck (vanilla postgres:17).
+# Colocated on ds-1 with the rundeck stack, scrapes 192.168.59.23:5432.
+# Standalone postgres (not repmgr) so no replication-state metrics;
+# main interest is connection-pool saturation, query duration, table
+# bloat, and basic up/down.
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.19.1
+    hostname: postgres-exporter-rundeck
+    networks:
+      servers-net:
+        # IP picked from 192.168.59.0/26 free pool
+        ipv4_address: 192.168.59.57
+    environment:
+      DATA_SOURCE_NAME: ${data_source_name}
+      PG_EXPORTER_AUTO_DISCOVER_DATABASES: "true"
+      PG_EXPORTER_EXCLUDE_DATABASES: "template0,template1"
+    expose:
+      - "9187"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9187/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "postgres-exporter-rundeck"
+      com.docker.service: "postgres-exporter"
+      portainer.autodeploy: "false"

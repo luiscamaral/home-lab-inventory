@@ -390,6 +390,20 @@ locals {
             labels:
               instance: pihole-3
 
+      # ── postgres_exporter — keycloak-db pair + postgres-rundeck ─────
+      # Per-DB exporters give each repmgr node its own pg_stat_replication
+      # view perspective (memory: feedback_container_health_vs_process —
+      # captured the case where keycloak-db-0 ran 5d "healthy" with
+      # zombie processes; per-node visibility prevents that).
+      - job_name: postgres
+        static_configs:
+          - targets: ['192.168.59.55:9187']
+            labels: { instance: keycloak-db-0 }
+          - targets: ['192.168.59.56:9187']
+            labels: { instance: keycloak-db-1 }
+          - targets: ['192.168.59.57:9187']
+            labels: { instance: postgres-rundeck }
+
       # ── Phase 3f: Rundeck (no scrape — see note) ────────────────────
       # Rundeck OSS 5.x exposes Dropwizard metrics at /metrics/metrics
       # but gates that endpoint behind session-cookie auth — it does
@@ -703,6 +717,17 @@ locals {
           - targets: ['192.168.4.240:9666']
             labels:
               instance: pihole-3
+
+      # ── postgres_exporter — keycloak-db pair + postgres-rundeck ─────
+      # Mirror of replica-A job. See replica-A comment for context.
+      - job_name: postgres
+        static_configs:
+          - targets: ['192.168.59.55:9187']
+            labels: { instance: keycloak-db-0 }
+          - targets: ['192.168.59.56:9187']
+            labels: { instance: keycloak-db-1 }
+          - targets: ['192.168.59.57:9187']
+            labels: { instance: postgres-rundeck }
 
       # ── Phase 3f: Rundeck (no scrape — see replica-A note) ──────────
 

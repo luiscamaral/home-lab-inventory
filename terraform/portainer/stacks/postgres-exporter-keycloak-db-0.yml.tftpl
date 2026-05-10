@@ -1,0 +1,48 @@
+name: postgres-exporter-keycloak-db-0
+
+# postgres_exporter for keycloak-db-0 (Bitnami postgresql-repmgr 17.6.0).
+# Colocated on dockermaster, scrapes postgres on 192.168.59.44:5432.
+#
+# Why per-DB instead of multi-target: each exporter has its own
+# `pg_stat_replication` view perspective, which is critical for
+# repmgr cluster health monitoring (memory:
+# feedback_container_health_vs_process.md captured the case where
+# keycloak-db-0 ran 5 days "healthy" with zombie processes — separate
+# exporter per node makes such states visible).
+#
+# Scrapes the `postgres` superuser (DATA_SOURCE_NAME from Vault). A
+# dedicated `pg_monitor` role would be cleaner long-term but requires
+# bootstrap SQL inside the DB; punted for now.
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.19.1
+    hostname: postgres-exporter-keycloak-db-0
+    networks:
+      servers-net:
+        # IP picked from 192.168.59.0/26 free pool
+        ipv4_address: 192.168.59.55
+    environment:
+      DATA_SOURCE_NAME: ${data_source_name}
+      PG_EXPORTER_AUTO_DISCOVER_DATABASES: "true"
+      PG_EXPORTER_EXCLUDE_DATABASES: "template0,template1"
+    expose:
+      - "9187"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9187/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "postgres-exporter-keycloak-db-0"
+      com.docker.service: "postgres-exporter"
+      portainer.autodeploy: "false"
