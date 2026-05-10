@@ -590,6 +590,7 @@ resource "portainer_stack" "thanos_rule" {
       access_key = data.vault_kv_secret_v2.thanos.data["access_key"]
       secret_key = data.vault_kv_secret_v2.thanos.data["secret_key"]
     })
+    thanos_rules_yml = file("${path.module}/stacks/thanos-rules.yml")
   })
 }
 
