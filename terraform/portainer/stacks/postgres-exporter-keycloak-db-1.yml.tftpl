@@ -1,0 +1,39 @@
+name: postgres-exporter-keycloak-db-1
+
+# postgres_exporter for keycloak-db-1 (Bitnami postgresql-repmgr 17.6.0).
+# Colocated on ds-1, scrapes postgres on 192.168.59.54:5432.
+# Mirror of postgres-exporter-keycloak-db-0; see that stack file for
+# rationale.
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.19.1
+    hostname: postgres-exporter-keycloak-db-1
+    networks:
+      servers-net:
+        # IP picked from 192.168.59.0/26 free pool
+        ipv4_address: 192.168.59.56
+    environment:
+      DATA_SOURCE_NAME: ${data_source_name}
+      PG_EXPORTER_AUTO_DISCOVER_DATABASES: "true"
+      PG_EXPORTER_EXCLUDE_DATABASES: "template0,template1"
+    expose:
+      - "9187"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9187/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "postgres-exporter-keycloak-db-1"
+      com.docker.service: "postgres-exporter"
+      portainer.autodeploy: "false"

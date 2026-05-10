@@ -593,6 +593,45 @@ resource "portainer_stack" "thanos_rule" {
   })
 }
 
+# postgres_exporter for keycloak-db-0 (Bitnami repmgr primary on dockermaster).
+# DATA_SOURCE_NAME uses the postgres superuser bootstrap creds from Vault.
+resource "portainer_stack" "postgres_exporter_keycloak_db_0" {
+  name            = "postgres-exporter-keycloak-db-0"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/postgres-exporter-keycloak-db-0.yml.tftpl", {
+    data_source_name = "postgresql://postgres:${data.vault_kv_secret_v2.keycloak.data["postgres_root_password"]}@192.168.59.44:5432/postgres?sslmode=disable"
+  })
+}
+
+# postgres_exporter for keycloak-db-1 (Bitnami repmgr standby on ds-1).
+resource "portainer_stack" "postgres_exporter_keycloak_db_1" {
+  name            = "postgres-exporter-keycloak-db-1"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/postgres-exporter-keycloak-db-1.yml.tftpl", {
+    data_source_name = "postgresql://postgres:${data.vault_kv_secret_v2.keycloak.data["postgres_root_password"]}@192.168.59.54:5432/postgres?sslmode=disable"
+  })
+}
+
+# postgres_exporter for postgres-rundeck (vanilla postgres:17 on ds-1).
+# Standalone postgres so no replication-state metrics; main interest is
+# connection-pool saturation + query metrics.
+resource "portainer_stack" "postgres_exporter_rundeck" {
+  name            = "postgres-exporter-rundeck"
+  endpoint_id     = var.ds1_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/postgres-exporter-rundeck.yml.tftpl", {
+    data_source_name = "postgresql://rundeck:${data.vault_kv_secret_v2.rundeck.data["db_password"]}@192.168.59.23:5432/rundeck?sslmode=disable"
+  })
+}
+
 # node-exporter on ds-2 (host network mode).
 resource "portainer_stack" "node_exporter_ds2" {
   name            = "node-exporter-ds2"
