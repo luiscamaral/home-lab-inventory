@@ -164,6 +164,14 @@ services:
   thanos-sidecar-1:
     image: quay.io/thanos/thanos:v0.41.0
     hostname: thanos-sidecar-1
+    # Run as the same UID/GID as Prometheus owns the shared TSDB volume —
+    # the upstream Thanos image defaults to uid=1001(thanos), but
+    # prometheus-1 writes to /prometheus as uid=65534(nobody). Without
+    # this override the sidecar can READ the existing blocks but can't
+    # `mkdir /prometheus/thanos` for upload staging, so every block
+    # ships nothing ("create upload dir: permission denied"). Bucket
+    # stayed empty for 13+ days before this fix.
+    user: "65534:65534"
     networks:
       servers-net:
         ipv4_address: 192.168.59.20
