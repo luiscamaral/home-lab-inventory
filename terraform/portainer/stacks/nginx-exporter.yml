@@ -1,0 +1,49 @@
+name: nginx-exporter
+
+# nginx-prometheus-exporter on dockermaster, scraping the rproxy
+# stub_status endpoint over the shared `rproxy` bridge network at
+# http://rproxy:8080/nginx_status. The stub_status server inside
+# nginx is gated by network ACL (allow 127.0.0.0/8 + 172.16.0.0/12)
+# and is not in nginx-rproxy's `expose:` list — it only reaches
+# containers on the same bridge.
+#
+# Phase D coverage gap closure (per docs/monitoring-coverage-gap-2026-05-07.md).
+# Metrics: nginx_connections_{accepted,handled,active,reading,writing,waiting},
+# nginx_http_requests_total. Useful for: rproxy throughput, connection
+# saturation, request rate spikes, slow-handling counts.
+
+networks:
+  rproxy:
+    name: rproxy
+    external: true
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.5.1
+    hostname: nginx-exporter
+    networks:
+      servers-net:
+        # IP picked from 192.168.59.0/26 free pool
+        ipv4_address: 192.168.59.58
+      rproxy:
+    command:
+      - --nginx.scrape-uri=http://rproxy:8080/nginx_status
+      - --web.listen-address=:9113
+    expose:
+      - "9113"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9113/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nginx-exporter"
+      com.docker.service: "nginx-exporter"
+      portainer.autodeploy: "false"

@@ -404,6 +404,13 @@ locals {
           - targets: ['192.168.59.57:9187']
             labels: { instance: postgres-rundeck }
 
+      # ── nginx-prometheus-exporter — rproxy throughput / connection
+      # saturation. Scrapes nginx stub_status via shared bridge network.
+      - job_name: nginx
+        static_configs:
+          - targets: ['192.168.59.58:9113']
+            labels: { instance: nginx-rproxy }
+
       # ── Phase 3f: Rundeck (no scrape — see note) ────────────────────
       # Rundeck OSS 5.x exposes Dropwizard metrics at /metrics/metrics
       # but gates that endpoint behind session-cookie auth — it does
@@ -728,6 +735,12 @@ locals {
             labels: { instance: keycloak-db-1 }
           - targets: ['192.168.59.57:9187']
             labels: { instance: postgres-rundeck }
+
+      # ── nginx-prometheus-exporter — mirror of replica-A.
+      - job_name: nginx
+        static_configs:
+          - targets: ['192.168.59.58:9113']
+            labels: { instance: nginx-rproxy }
 
       # ── Phase 3f: Rundeck (no scrape — see replica-A note) ──────────
 

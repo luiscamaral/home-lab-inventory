@@ -632,6 +632,18 @@ resource "portainer_stack" "postgres_exporter_rundeck" {
   })
 }
 
+# nginx-prometheus-exporter on dockermaster — sidecar to nginx-rproxy.
+# Scrapes the local stub_status server (gated to Docker bridge ranges,
+# not in `expose:`) over the shared `rproxy` bridge network.
+resource "portainer_stack" "nginx_exporter" {
+  name            = "nginx-exporter"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/nginx-exporter.yml")
+}
+
 # node-exporter on ds-2 (host network mode).
 resource "portainer_stack" "node_exporter_ds2" {
   name            = "node-exporter-ds2"

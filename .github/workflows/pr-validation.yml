@@ -616,10 +616,15 @@ jobs:
           done
 
           if [ -n "$MISSING_INVENTORY" ]; then
-            echo "missing_inventory=$MISSING_INVENTORY" >> $GITHUB_OUTPUT
-            echo "inventory_complete=false" >> $GITHUB_OUTPUT
+            # Same multi-line guard as outdated_reason below.
+            {
+              echo 'missing_inventory<<MISSING_INVENTORY_EOF'
+              echo "$MISSING_INVENTORY"
+              echo 'MISSING_INVENTORY_EOF'
+            } >> "$GITHUB_OUTPUT"
+            echo "inventory_complete=false" >> "$GITHUB_OUTPUT"
           else
-            echo "inventory_complete=true" >> $GITHUB_OUTPUT
+            echo "inventory_complete=true" >> "$GITHUB_OUTPUT"
           fi
 
           # Check if documentation is up to date (basic check)
@@ -634,13 +639,20 @@ jobs:
 
           if [ -n "$CONFIG_CHANGES" ] && [ -z "$DOC_CHANGES" ]; then
             echo "⚠️ Configuration files changed but no documentation updates found"
-            echo "docs_may_need_update=true" >> $GITHUB_OUTPUT
+            echo "docs_may_need_update=true" >> "$GITHUB_OUTPUT"
             DOCS_OUTDATED="Configuration files changed: $CONFIG_CHANGES"
           else
-            echo "docs_may_need_update=false" >> $GITHUB_OUTPUT
+            echo "docs_may_need_update=false" >> "$GITHUB_OUTPUT"
           fi
 
-          echo "outdated_reason=$DOCS_OUTDATED" >> $GITHUB_OUTPUT
+          # `outdated_reason` may contain multiple newlines (one path per
+          # line) — bare `key=value` writes break GITHUB_OUTPUT parsing.
+          # Use the heredoc form for any multi-line value.
+          {
+            echo 'outdated_reason<<OUTDATED_REASON_EOF'
+            echo "$DOCS_OUTDATED"
+            echo 'OUTDATED_REASON_EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Generate documentation report
         if: always()
