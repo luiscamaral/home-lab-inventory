@@ -36,9 +36,15 @@ configs:
   # terraform/portainer/stacks/thanos-rules.yml (loaded via file() in
   # stacks.tf). Edit the rules file, terraform apply, then
   # ./scripts/portainer-redeploy.py thanos-rule to push.
+  #
+  # `replace(..., "$", "$$")` escapes single-dollar so Compose's
+  # variable substitution doesn't eat `$value` / `$labels.instance`
+  # before the rules reach the Prometheus template engine. Same trick
+  # the existing prometheus.yml.tftpl uses for its scrape configs.
+  # Memory: feedback_compose_configs_dollar_interpolation.md.
   thanos_rules:
     content: |
-      ${indent(6, thanos_rules_yml)}
+      ${indent(6, replace(thanos_rules_yml, "$", "$$"))}
 
 services:
   thanos-rule:
