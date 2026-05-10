@@ -35,7 +35,6 @@ updates:
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
-      include: "scope"
     labels:
       - "dependencies"
       - "github-actions"
@@ -58,7 +57,6 @@ updates:
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
-      include: "scope"
     labels:
       - "dependencies"
       - "docker"
@@ -93,7 +91,6 @@ updates:
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
-      include: "scope"
     labels:
       - "dependencies"
       - "docker"
@@ -110,7 +107,6 @@ updates:
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
-      include: "scope"
     labels:
       - "dependencies"
       - "javascript"
@@ -137,7 +133,6 @@ updates:
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
-      include: "scope"
     labels:
       - "dependencies"
       - "python"
