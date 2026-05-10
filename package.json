@@ -11,7 +11,7 @@
   "description": "Home lab infrastructure inventory and management system",
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
-    "@commitlint/config-conventional": "^19.5.0",
+    "@commitlint/config-conventional": "^21.0.0",
     "@commitlint/cz-commitlint": "^19.5.0",
     "@commitlint/prompt-cli": "^19.5.0",
     "commitizen": "^4.3.1",
