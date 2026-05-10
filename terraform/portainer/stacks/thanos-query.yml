@@ -28,9 +28,10 @@ services:
       - --grpc-address=0.0.0.0:10901
       - --query.replica-label=replica
       - --query.auto-downsampling
-      - --endpoint=192.168.59.20:10901
-      - --endpoint=192.168.59.21:10901
-      - --endpoint=192.168.4.239:10901
+      - --endpoint=192.168.59.20:10901   # thanos-sidecar-1 (ds-1, replica A)
+      - --endpoint=192.168.59.21:10901   # thanos-store-gw (ds-1, historical blocks)
+      - --endpoint=192.168.4.239:10901   # thanos-sidecar-2 (NAS, replica B)
+      - --endpoint=192.168.59.52:10901   # thanos-rule (ds-2, recorded rule blocks)
       - --log.level=info
     expose:
       - "10901"

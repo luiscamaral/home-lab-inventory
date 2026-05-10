@@ -553,6 +553,46 @@ resource "portainer_stack" "node_exporter_dm" {
   stack_file_content = file("${path.module}/stacks/node-exporter-dm.yml")
 }
 
+# thanos-compactor on ds-2 (Phase 1 batch plane).
+# Single instance — TWO compactors against the same bucket WILL corrupt
+# blocks per upstream docs. Owns block compaction, downsampling
+# (raw->5m->1h), retention enforcement, and replica-label dedup.
+# Reads/writes via objstore-ds2 → minio-2 (loopback-fast on ds-2).
+resource "portainer_stack" "thanos_compact" {
+  name            = "thanos-compact"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/thanos-compact.yml.tftpl", {
+    objstore_config = templatefile("${path.module}/stacks/objstore-ds2.yml.tftpl", {
+      access_key = data.vault_kv_secret_v2.thanos.data["access_key"]
+      secret_key = data.vault_kv_secret_v2.thanos.data["secret_key"]
+    })
+  })
+}
+
+# thanos-ruler on ds-2 (Phase 1 batch plane).
+# Single instance per design — long-window alerts that require
+# >15d history (capacity trends, cert-expiry beyond 30d, SLO burn-rate)
+# evaluate over Thanos data via the Querier. Short-window alerts stay
+# native to both prometheus replicas (no SPOF).
+# Initial deploy ships with an empty rules placeholder; real rules in a
+# follow-up PR.
+resource "portainer_stack" "thanos_rule" {
+  name            = "thanos-rule"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/thanos-rule.yml.tftpl", {
+    objstore_config = templatefile("${path.module}/stacks/objstore-ds2.yml.tftpl", {
+      access_key = data.vault_kv_secret_v2.thanos.data["access_key"]
+      secret_key = data.vault_kv_secret_v2.thanos.data["secret_key"]
+    })
+  })
+}
+
 # node-exporter on ds-2 (host network mode).
 resource "portainer_stack" "node_exporter_ds2" {
   name            = "node-exporter-ds2"
