@@ -52,7 +52,7 @@ jobs:
       alert-required: ${{ steps.health-check.outputs.alert-required }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Discover active services
         id: discover
@@ -309,7 +309,7 @@ jobs:
     runs-on: [self-hosted, dockermaster]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Create or update health issue
         uses: actions/github-script@v7
