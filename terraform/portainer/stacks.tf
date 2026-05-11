@@ -1197,10 +1197,19 @@ resource "portainer_stack" "grafana" {
   # Dashboard JSONs in stacks/grafana-dashboards/*.json get auto-rendered
   # into Compose `configs:` blocks per file — no bind-mount, no manual scp.
   # Add a dashboard: drop a JSON file in that dir, re-run `terraform apply`.
+  #
+  # Subfolder convention: stacks/grafana-dashboards/ → Grafana folder
+  # "Homelab" (catch-all). stacks/grafana-dashboards-observability/ →
+  # folder "Observability" (Thanos/Prometheus/Alertmanager stack health).
+  # New subfolder = new dir + new map here + new provider in the .tftpl.
   stack_file_content = templatefile("${path.module}/stacks/grafana.yml.tftpl", {
     dashboards = {
       for f in fileset("${path.module}/stacks/grafana-dashboards", "*.json") :
       trimsuffix(f, ".json") => file("${path.module}/stacks/grafana-dashboards/${f}")
+    }
+    dashboards_observability = {
+      for f in fileset("${path.module}/stacks/grafana-dashboards-observability", "*.json") :
+      trimsuffix(f, ".json") => file("${path.module}/stacks/grafana-dashboards-observability/${f}")
     }
   })
 

@@ -72,8 +72,23 @@ configs:
           allowUiUpdates: true
           options:
             path: /var/lib/grafana/dashboards
+        - name: observability
+          orgId: 1
+          folder: Observability
+          type: file
+          disableDeletion: false
+          editable: true
+          updateIntervalSeconds: 60
+          allowUiUpdates: true
+          options:
+            path: /var/lib/grafana/dashboards-observability
 %{ for name, content in dashboards ~}
   dashboard_${replace(name, "-", "_")}:
+    content: |
+      ${indent(6, replace(content, "$", "$$"))}
+%{ endfor ~}
+%{ for name, content in dashboards_observability ~}
+  obs_dashboard_${replace(name, "-", "_")}:
     content: |
       ${indent(6, replace(content, "$", "$$"))}
 %{ endfor ~}
@@ -133,6 +148,11 @@ services:
 %{ for name, _ in dashboards ~}
       - source: dashboard_${replace(name, "-", "_")}
         target: /var/lib/grafana/dashboards/${name}.json
+        mode: 0644
+%{ endfor ~}
+%{ for name, _ in dashboards_observability ~}
+      - source: obs_dashboard_${replace(name, "-", "_")}
+        target: /var/lib/grafana/dashboards-observability/${name}.json
         mode: 0644
 %{ endfor ~}
     expose:
