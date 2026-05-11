@@ -1086,7 +1086,7 @@ jobs:
       # template literal — that produced "SyntaxError: Unexpected
       # identifier 'type'" on every PR before this fix.
       - name: Comment on PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           PR_COMMENT: ${{ steps.summary.outputs.pr_comment }}
         with:
@@ -1130,7 +1130,7 @@ jobs:
       # critical_failures are short and quote-free today, but env-passing
       # is the safe default for action inputs we don't fully control.
       - name: Set PR status check
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           OVERALL_STATUS: ${{ steps.summary.outputs.overall_status }}
           CRITICAL_FAILURES: ${{ steps.summary.outputs.critical_failures }}

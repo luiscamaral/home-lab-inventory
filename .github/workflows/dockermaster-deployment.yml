@@ -179,7 +179,7 @@ jobs:
         # accept single-quote string literals.
         env:
           DEPLOY_ENV: ${{ github.event.inputs.environment || 'production' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const deployment = await github.rest.repos.createDeployment({
@@ -614,7 +614,7 @@ jobs:
           echo "color=$COLOR" >> $GITHUB_OUTPUT
 
       - name: Update GitHub deployment status
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const deploymentId = '${{ needs.pre-deployment.outputs.deployment-id }}';
