@@ -1363,15 +1363,17 @@ resource "portainer_stack" "blackbox_exporter" {
 # and (b) the connector itself exposes /metrics in v1.80+.
 
 # ──────────────────────────────────────────────
-# Ollama embedding service (ds-2)
+# Ollama embedding service (ds-1)
 # Spec: docs/superpowers/specs/2026-05-21-ollama-deployment-design.md
 # Single container on docker-servers-net @ 192.168.59.53.
 # Pulled post-deploy: qwen3-embedding:8b-q8_0 (4096-dim).
 # Honcho's deriver consumes this for message/document embeddings.
+# Originally planned for ds-2 — pivoted to ds-1 because ds-2's root FS
+# is full (/var/lib/minio-data at 74G, separate cleanup work tracked).
 # ──────────────────────────────────────────────
 resource "portainer_stack" "ollama" {
   name            = "ollama"
-  endpoint_id     = var.ds2_endpoint_id
+  endpoint_id     = var.ds1_endpoint_id
   deployment_type = "standalone"
   method          = "string"
 

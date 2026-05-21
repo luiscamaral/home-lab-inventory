@@ -3,11 +3,11 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development to implement this plan task-by-task.
 
-**Goal:** Deploy a single-container Ollama instance on ds-2 serving the
+**Goal:** Deploy a single-container Ollama instance on ds-1 serving the
 `qwen3-embedding:8b-q8_0` model at `ollama.d.lcamaral.com:11434` so Honcho can use it for
 embeddings.
 
-**Architecture:** Single Compose stack on ds-2 with one Ollama container on
+**Architecture:** Single Compose stack on ds-1 with one Ollama container on
 `docker-servers-net` macvlan at `192.168.59.53`, NFS-backed model storage, direct HTTP API
 (no Nginx-rproxy, no auth, no TLS — internal LAN only).
 
@@ -34,19 +34,19 @@ embeddings.
 | Replace | `dockermaster/docker/compose/ollama/docker-compose.yml` | Delete stale legacy file |
 | Create | `dockermaster/docker/compose/ollama/docker-compose.yml.tftpl` | New templated stack |
 | Modify | `pihole/dnsmasq.d/04-d-lcamaral-com.conf` | +1 A record for ollama |
-| Modify | `terraform/portainer/stacks.tf` | +1 `portainer_stack.ollama` resource on ds2_endpoint_id |
+| Modify | `terraform/portainer/stacks.tf` | +1 `portainer_stack.ollama` resource on ds1_endpoint_id |
 | Modify | `inventory/docker-containers.md` | Document the new stack |
 
 ---
 
-## Task 1: Pre-flight verifications on ds-2
+## Task 1: Pre-flight verifications on ds-1
 
 **Files:** None (verification only).
 
-- [ ] **Step 1.1: Find macvlan parent interface on ds-2**
+- [ ] **Step 1.1: Find macvlan parent interface on ds-1**
 
 ```bash
-ssh dockerserver-2 'ip -o link show | grep -E "macvlan|server-net"'
+ssh dockerserver-1 'ip -o link show | grep -E "macvlan|server-net"'
 ```
 
 Expected: a `server-net-shim` interface (or similar — note the actual name).
@@ -54,7 +54,7 @@ Expected: a `server-net-shim` interface (or similar — note the actual name).
 - [ ] **Step 1.2: arping 192.168.59.53 for collision**
 
 ```bash
-ssh dockerserver-2 'SUDO_ASKPASS=$HOME/.config/bin/answer sudo -A arping -I server-net-shim -c 3 192.168.59.53'
+ssh dockerserver-1 'SUDO_ASKPASS=$HOME/.config/bin/answer sudo -A arping -I server-net-shim -c 3 192.168.59.53'
 ```
 
 Expected: `0 packets received` / `100% unanswered`. If any reply → STOP, pick a different
@@ -64,7 +64,7 @@ spec + plan before continuing.
 - [ ] **Step 1.3: Create NFS storage directory**
 
 ```bash
-ssh dockerserver-2 'SUDO_ASKPASS=$HOME/.config/bin/answer sudo -A mkdir -p /nfs/dockermaster/ollama/data && \
+ssh dockerserver-1 'SUDO_ASKPASS=$HOME/.config/bin/answer sudo -A mkdir -p /nfs/dockermaster/ollama/data && \
                     ls -la /nfs/dockermaster/ollama/'
 ```
 
@@ -73,15 +73,15 @@ Expected: `data` directory listed.
 - [ ] **Step 1.4: Verify NFS has enough free space**
 
 ```bash
-ssh dockerserver-2 'df -h /nfs/dockermaster | tail -1'
+ssh dockerserver-1 'df -h /nfs/dockermaster | tail -1'
 ```
 
 Expected: at least 15 GB available (model is ~9 GB, give headroom).
 
-- [ ] **Step 1.5: Confirm ds-2's Docker is up and the endpoint is reachable**
+- [ ] **Step 1.5: Confirm ds-1's Docker is up and the endpoint is reachable**
 
 ```bash
-ssh dockerserver-2 'docker version --format "{{.Server.Version}}"'
+ssh dockerserver-1 'docker version --format "{{.Server.Version}}"'
 ```
 
 Expected: a Docker server version string (no error).
@@ -109,7 +109,7 @@ git rm dockermaster/docker/compose/ollama/docker-compose.yml
 cat > dockermaster/docker/compose/ollama/docker-compose.yml.tftpl <<'EOF'
 name: ollama
 
-# Ollama embedding service on ds-2.
+# Ollama embedding service on ds-1.
 # Spec: docs/superpowers/specs/2026-05-21-ollama-deployment-design.md
 # Single container, macvlan IP 192.168.59.53, NFS-backed model storage.
 # Embeddings only: qwen3-embedding:8b-q8_0 (4096-dim). Pulled post-deploy.
@@ -167,7 +167,7 @@ Expected: `OK`. No template vars in this file, so it parses cleanly as plain YAM
 
 ```bash
 git add dockermaster/docker/compose/ollama/docker-compose.yml dockermaster/docker/compose/ollama/docker-compose.yml.tftpl
-git commit -m "feat(docker): ollama embedding service compose stack (ds-2, macvlan .53)"
+git commit -m "feat(docker): ollama embedding service compose stack (ds-1, macvlan .53)"
 ```
 
 ---
@@ -192,7 +192,7 @@ Open `pihole/dnsmasq.d/04-d-lcamaral-com.conf` and add the lines below at the ch
 position:
 
 ```text
-# Ollama embedding service (single-host on ds-2, direct macvlan access — no rproxy)
+# Ollama embedding service (single-host on ds-1, direct macvlan access — no rproxy)
 address=/ollama.d.lcamaral.com/192.168.59.53
 ```
 
@@ -224,7 +224,7 @@ git commit -m "feat(network): DNS record for ollama.d.lcamaral.com"
 ```hcl
 
 # ──────────────────────────────────────────────
-# Ollama embedding service (ds-2)
+# Ollama embedding service (ds-1)
 # Spec: docs/superpowers/specs/2026-05-21-ollama-deployment-design.md
 # Single container on docker-servers-net @ 192.168.59.53.
 # Pulled post-deploy: qwen3-embedding:8b-q8_0 (4096-dim).
@@ -232,7 +232,7 @@ git commit -m "feat(network): DNS record for ollama.d.lcamaral.com"
 # ──────────────────────────────────────────────
 resource "portainer_stack" "ollama" {
   name            = "ollama"
-  endpoint_id     = var.ds2_endpoint_id
+  endpoint_id     = var.ds1_endpoint_id
   deployment_type = "standalone"
   method          = "string"
 
@@ -258,7 +258,7 @@ Expected: `Success! The configuration is valid.`
 
 ```bash
 git add terraform/portainer/stacks.tf
-git commit -m "feat(deploy): portainer_stack for ollama on ds-2"
+git commit -m "feat(deploy): portainer_stack for ollama on ds-1"
 ```
 
 ---
@@ -302,10 +302,10 @@ cd ../..
 
 Expected: `Apply complete! Resources: 1 added, 0 changed, 0 destroyed.`
 
-- [ ] **Step 5.4: Confirm the container is up on ds-2**
+- [ ] **Step 5.4: Confirm the container is up on ds-1**
 
 ```bash
-ssh dockerserver-2 'docker ps --filter name=ollama --format "table {{.Names}}\t{{.Status}}\t{{.Networks}}"'
+ssh dockerserver-1 'docker ps --filter name=ollama --format "table {{.Names}}\t{{.Status}}\t{{.Networks}}"'
 ```
 
 Expected: `ollama  Up X seconds (health: starting)` then `(healthy)` after ~60 s.
@@ -321,7 +321,7 @@ Expected: `ollama  Up X seconds (health: starting)` then `(healthy)` after ~60 s
 - [ ] **Step 6.1: Pull qwen3-embedding:8b-q8_0**
 
 ```bash
-ssh dockerserver-2 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'
+ssh dockerserver-1 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'
 ```
 
 Expected: download progress, ending with `success`. Takes ~5-10 minutes depending on your
@@ -330,7 +330,7 @@ internet speed.
 - [ ] **Step 6.2: Confirm the model is loaded**
 
 ```bash
-ssh dockerserver-2 'docker exec ollama ollama list'
+ssh dockerserver-1 'docker exec ollama ollama list'
 ```
 
 Expected: a row showing `qwen3-embedding:8b-q8_0` with size ~9 GB.
@@ -338,7 +338,7 @@ Expected: a row showing `qwen3-embedding:8b-q8_0` with size ~9 GB.
 - [ ] **Step 6.3: Verify the output dimensions (THE critical check)**
 
 ```bash
-ssh dockerserver-2 \
+ssh dockerserver-1 \
   'docker exec ollama curl -s http://localhost:11434/api/embed \
     -d "{\"model\": \"qwen3-embedding:8b-q8_0\", \"input\": \"test\"}" \
     | python3 -c "import sys, json; d=json.load(sys.stdin); print(\"dims:\", len(d[\"embeddings\"][0]))"'
@@ -480,14 +480,14 @@ grep -n "| ollama | Removed" inventory/docker-containers.md
 
 Delete that line (Ollama is no longer "Removed").
 
-- [ ] **Step 9.2: Add an active entry under the ds-2 section**
+- [ ] **Step 9.2: Add an active entry under the ds-1 section**
 
-Open `inventory/docker-containers.md` and add (in the appropriate spot — ds-2 section):
+Open `inventory/docker-containers.md` and add (in the appropriate spot — ds-1 section):
 
 ```markdown
 ### ollama (embedding service)
 
-- **Host:** dockerserver-2 (ds-2)
+- **Host:** dockerserver-1 (ds-1)
 - **Stack:** `terraform/portainer/stacks.tf` → `portainer_stack.ollama`
 - **Compose:** `dockermaster/docker/compose/ollama/docker-compose.yml.tftpl`
 - **Containers:** `ollama`
@@ -506,7 +506,7 @@ Open `inventory/docker-containers.md` and add (in the appropriate spot — ds-2 
 
 ```bash
 git add inventory/docker-containers.md
-git commit -m "docs(inventory): activate ollama entry (embedding service on ds-2)"
+git commit -m "docs(inventory): activate ollama entry (embedding service on ds-1)"
 git push origin main
 ```
 

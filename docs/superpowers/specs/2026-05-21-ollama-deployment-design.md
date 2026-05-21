@@ -9,7 +9,7 @@
 
 ## 1. Overview
 
-Deploy a minimal Ollama instance on `dockerserver-2` (ds-2, Portainer endpoint id 13) to
+Deploy a minimal Ollama instance on `dockerserver-1` (ds-1, Portainer endpoint id 9) to
 serve embeddings for the upcoming Honcho memory server. Embeddings only — no chat models.
 
 This is a precursor sub-project to the Honcho deployment (see
@@ -26,7 +26,7 @@ at this Ollama instance; without it, the Honcho deployment cannot complete accep
 ## 3. Non-goals
 
 - Chat / generation models — Honcho's chat pipeline goes through OpenRouter, not Ollama.
-- GPU acceleration — ds-2 has no GPU; CPU inference only.
+- GPU acceleration — ds-1 has no GPU; CPU inference only.
 - Authentication — Ollama has no built-in auth; access is gated by LAN reachability.
 - HTTPS in front via Nginx — overkill for internal HTTP traffic; skip the rproxy layer.
 - Multi-host HA — single instance is enough; embeddings can re-run if the service blips.
@@ -43,7 +43,7 @@ Honcho services on ds-1 (api + deriver)
 ollama.d.lcamaral.com (DNS single-A → 192.168.59.53)
   │
   ▼
-ds-2 ──── docker-servers-net macvlan ──── 192.168.59.53:11434
+ds-1 ──── docker-servers-net macvlan ──── 192.168.59.53:11434
               │
               ▼
         ┌─────────────┐
@@ -69,7 +69,7 @@ Standard labels:
 
 ### Resource limits (Compose `deploy.resources`)
 
-- `cpus: 4` (embedding inference is CPU-bound; ds-2 has 10 cores)
+- `cpus: 4` (embedding inference is CPU-bound; ds-1 has 10 cores)
 - `memory: 12G` (q8_0 8B uses ~8-9 GB at inference; 12 GB cap gives headroom)
 - `reservations.memory: 1G`
 
@@ -84,7 +84,7 @@ Healthcheck: `ollama list` via `wget` against `/api/tags`.
 
 ### IP allocation verification
 
-Pre-apply: `ssh dockerserver-2 'sudo arping -I server-net-shim -c 3 192.168.59.53'`.
+Pre-apply: `ssh dockerserver-1 'sudo arping -I server-net-shim -c 3 192.168.59.53'`.
 Expect zero replies.
 
 ## 7. Storage
@@ -95,7 +95,7 @@ NFS-backed bind mount:
 /nfs/dockermaster/ollama/data → /root/.ollama (in container)
 ```
 
-Pre-deploy: `ssh dockerserver-2 'sudo mkdir -p /nfs/dockermaster/ollama/data'`.
+Pre-deploy: `ssh dockerserver-1 'sudo mkdir -p /nfs/dockermaster/ollama/data'`.
 
 The `qwen3-embedding:8b-q8_0` model is ~9 GB on disk; ensure the underlying NFS volume has
 that available before pulling.
@@ -108,7 +108,7 @@ re-pullable from `ollama.com` if storage is ever lost — no critical state.
 Single-A record (no multi-A across rproxies, since we're bypassing rproxy):
 
 ```text
-# Ollama embedding service (single-host on ds-2, direct macvlan access)
+# Ollama embedding service (single-host on ds-1, direct macvlan access)
 address=/ollama.d.lcamaral.com/192.168.59.53
 ```
 
@@ -136,13 +136,13 @@ Single model: `qwen3-embedding:8b-q8_0`.
 Pull happens post-deploy as a one-off:
 
 ```bash
-ssh dockerserver-2 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'
+ssh dockerserver-1 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'
 ```
 
 After the pull, verify dimensions with:
 
 ```bash
-ssh dockerserver-2 \
+ssh dockerserver-1 \
   'docker exec ollama curl -s http://localhost:11434/api/embed \
    -d "{\"model\": \"qwen3-embedding:8b-q8_0\", \"input\": \"test\"}" \
    | python3 -c "import sys, json; print(len(json.load(sys.stdin)[\"embeddings\"][0]))"'
@@ -159,7 +159,7 @@ inventory/
 ├── pihole/dnsmasq.d/
 │   └── 04-d-lcamaral-com.conf         # +1 line (ollama A record)
 └── terraform/portainer/
-    └── stacks.tf                       # +1 portainer_stack: ollama (on ds2_endpoint_id)
+    └── stacks.tf                       # +1 portainer_stack: ollama (on ds1_endpoint_id)
 ```
 
 The existing `dockermaster/docker/compose/ollama/docker-compose.yml` is a stale legacy
@@ -170,8 +170,8 @@ source needed.
 
 ```text
 1. Pre-flight:
-   - arping 192.168.59.53 on ds-2 → expect 0 replies
-   - mkdir /nfs/dockermaster/ollama/data on ds-2
+   - arping 192.168.59.53 on ds-1 → expect 0 replies
+   - mkdir /nfs/dockermaster/ollama/data on ds-1
 2. Write new compose template (replaces stale file).
 3. Add DNS record to pihole/dnsmasq.d/04-d-lcamaral-com.conf.
 4. Add portainer_stack resource to terraform/portainer/stacks.tf.
@@ -189,7 +189,7 @@ source needed.
 - **Adding more models:** `docker exec ollama ollama pull <model>` — runtime command, no
   IaC change needed.
 - **Backups:** NFS snapshot policy. Models are re-pullable; no critical state.
-- **Monitoring:** cadvisor-ds2 picks up the container automatically. No Prometheus metrics
+- **Monitoring:** cadvisor-ds1 picks up the container automatically. No Prometheus metrics
   endpoint on Ollama (yet); skip dashboard work for now.
 
 ## 15. Verification / acceptance
@@ -199,7 +199,7 @@ After `terraform apply` and model pull:
 1. **Container healthy:**
 
    ```bash
-   ssh dockerserver-2 'docker ps --filter name=ollama --format "{{.Status}}"'
+   ssh dockerserver-1 'docker ps --filter name=ollama --format "{{.Status}}"'
    ```
 
    Expected: `Up X minutes (healthy)`.
@@ -207,7 +207,7 @@ After `terraform apply` and model pull:
 2. **Model present:**
 
    ```bash
-   ssh dockerserver-2 'docker exec ollama ollama list | grep qwen3-embedding'
+   ssh dockerserver-1 'docker exec ollama ollama list | grep qwen3-embedding'
    ```
 
    Expected: a row showing `qwen3-embedding:8b-q8_0`, size ~9 GB.
@@ -258,7 +258,7 @@ If any check fails, debug before declaring done.
 | Risk | Mitigation |
 |------|------------|
 | Cross-host macvlan routing flaky | Documented in `feedback_macvlan_ip_collisions.md`. Pin stable MAC for the container if observed. |
-| 8B model OOMs ds-2 (24 GB total) | 12 GB compose limit + 1 GB reservation. Other ds-2 stacks (vault-3, keycloak-2, etc.) use ~10 GB combined. Should be safe with 2 GB+ headroom. |
+| 8B model OOMs ds-1 (24 GB total) | 12 GB compose limit + 1 GB reservation. Other ds-1 stacks (vault-3, keycloak-2, etc.) use ~10 GB combined. Should be safe with 2 GB+ headroom. |
 | First pull takes ~5-10 min on local internet | One-time post-deploy step; not part of `terraform apply`. |
 | CPU inference is slow (~2-5 s per embed) | Embeddings are async on Honcho's deriver; throughput matters more than latency. Accept. |
 | Ollama `:latest` image may break compatibility | Watchtower-managed. Model API has been stable for 18+ months; low risk. |
