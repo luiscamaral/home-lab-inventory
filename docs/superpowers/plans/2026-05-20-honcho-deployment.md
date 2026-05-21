@@ -10,7 +10,7 @@
 
 **Architecture:** 4-container Compose stack (`api` + `deriver` + pgvector-db + `redis`) on the
 `docker-servers-net` macvlan, fronted by the existing 3-instance Nginx reverse-proxy fleet.
-Chat LLM calls go to OpenRouter free tier; embeddings go to the existing Ollama on ds-2.
+Chat LLM calls go to OpenRouter free tier; embeddings go to the existing Ollama on ds-1.
 
 **Tech Stack:** Docker Compose, Portainer, Terraform (portainer + vault providers), Nginx,
 PostgreSQL with pgvector, Redis, dnsmasq.
@@ -83,17 +83,17 @@ Expected: `Received 0 replies`. If ANY reply, do NOT proceed — pick a differen
 from the .59.0/26 range (gaps documented in spec §6.1) and update the spec + plan
 references before continuing.
 
-- [ ] **Step 1.3: Verify Ollama qwen3-embedding:8b-q8_0 model is pulled on ds-2**
+- [ ] **Step 1.3: Verify Ollama qwen3-embedding:8b-q8_0 model is pulled on ds-1**
 
 ```bash
-ssh dockerserver-2 'docker exec ollama ollama list | grep qwen3-embedding:8b-q8_0'
+ssh dockerserver-1 'docker exec ollama ollama list | grep qwen3-embedding:8b-q8_0'
 ```
 
 If found: continue.
 If missing:
 
 ```bash
-ssh dockerserver-2 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'
+ssh dockerserver-1 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'
 ```
 
 Re-run the `list` check to confirm.
@@ -222,7 +222,7 @@ name: honcho
 
 # Honcho memory server — internal-only deployment on ds-1.
 # Spec: docs/superpowers/specs/2026-05-20-honcho-deployment-design.md
-# Chat LLM via OpenRouter free tier; embeddings via Ollama on ds-2.
+# Chat LLM via OpenRouter free tier; embeddings via Ollama on ds-1.
 # Templated by Terraform: $${OPENROUTER_API_KEY} and $${HONCHO_DB_PASSWORD}
 # are injected via portainer_stack `env {}` blocks, sourced from Vault.
 
@@ -296,7 +296,7 @@ services:
       DREAM_INDUCTION_MODEL_CONFIG__MODEL: deepseek/deepseek-v4-flash:free
       DREAM_INDUCTION_MODEL_CONFIG__OVERRIDES__BASE_URL: https://openrouter.ai/api/v1
       DREAM_INDUCTION_MODEL_CONFIG__OVERRIDES__API_KEY_ENV: OPENROUTER_API_KEY
-      # Embeddings → Ollama on ds-2 (zero per-call cost)
+      # Embeddings → Ollama on ds-1 (zero per-call cost)
       EMBED_MESSAGES: "true"
       EMBEDDING_VECTOR_DIMENSIONS: "4096"
       EMBEDDING_MODEL_CONFIG__TRANSPORT: openai
@@ -626,7 +626,7 @@ git commit -m "feat(deploy): vault data source for secret/homelab/honcho"
 # Spec: docs/superpowers/specs/2026-05-20-honcho-deployment-design.md
 # - api dual-homes on docker-servers-net (192.168.59.47) and rproxy bridge
 # - deriver/db/redis on the stack-internal bridge only
-# - Chat LLM via OpenRouter free tier; embeddings via Ollama on ds-2
+# - Chat LLM via OpenRouter free tier; embeddings via Ollama on ds-1
 # - DB init.sql vendored under dockermaster/docker/compose/honcho/
 # ──────────────────────────────────────────────
 resource "portainer_stack" "honcho" {
@@ -859,7 +859,7 @@ If any of the 7 checks fail, debug before continuing. Common issues and fixes:
 | `honcho-db` unhealthy | NFS perms wrong on `pgdata` | `chown -R 999:999 /nfs/.../pgdata` |
 | `honcho-api` healthy but 502 via `nginx-rproxy` | vhost not yet rolled out | re-`terraform apply`; check rproxy containers restarted |
 | Deriver loops on auth errors | `OPENROUTER_API_KEY` malformed in Vault | re-run `vault kv put` with the correct key |
-| Embedding writes fail | `qwen3-embedding:8b-q8_0` model not pulled | `ssh dockerserver-2 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'` |
+| Embedding writes fail | `qwen3-embedding:8b-q8_0` model not pulled | `ssh dockerserver-1 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'` |
 | `arping` parent iface wrong on ds-1 | macvlan parent named differently | re-check Task 1 step 1.2, pick the right name |
 
 ---
@@ -896,7 +896,7 @@ Open `inventory/docker-containers.md` and add an entry like this in the appropri
 - **Macvlan IP:** `192.168.59.47` (api only)
 - **URL (internal):** <https://honcho.d.lcamaral.com>
 - **Chat LLM:** OpenRouter free tier — `deepseek/deepseek-v4-flash:free`
-- **Embeddings:** Ollama on ds-2 — `qwen3-embedding:8b-q8_0` (4096-dim)
+- **Embeddings:** Ollama on ds-1 — `qwen3-embedding:8b-q8_0` (4096-dim)
 - **Storage:** `/nfs/dockermaster/honcho/{pgdata,redis-data}`
 - **Vault:** `secret/homelab/honcho` (`openrouter_api_key`, `postgres_password`)
 - **Spec:** `docs/superpowers/specs/2026-05-20-honcho-deployment-design.md`

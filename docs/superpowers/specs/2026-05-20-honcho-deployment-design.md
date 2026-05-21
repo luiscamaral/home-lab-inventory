@@ -25,7 +25,7 @@ Honcho is a stateful memory layer that:
 
 - Run Honcho on ds-1, reachable internally as `honcho.d.lcamaral.com`.
 - Use OpenRouter free-tier chat models (zero per-token cost; rate-limited).
-- Use Ollama on ds-2 for embeddings (zero per-token cost).
+- Use Ollama on ds-1 for embeddings (zero per-token cost).
 - Follow the project's IaC-first pattern: compose in repo, deployed via Terraform-managed
   Portainer stack, secrets sourced from Vault at apply time, DNS + Nginx vhost in repo.
 - All four workers enabled (deriver + summary + dialectic + dream).
@@ -67,7 +67,7 @@ Honcho is a stateful memory layer that:
                           │  └─────────────────────┘ │
                           └──────────────────────────┘
 
-    Embeddings call out to Ollama on ds-2 (separate stack, already running):
+    Embeddings call out to Ollama on ds-1 (separate stack, already running):
         api/deriver  ──HTTP──>  http://ollama.d.lcamaral.com/v1/embeddings
                                 model: qwen3-embedding:8b-q8_0 (4096-dim)
 ```
@@ -244,7 +244,7 @@ pattern in `terraform/portainer/stacks.tf`.
 ## 11. LLM configuration
 
 Honcho separates LLM config per feature. All chat features point at OpenRouter; the
-embedding feature points at Ollama on ds-2.
+embedding feature points at Ollama on ds-1.
 
 ### 11.1 Chat features (deriver, summary, dialectic, dream)
 
@@ -316,8 +316,8 @@ OLLAMA_API_KEY=ollama
 **Pre-deploy verification:** ensure `qwen3-embedding:8b-q8_0` is pulled on the ds-2 Ollama instance:
 
 ```bash
-ssh dockerserver-2 'docker exec ollama ollama list | grep nomic'
-# If missing: ssh dockerserver-2 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'
+ssh dockerserver-1 'docker exec ollama ollama list | grep nomic'
+# If missing: ssh dockerserver-1 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'
 ```
 
 ### 11.3 Rate-limit awareness
@@ -372,8 +372,8 @@ service has multiple supporting files. Terraform reads the `.tftpl` via `templat
    # Expect zero replies. If any reply, pick a different IP and update the spec.
 
 4. Pre-verify Ollama embedding model:
-   ssh dockerserver-2 'docker exec ollama ollama list | grep qwen3-embedding:8b-q8_0' \
-     || ssh dockerserver-2 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'
+   ssh dockerserver-1 'docker exec ollama ollama list | grep qwen3-embedding:8b-q8_0' \
+     || ssh dockerserver-1 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'
 
 5. Add files to repo (compose, vhost, dnsmasq, terraform).
 
