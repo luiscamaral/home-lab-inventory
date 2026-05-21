@@ -1,0 +1,45 @@
+name: ollama
+
+# Ollama embedding service on ds-2.
+# Spec: docs/superpowers/specs/2026-05-21-ollama-deployment-design.md
+# Single container, macvlan IP 192.168.59.53, NFS-backed model storage.
+# Embeddings only: qwen3-embedding:8b-q8_0 (4096-dim). Pulled post-deploy.
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    hostname: ollama
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.53
+    volumes:
+      - /nfs/dockermaster/ollama/data:/root/.ollama
+    environment:
+      OLLAMA_HOST: "0.0.0.0:11434"
+      OLLAMA_KEEP_ALIVE: "30m"
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list > /dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 12G
+        reservations:
+          memory: 1G
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "true"
+      com.docker.stack: "ollama"
+      com.docker.service: "ollama"
+      portainer.autodeploy: "false"
