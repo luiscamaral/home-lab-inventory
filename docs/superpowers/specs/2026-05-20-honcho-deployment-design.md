@@ -69,7 +69,7 @@ Honcho is a stateful memory layer that:
 
     Embeddings call out to Ollama on ds-2 (separate stack, already running):
         api/deriver  ──HTTP──>  http://ollama.d.lcamaral.com/v1/embeddings
-                                model: nomic-embed-text (768-dim)
+                                model: qwen3-embedding:8b-q8_0 (4096-dim)
 ```
 
 ## 5. Components
@@ -304,20 +304,20 @@ OPENROUTER_API_KEY=${vault.openrouter_api_key}
 
 ```text
 EMBED_MESSAGES=true
-EMBEDDING_VECTOR_DIMENSIONS=768
+EMBEDDING_VECTOR_DIMENSIONS=4096
 EMBEDDING_MODEL_CONFIG__TRANSPORT=openai
-EMBEDDING_MODEL_CONFIG__MODEL=nomic-embed-text
+EMBEDDING_MODEL_CONFIG__MODEL=qwen3-embedding:8b-q8_0
 EMBEDDING_MODEL_CONFIG__OVERRIDES__BASE_URL=http://ollama.d.lcamaral.com/v1
 # Ollama needs an API key var to be set (any non-empty string) for the openai SDK
 EMBEDDING_MODEL_CONFIG__OVERRIDES__API_KEY_ENV=OLLAMA_API_KEY
 OLLAMA_API_KEY=ollama
 ```
 
-**Pre-deploy verification:** ensure `nomic-embed-text` is pulled on the ds-2 Ollama instance:
+**Pre-deploy verification:** ensure `qwen3-embedding:8b-q8_0` is pulled on the ds-2 Ollama instance:
 
 ```bash
 ssh dockerserver-2 'docker exec ollama ollama list | grep nomic'
-# If missing: ssh dockerserver-2 'docker exec ollama ollama pull nomic-embed-text'
+# If missing: ssh dockerserver-2 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'
 ```
 
 ### 11.3 Rate-limit awareness
@@ -372,8 +372,8 @@ service has multiple supporting files. Terraform reads the `.tftpl` via `templat
    # Expect zero replies. If any reply, pick a different IP and update the spec.
 
 4. Pre-verify Ollama embedding model:
-   ssh dockerserver-2 'docker exec ollama ollama list | grep nomic-embed-text' \
-     || ssh dockerserver-2 'docker exec ollama ollama pull nomic-embed-text'
+   ssh dockerserver-2 'docker exec ollama ollama list | grep qwen3-embedding:8b-q8_0' \
+     || ssh dockerserver-2 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'
 
 5. Add files to repo (compose, vhost, dnsmasq, terraform).
 

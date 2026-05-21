@@ -83,17 +83,17 @@ Expected: `Received 0 replies`. If ANY reply, do NOT proceed — pick a differen
 from the .59.0/26 range (gaps documented in spec §6.1) and update the spec + plan
 references before continuing.
 
-- [ ] **Step 1.3: Verify Ollama nomic-embed-text model is pulled on ds-2**
+- [ ] **Step 1.3: Verify Ollama qwen3-embedding:8b-q8_0 model is pulled on ds-2**
 
 ```bash
-ssh dockerserver-2 'docker exec ollama ollama list | grep nomic-embed-text'
+ssh dockerserver-2 'docker exec ollama ollama list | grep qwen3-embedding:8b-q8_0'
 ```
 
 If found: continue.
 If missing:
 
 ```bash
-ssh dockerserver-2 'docker exec ollama ollama pull nomic-embed-text'
+ssh dockerserver-2 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'
 ```
 
 Re-run the `list` check to confirm.
@@ -104,7 +104,7 @@ Re-run the `list` check to confirm.
 ssh dockerserver-1 'curl -sf http://ollama.d.lcamaral.com/api/tags | head -c 200'
 ```
 
-Expected: JSON with `models: [...]` array including `nomic-embed-text`. If DNS fails,
+Expected: JSON with `models: [...]` array including `qwen3-embedding:8b-q8_0`. If DNS fails,
 grep `pihole/dnsmasq.d/` for an `ollama` entry; add one if missing (out of scope for this
 plan — log a follow-up issue).
 
@@ -298,9 +298,9 @@ services:
       DREAM_INDUCTION_MODEL_CONFIG__OVERRIDES__API_KEY_ENV: OPENROUTER_API_KEY
       # Embeddings → Ollama on ds-2 (zero per-call cost)
       EMBED_MESSAGES: "true"
-      EMBEDDING_VECTOR_DIMENSIONS: "768"
+      EMBEDDING_VECTOR_DIMENSIONS: "4096"
       EMBEDDING_MODEL_CONFIG__TRANSPORT: openai
-      EMBEDDING_MODEL_CONFIG__MODEL: nomic-embed-text
+      EMBEDDING_MODEL_CONFIG__MODEL: qwen3-embedding:8b-q8_0
       EMBEDDING_MODEL_CONFIG__OVERRIDES__BASE_URL: http://ollama.d.lcamaral.com/v1
       EMBEDDING_MODEL_CONFIG__OVERRIDES__API_KEY_ENV: OLLAMA_API_KEY
       OLLAMA_API_KEY: ollama
@@ -361,9 +361,9 @@ services:
       DREAM_INDUCTION_MODEL_CONFIG__OVERRIDES__BASE_URL: https://openrouter.ai/api/v1
       DREAM_INDUCTION_MODEL_CONFIG__OVERRIDES__API_KEY_ENV: OPENROUTER_API_KEY
       EMBED_MESSAGES: "true"
-      EMBEDDING_VECTOR_DIMENSIONS: "768"
+      EMBEDDING_VECTOR_DIMENSIONS: "4096"
       EMBEDDING_MODEL_CONFIG__TRANSPORT: openai
-      EMBEDDING_MODEL_CONFIG__MODEL: nomic-embed-text
+      EMBEDDING_MODEL_CONFIG__MODEL: qwen3-embedding:8b-q8_0
       EMBEDDING_MODEL_CONFIG__OVERRIDES__BASE_URL: http://ollama.d.lcamaral.com/v1
       EMBEDDING_MODEL_CONFIG__OVERRIDES__API_KEY_ENV: OLLAMA_API_KEY
       OLLAMA_API_KEY: ollama
@@ -859,7 +859,7 @@ If any of the 7 checks fail, debug before continuing. Common issues and fixes:
 | `honcho-db` unhealthy | NFS perms wrong on `pgdata` | `chown -R 999:999 /nfs/.../pgdata` |
 | `honcho-api` healthy but 502 via `nginx-rproxy` | vhost not yet rolled out | re-`terraform apply`; check rproxy containers restarted |
 | Deriver loops on auth errors | `OPENROUTER_API_KEY` malformed in Vault | re-run `vault kv put` with the correct key |
-| Embedding writes fail | `nomic-embed-text` model not pulled | `ssh dockerserver-2 'docker exec ollama ollama pull nomic-embed-text'` |
+| Embedding writes fail | `qwen3-embedding:8b-q8_0` model not pulled | `ssh dockerserver-2 'docker exec ollama ollama pull qwen3-embedding:8b-q8_0'` |
 | `arping` parent iface wrong on ds-1 | macvlan parent named differently | re-check Task 1 step 1.2, pick the right name |
 
 ---
@@ -896,7 +896,7 @@ Open `inventory/docker-containers.md` and add an entry like this in the appropri
 - **Macvlan IP:** `192.168.59.47` (api only)
 - **URL (internal):** <https://honcho.d.lcamaral.com>
 - **Chat LLM:** OpenRouter free tier — `deepseek/deepseek-v4-flash:free`
-- **Embeddings:** Ollama on ds-2 — `nomic-embed-text` (768-dim)
+- **Embeddings:** Ollama on ds-2 — `qwen3-embedding:8b-q8_0` (4096-dim)
 - **Storage:** `/nfs/dockermaster/honcho/{pgdata,redis-data}`
 - **Vault:** `secret/homelab/honcho` (`openrouter_api_key`, `postgres_password`)
 - **Spec:** `docs/superpowers/specs/2026-05-20-honcho-deployment-design.md`
