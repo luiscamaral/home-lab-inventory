@@ -147,11 +147,6 @@
 - **Post-clone fixes applied**: machine-id regenerated, SSH host keys regenerated, locale `en_US.UTF-8` generated
 - **DNS entries (pihole)**: `hermes.lab`, `hermes.lab.home`
 
-#### LXC 102 - hermes (broken, pending cleanup)
-
-- **Status**: 🔴 Stopped (no rootfs — interrupted creation)
-- **Note**: Original hermes config, never finished provisioning. Replaced by 10020. Safe to `pct destroy 102`.
-
 ### Templates & Testing
 
 #### LXC 9000 - tmpl-debian-devops 📋
@@ -178,10 +173,9 @@
 ## Summary
 
 - **Total VMs**: 9 (6 running: 100, 120, 121, 122, 123, 124; 3 stopped: 101, 110, 111)
-- **Total LXCs**: 5 entries
+- **Total LXCs**: 4 entries
   - Running: 10000 pihole, 10020 hermes
   - Stopped: 10010 openclaw
   - Template: 9000 tmpl-debian-devops
-  - Broken/empty (pending cleanup): 102 hermes
 - **Templates**: 1 LXC (`tmpl-debian-devops` 9000)
 - **Last reconciled with live `qm list` / `pct list`**: 2026-05-20
