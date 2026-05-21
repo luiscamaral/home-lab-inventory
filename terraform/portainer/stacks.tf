@@ -108,10 +108,10 @@ resource "portainer_stack" "reverse_proxy" {
   method          = "string"
 
   stack_file_content = templatefile("${path.module}/stacks/reverse-proxy.yml.tftpl", {
-    vhosts           = local.rproxy_vhosts
-    nginx_conf       = local.rproxy_nginx_conf
-    promtail_config  = local.rproxy_promtail_config
-    start_sh         = local.rproxy_promtail_start
+    vhosts          = local.rproxy_vhosts
+    nginx_conf      = local.rproxy_nginx_conf
+    promtail_config = local.rproxy_promtail_config
+    start_sh        = local.rproxy_promtail_start
   })
 }
 
@@ -459,7 +459,7 @@ resource "portainer_stack" "prometheus" {
     blackbox_dns_targets  = local.blackbox_dns_targets
     blackbox_tcp_targets  = local.blackbox_tcp_targets
     # Phase 5 (initial slice): TLS cert-expiry alert rules.
-    prometheus_rules_yml  = local.prometheus_rules_yml
+    prometheus_rules_yml = local.prometheus_rules_yml
   })
 }
 
@@ -1326,7 +1326,7 @@ resource "portainer_stack" "prometheus_2" {
     blackbox_dns_targets  = local.blackbox_dns_targets
     blackbox_tcp_targets  = local.blackbox_tcp_targets
     # Phase 5 (initial slice): TLS cert-expiry alert rules.
-    prometheus_rules_yml  = local.prometheus_rules_yml
+    prometheus_rules_yml = local.prometheus_rules_yml
   })
 }
 
@@ -1361,3 +1361,19 @@ resource "portainer_stack" "blackbox_exporter" {
 # and twingate-b.yml. The earlier twingate-exporter stack (Admin-API
 # poller) was removed when we discovered (a) no upstream image exists
 # and (b) the connector itself exposes /metrics in v1.80+.
+
+# ──────────────────────────────────────────────
+# Ollama embedding service (ds-2)
+# Spec: docs/superpowers/specs/2026-05-21-ollama-deployment-design.md
+# Single container on docker-servers-net @ 192.168.59.53.
+# Pulled post-deploy: qwen3-embedding:8b-q8_0 (4096-dim).
+# Honcho's deriver consumes this for message/document embeddings.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "ollama" {
+  name            = "ollama"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/../../dockermaster/docker/compose/ollama/docker-compose.yml.tftpl")
+}
