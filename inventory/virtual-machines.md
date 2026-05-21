@@ -17,7 +17,7 @@
 
 #### VM 110 - Laorion
 
-- **Status**: ✅ Running
+- **Status**: 🔴 Stopped
 - **CPU**: 4 cores (host)
 - **RAM**: 16 GB
 - **Storage**:
@@ -27,11 +27,11 @@
   - vmbr1 (Management)
   - vmbr10 (VLAN 10)
 - **OS**: Linux
-- **Auto-start**: Yes
+- **Auto-start**: Yes (currently powered off)
 
 #### VM 111 - Rootmaster
 
-- **Status**: ✅ Running
+- **Status**: 🔴 Stopped
 - **CPU**: 2 cores (host)
 - **RAM**: 2 GB
 - **Storage**:
@@ -39,7 +39,7 @@
   - 16 GB SSD (Additional)
 - **Network**: vmbr10 (VLAN 10)
 - **OS**: Linux
-- **Auto-start**: Yes
+- **Auto-start**: Yes (currently powered off)
 
 #### VM 120 - dockermaster (Docker Master)
 
@@ -105,112 +105,66 @@
 - **Purpose**: UniFi network management
 - **Auto-start**: Yes (startup delay: 120s)
 
-#### VM 1000 - Lamint
-
-- **Status**: 🔴 Stopped
-- **CPU**: 12 cores (host)
-- **RAM**: 32 GB
-- **Storage**: 64 GB SSD
-- **Network**: vmbr10 (MTU 9000)
-- **OS**: Linux
-- **Auto-start**: Yes
-
 ### Proxmox LXC Containers
 
 #### LXC 10000 - pihole
 
 - **Status**: ✅ Running
-- **CPU**: allocated via Proxmox default
-- **Network**: macvlan
-- **OS**: Linux
-- **Purpose**: Pi-hole DNS (HA node 1 of 3)
+- **CPU**: 4 cores (limit 8)
+- **RAM**: 1 GB (512 MB swap)
+- **Storage**: 8 GB SSD (thin-pool)
+- **Network**: vmbr0, IP 192.168.100.254/24, GW 192.168.100.1
+- **OS**: Debian (unprivileged)
+- **Auto-start**: Yes (startup order 1)
+- **Purpose**: Pi-hole v6.3.3 DNS — authoritative for `*.lab.home` via `pihole.toml` hosts array
+- **Search domain**: lab.lcamaral.com
 
 #### LXC 10010 - openclaw
 
-- **Status**: ✅ Running
+- **Status**: 🔴 Stopped (retired, replaced by hermes 10020)
 - **CPU**: 6 cores
 - **RAM**: 8 GB (8128 MB)
 - **Storage**: 236 GB SSD (thin-pool)
 - **Network**: vmbr0, IP 192.168.100.244/24, GW 192.168.100.1
 - **OS**: Debian 12 (bookworm)
 - **Features**: nesting=1, unprivileged
-- **Auto-start**: Yes
-- **Purpose**: Nginx reverse proxy for openclaw/byte application (backend at 127.0.0.1:18789)
-- **Server names**: `openclaw.lab.home`, `byte.lab.home`
-- **Security note**: Bearer token in Nginx config should be moved to Vault at `secret/homelab/openclaw/canvas_token`
+- **Snapshot**: `initial-installation` (2026-02-26) — used as source for template 9000
+- **Purpose (legacy)**: Nginx reverse proxy for openclaw/byte application
+- **⚠️ IP conflict**: configured for `192.168.100.244` — same as hermes 10020. Do not start while hermes is running.
 
-### Container Orchestration (Stopped)
+#### LXC 10020 - hermes
 
-#### Docker Swarm Cluster
+- **Status**: ✅ Running (since 2026-05-20)
+- **CPU**: 6 cores
+- **RAM**: 8 GB (8128 MB)
+- **Storage**: 236 GB SSD (thin-pool, full clone of base-9000-disk-0)
+- **Network**: vmbr0, IP 192.168.100.244/24, GW 192.168.100.1, MAC `BC:24:11:9F:DE:1F`
+- **OS**: Debian 12 (bookworm)
+- **Features**: nesting=1, unprivileged
+- **DNS**: nameserver 192.168.100.254 (pihole), searchdomain lab.lcamaral.com
+- **Auto-start**: No (`onboot: 0`)
+- **Cloned from**: template `tmpl-debian-devops` (9000) — full clone
+- **Post-clone fixes applied**: machine-id regenerated, SSH host keys regenerated, locale `en_US.UTF-8` generated
+- **DNS entries (pihole)**: `hermes.lab`, `hermes.lab.home`
 
-- **VM 230 - Swarm Manager 1**
-  - Status: 🔴 Stopped
-  - CPU: 4 cores
-  - RAM: 4 GB
-  - Storage: 21 GB HDD
-  - Network: vmbr28
+#### LXC 102 - hermes (broken, pending cleanup)
 
-- **VM 231 - Swarm Worker 1**
-  - Status: 🔴 Stopped
-  - CPU: 4 cores
-  - RAM: 4 GB
-  - Storage: 21 GB SSD
-  - Network: vmbr28
-
-- **VM 232 - Swarm Worker 2**
-  - Status: 🔴 Stopped
-  - CPU: 4 cores
-  - RAM: 4 GB
-  - Storage: 21 GB SSD
-  - Network: vmbr28
-
-#### Kubernetes Cluster
-
-- **VM 240 - Kubernetes Master 1**
-  - Status: 🔴 Stopped
-  - CPU: 4 cores
-  - RAM: 7 GB
-  - Storage: 21 GB SSD
-  - Network: vmbr28
-
-- **VM 241 - Kubernetes Worker 1**
-  - Status: 🔴 Stopped
-  - CPU: 6 cores
-  - RAM: 18 GB
-  - Storage: 21 GB SSD
-  - Network: vmbr28
-
-- **VM 242 - Kubernetes Worker 2**
-  - Status: 🔴 Stopped
-  - CPU: 6 cores
-  - RAM: 18 GB
-  - Storage: 21 GB SSD
-  - Network: vmbr28
-
-#### Talos Kubernetes Cluster
-
-- **VM 250 - TKMaster 1**
-  - Status: 🔴 Stopped
-  - CPU: 4 cores
-  - RAM: 8 GB (4 GB balloon)
-  - Storage: 96 GB SSD
-  - Network: vmbr28
-
-- **VM 251 - TKWorker 1**
-  - Status: 🔴 Stopped
-  - CPU: 4 cores
-  - RAM: 8 GB
-  - Storage: 96 GB SSD
-  - Network: vmbr28
-
-- **VM 252 - TKWorker 2**
-  - Status: 🔴 Stopped
-  - CPU: 4 cores
-  - RAM: 8 GB
-  - Storage: 96 GB SSD
-  - Network: vmbr28
+- **Status**: 🔴 Stopped (no rootfs — interrupted creation)
+- **Note**: Original hermes config, never finished provisioning. Replaced by 10020. Safe to `pct destroy 102`.
 
 ### Templates & Testing
+
+#### LXC 9000 - tmpl-debian-devops 📋
+
+- **Status**: 📋 Template (since 2026-05-20)
+- **CPU**: 6 cores
+- **RAM**: 8 GB (8128 MB)
+- **Storage**: `base-9000-disk-0`, 236 GB declared (~1.7 GB used, thin-provisioned)
+- **OS**: Debian 12 (bookworm) + dev/ops packages
+- **Features**: nesting=1, unprivileged
+- **Source**: full clone of `openclaw@initial-installation` snapshot
+- **Purpose**: Base template for Debian dev/ops LXCs. Supports both linked and full clones.
+- **Usage**: `pct clone 9000 <vmid> --hostname <name>` (linked) or add `--full --storage thin-pool-ssd` for independence.
 
 #### VM 101 - Tiny
 
@@ -221,22 +175,13 @@
 - **Network**: vmbr10
 - **OS**: Linux
 
-#### VM 10001 - Ubuntu Server 22.04 Template
-
-- **Status**: 📋 Template
-- **CPU**: 4 cores
-- **RAM**: 4 GB
-- **Storage**: 21 GB HDD
-- **Network**: vmbr28
-- **OS**: Ubuntu Server 22.04
-- **Purpose**: VM template for cloning
-
 ## Summary
 
-- **Total VMs**: 19
-- **LXC Containers**: 2
-- **Running**: 7
-- **Stopped**: 11
-- **Templates**: 1
-- **Total Allocated RAM**: ~219 GB
-- **Total Allocated Storage**: ~1.6 TB
+- **Total VMs**: 9 (6 running: 100, 120, 121, 122, 123, 124; 3 stopped: 101, 110, 111)
+- **Total LXCs**: 5 entries
+  - Running: 10000 pihole, 10020 hermes
+  - Stopped: 10010 openclaw
+  - Template: 9000 tmpl-debian-devops
+  - Broken/empty (pending cleanup): 102 hermes
+- **Templates**: 1 LXC (`tmpl-debian-devops` 9000)
+- **Last reconciled with live `qm list` / `pct list`**: 2026-05-20
