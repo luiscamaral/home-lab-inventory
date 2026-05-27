@@ -157,7 +157,7 @@ locals {
       - job_name: karma
         metrics_path: /metrics
         static_configs:
-          - targets: [192.168.59.46:8080]
+          - targets: [192.168.59.47:8080]
             labels: { instance: karma }
 
       # ── Phase 3a: Vault (3-node Raft cluster) ───────────────────────
@@ -568,7 +568,7 @@ locals {
       - job_name: karma
         metrics_path: /metrics
         static_configs:
-          - targets: [192.168.59.46:8080]
+          - targets: [192.168.59.47:8080]
             labels: { instance: karma }
 
       # ── Phase 3a: Vault (3-node Raft cluster) ───────────────────────

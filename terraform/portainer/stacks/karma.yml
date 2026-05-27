@@ -13,6 +13,12 @@ name: karma
 # single logical cluster and de-duplicate.
 #
 # IP picked from 192.168.59.0/26 free pool (see stacks.tf header).
+# NOTE: avoid .46 — collides with ds-2's `server-net-shim` per
+# `feedback_macvlan_ip_collisions.md`. Originally tried .46; symptom
+# was `karma.d.lcamaral.com` randomly redirecting to cAdvisor's
+# `/containers/` because ARP resolved to ds-2's shim half the time
+# and dm's karma the other half. Moved to .47 (probed clean across
+# dm/ds-1/ds-2).
 
 networks:
   servers-net:
@@ -66,7 +72,7 @@ services:
     hostname: karma
     networks:
       servers-net:
-        ipv4_address: 192.168.59.46
+        ipv4_address: 192.168.59.47
     command:
       # karma's --listen.address takes ONLY the host (port is a separate
       # --listen.port flag, default 8080). Passing host:port produces
