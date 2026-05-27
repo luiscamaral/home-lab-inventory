@@ -1,0 +1,27 @@
+# pfSense cron jobs managed by this repo.
+#
+# Reconciled against pfSense's `<cron>` section in /cf/conf/config.xml
+# via the REST API endpoint /api/v2/services/cron/job. The sync script
+# scripts/sync-pfsense-cron-jobs.py upserts each entry below by matching
+# on (command, who); jobs already in pfSense that are not listed here
+# (default pfSense-shipped entries, ACME, RESTAPI cache, etc.) are
+# LEFT UNTOUCHED.
+#
+# Schema (one entry per item in `jobs:`):
+#   description: human note (NOT sent to pfSense, just for git audit)
+#   minute / hour / mday / month / wday: standard cron fields
+#   who: user to run as (almost always "root" on pfSense)
+#   command: absolute path; must already exist on pfSense
+#            (use sync-pfsense-scripts.py to install it first)
+#
+# Apply: scripts/sync-pfsense-cron-jobs.py --apply
+
+jobs:
+  - description: "node_exporter textfile feeder for dpinger gateway metrics (~30s cadence via twice-per-minute wrapper)"
+    minute: "*"
+    hour: "*"
+    mday: "*"
+    month: "*"
+    wday: "*"
+    who: "root"
+    command: "/usr/local/bin/dpinger_textfile_30s.sh"
