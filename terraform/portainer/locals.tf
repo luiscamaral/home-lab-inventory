@@ -79,6 +79,8 @@ locals {
             labels: { instance: dockermaster }
           - targets: [192.168.0.50:9100]
             labels: { instance: nas }
+          - targets: [192.168.4.1:9100]
+            labels: { instance: pfsense }
 
       # ── cadvisor — container metrics ────────────────────────────────
       - job_name: cadvisor
@@ -494,6 +496,8 @@ locals {
             labels: { instance: dockermaster }
           - targets: [192.168.0.50:9100]
             labels: { instance: nas }
+          - targets: [192.168.4.1:9100]
+            labels: { instance: pfsense }
 
       - job_name: cadvisor
         static_configs:
