@@ -102,8 +102,14 @@ locals {
       # Original target `pfsense1.srv.lcamaral.com` was NXDOMAIN —
       # switched to IP to avoid DNS dependency inside the container.
       - job_name: snmp-pfsense
-        scrape_interval: 15s
-        scrape_timeout: 10s
+        # 2026-05-27: bumped scrape_timeout 10s → 30s after Thanos
+        # anomaly scan showed 36 short flaps over 12 h. pfSense's
+        # bsnmpd is slow under real scrape pressure (single-threaded,
+        # FreeBSD-base implementation; not net-snmp). Scrape walks
+        # all of mibII + pf MIB + IF-MIB; 10 s was tight at the 95th
+        # percentile.
+        scrape_interval: 60s
+        scrape_timeout: 30s
         metrics_path: /snmp
         params:
           module: [pfsense]
@@ -522,8 +528,14 @@ locals {
             labels: { instance: nas }
 
       - job_name: snmp-pfsense
-        scrape_interval: 15s
-        scrape_timeout: 10s
+        # 2026-05-27: bumped scrape_timeout 10s → 30s after Thanos
+        # anomaly scan showed 36 short flaps over 12 h. pfSense's
+        # bsnmpd is slow under real scrape pressure (single-threaded,
+        # FreeBSD-base implementation; not net-snmp). Scrape walks
+        # all of mibII + pf MIB + IF-MIB; 10 s was tight at the 95th
+        # percentile.
+        scrape_interval: 60s
+        scrape_timeout: 30s
         metrics_path: /snmp
         params:
           module: [pfsense]
@@ -921,11 +933,19 @@ locals {
         "https://vault.d.lcamaral.com",
         "https://keycloak.d.lcamaral.com",
         "https://prometheus.d.lcamaral.com",
-        "https://s3.d.lcamaral.com",
         "https://portainer.d.lcamaral.com",
-        "https://registry.cf.lcamaral.com",
-        "https://login.cf.lcamaral.com",
-        "https://auth.cf.lcamaral.com",
+        # Removed 2026-05-27 after Thanos 12h anomaly scan showed they
+        # failed 100% of the window:
+        #   - s3.d.lcamaral.com returns 403 (probe expects 2xx);
+        #     MinIO console at the URL works but anonymous access is
+        #     denied. Re-add with auth or probe an unauthenticated
+        #     endpoint if needed.
+        #   - registry.cf / login.cf / auth.cf all fast-fail TLS from
+        #     inside docker-servers-net because they resolve to
+        #     Cloudflare-edge IPs that SNI-reject internal probers.
+        #     External-reachability validation belongs to a 3rd-party
+        #     uptime monitor (see Phase 3.5 in
+        #     docs/network/monitoring-plan-2026-05-26.md).
       ]
     }
   ])
@@ -949,10 +969,13 @@ locals {
       targets = [
         "vault.d.lcamaral.com:443",
         "keycloak.d.lcamaral.com:443",
-        "registry.cf.lcamaral.com:443",
-        "login.cf.lcamaral.com:443",
-        "auth.cf.lcamaral.com:443",
         "ha.home.lcamaral.com:443",
+        # Removed 2026-05-27: the three *.cf.lcamaral.com SSL probes
+        # fast-fail TLS handshake from inside servers-net because
+        # they resolve to Cloudflare-edge IPs that SNI-reject this
+        # vantage. Cert-expiry for those endpoints is covered by
+        # the wildcard *.d.lcamaral.com cert probed via
+        # vault.d / keycloak.d above (same ACME issuer).
       ]
     }
   ])
@@ -976,8 +999,6 @@ locals {
   blackbox_tcp_targets = jsonencode([
     {
       targets = [
-        # FreeSWITCH SIP signalling (Phase 3f — native ESL exporter deferred)
-        "freeswitch.d.lcamaral.com:5060",
         # RustDesk hbbs (NAT type test, ID server, TCP hole-punching)
         "hbbs.d.lcamaral.com:21115",
         "hbbs.d.lcamaral.com:21116",
@@ -985,6 +1006,12 @@ locals {
         # RustDesk hbbr (relay)
         "hbbr.d.lcamaral.com:21117",
         "hbbr.d.lcamaral.com:21119",
+        # Removed 2026-05-27: freeswitch.d.lcamaral.com:5060 — SIP
+        # signalling port is firewalled off the server-net VLAN
+        # (intentional; only specific phones/PBX peers allowed).
+        # Probe was failing 100% of the window. ESL exporter (Phase
+        # 3f) will give us real FreeSWITCH-level health when it
+        # lands.
       ]
     }
   ])
