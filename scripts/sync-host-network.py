@@ -103,6 +103,37 @@ def restart_networkd(host: str) -> None:
         sys.exit(f"  ERR: systemd-networkd restart on {host} failed: {r.stderr or r.stdout}")
 
 
+def expected_mac_for_host(label: str) -> str | None:
+    """Parse the MACAddress= line out of <label>/10-server-net-shim.netdev."""
+    p = HOST_NETWORK_DIR / label / "10-server-net-shim.netdev"
+    for line in p.read_text().splitlines():
+        s = line.strip()
+        if s.startswith("MACAddress="):
+            return s.split("=", 1)[1].strip().lower()
+    return None
+
+
+def enforce_mac(host: str, expected_mac: str) -> None:
+    """If the live shim MAC differs from expected, `ip link set address`
+    it directly. systemd-networkd's restart preserves the existing kernel-
+    assigned MAC on already-up macvlan interfaces; direct override is the
+    cleanest way to converge without an interface delete+recreate."""
+    r = ssh_run(host, "ip link show server-net-shim | awk '/link\\/ether/ {print $2}'")
+    if r.returncode != 0:
+        sys.exit(f"  ERR: read shim MAC on {host} failed: {r.stderr or r.stdout}")
+    live_mac = r.stdout.strip().lower()
+    if live_mac == expected_mac:
+        return
+    print(f"  MAC drift: live={live_mac} expected={expected_mac} — overriding")
+    cmd = (
+        f"SUDO_ASKPASS=$HOME/.config/bin/answer "
+        f"sudo -A ip link set dev server-net-shim address {expected_mac}"
+    )
+    r = ssh_run(host, cmd)
+    if r.returncode != 0:
+        sys.exit(f"  ERR: MAC override on {host} failed: {r.stderr or r.stdout}")
+
+
 def verify_shim(host: str, expected_ip: str) -> bool:
     """Check `ip -br addr show server-net-shim` on `host` reports expected_ip."""
     r = ssh_run(host, "ip -br addr show server-net-shim 2>&1")
@@ -188,6 +219,11 @@ def main() -> int:
         restart_networkd(host)
         # systemd-networkd is fast but give it a beat for the link to settle
         time.sleep(2)
+        # Macvlan MACs don't update on restart for already-up interfaces;
+        # converge via direct `ip link set address`.
+        expected_mac = expected_mac_for_host(label)
+        if expected_mac:
+            enforce_mac(host, expected_mac)
         expected = expected_ip_for_host(label)
         if verify_shim(host, expected):
             print(f"  verified: server-net-shim has {expected}")
