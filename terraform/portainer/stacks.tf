@@ -507,6 +507,19 @@ resource "portainer_stack" "alertmanager_1" {
   })
 }
 
+# karma — Alertmanager dashboard UI (prymitive/karma) on dockermaster.
+# Reads from alertmanager-1 over docker-servers-net. Listed-as-a-cluster
+# config so we can add alertmanager-2 to `servers:` in the stack file
+# when Phase 2 of the alerting plane lands (no terraform churn).
+resource "portainer_stack" "karma" {
+  name            = "karma"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/karma.yml")
+}
+
 # node-exporter on ds-1 (host network mode, no IP allocation needed).
 # Phase 3 will add identical stacks for ds-2 and dockermaster.
 resource "portainer_stack" "node_exporter_ds1" {

@@ -1,0 +1,91 @@
+name: karma
+
+# karma — Alertmanager dashboard UI by prymitive.
+# https://github.com/prymitive/karma
+#
+# Pulls active alerts from the Alertmanager cluster, renders them with
+# better filtering / grouping / silence-management than Alertmanager's
+# built-in UI. Single-page web app, stateless.
+#
+# Today it reads from alertmanager-1 only (the only AM running). When
+# alertmanager-2 lands on NAS (planned Phase 2 of the alerting build-out),
+# add it to the `servers:` list below — karma will treat them as a
+# single logical cluster and de-duplicate.
+#
+# IP picked from 192.168.59.0/26 free pool (see stacks.tf header).
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+configs:
+  karma_yml:
+    content: |
+      alertmanager:
+        interval: 30s
+        servers:
+          - name: alertmanager-1
+            uri: http://192.168.59.27:9093
+            timeout: 10s
+            proxy: true
+            readonly: false
+      filters:
+        default:
+          - "@state=active"
+      grid:
+        sorting:
+          order: startsAt
+          reverse: true
+          label: alertname
+      labels:
+        keep:
+          - severity
+          - instance
+          - alertname
+          - job
+          - cluster
+        color:
+          static:
+            - job
+            - cluster
+          unique:
+            - instance
+      ui:
+        refresh: 30s
+        hideFiltersWhenIdle: false
+        animations: true
+        theme: auto
+      log:
+        level: info
+        format: text
+
+services:
+  karma:
+    image: ghcr.io/prymitive/karma:v0.122
+    hostname: karma
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.46
+    command:
+      # karma's --listen.address takes ONLY the host (port is a separate
+      # --listen.port flag, default 8080). Passing host:port produces
+      # "too many colons" at startup. Defaults are fine — bind all ifaces
+      # on port 8080.
+      - --config.file=/etc/karma/karma.yml
+    configs:
+      - source: karma_yml
+        target: /etc/karma/karma.yml
+        mode: 0644
+    expose:
+      - "8080"
+    restart: unless-stopped
+    # No native healthcheck — karma ships on a distroless base with no
+    # shell, wget, or curl. Liveness is monitored externally via the
+    # blackbox-exporter HTTP probe (added in a follow-up commit).
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "karma"
+      com.docker.service: "karma"
+      portainer.autodeploy: "false"

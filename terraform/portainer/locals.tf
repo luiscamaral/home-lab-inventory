@@ -149,6 +149,17 @@ locals {
           - targets: [192.168.4.238:9093]
             labels: { instance: alertmanager-2 }
 
+      # ── karma — Alertmanager dashboard UI (prymitive/karma) ─────────
+      # Exposes `karma_alertmanager_up{}`, `karma_alertmanager_errors_total{}`,
+      # `karma_collect_cycles_total{}`, `karma_collected_alerts_count{}` —
+      # tells us if karma can talk to AM and how many alerts/groups it
+      # sees. Useful as an indirect AM-API healthcheck.
+      - job_name: karma
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.46:8080]
+            labels: { instance: karma }
+
       # ── Phase 3a: Vault (3-node Raft cluster) ───────────────────────
       # Listener is plain HTTP on the macvlan IP (TLS terminates at
       # nginx-rproxy). Requires `telemetry.unauthenticated_metrics_access
@@ -548,6 +559,17 @@ locals {
             labels: { instance: alertmanager-1 }
           - targets: [192.168.4.238:9093]
             labels: { instance: alertmanager-2 }
+
+      # ── karma — Alertmanager dashboard UI (prymitive/karma) ─────────
+      # Exposes `karma_alertmanager_up{}`, `karma_alertmanager_errors_total{}`,
+      # `karma_collect_cycles_total{}`, `karma_collected_alerts_count{}` —
+      # tells us if karma can talk to AM and how many alerts/groups it
+      # sees. Useful as an indirect AM-API healthcheck.
+      - job_name: karma
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.46:8080]
+            labels: { instance: karma }
 
       # ── Phase 3a: Vault (3-node Raft cluster) ───────────────────────
       # Mirror of replica-A job. See replica-A comment for context.
