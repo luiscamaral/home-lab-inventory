@@ -1,9 +1,26 @@
 name: calibre
 
+# Calibre desktop (KasmVNC) + calibre-web reader on dockerserver-1.
+#
+# 10-keyboard.conf is delivered via Compose `configs:` instead of a host
+# bind-mount. The previous bind source on the NFS share
+# (/nfs/dockermaster/docker/calibre-server/10-keyboard.conf) was silently
+# replaced by an empty directory on 2026-05-11, breaking the file→file mount
+# and putting the container into Exited (127) for ~2 weeks. The original
+# content lives in `_archive/calibre-server/10-keyboard.conf` (US intl
+# layout); inlining it here removes the host filesystem coupling per the
+# project's IaC-first principle.
+
 networks:
   servers-net:
     name: docker-servers-net
     external: true
+
+configs:
+  keyboard_conf:
+    content: |
+      XKBLayout="us"
+      XKBVARIANT="intl"
 
 services:
   calibre:
@@ -21,8 +38,11 @@ services:
       - /nfs/calibre/config:/config
       - /nfs/calibre/upload:/upload
       - /nfs/calibre/plugins:/plugins
-      - /nfs/dockermaster/docker/calibre-server/10-keyboard.conf:/etc/X11/xorg.conf.d/10-keyboard.conf
       - /dev/dri:/dev/dri
+    configs:
+      - source: keyboard_conf
+        target: /etc/X11/xorg.conf.d/10-keyboard.conf
+        mode: 0644
     security_opt:
       - seccomp:unconfined
     environment:
