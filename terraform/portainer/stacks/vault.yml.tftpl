@@ -45,7 +45,13 @@ services:
       - server
       - -config=/vault/config/config.hcl
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8200/v1/sys/health || exit 1"]
+      # 2026-05-27: added query flags so follower/standby nodes don't
+      # always return 429. Without them, /v1/sys/health responds 429
+      # for any node that's healthy-but-not-leader, making 2 of 3
+      # Raft replicas always look "unhealthy" to Docker even when the
+      # cluster is fully operational. See HashiCorp Vault HTTP API
+      # docs / `/sys/health` query parameters.
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider 'http://127.0.0.1:8200/v1/sys/health?standbyok=true&perfstandbyok=true' || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 10

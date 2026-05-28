@@ -35,12 +35,12 @@ services:
     expose:
       - "9113"
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:9113/metrics"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+    # 2026-05-27: the nginx/nginx-prometheus-exporter image is a
+    # minimal Go-binary container — it has no wget, no curl, no shell
+    # tools, so the previous `wget /metrics` probe was a guaranteed
+    # exit-1 even when the exporter is serving fine. Removed the
+    # container-level healthcheck; Prometheus's own `up{job="nginx"}`
+    # gauge is the authoritative health signal.
     labels:
       loki.logging: "true"
       com.centurylinklabs.watchtower.enable: "false"
