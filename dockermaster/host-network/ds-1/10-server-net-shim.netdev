@@ -1,7 +1,7 @@
 [NetDev]
 Name=server-net-shim
 Kind=macvlan
-MACAddress=02:00:00:00:00:06
+MACAddress=02:00:00:00:00:02
 
 [MACVLAN]
 Mode=bridge
