@@ -453,11 +453,12 @@ resource "portainer_stack" "prometheus" {
     rundeck_token = data.vault_kv_secret_v2.rundeck.data["api_token"]
     # Phase 3h — blackbox file_sd target lists (rendered as JSON in locals.tf).
     # Phase 3f extends with the tcp list (FreeSWITCH SIP, RustDesk hbbs/hbbr).
-    blackbox_http_targets = local.blackbox_http_targets
-    blackbox_icmp_targets = local.blackbox_icmp_targets
-    blackbox_ssl_targets  = local.blackbox_ssl_targets
-    blackbox_dns_targets  = local.blackbox_dns_targets
-    blackbox_tcp_targets  = local.blackbox_tcp_targets
+    blackbox_http_targets   = local.blackbox_http_targets
+    blackbox_icmp_targets   = local.blackbox_icmp_targets
+    blackbox_ssl_targets    = local.blackbox_ssl_targets
+    blackbox_dns_targets    = local.blackbox_dns_targets
+    blackbox_tcp_targets    = local.blackbox_tcp_targets
+    blackbox_rproxy_targets = local.blackbox_rproxy_targets
     # Phase 5 (initial slice): TLS cert-expiry alert rules.
     prometheus_rules_yml = local.prometheus_rules_yml
   })
@@ -1333,11 +1334,12 @@ resource "portainer_stack" "prometheus_2" {
     rundeck_token = data.vault_kv_secret_v2.rundeck.data["api_token"]
     # Phase 3h — blackbox file_sd target lists (rendered as JSON in locals.tf).
     # Phase 3f extends with the tcp list (FreeSWITCH SIP, RustDesk hbbs/hbbr).
-    blackbox_http_targets = local.blackbox_http_targets
-    blackbox_icmp_targets = local.blackbox_icmp_targets
-    blackbox_ssl_targets  = local.blackbox_ssl_targets
-    blackbox_dns_targets  = local.blackbox_dns_targets
-    blackbox_tcp_targets  = local.blackbox_tcp_targets
+    blackbox_http_targets   = local.blackbox_http_targets
+    blackbox_icmp_targets   = local.blackbox_icmp_targets
+    blackbox_ssl_targets    = local.blackbox_ssl_targets
+    blackbox_dns_targets    = local.blackbox_dns_targets
+    blackbox_tcp_targets    = local.blackbox_tcp_targets
+    blackbox_rproxy_targets = local.blackbox_rproxy_targets
     # Phase 5 (initial slice): TLS cert-expiry alert rules.
     prometheus_rules_yml = local.prometheus_rules_yml
   })

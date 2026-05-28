@@ -292,6 +292,27 @@ locals {
           - target_label: __address__
             replacement: 192.168.59.45:9115
 
+      # 2026-05-27: probe every nginx-rproxy upstream so 502/503/504
+      # (upstream-unreachable) and TLS-handshake failures surface within
+      # one scrape interval. Target list auto-derived from vhost.d/
+      # via fileset() in locals.tf — adding a new vhost auto-creates a
+      # probe. The http_rproxy_alive module accepts 200/30x/401/403 as
+      # "healthy" (service responded; may need auth).
+      - job_name: blackbox-rproxy
+        scrape_interval: 30s
+        metrics_path: /probe
+        params:
+          module: [http_rproxy_alive]
+        file_sd_configs:
+          - files: ['/etc/prometheus/blackbox-targets/rproxy-targets.json']
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: 192.168.59.45:9115
+
       - job_name: blackbox-icmp
         scrape_interval: 60s
         metrics_path: /probe
@@ -665,6 +686,27 @@ locals {
           - target_label: __address__
             replacement: 192.168.59.45:9115
 
+      # 2026-05-27: probe every nginx-rproxy upstream so 502/503/504
+      # (upstream-unreachable) and TLS-handshake failures surface within
+      # one scrape interval. Target list auto-derived from vhost.d/
+      # via fileset() in locals.tf — adding a new vhost auto-creates a
+      # probe. The http_rproxy_alive module accepts 200/30x/401/403 as
+      # "healthy" (service responded; may need auth).
+      - job_name: blackbox-rproxy
+        scrape_interval: 30s
+        metrics_path: /probe
+        params:
+          module: [http_rproxy_alive]
+        file_sd_configs:
+          - files: ['/etc/prometheus/blackbox-targets/rproxy-targets.json']
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: 192.168.59.45:9115
+
       - job_name: blackbox-icmp
         scrape_interval: 60s
         metrics_path: /probe
@@ -889,6 +931,21 @@ locals {
         http:
           preferred_ip_protocol: ip4
           valid_status_codes: [200]
+      # 2026-05-27: probes for all nginx-rproxy upstreams. Treats
+      # "service responding, may need auth" as healthy (200, 30x, 401,
+      # 403) and "upstream broken" as failure (502/503/504/timeout).
+      # This is what would have caught the calibre 502 from the
+      # ds-1 shim IP collision in under 60 s.
+      http_rproxy_alive:
+        prober: http
+        timeout: 10s
+        http:
+          preferred_ip_protocol: ip4
+          valid_status_codes: [200, 201, 204, 301, 302, 303, 307, 308, 401, 403]
+          tls_config:
+            insecure_skip_verify: true
+          fail_if_ssl: false
+          fail_if_not_ssl: true
       icmp:
         prober: icmp
         timeout: 5s
@@ -927,6 +984,27 @@ locals {
   # structure is needed (per-target labels, env grouping), split into
   # multiple objects in the same file.
   # ──────────────────────────────────────────────
+  # ──────────────────────────────────────────────
+  # nginx-rproxy upstream probes — derived from vhost.d/ via fileset().
+  # Adding a new vhost.d/<host>.conf auto-creates a probe on next
+  # terraform apply. Filters out *.cf.lcamaral.com because those
+  # resolve to Cloudflare-edge IPs from inside servers-net and
+  # SNI-reject probes from this vantage (per 2026-05-27 anomaly
+  # scan). External-reachability for those endpoints belongs to a
+  # 3rd-party uptime monitor.
+  # ──────────────────────────────────────────────
+  rproxy_probe_hosts = [
+    for f in fileset("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/vhost.d", "*.conf") :
+    trimsuffix(f, ".conf")
+    if !can(regex("\\.cf\\.lcamaral\\.com$", trimsuffix(f, ".conf")))
+  ]
+
+  blackbox_rproxy_targets = jsonencode([
+    {
+      targets = [for h in local.rproxy_probe_hosts : "https://${h}"]
+    }
+  ])
+
   blackbox_http_targets = jsonencode([
     {
       targets = [
@@ -1076,5 +1154,44 @@ locals {
                 blackbox_exporter cannot establish a TLS handshake to
                 {{ $$labels.instance }} for the past 15 minutes. Either the
                 target is down or the listening cert/cipher set is broken.
+
+      # 2026-05-27: alerts on nginx-rproxy upstream health. The
+      # http_rproxy_alive module marks 5xx/timeout as failures,
+      # treats 2xx/30x/401/403 as healthy. Probe fires every 30s,
+      # alert at 2m gives 4 consecutive failed scrapes — enough to
+      # filter momentary blips without missing real outages.
+      - name: rproxy-endpoints
+        interval: 1m
+        rules:
+          - alert: RProxyEndpointDown
+            expr: probe_success{job="blackbox-rproxy"} == 0
+            for: 2m
+            labels:
+              severity: warning
+              category: rproxy
+            annotations:
+              summary: "rproxy upstream {{ $$labels.instance }} not responding"
+              description: |
+                blackbox-exporter probe to {{ $$labels.instance }} has been
+                failing for at least 2 minutes (5xx, timeout, or TLS error).
+                The reverse-proxy vhost exists but its upstream is unreachable.
+                Common causes: macvlan IP collision with a shim, container
+                exited, upstream port wrong, cert mismatch. Check the rproxy
+                vhost file under
+                dockermaster/docker/compose/nginx-rproxy/vhost.d/
+                and compare its `proxy_pass` upstream to the actual
+                container `docker inspect` IP/port.
+          - alert: RProxyEndpointSlow
+            expr: probe_duration_seconds{job="blackbox-rproxy"} > 5
+            for: 5m
+            labels:
+              severity: info
+              category: rproxy
+            annotations:
+              summary: "rproxy upstream {{ $$labels.instance }} slow (>5s)"
+              description: |
+                Probe to {{ $$labels.instance }} has been taking over 5s for
+                5 minutes. Upstream is responding but slowly — could be DB
+                load, NFS contention, or downstream service degradation.
   EOT
 }
