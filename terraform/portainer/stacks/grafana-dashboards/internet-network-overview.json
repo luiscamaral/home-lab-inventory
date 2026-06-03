@@ -420,7 +420,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "sum(rate(ifHCInOctets{ifAlias=~\"WAN1|WAN2\"}[$__rate_interval])*8)",
+          "expr": "sum(rate(ifHCInOctets{ifAlias=~\"WAN1|WAN2\"}[5m])*8)",
           "instant": false,
           "legendFormat": "",
           "range": true,
@@ -978,7 +978,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "rate(ifHCInOctets{ifAlias=~\"WAN1|WAN2\"}[$__rate_interval])*8",
+          "expr": "rate(ifHCInOctets{ifAlias=~\"WAN1|WAN2\"}[5m])*8",
           "instant": false,
           "legendFormat": "{{ifAlias}} in",
           "range": true,
@@ -989,7 +989,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "rate(ifHCOutOctets{ifAlias=~\"WAN1|WAN2\"}[$__rate_interval])*8",
+          "expr": "rate(ifHCOutOctets{ifAlias=~\"WAN1|WAN2\"}[5m])*8",
           "instant": false,
           "legendFormat": "{{ifAlias}} out",
           "range": true,
@@ -1074,7 +1074,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "rate(ifHCInOctets{ifAlias=~\"WAN1|WAN2\"}[$__rate_interval])*8 / (ifHighSpeed{ifAlias=~\"WAN1|WAN2\"}*1e6) * 100",
+          "expr": "rate(ifHCInOctets{ifAlias=~\"WAN1|WAN2\"}[5m])*8 / (ifHighSpeed{ifAlias=~\"WAN1|WAN2\"}*1e6) * 100",
           "instant": false,
           "legendFormat": "{{ifAlias}} in %",
           "range": true,
@@ -1085,7 +1085,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "rate(ifHCOutOctets{ifAlias=~\"WAN1|WAN2\"}[$__rate_interval])*8 / (ifHighSpeed{ifAlias=~\"WAN1|WAN2\"}*1e6) * 100",
+          "expr": "rate(ifHCOutOctets{ifAlias=~\"WAN1|WAN2\"}[5m])*8 / (ifHighSpeed{ifAlias=~\"WAN1|WAN2\"}*1e6) * 100",
           "instant": false,
           "legendFormat": "{{ifAlias}} out %",
           "range": true,
@@ -2264,7 +2264,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifHCInOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\"}[$__rate_interval])*8",
+              "expr": "rate(ifHCInOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\"}[5m])*8",
               "instant": false,
               "legendFormat": "{{ifAlias}}",
               "range": true,
@@ -2340,7 +2340,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifHCOutOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\"}[$__rate_interval])*8",
+              "expr": "rate(ifHCOutOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\"}[5m])*8",
               "instant": false,
               "legendFormat": "{{ifAlias}}",
               "range": true,
@@ -2425,7 +2425,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifHCInOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])*8 / (ifHighSpeed{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}*1e6) * 100",
+              "expr": "rate(ifHCInOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m])*8 / (ifHighSpeed{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}*1e6) * 100",
               "instant": false,
               "legendFormat": "{{ifAlias}} in %",
               "range": true,
@@ -2436,7 +2436,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifHCOutOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])*8 / (ifHighSpeed{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}*1e6) * 100",
+              "expr": "rate(ifHCOutOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m])*8 / (ifHighSpeed{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}*1e6) * 100",
               "instant": false,
               "legendFormat": "{{ifAlias}} out %",
               "range": true,
@@ -2513,7 +2513,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifHCInUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])",
+              "expr": "rate(ifHCInUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m]) + rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m])",
               "instant": false,
               "legendFormat": "{{ifAlias}} in pps",
               "range": true,
@@ -2524,7 +2524,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifHCOutUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCOutMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCOutBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])",
+              "expr": "rate(ifHCOutUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m]) + rate(ifHCOutMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m]) + rate(ifHCOutBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m])",
               "instant": false,
               "legendFormat": "{{ifAlias}} out pps",
               "range": true,
@@ -2604,7 +2604,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifInErrors{ifAlias=~\"$interface\"}[$__rate_interval])",
+              "expr": "rate(ifInErrors{ifAlias=~\"$interface\"}[5m])",
               "instant": false,
               "legendFormat": "{{ifAlias}} in-err",
               "range": true,
@@ -2615,7 +2615,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifOutErrors{ifAlias=~\"$interface\"}[$__rate_interval])",
+              "expr": "rate(ifOutErrors{ifAlias=~\"$interface\"}[5m])",
               "instant": false,
               "legendFormat": "{{ifAlias}} out-err",
               "range": true,
@@ -2626,7 +2626,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifInDiscards{ifAlias=~\"$interface\"}[$__rate_interval])",
+              "expr": "rate(ifInDiscards{ifAlias=~\"$interface\"}[5m])",
               "instant": false,
               "legendFormat": "{{ifAlias}} in-disc",
               "range": true,
@@ -2637,7 +2637,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifOutDiscards{ifAlias=~\"$interface\"}[$__rate_interval])",
+              "expr": "rate(ifOutDiscards{ifAlias=~\"$interface\"}[5m])",
               "instant": false,
               "legendFormat": "{{ifAlias}} out-disc",
               "range": true,
@@ -2722,7 +2722,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifInErrors{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) / (rate(ifHCInUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])) * 100",
+              "expr": "rate(ifInErrors{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m]) / (rate(ifHCInUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m]) + rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m])) * 100",
               "instant": false,
               "legendFormat": "{{ifAlias}} in-err %",
               "range": true,
@@ -2733,7 +2733,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifInDiscards{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) / (rate(ifHCInUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])) * 100",
+              "expr": "rate(ifInDiscards{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m]) / (rate(ifHCInUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m]) + rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m])) * 100",
               "instant": false,
               "legendFormat": "{{ifAlias}} in-disc %",
               "range": true,
@@ -2818,7 +2818,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "(rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])) / (rate(ifHCInUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])) * 100",
+              "expr": "(rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m])) / (rate(ifHCInUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m]) + rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[5m])) * 100",
               "instant": false,
               "legendFormat": "{{ifAlias}} bcast+mcast %",
               "range": true,
@@ -3057,7 +3057,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifHCInOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\"}[$__rate_interval])*8",
+              "expr": "rate(ifHCInOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\"}[5m])*8",
               "instant": true,
               "legendFormat": "",
               "range": false,
@@ -3068,7 +3068,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(ifHCOutOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\"}[$__rate_interval])*8",
+              "expr": "rate(ifHCOutOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\"}[5m])*8",
               "instant": true,
               "legendFormat": "",
               "range": false,
@@ -4711,7 +4711,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace((rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval])),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\"),\"vlan\",\"ADMIN\",\"pfInterfacesIfIndex\",\"7\"),\"vlan\",\"HOME\",\"pfInterfacesIfIndex\",\"9\"),\"vlan\",\"GUEST\",\"pfInterfacesIfIndex\",\"10\"),\"vlan\",\"IoT\",\"pfInterfacesIfIndex\",\"11\"),\"vlan\",\"SRVAN\",\"pfInterfacesIfIndex\",\"12\")",
+              "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace((rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m])),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\"),\"vlan\",\"ADMIN\",\"pfInterfacesIfIndex\",\"7\"),\"vlan\",\"HOME\",\"pfInterfacesIfIndex\",\"9\"),\"vlan\",\"GUEST\",\"pfInterfacesIfIndex\",\"10\"),\"vlan\",\"IoT\",\"pfInterfacesIfIndex\",\"11\"),\"vlan\",\"SRVAN\",\"pfInterfacesIfIndex\",\"12\")",
               "instant": false,
               "legendFormat": "{{vlan}}",
               "range": true,
@@ -4782,7 +4782,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "topk(1, label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace((rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval])),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\"),\"vlan\",\"ADMIN\",\"pfInterfacesIfIndex\",\"7\"),\"vlan\",\"HOME\",\"pfInterfacesIfIndex\",\"9\"),\"vlan\",\"GUEST\",\"pfInterfacesIfIndex\",\"10\"),\"vlan\",\"IoT\",\"pfInterfacesIfIndex\",\"11\"),\"vlan\",\"SRVAN\",\"pfInterfacesIfIndex\",\"12\"))",
+              "expr": "topk(1, label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace((rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m])),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\"),\"vlan\",\"ADMIN\",\"pfInterfacesIfIndex\",\"7\"),\"vlan\",\"HOME\",\"pfInterfacesIfIndex\",\"9\"),\"vlan\",\"GUEST\",\"pfInterfacesIfIndex\",\"10\"),\"vlan\",\"IoT\",\"pfInterfacesIfIndex\",\"11\"),\"vlan\",\"SRVAN\",\"pfInterfacesIfIndex\",\"12\"))",
               "instant": false,
               "legendFormat": "{{vlan}}",
               "range": true,
@@ -4867,7 +4867,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(100 * (rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval])) / clamp_min(rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsInPass{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsOutPass{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsInPass{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsOutPass{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]), 1),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\"),\"vlan\",\"ADMIN\",\"pfInterfacesIfIndex\",\"7\"),\"vlan\",\"HOME\",\"pfInterfacesIfIndex\",\"9\"),\"vlan\",\"GUEST\",\"pfInterfacesIfIndex\",\"10\"),\"vlan\",\"IoT\",\"pfInterfacesIfIndex\",\"11\"),\"vlan\",\"SRVAN\",\"pfInterfacesIfIndex\",\"12\")",
+              "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(100 * (rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m])) / clamp_min(rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf4PktsInPass{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf4PktsOutPass{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf6PktsInPass{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf6PktsOutPass{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]), 1),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\"),\"vlan\",\"ADMIN\",\"pfInterfacesIfIndex\",\"7\"),\"vlan\",\"HOME\",\"pfInterfacesIfIndex\",\"9\"),\"vlan\",\"GUEST\",\"pfInterfacesIfIndex\",\"10\"),\"vlan\",\"IoT\",\"pfInterfacesIfIndex\",\"11\"),\"vlan\",\"SRVAN\",\"pfInterfacesIfIndex\",\"12\")",
               "instant": false,
               "legendFormat": "{{vlan}}",
               "range": true,
@@ -4952,7 +4952,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace((rate(pfInterfacesIf4BytesInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4BytesOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6BytesInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6BytesOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval])),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\"),\"vlan\",\"ADMIN\",\"pfInterfacesIfIndex\",\"7\"),\"vlan\",\"HOME\",\"pfInterfacesIfIndex\",\"9\"),\"vlan\",\"GUEST\",\"pfInterfacesIfIndex\",\"10\"),\"vlan\",\"IoT\",\"pfInterfacesIfIndex\",\"11\"),\"vlan\",\"SRVAN\",\"pfInterfacesIfIndex\",\"12\")",
+              "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace((rate(pfInterfacesIf4BytesInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf4BytesOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf6BytesInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf6BytesOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m])),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\"),\"vlan\",\"ADMIN\",\"pfInterfacesIfIndex\",\"7\"),\"vlan\",\"HOME\",\"pfInterfacesIfIndex\",\"9\"),\"vlan\",\"GUEST\",\"pfInterfacesIfIndex\",\"10\"),\"vlan\",\"IoT\",\"pfInterfacesIfIndex\",\"11\"),\"vlan\",\"SRVAN\",\"pfInterfacesIfIndex\",\"12\")",
               "instant": false,
               "legendFormat": "{{vlan}}",
               "range": true,
@@ -5037,7 +5037,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "label_replace(label_replace((rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5\"}[$__rate_interval])),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\")",
+              "expr": "label_replace(label_replace((rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5\"}[5m]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5\"}[5m])),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\")",
               "instant": false,
               "legendFormat": "{{vlan}} inbound-block",
               "range": true,
@@ -5122,7 +5122,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "sum(rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]))",
+              "expr": "sum(rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]))",
               "instant": false,
               "legendFormat": "IPv4 blocked",
               "range": true,
@@ -5133,7 +5133,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "sum(rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]))",
+              "expr": "sum(rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[5m]))",
               "instant": false,
               "legendFormat": "IPv6 blocked",
               "range": true,
@@ -5209,7 +5209,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(pfLogInterfaceIp4PktsInPass[$__rate_interval]) + rate(pfLogInterfaceIp4PktsOutPass[$__rate_interval]) + rate(pfLogInterfaceIp6PktsInPass[$__rate_interval]) + rate(pfLogInterfaceIp6PktsOutPass[$__rate_interval])",
+              "expr": "rate(pfLogInterfaceIp4PktsInPass[5m]) + rate(pfLogInterfaceIp4PktsOutPass[5m]) + rate(pfLogInterfaceIp6PktsInPass[5m]) + rate(pfLogInterfaceIp6PktsOutPass[5m])",
               "instant": false,
               "legendFormat": "pass",
               "range": true,
@@ -5220,7 +5220,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(pfLogInterfaceIp4PktsInDrop[$__rate_interval]) + rate(pfLogInterfaceIp4PktsOutDrop[$__rate_interval]) + rate(pfLogInterfaceIp6PktsInDrop[$__rate_interval]) + rate(pfLogInterfaceIp6PktsOutDrop[$__rate_interval])",
+              "expr": "rate(pfLogInterfaceIp4PktsInDrop[5m]) + rate(pfLogInterfaceIp4PktsOutDrop[5m]) + rate(pfLogInterfaceIp6PktsInDrop[5m]) + rate(pfLogInterfaceIp6PktsOutDrop[5m])",
               "instant": false,
               "legendFormat": "block",
               "range": true,
@@ -5309,7 +5309,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(pfLogInterfaceIp4BytesIn[$__rate_interval]) + rate(pfLogInterfaceIp6BytesIn[$__rate_interval])",
+              "expr": "rate(pfLogInterfaceIp4BytesIn[5m]) + rate(pfLogInterfaceIp6BytesIn[5m])",
               "instant": false,
               "legendFormat": "in",
               "range": true,
@@ -5320,7 +5320,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(pfLogInterfaceIp4BytesOut[$__rate_interval]) + rate(pfLogInterfaceIp6BytesOut[$__rate_interval])",
+              "expr": "rate(pfLogInterfaceIp4BytesOut[5m]) + rate(pfLogInterfaceIp6BytesOut[5m])",
               "instant": false,
               "legendFormat": "out",
               "range": true,
@@ -5391,7 +5391,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(pfLogInterfaceIp4PktsInDrop[$__rate_interval]) + rate(pfLogInterfaceIp4PktsOutDrop[$__rate_interval]) + rate(pfLogInterfaceIp6PktsInDrop[$__rate_interval]) + rate(pfLogInterfaceIp6PktsOutDrop[$__rate_interval])",
+              "expr": "rate(pfLogInterfaceIp4PktsInDrop[5m]) + rate(pfLogInterfaceIp4PktsOutDrop[5m]) + rate(pfLogInterfaceIp6PktsInDrop[5m]) + rate(pfLogInterfaceIp6PktsOutDrop[5m])",
               "instant": false,
               "legendFormat": "",
               "range": true,
@@ -5454,7 +5454,7 @@
                 "type": "prometheus",
                 "uid": "thanos"
               },
-              "expr": "rate(pfLogInterfaceIp4PktsInPass[$__rate_interval]) + rate(pfLogInterfaceIp4PktsOutPass[$__rate_interval]) + rate(pfLogInterfaceIp6PktsInPass[$__rate_interval]) + rate(pfLogInterfaceIp6PktsOutPass[$__rate_interval])",
+              "expr": "rate(pfLogInterfaceIp4PktsInPass[5m]) + rate(pfLogInterfaceIp4PktsOutPass[5m]) + rate(pfLogInterfaceIp6PktsInPass[5m]) + rate(pfLogInterfaceIp6PktsOutPass[5m])",
               "instant": false,
               "legendFormat": "",
               "range": true,

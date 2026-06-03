@@ -55,13 +55,25 @@ def T(expr, legend="", instant=False):
     return {"expr": expr, "legend": legend, "instant": instant}
 
 
+# snmp-pfsense scrapes every 60s; $__rate_interval (sized for the 15s default)
+# resolves too small for rate() to find 2 samples → "Data outside time range".
+# Pin SNMP rate windows to a fixed [5m]; leave fast-scraped jobs on $__rate_interval.
+SNMP_TOKENS = ("ifHC", "ifIn", "ifOut", "pfInterfaces", "pfLog")
+
+
+def snmp_rate_fix(expr):
+    if "[$__rate_interval]" in expr and any(tok in expr for tok in SNMP_TOKENS):
+        return expr.replace("[$__rate_interval]", "[5m]")
+    return expr
+
+
 # ── generic panel renderer ────────────────────────────────────────────────────
 def mk(s, gp):
     t = s["type"]
     targets = []
     for i, x in enumerate(s.get("targets", [])):
         targets.append({
-            "datasource": DS, "expr": x["expr"], "legendFormat": x.get("legend", ""),
+            "datasource": DS, "expr": snmp_rate_fix(x["expr"]), "legendFormat": x.get("legend", ""),
             "instant": x.get("instant", False), "range": not x.get("instant", False),
             "refId": chr(65 + i),
         })
