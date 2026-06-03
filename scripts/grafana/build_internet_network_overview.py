@@ -347,17 +347,93 @@ reach = [
                  "tile and *Per-target availability*. See memory `blackbox-rproxy WebSocket false positive`.")},
 ]
 
-# ── assemble rows (base + additions) ──────────────────────────────────────────
+# ── explicit line layout: every line sums to width 24 with a uniform height ────
+# (height, [(panel-title, width), ...]) — keeps the grid gap-free and aligned.
 adds = load_additions()
+
+LINES = {
+    "wan": [
+        (8, [("Gateway RTT (ms)", 8), ("Packet Loss (%)", 8), ("Jitter / stddev (ms)", 8)]),
+        (8, [("WAN Throughput (in ↑ / out ↓)", 8), ("WAN link utilization vs capacity (%)", 8), ("External DNS lookup time (ms)", 8)]),
+        (4, [("Per-WAN availability % (window)", 8), ("WAN latency-SLO breach % (delay>80ms, window)", 8), ("WAN failover events (100%-loss down intervals)", 8)]),
+        (8, [("WAN jitter ratio (stddev / RTT)", 12), ("WAN1 vs WAN2 — SLA comparison", 12)]),
+    ],
+    "cloudflare": [
+        (4, [("🟧 Tunnel edge connections (min HA)", 8), ("Cloudflared replicas up", 8), ("Tunnel error ratio %", 8)]),
+        (8, [("Edge responses by HTTP status class (/s)", 12), ("Tunnel HA connections per replica", 12)]),
+        (8, [("QUIC RTT to Cloudflare edge (ms)", 12), ("QUIC packet loss on tunnel uplink (/s)", 12)]),
+    ],
+    "interface": [
+        (8, [("Inbound by interface (bits/s)", 12), ("Outbound by interface (bits/s)", 12)]),
+        (8, [("Interface utilization % vs link capacity", 12), ("Packet rate (pps) per VLAN", 12)]),
+        (8, [("Interface errors & discards (/s)", 12), ("Errors & discards as % of inbound packets (per VLAN)", 12)]),
+        (8, [("Broadcast/multicast share of inbound packets (per VLAN)", 12), ("Host NIC drops & errors (node_exporter, all hosts)", 12)]),
+        (8, [("Link flaps — carrier changes (host NICs)", 12), ("Interface summary (current)", 12)]),
+        (8, [("Per-host top talkers — rx (bits/s)", 12), ("Per-host top talkers — tx (bits/s)", 12)]),
+        (5, [("Interface up/down — physical link state", 24)]),
+        (5, [("Interface MTU (per VLAN) — config sanity", 24)]),
+    ],
+    "dns": [
+        (4, [("DNS resolver up", 24)]),
+        (4, [("Internal DNS probe — answer succeeded (validity matrix)", 24)]),
+        (4, [("Block %", 8), ("Gravity domains", 8), ("Active clients", 8)]),
+        (8, [("DNS resolver lookup time (ms)", 12), ("Live DNS QPS per Pi-hole", 12)]),
+        (8, [("Cache-hit ratio per Pi-hole (live)", 12), ("Resolution failure share per Pi-hole (NXDOMAIN/SERVFAIL/REFUSED %)", 12)]),
+        (8, [("Pi-hole query status mix", 6), ("Answer source split — cache vs blocklist vs forwarded upstream", 6), ("Query type mix (A / AAAA / HTTPS / PTR …)", 6), ("Reply outcome mix (resolution quality)", 6)]),
+        (8, [("Blocklist (gravity) size drift across the 3 Pi-holes", 12), ("External DNS probe phase breakdown (connect / request / resolve)", 12)]),
+        (6, [("Pi-hole queries in window by instance", 24)]),
+    ],
+    "firewall": [
+        (8, [("Block rate by VLAN (pkts/s)", 18), ("Top-blocked VLAN (now)", 6)]),
+        (8, [("Block-vs-pass ratio by VLAN (%)", 12), ("Blocked bytes by VLAN (bytes/s)", 12)]),
+        (8, [("WAN inbound blocks — internet attack surface (pkts/s)", 12), ("IPv4 vs IPv6 blocked traffic (pkts/s)", 12)]),
+        (8, [("pflog: Pass vs Block — packets/s", 12), ("pflog: Logged bytes/s (in ↑ / out ↓)", 12)]),
+        (4, [("pflog block rate (pkt/s)", 12), ("pflog pass rate (pkt/s)", 12)]),
+    ],
+    "reach": [
+        (8, [("Probe UP matrix (all blackbox jobs)", 24)]),
+        (8, [("Per-target availability % (window SLA)", 12), ("ICMP reachability — internal LAN & gateways (UP matrix)", 12)]),
+        (8, [("Probes Up %", 6), ("Probe duration (ms)", 18)]),
+        (8, [("Probe latency percentiles (p50 / p95 / p99)", 12), ("HTTP probe phase breakdown (resolve/connect/tls/processing/transfer)", 12)]),
+        (8, [("ICMP RTT to internal hosts & gateways", 12), ("HTTP status code over time", 12)]),
+        (5, [("RustDesk relay/signal TCP reachability", 24)]),
+        (8, [("HTTP status codes", 12), ("SSL cert expiry (days, soonest first)", 12)]),
+    ],
+    "path": [
+        (7, [("Ingress/DNS path uptime & restarts", 24)]),
+        (5, [("Service restarts — last 24h", 6), ("Per-service uptime & last restart", 18)]),
+    ],
+}
+
+
+def assemble(base, key, extra=None):
+    """Order base+addition specs into the explicit LINES grid, setting w/h."""
+    pool = {s["title"]: s for s in (base + adds.get(key, []))}
+    out = []
+    for h, items in LINES[key]:
+        for title, w in items:
+            if title not in pool:
+                raise KeyError(f"{key}: no panel titled {title!r} (have: {sorted(pool)})")
+            s = pool[title]
+            s["w"], s["h"] = w, h
+            out.append(s)
+    if extra:
+        out.extend(extra)
+    return out
+
+
+wsnote = next(s for s in reach if s["type"] == "text")
+wsnote["w"], wsnote["h"] = 24, 3
+
 ROWS = [
     {"key": "verdict", "title": None, "open": True, "panels": verdict},
-    {"key": "wan", "title": "🌐 Internet / WAN — uplink quality & failover", "open": True, "panels": wan + adds.get("wan", [])},
-    {"key": "cloudflare", "title": "🟧 Cloudflare Tunnel / Edge — public ingress health", "open": True, "panels": adds.get("cloudflare", [])},
-    {"key": "interface", "title": "🔀 Interface Throughput & Errors — per VLAN/iface", "open": False, "panels": interface + adds.get("interface", [])},
-    {"key": "dns", "title": "🧭 DNS & Pi-hole — resolution & ad-blocking", "open": False, "panels": dns + adds.get("dns", [])},
-    {"key": "firewall", "title": "🛡️ Firewall — per-VLAN block/pass", "open": False, "panels": firewall + adds.get("firewall", [])},
-    {"key": "reach", "title": "🩺 Service Reachability — blackbox probes", "open": False, "panels": reach + adds.get("reach", [])},
-    {"key": "path", "title": "🔌 Path Health & Uptime — ingress/DNS services", "open": False, "panels": adds.get("path", [])},
+    {"key": "wan", "title": "🌐 Internet / WAN — uplink quality & failover", "open": True, "panels": assemble(wan, "wan")},
+    {"key": "cloudflare", "title": "🟧 Cloudflare Tunnel / Edge — public ingress health", "open": True, "panels": assemble([], "cloudflare")},
+    {"key": "interface", "title": "🔀 Interface Throughput & Errors — per VLAN/iface", "open": False, "panels": assemble(interface, "interface")},
+    {"key": "dns", "title": "🧭 DNS & Pi-hole — resolution & ad-blocking", "open": False, "panels": assemble(dns, "dns")},
+    {"key": "firewall", "title": "🛡️ Firewall — per-VLAN block/pass", "open": False, "panels": assemble(firewall, "firewall")},
+    {"key": "reach", "title": "🩺 Service Reachability — blackbox probes", "open": False, "panels": assemble([s for s in reach if s["type"] != "text"], "reach", extra=[wsnote])},
+    {"key": "path", "title": "🔌 Path Health & Uptime — ingress/DNS services", "open": False, "panels": assemble([], "path")},
 ]
 
 # ── layout pass → panels[] with gridPos ───────────────────────────────────────
