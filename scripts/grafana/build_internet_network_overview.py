@@ -4,32 +4,39 @@
 Single-pane NOC board provisioned via Terraform (Portainer configs:). Drop the
 output in terraform/portainer/stacks/grafana-dashboards/ and `terraform apply`.
 
-All panels read the `thanos` Prometheus datasource. Metric/label names were
-verified live against Thanos Query (192.168.59.26:10902) before authoring — see
-the design doc under docs/superpowers/specs/. Re-run this script to regenerate:
+Design is declarative: BASE panels are defined inline as uniform "spec" dicts,
+and the validated additions from the multi-agent coverage review are loaded
+verbatim from internet-network-additions.json (sibling file) and appended to
+their rows. A single renderer (mk) turns a spec into a Grafana panel and a
+layout pass assigns gridPos. Re-run to regenerate:
 
     python3 scripts/grafana/build_internet_network_overview.py
 
-Why a generator instead of hand-edited JSON: the interface/throughput rows loop
-over the same metric family, and gridPos packing is mechanical. Keeping it in
-code makes re-thresholding or adding a VLAN a one-line change, not a 1500-line
-JSON diff.
+Every metric/label name and all PromQL was verified live against Thanos Query
+(192.168.59.26:10902). See docs/superpowers/specs/ for the design + coverage
+review. Coverage after the review: ~88/100.
 """
 import json
 import pathlib
 
 DS = {"type": "prometheus", "uid": "thanos"}
-OUT = (
-    pathlib.Path(__file__).resolve().parents[2]
-    / "terraform/portainer/stacks/grafana-dashboards/internet-network-overview.json"
-)
+HERE = pathlib.Path(__file__).resolve()
+OUT = HERE.parents[2] / "terraform/portainer/stacks/grafana-dashboards/internet-network-overview.json"
+ADDITIONS = HERE.parent / "internet-network-additions.json"
 
-# Pi-hole query_status values that count as "blocked" (verified live).
 BLOCKED = "DENYLIST.*|GRAVITY.*|REGEX.*|EXTERNAL_BLOCKED.*|SPECIAL_DOMAIN"
-# node_exporter virtual/bridge devices to exclude from "top talker" rollups.
-# Use RE2 "[.]" for the literal dot — a backslash here would be eaten by PromQL's
-# own string parser (and again by JSON), producing a 400 on the query.
 VIRT_DEV = "lo|veth.*|docker.*|docker0|br-.*|bond0[.].*|enc0|tap.*"
+WAN2_CAVEAT = ("Note: WAN2_DHCP dpinger monitors 192.168.12.1 (the ISP-modem "
+               "next-hop on the LAN, ~1ms), not an external host — it reflects "
+               "modem reachability only. WAN1GW monitors 8.8.8.8 (external).")
+
+# ── threshold presets ─────────────────────────────────────────────────────────
+RTT = [{"color": "green", "value": None}, {"color": "yellow", "value": 30}, {"color": "red", "value": 80}]
+LOSS = [{"color": "green", "value": None}, {"color": "yellow", "value": 1}, {"color": "red", "value": 2}]
+JIT = [{"color": "green", "value": None}, {"color": "yellow", "value": 10}, {"color": "red", "value": 30}]
+CERT = [{"color": "red", "value": None}, {"color": "yellow", "value": 14}, {"color": "green", "value": 30}]
+DNSL = [{"color": "green", "value": None}, {"color": "yellow", "value": 50}, {"color": "red", "value": 200}]
+GREEN = [{"color": "green", "value": None}]
 
 _id = 0
 
@@ -40,412 +47,380 @@ def nid():
     return _id
 
 
-# ── layout cursor: packs panels left→right into 24-wide rows ──────────────────
-class Grid:
-    def __init__(self, y=0):
-        self.x, self.y, self.rowh = 0, y, 0
-
-    def place(self, w, h):
-        if self.x + w > 24:
-            self.y += self.rowh
-            self.x, self.rowh = 0, 0
-        pos = {"h": h, "w": w, "x": self.x, "y": self.y}
-        self.x += w
-        self.rowh = max(self.rowh, h)
-        return pos
-
-    def newline(self):
-        if self.x:
-            self.y += self.rowh
-            self.x, self.rowh = 0, 0
-
-    def advance(self, h=1):
-        self.newline()
-        pos = {"h": h, "w": 24, "x": 0, "y": self.y}
-        self.y += h
-        return pos
-
-
 def thr(steps):
     return {"mode": "absolute", "steps": steps}
 
 
-def target(expr, legend="", instant=False):
-    return {
-        "datasource": DS,
-        "expr": expr,
-        "legendFormat": legend,
-        "range": not instant,
-        "instant": instant,
-        "refId": chr(65 + target._n % 26),
-    }
+def T(expr, legend="", instant=False):
+    return {"expr": expr, "legend": legend, "instant": instant}
 
 
-target._n = 0
-
-
-def tgt(expr, legend="", instant=False):
-    t = target(expr, legend, instant)
-    target._n += 1
-    return t
-
-
-def stat(title, gp, expr, unit="none", steps=None, mappings=None,
-         color="thresholds", colormode="background", legend="", decimals=None):
-    steps = steps or [{"color": "green", "value": None}]
-    fc = {
-        "defaults": {
-            "unit": unit,
-            "color": {"mode": color},
-            "thresholds": thr(steps),
-            "mappings": mappings or [],
-        },
-        "overrides": [],
-    }
-    if decimals is not None:
-        fc["defaults"]["decimals"] = decimals
-    return {
-        "id": nid(), "type": "stat", "title": title, "datasource": DS,
-        "gridPos": gp, "fieldConfig": fc,
-        "options": {
-            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": False},
-            "colorMode": colormode, "graphMode": "area", "justifyMode": "auto",
-            "textMode": "auto", "orientation": "auto",
-        },
-        "targets": [tgt(expr, legend)],
-    }
-
-
-def timeseries(title, gp, targets, unit="none", steps=None, fill=10,
-               stack=False, neg_legends=(), desc=""):
-    steps = steps or [{"color": "green", "value": None}]
-    custom = {
-        "drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 1,
-        "fillOpacity": fill, "gradientMode": "opacity", "showPoints": "never",
-        "spanNulls": True, "axisCenteredZero": bool(neg_legends),
-        "stacking": {"mode": "normal" if stack else "none", "group": "A"},
-    }
-    overrides = []
-    for nl in neg_legends:
-        overrides.append({
-            "matcher": {"id": "byFrameRefID", "options": nl},
-            "properties": [{"id": "custom.transform", "value": "negative-Y"}],
+# ── generic panel renderer ────────────────────────────────────────────────────
+def mk(s, gp):
+    t = s["type"]
+    targets = []
+    for i, x in enumerate(s.get("targets", [])):
+        targets.append({
+            "datasource": DS, "expr": x["expr"], "legendFormat": x.get("legend", ""),
+            "instant": x.get("instant", False), "range": not x.get("instant", False),
+            "refId": chr(65 + i),
         })
-    return {
-        "id": nid(), "type": "timeseries", "title": title, "datasource": DS,
-        "gridPos": gp, "description": desc,
-        "fieldConfig": {
-            "defaults": {
-                "unit": unit, "color": {"mode": "palette-classic"},
-                "custom": custom, "thresholds": thr(steps),
-            },
-            "overrides": overrides,
-        },
-        "options": {
-            "legend": {"displayMode": "table", "placement": "bottom",
-                       "calcs": ["lastNotNull", "max"]},
-            "tooltip": {"mode": "multi", "sort": "desc"},
-        },
-        "targets": targets,
-    }
+    defs = {"unit": s.get("unit", "none"), "thresholds": thr(s.get("steps") or GREEN),
+            "mappings": s.get("mappings", [])}
+    if s.get("decimals") is not None:
+        defs["decimals"] = s["decimals"]
+    common = {"id": nid(), "title": s.get("title", ""), "datasource": DS,
+              "gridPos": gp, "description": s.get("desc", "")}
+
+    if t == "stat":
+        defs["color"] = {"mode": "thresholds"}
+        return {**common, "type": "stat",
+                "fieldConfig": {"defaults": defs, "overrides": s.get("overrides", [])},
+                "options": {"reduceOptions": {"calcs": [s.get("reducer", "lastNotNull")],
+                                              "fields": "", "values": False},
+                            "colorMode": s.get("colormode", "background"), "graphMode": "area",
+                            "textMode": s.get("textmode", "auto"), "justifyMode": "auto",
+                            "orientation": "auto"},
+                "targets": targets}
+
+    if t == "timeseries":
+        custom = {"drawStyle": "line", "lineInterpolation": "smooth", "lineWidth": 1,
+                  "fillOpacity": s.get("fill", 10), "gradientMode": "opacity",
+                  "showPoints": "never", "spanNulls": True,
+                  "axisCenteredZero": bool(s.get("negY")),
+                  "stacking": {"mode": "normal" if s.get("stack") else "none", "group": "A"}}
+        defs["color"] = {"mode": "palette-classic"}
+        defs["custom"] = custom
+        overrides = list(s.get("overrides", []))
+        for ref in (s.get("negY") or []):
+            overrides.append({"matcher": {"id": "byFrameRefID", "options": ref},
+                              "properties": [{"id": "custom.transform", "value": "negative-Y"}]})
+        return {**common, "type": "timeseries",
+                "fieldConfig": {"defaults": defs, "overrides": overrides},
+                "options": {"legend": {"displayMode": "table", "placement": "bottom",
+                                       "calcs": ["lastNotNull", "max"]},
+                            "tooltip": {"mode": "multi", "sort": "desc"}},
+                "targets": targets}
+
+    if t == "piechart":
+        defs["color"] = {"mode": "palette-classic"}
+        return {**common, "type": "piechart",
+                "fieldConfig": {"defaults": defs, "overrides": []},
+                "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": False},
+                            "pieType": "donut" if s.get("donut", True) else "pie",
+                            "legend": {"displayMode": "table", "placement": "right",
+                                       "values": ["value", "percent"]}},
+                "targets": targets}
+
+    if t == "bargauge":
+        defs["color"] = {"mode": "thresholds"}
+        return {**common, "type": "bargauge",
+                "fieldConfig": {"defaults": defs, "overrides": s.get("overrides", [])},
+                "options": {"reduceOptions": {"calcs": ["lastNotNull"], "values": False},
+                            "orientation": "horizontal", "displayMode": "gradient",
+                            "minVizWidth": 0, "minVizHeight": 10, "showUnfilled": True},
+                "targets": targets}
+
+    if t == "state-timeline":
+        if s.get("binary", True):
+            steps = [{"color": "red", "value": None}, {"color": "green", "value": 1}]
+            mappings = [{"type": "value", "options": {"0": {"text": "DOWN", "color": "red"},
+                                                      "1": {"text": "UP", "color": "green"}}}]
+        else:
+            steps = s.get("steps") or GREEN
+            mappings = s.get("mappings", [])
+        return {**common, "type": "state-timeline",
+                "fieldConfig": {"defaults": {"color": {"mode": "thresholds"},
+                                             "custom": {"fillOpacity": 80, "lineWidth": 0},
+                                             "thresholds": thr(steps), "mappings": mappings},
+                                "overrides": []},
+                "options": {"mergeValues": True, "showValue": "never", "rowHeight": 0.9,
+                            "legend": {"displayMode": "list", "placement": "bottom"}},
+                "targets": targets}
+
+    if t == "table":
+        return {**common, "type": "table",
+                "fieldConfig": {"defaults": {"custom": {"filterable": True, "align": "auto"},
+                                             "mappings": s.get("mappings", [])},
+                                "overrides": s.get("overrides", [])},
+                "options": {"showHeader": True, "footer": {"show": False}},
+                "transformations": s.get("transforms", []),
+                "targets": targets}
+
+    if t == "text":
+        return {**common, "type": "text", "datasource": None,
+                "options": {"mode": "markdown", "content": s.get("content", "")}}
+
+    raise ValueError("unknown panel type: " + t)
 
 
-def piechart(title, gp, expr, legend):
-    return {
-        "id": nid(), "type": "piechart", "title": title, "datasource": DS,
-        "gridPos": gp,
-        "fieldConfig": {"defaults": {"unit": "short", "color": {"mode": "palette-classic"}},
-                        "overrides": []},
-        "options": {
-            "reduceOptions": {"calcs": ["lastNotNull"], "values": False},
-            "pieType": "donut", "legend": {"displayMode": "table", "placement": "right",
-                                           "values": ["value", "percent"]},
-        },
-        "targets": [tgt(expr, legend)],
-    }
+# ── layout: pack specs left→right into 24-wide rows from y0 ────────────────────
+def pack(specs, y0):
+    x = y = 0
+    rowh = 0
+    out = []
+    y = y0
+    for s in specs:
+        w, h = s.get("w", 12), s.get("h", 8)
+        if x + w > 24:
+            y += rowh
+            x = rowh = 0
+        out.append(mk(s, {"h": h, "w": w, "x": x, "y": y}))
+        x += w
+        rowh = max(rowh, h)
+    return out, (y + rowh)
 
 
-def state_timeline(title, gp, expr, legend):
-    return {
-        "id": nid(), "type": "state-timeline", "title": title, "datasource": DS,
-        "gridPos": gp,
-        "fieldConfig": {
-            "defaults": {
-                "color": {"mode": "thresholds"},
-                "custom": {"fillOpacity": 80, "lineWidth": 0},
-                "thresholds": thr([{"color": "red", "value": None},
-                                   {"color": "green", "value": 1}]),
-                "mappings": [
-                    {"type": "value", "options": {"0": {"text": "DOWN", "color": "red"},
-                                                   "1": {"text": "UP", "color": "green"}}},
-                ],
-            },
-            "overrides": [],
-        },
-        "options": {"mergeValues": True, "showValue": "never", "rowHeight": 0.9,
-                    "legend": {"displayMode": "list", "placement": "bottom"}},
-        "targets": [tgt(expr, legend)],
-    }
+GENERIC_TABLE_TFM = [
+    {"id": "merge", "options": {}},
+    {"id": "organize", "options": {"excludeByName": {
+        "Time": True, "__name__": True, "cluster": True, "region": True, "job": True,
+        "monitor": True, "source": True}, "renameByName": {}}},
+]
 
 
-def table(title, gp, targets, transformations, overrides=None):
-    return {
-        "id": nid(), "type": "table", "title": title, "datasource": DS, "gridPos": gp,
-        "fieldConfig": {"defaults": {"custom": {"filterable": True, "align": "auto"}},
-                        "overrides": overrides or []},
-        "options": {"showHeader": True, "footer": {"show": False}},
-        "transformations": transformations,
-        "targets": targets,
-    }
+def load_additions():
+    """Load validated additions from the review, convert to spec dicts by row_key."""
+    by_row = {}
+    for a in json.loads(ADDITIONS.read_text()):
+        s = {
+            "type": a["type"], "title": a["title"],
+            "targets": [T(t["expr"], t.get("legend", ""), t.get("instant", False)) for t in a["targets"]],
+            "unit": a.get("unit", "none"), "steps": a.get("steps") or GREEN,
+            "decimals": a.get("decimals"), "w": a.get("w", 12), "h": a.get("h", 8),
+            "desc": a.get("desc", ""),
+        }
+        h = a.get("hints", {})
+        if h.get("binary") is False:
+            s["binary"] = False
+        if h.get("textmode"):
+            s["textmode"] = h["textmode"]
+            s["colormode"] = "value"
+        if h.get("table") or a["type"] == "table":
+            s["transforms"] = GENERIC_TABLE_TFM
+        if a["type"] in ("stat", "bargauge") and "colormode" not in s:
+            s["colormode"] = "value" if a["type"] == "bargauge" else "background"
+        by_row.setdefault(a["row_key"], []).append(s)
+    return by_row
 
 
-def row(title, collapsed):
-    return {"id": nid(), "type": "row", "title": title, "collapsed": collapsed,
-            "panels": [], "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0}}
+# ══ BASE panels ═══════════════════════════════════════════════════════════════
+verdict = [
+    {"type": "stat", "title": "🌐 WAN1 RTT", "w": 3, "h": 4, "unit": "ms", "steps": RTT,
+     "targets": [T('pfsense_gateway_delay_seconds{gateway="WAN1GW"}*1000')]},
+    {"type": "stat", "title": "WAN1 Loss", "w": 3, "h": 4, "unit": "percent", "steps": LOSS,
+     "targets": [T('pfsense_gateway_loss_ratio{gateway="WAN1GW"}*100')]},
+    {"type": "stat", "title": "WAN2 RTT", "w": 3, "h": 4, "unit": "ms", "steps": RTT, "desc": WAN2_CAVEAT,
+     "targets": [T('pfsense_gateway_delay_seconds{gateway="WAN2_DHCP"}*1000')]},
+    {"type": "stat", "title": "WAN2 Loss", "w": 3, "h": 4, "unit": "percent", "steps": LOSS, "desc": WAN2_CAVEAT,
+     "targets": [T('pfsense_gateway_loss_ratio{gateway="WAN2_DHCP"}*100')]},
+    {"type": "stat", "title": "WAN ↓ total", "w": 3, "h": 4, "unit": "bps", "colormode": "value",
+     "targets": [T('sum(rate(ifHCInOctets{ifAlias=~"WAN1|WAN2"}[$__rate_interval])*8)')]},
+    {"type": "stat", "title": "DNS resolvers up", "w": 3, "h": 4, "unit": "none",
+     "steps": [{"color": "red", "value": None}, {"color": "yellow", "value": 3}, {"color": "green", "value": 4}],
+     "targets": [T('sum(probe_success{job="blackbox-dns"})')]},
+    {"type": "stat", "title": "🛡️ Pi-hole block %", "w": 3, "h": 4, "unit": "percent", "colormode": "value", "decimals": 1,
+     "steps": [{"color": "blue", "value": None}],
+     "targets": [T(f'sum(pihole_query_by_status{{query_status=~"{BLOCKED}"}}) / sum(pihole_query_by_status) * 100')]},
+    {"type": "stat", "title": "🩺 Cert expiry (min, d)", "w": 3, "h": 4, "unit": "none", "decimals": 0, "steps": CERT,
+     "targets": [T('min(probe_ssl_earliest_cert_expiry - time()) / 86400')]},
+]
 
+wan = [
+    {"type": "timeseries", "title": "Gateway RTT (ms)", "w": 8, "h": 8, "unit": "ms", "steps": RTT,
+     "targets": [T('pfsense_gateway_delay_seconds*1000', "{{gateway}}")]},
+    {"type": "timeseries", "title": "Packet Loss (%)", "w": 8, "h": 8, "unit": "percent", "steps": LOSS, "desc": WAN2_CAVEAT,
+     "targets": [T('pfsense_gateway_loss_ratio*100', "{{gateway}}")]},
+    {"type": "timeseries", "title": "Jitter / stddev (ms)", "w": 8, "h": 8, "unit": "ms", "steps": JIT,
+     "targets": [T('pfsense_gateway_stddev_seconds*1000', "{{gateway}}")]},
+    {"type": "timeseries", "title": "WAN Throughput (in ↑ / out ↓)", "w": 12, "h": 8, "unit": "bps", "negY": ["B"],
+     "targets": [T('rate(ifHCInOctets{ifAlias=~"WAN1|WAN2"}[$__rate_interval])*8', "{{ifAlias}} in"),
+                 T('rate(ifHCOutOctets{ifAlias=~"WAN1|WAN2"}[$__rate_interval])*8', "{{ifAlias}} out")]},
+    {"type": "timeseries", "title": "External DNS lookup time (ms)", "w": 12, "h": 8, "unit": "ms", "steps": DNSL,
+     "targets": [T('probe_dns_lookup_time_seconds{job="blackbox-dns"}*1000', "{{instance}}")]},
+]
 
-# Threshold presets ───────────────────────────────────────────────────────────
-RTT = [{"color": "green", "value": None}, {"color": "yellow", "value": 30}, {"color": "red", "value": 80}]
-LOSS = [{"color": "green", "value": None}, {"color": "yellow", "value": 1}, {"color": "red", "value": 2}]
-JIT = [{"color": "green", "value": None}, {"color": "yellow", "value": 10}, {"color": "red", "value": 30}]
-CERT = [{"color": "red", "value": None}, {"color": "yellow", "value": 14}, {"color": "green", "value": 30}]
-UPDN = [{"color": "red", "value": None}, {"color": "green", "value": 1}]
+interface = [
+    {"type": "timeseries", "title": "Inbound by interface (bits/s)", "w": 12, "h": 8, "unit": "bps",
+     "targets": [T('rate(ifHCInOctets{job="snmp-pfsense", ifAlias=~"$interface"}[$__rate_interval])*8', "{{ifAlias}}")]},
+    {"type": "timeseries", "title": "Outbound by interface (bits/s)", "w": 12, "h": 8, "unit": "bps",
+     "targets": [T('rate(ifHCOutOctets{job="snmp-pfsense", ifAlias=~"$interface"}[$__rate_interval])*8', "{{ifAlias}}")]},
+    {"type": "timeseries", "title": "Interface errors & discards (/s)", "w": 12, "h": 7, "unit": "pps",
+     "steps": [{"color": "green", "value": None}, {"color": "red", "value": 1}],
+     "targets": [T('rate(ifInErrors{ifAlias=~"$interface"}[$__rate_interval])', "{{ifAlias}} in-err"),
+                 T('rate(ifOutErrors{ifAlias=~"$interface"}[$__rate_interval])', "{{ifAlias}} out-err"),
+                 T('rate(ifInDiscards{ifAlias=~"$interface"}[$__rate_interval])', "{{ifAlias}} in-disc"),
+                 T('rate(ifOutDiscards{ifAlias=~"$interface"}[$__rate_interval])', "{{ifAlias}} out-disc")]},
+    {"type": "table", "title": "Interface summary (current)", "w": 12, "h": 7,
+     "targets": [T('rate(ifHCInOctets{job="snmp-pfsense", ifAlias=~"$interface"}[$__rate_interval])*8', instant=True),
+                 T('rate(ifHCOutOctets{job="snmp-pfsense", ifAlias=~"$interface"}[$__rate_interval])*8', instant=True)],
+     "transforms": [
+         {"id": "joinByField", "options": {"byField": "ifAlias", "mode": "outer"}},
+         {"id": "organize", "options": {"excludeByName": {
+             "Time": True, "Time 1": True, "Time 2": True, "__name__": True, "__name__ 1": True,
+             "__name__ 2": True, "cluster": True, "cluster 1": True, "cluster 2": True, "instance": True,
+             "instance 1": True, "instance 2": True, "job": True, "job 1": True, "job 2": True,
+             "region": True, "region 1": True, "region 2": True, "ifDescr": True, "ifDescr 1": True,
+             "ifDescr 2": True, "ifIndex": True, "ifIndex 1": True, "ifIndex 2": True, "ifName": True,
+             "ifName 1": True, "ifName 2": True},
+             "renameByName": {"ifAlias": "Interface", "Value #A": "In (bps)", "Value #B": "Out (bps)"}}}],
+     "overrides": [{"matcher": {"id": "byRegexp", "options": ".*bps.*"},
+                    "properties": [{"id": "unit", "value": "bps"}]}]},
+    {"type": "timeseries", "title": "Per-host top talkers — rx (bits/s)", "w": 12, "h": 7, "unit": "bps",
+     "targets": [T(f'topk(8, rate(node_network_receive_bytes_total{{device!~"{VIRT_DEV}"}}[$__rate_interval])*8)',
+                   "{{instance}} · {{device}}")]},
+    {"type": "timeseries", "title": "Per-host top talkers — tx (bits/s)", "w": 12, "h": 7, "unit": "bps",
+     "targets": [T(f'topk(8, rate(node_network_transmit_bytes_total{{device!~"{VIRT_DEV}"}}[$__rate_interval])*8)',
+                   "{{instance}} · {{device}}")]},
+]
 
+dns = [
+    {"type": "state-timeline", "title": "DNS resolver up", "w": 24, "h": 4,
+     "targets": [T('probe_success{job="blackbox-dns"}', "{{instance}}")]},
+    {"type": "timeseries", "title": "DNS resolver lookup time (ms)", "w": 12, "h": 8, "unit": "ms", "steps": DNSL,
+     "targets": [T('probe_dns_lookup_time_seconds{job="blackbox-dns"}*1000', "{{instance}}")]},
+    {"type": "piechart", "title": "Pi-hole query status mix", "w": 6, "h": 8, "unit": "short",
+     "targets": [T('sum by (query_status) (pihole_query_by_status)', "{{query_status}}")]},
+    {"type": "stat", "title": "Block %", "w": 6, "h": 4, "unit": "percent", "colormode": "value", "decimals": 1,
+     "steps": [{"color": "blue", "value": None}],
+     "targets": [T(f'sum(pihole_query_by_status{{query_status=~"{BLOCKED}"}}) / sum(pihole_query_by_status) * 100')]},
+    {"type": "stat", "title": "Gravity domains", "w": 3, "h": 4, "unit": "short", "colormode": "value",
+     "steps": [{"color": "purple", "value": None}], "targets": [T('max(pihole_domains_being_blocked)')]},
+    {"type": "stat", "title": "Active clients", "w": 3, "h": 4, "unit": "short", "colormode": "value",
+     "steps": [{"color": "blue", "value": None}], "targets": [T('max(pihole_client_count)')]},
+    {"type": "timeseries", "title": "Pi-hole queries in window by instance", "w": 24, "h": 7, "unit": "short",
+     "targets": [T('pihole_query_count', "{{instance}}")]},
+]
+
+PASS = ('rate(pfLogInterfaceIp4PktsInPass[$__rate_interval]) + rate(pfLogInterfaceIp4PktsOutPass[$__rate_interval]) '
+        '+ rate(pfLogInterfaceIp6PktsInPass[$__rate_interval]) + rate(pfLogInterfaceIp6PktsOutPass[$__rate_interval])')
+DROP = ('rate(pfLogInterfaceIp4PktsInDrop[$__rate_interval]) + rate(pfLogInterfaceIp4PktsOutDrop[$__rate_interval]) '
+        '+ rate(pfLogInterfaceIp6PktsInDrop[$__rate_interval]) + rate(pfLogInterfaceIp6PktsOutDrop[$__rate_interval])')
+firewall = [
+    {"type": "timeseries", "title": "pflog: Pass vs Block — packets/s", "w": 12, "h": 8, "unit": "pps", "fill": 20,
+     "targets": [T(PASS, "pass"), T(DROP, "block")]},
+    {"type": "timeseries", "title": "pflog: Logged bytes/s (in ↑ / out ↓)", "w": 12, "h": 8, "unit": "Bps", "negY": ["B"],
+     "targets": [T('rate(pfLogInterfaceIp4BytesIn[$__rate_interval]) + rate(pfLogInterfaceIp6BytesIn[$__rate_interval])', "in"),
+                 T('rate(pfLogInterfaceIp4BytesOut[$__rate_interval]) + rate(pfLogInterfaceIp6BytesOut[$__rate_interval])', "out")]},
+    {"type": "stat", "title": "pflog block rate (pkt/s)", "w": 6, "h": 4, "unit": "pps", "colormode": "value", "decimals": 2,
+     "steps": [{"color": "green", "value": None}, {"color": "yellow", "value": 1}, {"color": "red", "value": 10}],
+     "targets": [T(DROP)]},
+    {"type": "stat", "title": "pflog pass rate (pkt/s)", "w": 6, "h": 4, "unit": "pps", "colormode": "value", "decimals": 2,
+     "targets": [T(PASS)]},
+]
+
+reach = [
+    {"type": "state-timeline", "title": "Probe UP matrix (all blackbox jobs)", "w": 24, "h": 9,
+     "targets": [T('probe_success', "{{job}} · {{instance}}")]},
+    {"type": "stat", "title": "Probes Up %", "w": 6, "h": 4, "unit": "percent", "decimals": 1,
+     "steps": [{"color": "red", "value": None}, {"color": "yellow", "value": 90}, {"color": "green", "value": 100}],
+     "targets": [T('sum(probe_success{instance!~"https://rustdesk.*"}) / count(probe_success{instance!~"https://rustdesk.*"}) * 100')]},
+    {"type": "timeseries", "title": "Probe duration (ms)", "w": 18, "h": 8, "unit": "ms",
+     "steps": [{"color": "green", "value": None}, {"color": "yellow", "value": 500}, {"color": "red", "value": 2000}],
+     "targets": [T('probe_duration_seconds*1000', "{{job}} · {{instance}}")]},
+    {"type": "table", "title": "HTTP status codes", "w": 12, "h": 8,
+     "targets": [T('probe_http_status_code', instant=True)],
+     "transforms": [{"id": "organize", "options": {
+         "excludeByName": {"Time": True, "__name__": True, "cluster": True, "region": True},
+         "renameByName": {"job": "Job", "instance": "Target", "Value": "HTTP code"},
+         "indexByName": {"instance": 0, "job": 1, "Value": 2}}}],
+     "overrides": [{"matcher": {"id": "byName", "options": "HTTP code"},
+                    "properties": [{"id": "custom.cellOptions", "value": {"type": "color-text"}},
+                                   {"id": "thresholds", "value": thr([{"color": "green", "value": None},
+                                                                      {"color": "yellow", "value": 300},
+                                                                      {"color": "red", "value": 400}])}]}]},
+    {"type": "table", "title": "SSL cert expiry (days, soonest first)", "w": 12, "h": 8,
+     "targets": [T('(probe_ssl_earliest_cert_expiry - time()) / 86400', instant=True)],
+     "transforms": [
+         {"id": "filterFieldsByName", "options": {"include": {"pattern": "instance|job|Value"}}},
+         {"id": "organize", "options": {"renameByName": {"job": "Job", "instance": "Target", "Value": "Days left"},
+                                        "indexByName": {"instance": 0, "job": 1, "Value": 2}}},
+         {"id": "sortBy", "options": {"fields": "", "sort": [{"field": "Days left", "desc": False}]}}],
+     "overrides": [{"matcher": {"id": "byName", "options": "Days left"},
+                    "properties": [{"id": "unit", "value": "none"}, {"id": "decimals", "value": 0},
+                                   {"id": "custom.cellOptions", "value": {"type": "color-background"}},
+                                   {"id": "thresholds", "value": thr(CERT)}]}]},
+    {"type": "text", "title": "", "w": 24, "h": 3,
+     "content": ("ℹ️ **Known false-positive:** `rustdesk.home` / `rustdesk-relay.home` report "
+                 "`probe_success=0` on plain-GET probes because they are **WebSocket-only** upstreams "
+                 "(they answer `101 Switching Protocols`). They are **excluded** from the *Probes Up %* "
+                 "tile and *Per-target availability*. See memory `blackbox-rproxy WebSocket false positive`.")},
+]
+
+# ── assemble rows (base + additions) ──────────────────────────────────────────
+adds = load_additions()
+ROWS = [
+    {"key": "verdict", "title": None, "open": True, "panels": verdict},
+    {"key": "wan", "title": "🌐 Internet / WAN — uplink quality & failover", "open": True, "panels": wan + adds.get("wan", [])},
+    {"key": "cloudflare", "title": "🟧 Cloudflare Tunnel / Edge — public ingress health", "open": True, "panels": adds.get("cloudflare", [])},
+    {"key": "interface", "title": "🔀 Interface Throughput & Errors — per VLAN/iface", "open": False, "panels": interface + adds.get("interface", [])},
+    {"key": "dns", "title": "🧭 DNS & Pi-hole — resolution & ad-blocking", "open": False, "panels": dns + adds.get("dns", [])},
+    {"key": "firewall", "title": "🛡️ Firewall — per-VLAN block/pass", "open": False, "panels": firewall + adds.get("firewall", [])},
+    {"key": "reach", "title": "🩺 Service Reachability — blackbox probes", "open": False, "panels": reach + adds.get("reach", [])},
+    {"key": "path", "title": "🔌 Path Health & Uptime — ingress/DNS services", "open": False, "panels": adds.get("path", [])},
+]
+
+# ── layout pass → panels[] with gridPos ───────────────────────────────────────
 panels = []
-g = Grid(0)
+y = 0
+for r in ROWS:
+    if r["title"] is None:
+        rendered, y = pack(r["panels"], y)
+        panels.extend(rendered)
+        continue
+    if r["open"]:
+        panels.append({"id": nid(), "type": "row", "title": r["title"], "collapsed": False,
+                       "panels": [], "gridPos": {"h": 1, "w": 24, "x": 0, "y": y}})
+        y += 1
+        rendered, y = pack(r["panels"], y)
+        panels.extend(rendered)
+    else:
+        children, _ = pack(r["panels"], y + 1)
+        panels.append({"id": nid(), "type": "row", "title": r["title"], "collapsed": True,
+                       "panels": children, "gridPos": {"h": 1, "w": 24, "x": 0, "y": y}})
+        y += 1
 
-# ── VERDICT STRIP (always visible) ────────────────────────────────────────────
-panels.append(stat("🌐 WAN1 RTT", g.place(3, 4),
-                   'pfsense_gateway_delay_seconds{gateway="WAN1GW"}*1000', "ms", RTT))
-panels.append(stat("WAN1 Loss", g.place(3, 4),
-                   'pfsense_gateway_loss_ratio{gateway="WAN1GW"}*100', "percent", LOSS))
-panels.append(stat("WAN2 RTT", g.place(3, 4),
-                   'pfsense_gateway_delay_seconds{gateway="WAN2_DHCP"}*1000', "ms", RTT))
-panels.append(stat("WAN2 Loss", g.place(3, 4),
-                   'pfsense_gateway_loss_ratio{gateway="WAN2_DHCP"}*100', "percent", LOSS))
-panels.append(stat("WAN ↓ total", g.place(3, 4),
-                   'sum(rate(ifHCInOctets{ifAlias=~"WAN1|WAN2"}[5m])*8)', "bps",
-                   [{"color": "green", "value": None}], color="thresholds", colormode="value"))
-panels.append(stat("DNS resolvers up", g.place(3, 4),
-                   'sum(probe_success{job="blackbox-dns"})', "none",
-                   [{"color": "red", "value": None}, {"color": "yellow", "value": 3},
-                    {"color": "green", "value": 4}]))
-panels.append(stat("🛡️ Pi-hole block %", g.place(3, 4),
-                   f'sum(pihole_query_by_status{{query_status=~"{BLOCKED}"}}) '
-                   f'/ sum(pihole_query_by_status) * 100', "percent",
-                   [{"color": "blue", "value": None}], color="thresholds", colormode="value",
-                   decimals=1))
-panels.append(stat("🩺 Cert expiry (min, d)", g.place(3, 4),
-                   'min(probe_ssl_earliest_cert_expiry - time()) / 86400', "none",
-                   CERT, decimals=0))
-
-# ── ROW 1: Internet / WAN (open) ──────────────────────────────────────────────
-panels.append(row("🌐 Internet / WAN — uplink quality & failover", False))
-g.advance()  # consume the row header line
-panels.append(timeseries("Gateway RTT (ms)", g.place(8, 8),
-              [tgt('pfsense_gateway_delay_seconds*1000', "{{gateway}}")], "ms", RTT))
-panels.append(timeseries("Packet Loss (%)", g.place(8, 8),
-              [tgt('pfsense_gateway_loss_ratio*100', "{{gateway}}")], "percent", LOSS))
-panels.append(timeseries("Jitter / stddev (ms)", g.place(8, 8),
-              [tgt('pfsense_gateway_stddev_seconds*1000', "{{gateway}}")], "ms", JIT))
-panels.append(timeseries("WAN Throughput (in ↑ / out ↓)", g.place(12, 8),
-              [tgt('rate(ifHCInOctets{ifAlias=~"WAN1|WAN2"}[5m])*8', "{{ifAlias}} in"),
-               tgt('rate(ifHCOutOctets{ifAlias=~"WAN1|WAN2"}[5m])*8', "{{ifAlias}} out")],
-              "bps", neg_legends=("B",)))
-panels.append(timeseries("External DNS lookup time (ms)", g.place(12, 8),
-              [tgt('probe_dns_lookup_time_seconds{job="blackbox-dns"}*1000', "{{instance}}")],
-              "ms", [{"color": "green", "value": None}, {"color": "yellow", "value": 50},
-                     {"color": "red", "value": 200}]))
-
-# ── ROW 2: Interface Throughput & Errors (open) ───────────────────────────────
-panels.append(row("🔀 Interface Throughput & Errors — per VLAN/iface", False))
-g.advance()
-panels.append(timeseries("Inbound by interface (bits/s)", g.place(12, 8),
-              [tgt('rate(ifHCInOctets{job="snmp-pfsense", ifAlias=~"$interface"}[5m])*8',
-                   "{{ifAlias}}")], "bps"))
-panels.append(timeseries("Outbound by interface (bits/s)", g.place(12, 8),
-              [tgt('rate(ifHCOutOctets{job="snmp-pfsense", ifAlias=~"$interface"}[5m])*8',
-                   "{{ifAlias}}")], "bps"))
-panels.append(timeseries("Interface errors & discards (/s)", g.place(12, 7),
-              [tgt('rate(ifInErrors{ifAlias=~"$interface"}[5m])', "{{ifAlias}} in-err"),
-               tgt('rate(ifOutErrors{ifAlias=~"$interface"}[5m])', "{{ifAlias}} out-err"),
-               tgt('rate(ifInDiscards{ifAlias=~"$interface"}[5m])', "{{ifAlias}} in-disc"),
-               tgt('rate(ifOutDiscards{ifAlias=~"$interface"}[5m])', "{{ifAlias}} out-disc")],
-              "pps", [{"color": "green", "value": None}, {"color": "red", "value": 1}]))
-# Interface summary table: merge in/out rates by ifAlias.
-panels.append(table("Interface summary (current)", g.place(12, 7),
-    [tgt('rate(ifHCInOctets{job="snmp-pfsense", ifAlias=~"$interface"}[5m])*8', "", instant=True),
-     tgt('rate(ifHCOutOctets{job="snmp-pfsense", ifAlias=~"$interface"}[5m])*8', "", instant=True)],
-    [
-        {"id": "joinByField", "options": {"byField": "ifAlias", "mode": "outer"}},
-        {"id": "organize", "options": {
-            "excludeByName": {"Time": True, "Time 1": True, "Time 2": True, "__name__": True,
-                              "__name__ 1": True, "__name__ 2": True, "cluster": True,
-                              "cluster 1": True, "cluster 2": True, "instance": True,
-                              "instance 1": True, "instance 2": True, "job": True,
-                              "job 1": True, "job 2": True, "region": True, "region 1": True,
-                              "region 2": True, "ifDescr": True, "ifDescr 1": True,
-                              "ifDescr 2": True, "ifIndex": True, "ifIndex 1": True,
-                              "ifIndex 2": True, "ifName": True, "ifName 1": True,
-                              "ifName 2": True},
-            "renameByName": {"ifAlias": "Interface", "Value #A": "In (bps)",
-                             "Value #B": "Out (bps)"},
-        }},
-    ],
-    overrides=[
-        {"matcher": {"id": "byRegexp", "options": ".*bps.*"},
-         "properties": [{"id": "unit", "value": "bps"}]},
-    ]))
-panels.append(timeseries("Per-host top talkers — rx (bits/s)", g.place(12, 7),
-              [tgt(f'topk(8, rate(node_network_receive_bytes_total{{device!~"{VIRT_DEV}"}}[5m])*8)',
-                   "{{instance}} · {{device}}")], "bps"))
-panels.append(timeseries("Per-host top talkers — tx (bits/s)", g.place(12, 7),
-              [tgt(f'topk(8, rate(node_network_transmit_bytes_total{{device!~"{VIRT_DEV}"}}[5m])*8)',
-                   "{{instance}} · {{device}}")], "bps"))
-
-# ── ROW 3: DNS & Pi-hole (collapsed) ──────────────────────────────────────────
-r3 = row("🧭 DNS & Pi-hole — resolution & ad-blocking", True)
-gc = Grid(0)
-r3["panels"].append(state_timeline("DNS resolver up", gc.place(24, 4),
-                    'probe_success{job="blackbox-dns"}', "{{instance}}"))
-r3["panels"].append(timeseries("DNS resolver lookup time (ms)", gc.place(12, 8),
-                    [tgt('probe_dns_lookup_time_seconds{job="blackbox-dns"}*1000', "{{instance}}")],
-                    "ms", [{"color": "green", "value": None}, {"color": "yellow", "value": 50},
-                           {"color": "red", "value": 200}]))
-r3["panels"].append(piechart("Pi-hole query status mix", gc.place(6, 8),
-                    'sum by (query_status) (pihole_query_by_status)', "{{query_status}}"))
-r3["panels"].append(stat("Block %", gc.place(6, 4),
-                    f'sum(pihole_query_by_status{{query_status=~"{BLOCKED}"}}) '
-                    f'/ sum(pihole_query_by_status) * 100', "percent",
-                    [{"color": "blue", "value": None}], color="thresholds",
-                    colormode="value", decimals=1))
-r3["panels"].append(stat("Gravity domains", gc.place(3, 4),
-                    'max(pihole_domains_being_blocked)', "short",
-                    [{"color": "purple", "value": None}], colormode="value"))
-r3["panels"].append(stat("Active clients", gc.place(3, 4),
-                    'max(pihole_client_count)', "short",
-                    [{"color": "blue", "value": None}], colormode="value"))
-r3["panels"].append(timeseries("Pi-hole queries in window by instance", gc.place(24, 7),
-                    [tgt('pihole_query_count', "{{instance}}")], "short"))
-panels.append(r3)
-g.advance()
-
-# ── ROW 4: Firewall (collapsed) ───────────────────────────────────────────────
-r4 = row("🛡️ Firewall (pflog) — pass vs block", True)
-gc = Grid(0)
-pass_pkts = ('rate(pfLogInterfaceIp4PktsInPass[5m]) + rate(pfLogInterfaceIp4PktsOutPass[5m]) '
-             '+ rate(pfLogInterfaceIp6PktsInPass[5m]) + rate(pfLogInterfaceIp6PktsOutPass[5m])')
-drop_pkts = ('rate(pfLogInterfaceIp4PktsInDrop[5m]) + rate(pfLogInterfaceIp4PktsOutDrop[5m]) '
-             '+ rate(pfLogInterfaceIp6PktsInDrop[5m]) + rate(pfLogInterfaceIp6PktsOutDrop[5m])')
-r4["panels"].append(timeseries("Pass vs Block — packets/s", gc.place(12, 8),
-                    [tgt(pass_pkts, "pass"), tgt(drop_pkts, "block")], "pps", fill=20))
-r4["panels"].append(timeseries("Logged bytes/s (in ↑ / out ↓)", gc.place(12, 8),
-                    [tgt('rate(pfLogInterfaceIp4BytesIn[5m]) + rate(pfLogInterfaceIp6BytesIn[5m])', "in"),
-                     tgt('rate(pfLogInterfaceIp4BytesOut[5m]) + rate(pfLogInterfaceIp6BytesOut[5m])', "out")],
-                    "Bps", neg_legends=("B",)))
-r4["panels"].append(stat("Block rate (pkt/s)", gc.place(6, 4), drop_pkts, "pps",
-                    [{"color": "green", "value": None}, {"color": "yellow", "value": 1},
-                     {"color": "red", "value": 10}], colormode="value", decimals=2))
-r4["panels"].append(stat("Pass rate (pkt/s)", gc.place(6, 4), pass_pkts, "pps",
-                    [{"color": "green", "value": None}], colormode="value", decimals=2))
-panels.append(r4)
-g.advance()
-
-# ── ROW 5: Service Reachability (collapsed) ───────────────────────────────────
-r5 = row("🩺 Service Reachability — blackbox probes", True)
-gc = Grid(0)
-r5["panels"].append(state_timeline("Probe UP matrix (all blackbox jobs)", gc.place(24, 9),
-                    'probe_success', "{{job}} · {{instance}}"))
-r5["panels"].append(stat("Probes Up %", gc.place(6, 4),
-                    'sum(probe_success{instance!~"https://rustdesk.*"}) '
-                    '/ count(probe_success{instance!~"https://rustdesk.*"}) * 100', "percent",
-                    [{"color": "red", "value": None}, {"color": "yellow", "value": 90},
-                     {"color": "green", "value": 100}], decimals=1))
-r5["panels"].append(timeseries("Probe duration (ms)", gc.place(18, 8),
-                    [tgt('probe_duration_seconds*1000', "{{job}} · {{instance}}")], "ms",
-                    [{"color": "green", "value": None}, {"color": "yellow", "value": 500},
-                     {"color": "red", "value": 2000}]))
-r5["panels"].append(table("HTTP status codes", gc.place(12, 8),
-    [tgt('probe_http_status_code', "", instant=True)],
-    [{"id": "organize", "options": {
-        "excludeByName": {"Time": True, "__name__": True, "cluster": True, "region": True},
-        "renameByName": {"job": "Job", "instance": "Target", "Value": "HTTP code"},
-        "indexByName": {"instance": 0, "job": 1, "Value": 2}}}],
-    overrides=[{"matcher": {"id": "byName", "options": "HTTP code"},
-                "properties": [{"id": "custom.cellOptions", "value": {"type": "color-text"}},
-                               {"id": "thresholds", "value": thr(
-                                   [{"color": "green", "value": None},
-                                    {"color": "yellow", "value": 300},
-                                    {"color": "red", "value": 400}])}]}]))
-r5["panels"].append(table("SSL cert expiry (days, soonest first)", gc.place(12, 8),
-    [tgt('(probe_ssl_earliest_cert_expiry - time()) / 86400', "", instant=True)],
-    [{"id": "filterFieldsByName", "options": {"include": {"pattern": "instance|job|Value"}}},
-     {"id": "organize", "options": {
-         "renameByName": {"job": "Job", "instance": "Target", "Value": "Days left"},
-         "indexByName": {"instance": 0, "job": 1, "Value": 2}}},
-     {"id": "sortBy", "options": {"fields": "", "sort": [{"field": "Days left", "desc": False}]}}],
-    overrides=[{"matcher": {"id": "byName", "options": "Days left"},
-                "properties": [{"id": "unit", "value": "none"}, {"id": "decimals", "value": 0},
-                               {"id": "custom.cellOptions", "value": {"type": "color-background"}},
-                               {"id": "thresholds", "value": thr(CERT)}]}]))
-r5["panels"].append({
-    "id": nid(), "type": "text", "title": "", "datasource": None,
-    "gridPos": gc.place(24, 3),
-    "options": {"mode": "markdown", "content":
-        "ℹ️ **Known false-positive:** `rustdesk.home` / `rustdesk-relay.home` report "
-        "`probe_success=0` on plain-GET probes because they are **WebSocket-only** "
-        "upstreams (they answer `101 Switching Protocols`, not `200`). They are "
-        "**excluded** from the *Probes Up %* tile. See memory "
-        "`blackbox-rproxy WebSocket false positive`."}})
-panels.append(r5)
-g.advance()
-
-# ── Dashboard envelope ────────────────────────────────────────────────────────
+# ── dashboard envelope ────────────────────────────────────────────────────────
 dashboard = {
     "uid": "internet-network-overview",
     "title": "🌐 Internet & Network — Overview",
-    "description": "Single-pane NOC view: dual-WAN uplink quality, interface "
-                   "throughput, DNS/Pi-hole, firewall, and service reachability. "
-                   "Generated by scripts/grafana/build_internet_network_overview.py.",
-    "tags": ["network", "internet", "wan", "dns", "blackbox", "homelab", "overview"],
-    "timezone": "browser",
-    "schemaVersion": 39,
-    "version": 1,
-    "editable": True,
-    "weekStart": "",
-    "refresh": "30s",
-    "time": {"from": "now-6h", "to": "now"},
-    "timepicker": {},
-    "annotations": {"list": [{
-        "builtIn": 1, "datasource": {"type": "grafana", "uid": "-- Grafana --"},
-        "enable": True, "hide": True, "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts", "type": "dashboard"}]},
+    "description": "Single-pane NOC view: dual-WAN uplink quality, Cloudflare tunnel edge, "
+                   "interface throughput, DNS/Pi-hole, per-VLAN firewall, service reachability "
+                   "and path health. Generated by scripts/grafana/build_internet_network_overview.py.",
+    "tags": ["network", "internet", "wan", "dns", "blackbox", "cloudflare", "homelab", "overview"],
+    "timezone": "browser", "schemaVersion": 39, "version": 1, "editable": True, "weekStart": "",
+    "refresh": "30s", "time": {"from": "now-6h", "to": "now"}, "timepicker": {},
+    "annotations": {"list": [
+        {"builtIn": 1, "datasource": {"type": "grafana", "uid": "-- Grafana --"}, "enable": True,
+         "hide": True, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard"},
+        {"datasource": DS, "enable": True, "hide": False, "iconColor": "rgba(245, 54, 54, 1)",
+         "name": "WAN failover (gateway down)", "expr": "pfsense_gateway_loss_ratio == 1",
+         "titleFormat": "{{gateway}} 100% loss / down", "step": "30s"},
+        {"datasource": DS, "enable": False, "hide": False, "iconColor": "rgba(255, 152, 0, 1)",
+         "name": "Service restart", "tagKeys": "job",
+         "expr": 'changes(process_start_time_seconds{job=~"nginx|cloudflared|pihole|vault"}[$__interval]) > 0',
+         "titleFormat": "{{job}} restart", "step": "60s"},
+    ]},
     "links": [
-        {"title": "pfSense WAN Quality", "type": "dashboards", "tags": ["pfsense", "wan"],
-         "asDropdown": False, "targetBlank": False, "icon": "external link"},
-        {"title": "Pi-hole", "type": "dashboards", "tags": ["pihole"],
-         "asDropdown": False, "targetBlank": False, "icon": "external link"},
-        {"title": "Blackbox", "type": "dashboards", "tags": ["blackbox"],
-         "asDropdown": False, "targetBlank": False, "icon": "external link"},
-        {"title": "Node Exporter", "type": "dashboards", "tags": ["node-exporter"],
-         "asDropdown": False, "targetBlank": False, "icon": "external link"},
+        {"title": "pfSense WAN Quality", "type": "dashboards", "tags": ["pfsense", "wan"], "asDropdown": False, "targetBlank": False, "icon": "external link"},
+        {"title": "Pi-hole", "type": "dashboards", "tags": ["pihole"], "asDropdown": False, "targetBlank": False, "icon": "external link"},
+        {"title": "Blackbox", "type": "dashboards", "tags": ["blackbox"], "asDropdown": False, "targetBlank": False, "icon": "external link"},
+        {"title": "Node Exporter", "type": "dashboards", "tags": ["node-exporter"], "asDropdown": False, "targetBlank": False, "icon": "external link"},
     ],
     "templating": {"list": [
         {"name": "interface", "type": "query", "datasource": DS,
-         "query": {"query": 'label_values(ifHCInOctets{job="snmp-pfsense"}, ifAlias)',
-                   "refId": "StandardVariableQuery"},
+         "query": {"query": 'label_values(ifHCInOctets{job="snmp-pfsense"}, ifAlias)', "refId": "StandardVariableQuery"},
          "refresh": 2, "includeAll": True, "multi": True, "allValue": ".*",
          "current": {"text": "All", "value": "$__all"}, "sort": 1, "label": "Interface"},
         {"name": "pihole", "type": "query", "datasource": DS,
-         "query": {"query": "label_values(pihole_query_count, instance)",
-                   "refId": "StandardVariableQuery"},
+         "query": {"query": "label_values(pihole_query_count, instance)", "refId": "StandardVariableQuery"},
          "refresh": 2, "includeAll": True, "multi": True, "allValue": ".*",
          "current": {"text": "All", "value": "$__all"}, "sort": 1, "label": "Pi-hole"},
     ]},
     "panels": panels,
 }
 
-# sort_keys matches the repo's pretty-format-json pre-commit hook so regeneration
-# is a no-op for the hook (no churn).
 OUT.write_text(json.dumps(dashboard, indent=2, sort_keys=True) + "\n")
-print(f"wrote {OUT}  ({len(panels)} top-level panels, {_id} total ids)")
+n_rows = sum(1 for p in panels if p["type"] == "row")
+n_leaf = sum(1 for p in panels if p["type"] != "row") + sum(len(p.get("panels", [])) for p in panels if p["type"] == "row")
+print(f"wrote {OUT}\n  rows={n_rows}  leaf-panels={n_leaf}  total-ids={_id}")
