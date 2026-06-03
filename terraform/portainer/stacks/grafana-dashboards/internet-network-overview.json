@@ -1534,6 +1534,7 @@
             "uid": "thanos"
           },
           "expr": "pfsense_gateway_delay_seconds{gateway=~\"WAN1GW|WAN2_DHCP\"}*1000",
+          "format": "table",
           "instant": true,
           "legendFormat": "RTT ms",
           "range": false,
@@ -1545,6 +1546,7 @@
             "uid": "thanos"
           },
           "expr": "pfsense_gateway_loss_ratio{gateway=~\"WAN1GW|WAN2_DHCP\"}*100",
+          "format": "table",
           "instant": true,
           "legendFormat": "Loss %",
           "range": false,
@@ -1556,6 +1558,7 @@
             "uid": "thanos"
           },
           "expr": "avg_over_time((pfsense_gateway_loss_ratio{gateway=~\"WAN1GW|WAN2_DHCP\"} < bool 1)[$__range:]) * 100",
+          "format": "table",
           "instant": true,
           "legendFormat": "Avail %",
           "range": false,
@@ -3058,6 +3061,7 @@
                 "uid": "thanos"
               },
               "expr": "rate(ifHCInOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\"}[5m])*8",
+              "format": "table",
               "instant": true,
               "legendFormat": "",
               "range": false,
@@ -3069,6 +3073,7 @@
                 "uid": "thanos"
               },
               "expr": "rate(ifHCOutOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\"}[5m])*8",
+              "format": "table",
               "instant": true,
               "legendFormat": "",
               "range": false,
@@ -3403,6 +3408,7 @@
                 "uid": "thanos"
               },
               "expr": "ifMtu{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}",
+              "format": "table",
               "instant": true,
               "legendFormat": "{{ifAlias}}",
               "range": false,
@@ -6357,6 +6363,7 @@
                 "uid": "thanos"
               },
               "expr": "probe_http_status_code",
+              "format": "table",
               "instant": true,
               "legendFormat": "",
               "range": false,
@@ -6468,6 +6475,7 @@
                 "uid": "thanos"
               },
               "expr": "(probe_ssl_earliest_cert_expiry - time()) / 86400",
+              "format": "table",
               "instant": true,
               "legendFormat": "",
               "range": false,
@@ -6740,6 +6748,7 @@
                 "uid": "thanos"
               },
               "expr": "(time() - process_start_time_seconds{job=~\"nginx|cloudflared|pihole|vault\"})",
+              "format": "table",
               "instant": true,
               "legendFormat": "uptime",
               "range": false,

@@ -151,6 +151,12 @@ def mk(s, gp):
                 "targets": targets}
 
     if t == "table":
+        # Prometheus instant queries must use format=table so labels become
+        # columns the join/organize transforms can key on (else "No data").
+        for tg in targets:
+            tg["format"] = "table"
+            tg["instant"] = True
+            tg["range"] = False
         return {**common, "type": "table",
                 "fieldConfig": {"defaults": {"custom": {"filterable": True, "align": "auto"},
                                              "mappings": s.get("mappings", [])},
