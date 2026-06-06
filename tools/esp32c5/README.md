@@ -166,5 +166,5 @@ tools/esp32c5/
 
 ## Future migration
 
-These scripts will migrate to `monitoring/wifi-probe-esp32c5/tools/` when the firmware submodule
+These scripts will migrate to `monitoring/esp32-c5-wifi-probe/tools/` when the firmware submodule
 is created (per the design spec §Submodule mechanics).

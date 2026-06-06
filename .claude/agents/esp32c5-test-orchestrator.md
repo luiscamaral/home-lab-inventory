@@ -37,7 +37,7 @@ Evaluate current status by checking which source files exist:
 # Check which components have been implemented
 ls tools/esp32c5/smoke/main/*.c 2>/dev/null || echo "smoke only"
 # For real firmware (future):
-ls monitoring/wifi-probe-esp32c5/main/*.c 2>/dev/null || echo "firmware repo not yet created"
+ls monitoring/esp32-c5-wifi-probe/main/*.c 2>/dev/null || echo "firmware repo not yet created"
 ```
 
 Component checklist:

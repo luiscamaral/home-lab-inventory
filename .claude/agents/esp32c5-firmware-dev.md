@@ -15,7 +15,7 @@ ESP-IDF v6 C firmware that compiles clean under warnings-as-errors for target `e
 Always read the full spec before writing any code:
 `docs/superpowers/specs/2026-06-06-esp32-c5-wifi-probe-design.md`
 
-The firmware submodule will eventually live at `monitoring/wifi-probe-esp32c5/` (not yet created).
+The firmware submodule will eventually live at `monitoring/esp32-c5-wifi-probe/` (not yet created).
 During development, use `tools/esp32c5/` as scratch space.
 
 ## Component ownership

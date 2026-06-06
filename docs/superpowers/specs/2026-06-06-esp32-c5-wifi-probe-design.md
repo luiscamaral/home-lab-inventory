@@ -1,7 +1,7 @@
 # 📡 ESP32-C5 WiFi Probe — Firmware Submodule
 
 **Date:** 2026-06-06 · **Status:** design refined (FSM + cache); HIL toolchain provisioning
-**Submodule (this repo):** `monitoring/wifi-probe-esp32c5/`
+**Submodule (this repo):** `monitoring/esp32-c5-wifi-probe/`
 **Firmware repo:** `github.com/luiscamaral/esp32-c5-wifi-probe` (private)
 **Toolchain floor:** ESP-IDF **v6.0.1** (stable) · target `esp32c5`
 
@@ -158,9 +158,9 @@ docs/  METRICS.md  PROVISIONING.md  OTA.md
 ## 🔗 Submodule mechanics & doc integration (this repo)
 
 1. Create the private GitHub repo, push the scaffold, then
-   `git submodule add <url> monitoring/wifi-probe-esp32c5` → creates
+   `git submodule add <url> monitoring/esp32-c5-wifi-probe` → creates
    `.gitmodules` (this repo's first submodule).
-2. **New pointer doc** `docs/network/wifi-probe-esp32c5.md`: what it is, the
+2. **New pointer doc** `docs/network/esp32-c5-wifi-probe.md`: what it is, the
    metric surface, that firmware lives in the submodule, and a **TODO Prometheus
    scrape-job stub** (static target, pending IoT-VLAN IP + HOME→IoT firewall
    carve-out).
@@ -169,7 +169,7 @@ docs/  METRICS.md  PROVISIONING.md  OTA.md
    "blackbox-on-Pi" note with firmware-native `/metrics`, link the submodule +
    new doc.
 4. **Forward-link** in `wifi-internet-quality-2026-05-25.md` → "mitigation: see
-   wifi-probe-esp32c5".
+   esp32-c5-wifi-probe".
 
 ## 🧪 ESP-IDF v6 specifics baked into the design
 
