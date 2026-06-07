@@ -329,6 +329,11 @@ both exporters are needed; if no, pick one.
 
 ### 2.6 Wireless probe host (synthetic WiFi client)
 
+> ✅ **Implemented as the ESP32-C5 WiFi probe** — see
+> [esp32-c5-wifi-probe.md](esp32-c5-wifi-probe.md). The dual-band Wi-Fi 6 C5
+> supersedes the ESP32-S3 option below and exposes `/metrics` natively (no
+> blackbox-exporter). Core (P0–P4) built clean + boot-verified on hardware.
+
 **Why:** even with §2.3-2.5, all the data is from the AP's side. A
 **dedicated wireless device running blackbox-exporter** measures what an
 actual WiFi client experiences end-to-end. Yesterday's 80%-loss event

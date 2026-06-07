@@ -67,6 +67,9 @@ The pattern is unambiguous: **wired-only paths are pristine; anything that
 crosses the air-link degrades sharply.** This is a WiFi problem, not an
 internet or routing problem.
 
+**Mitigation:** a synthetic WiFi client now measures this from the client side —
+see [esp32-c5-wifi-probe.md](esp32-c5-wifi-probe.md).
+
 ---
 
 ## 3. WiFi link details (laptop)
