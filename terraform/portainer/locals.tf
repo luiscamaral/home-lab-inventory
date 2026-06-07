@@ -86,14 +86,17 @@ locals {
       # One scrape target per deployed probe. The `room` label is the
       # wifi-probes-overview dashboard's per-room dimension; `instance`
       # is a friendly probe id. Probes must be reachable from this
-      # Prometheus. Empty until probes are deployed — add per room, e.g.:
-      #   - targets: [192.168.59.80:9100]
-      #     labels: { instance: wifi-probe-living-room, room: living-room }
+      # Prometheus. The dev board (desk) is the first live target; add more
+      # rooms below as probes are deployed, e.g.:
       #   - targets: [192.168.59.81:9100]
       #     labels: { instance: wifi-probe-bedroom, room: bedroom }
       - job_name: wifi-probe
+        scrape_interval: 30s
+        scrape_timeout: 15s
         metrics_path: /metrics
-        static_configs: []
+        static_configs:
+          - targets: [192.168.15.246:9100]
+            labels: { instance: wifi-probe-desk, room: desk }
 
       # ── cadvisor — container metrics ────────────────────────────────
       - job_name: cadvisor
@@ -554,14 +557,17 @@ locals {
       # One scrape target per deployed probe. The `room` label is the
       # wifi-probes-overview dashboard's per-room dimension; `instance`
       # is a friendly probe id. Probes must be reachable from this
-      # Prometheus. Empty until probes are deployed — add per room, e.g.:
-      #   - targets: [192.168.59.80:9100]
-      #     labels: { instance: wifi-probe-living-room, room: living-room }
+      # Prometheus. The dev board (desk) is the first live target; add more
+      # rooms below as probes are deployed, e.g.:
       #   - targets: [192.168.59.81:9100]
       #     labels: { instance: wifi-probe-bedroom, room: bedroom }
       - job_name: wifi-probe
+        scrape_interval: 30s
+        scrape_timeout: 15s
         metrics_path: /metrics
-        static_configs: []
+        static_configs:
+          - targets: [192.168.15.246:9100]
+            labels: { instance: wifi-probe-desk, room: desk }
 
       - job_name: cadvisor
         static_configs:
