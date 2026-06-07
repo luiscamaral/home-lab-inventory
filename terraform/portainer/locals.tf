@@ -82,6 +82,19 @@ locals {
           - targets: [192.168.4.1:9100]
             labels: { instance: pfsense }
 
+      # ── wifi-probe — ESP32-C5 per-room WiFi probes (:9100) ──────────
+      # One scrape target per deployed probe. The `room` label is the
+      # wifi-probes-overview dashboard's per-room dimension; `instance`
+      # is a friendly probe id. Probes must be reachable from this
+      # Prometheus. Empty until probes are deployed — add per room, e.g.:
+      #   - targets: [192.168.59.80:9100]
+      #     labels: { instance: wifi-probe-living-room, room: living-room }
+      #   - targets: [192.168.59.81:9100]
+      #     labels: { instance: wifi-probe-bedroom, room: bedroom }
+      - job_name: wifi-probe
+        metrics_path: /metrics
+        static_configs: []
+
       # ── cadvisor — container metrics ────────────────────────────────
       - job_name: cadvisor
         static_configs:
@@ -536,6 +549,19 @@ locals {
             labels: { instance: nas }
           - targets: [192.168.4.1:9100]
             labels: { instance: pfsense }
+
+      # ── wifi-probe — ESP32-C5 per-room WiFi probes (:9100) ──────────
+      # One scrape target per deployed probe. The `room` label is the
+      # wifi-probes-overview dashboard's per-room dimension; `instance`
+      # is a friendly probe id. Probes must be reachable from this
+      # Prometheus. Empty until probes are deployed — add per room, e.g.:
+      #   - targets: [192.168.59.80:9100]
+      #     labels: { instance: wifi-probe-living-room, room: living-room }
+      #   - targets: [192.168.59.81:9100]
+      #     labels: { instance: wifi-probe-bedroom, room: bedroom }
+      - job_name: wifi-probe
+        metrics_path: /metrics
+        static_configs: []
 
       - job_name: cadvisor
         static_configs:
