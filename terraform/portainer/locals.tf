@@ -95,8 +95,18 @@ locals {
         scrape_timeout: 15s
         metrics_path: /metrics
         static_configs:
-          - targets: [192.168.15.246:9100]
-            labels: { instance: wifi-probe-desk, room: desk }
+          - targets: [192.168.1.42:9100]
+            labels: { instance: HO-WIFI-PROBE, room: desk }
+          - targets: [192.168.1.43:9100]
+            labels: { instance: wifi-probe-43, room: reserved-43 }
+          - targets: [192.168.1.44:9100]
+            labels: { instance: wifi-probe-44, room: reserved-44 }
+          - targets: [192.168.1.45:9100]
+            labels: { instance: wifi-probe-45, room: reserved-45 }
+          - targets: [192.168.1.46:9100]
+            labels: { instance: wifi-probe-46, room: reserved-46 }
+          - targets: [192.168.1.47:9100]
+            labels: { instance: wifi-probe-47, room: reserved-47 }
 
       # ── cadvisor — container metrics ────────────────────────────────
       - job_name: cadvisor
@@ -566,8 +576,18 @@ locals {
         scrape_timeout: 15s
         metrics_path: /metrics
         static_configs:
-          - targets: [192.168.15.246:9100]
-            labels: { instance: wifi-probe-desk, room: desk }
+          - targets: [192.168.1.42:9100]
+            labels: { instance: HO-WIFI-PROBE, room: desk }
+          - targets: [192.168.1.43:9100]
+            labels: { instance: wifi-probe-43, room: reserved-43 }
+          - targets: [192.168.1.44:9100]
+            labels: { instance: wifi-probe-44, room: reserved-44 }
+          - targets: [192.168.1.45:9100]
+            labels: { instance: wifi-probe-45, room: reserved-45 }
+          - targets: [192.168.1.46:9100]
+            labels: { instance: wifi-probe-46, room: reserved-46 }
+          - targets: [192.168.1.47:9100]
+            labels: { instance: wifi-probe-47, room: reserved-47 }
 
       - job_name: cadvisor
         static_configs:
