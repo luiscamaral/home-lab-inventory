@@ -1912,7 +1912,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "last_over_time(wifi_client_rssi_dbm{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]) * on (instance, band) group_left(bssid, ssid, auth) last_over_time(wifi_client_bssid_info{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window])",
+          "expr": "last_over_time(wifi_client_rssi_dbm{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]) * on (instance, band) group_left(bssid, ssid, auth) (topk(1, last_over_time(wifi_client_bssid_info{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window])) by (instance, band))",
           "format": "table",
           "instant": true,
           "legendFormat": "rssi",
@@ -1924,7 +1924,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "last_over_time(wifi_client_channel{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]) * on (instance, band) group_left(bssid, ssid, auth) last_over_time(wifi_client_bssid_info{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window])",
+          "expr": "last_over_time(wifi_client_channel{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]) * on (instance, band) group_left(bssid, ssid, auth) (topk(1, last_over_time(wifi_client_bssid_info{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window])) by (instance, band))",
           "format": "table",
           "instant": true,
           "legendFormat": "ch",
