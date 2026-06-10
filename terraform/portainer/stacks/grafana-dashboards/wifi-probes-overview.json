@@ -859,7 +859,7 @@
               "options": {
                 "0": {
                   "color": "red",
-                  "text": "timeout"
+                  "text": "no response"
                 },
                 "204": {
                   "color": "green",
@@ -1109,7 +1109,7 @@
             "lineWidth": 1,
             "pointSize": 6,
             "showPoints": "auto",
-            "spanNulls": true,
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -1165,7 +1165,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "probe_last_duration_seconds{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}",
+          "expr": "probe_last_duration_seconds{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"} and (probe_success{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"} == 1)",
           "instant": false,
           "legendFormat": "{{room}} \u00b7 {{probe}} \u00b7 {{band}}",
           "range": true,
@@ -1279,14 +1279,24 @@
             "lineWidth": 1,
             "pointSize": 6,
             "showPoints": "auto",
-            "spanNulls": true,
+            "spanNulls": false,
             "stacking": {
               "group": "A",
               "mode": "none"
             }
           },
           "decimals": 0,
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "text": "no response"
+                }
+              },
+              "type": "value"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1496,7 +1506,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "probe_last_duration_seconds{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}",
+          "expr": "probe_last_duration_seconds{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"} and (probe_success{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"} == 1)",
           "format": "table",
           "instant": true,
           "legendFormat": "lastlat",
