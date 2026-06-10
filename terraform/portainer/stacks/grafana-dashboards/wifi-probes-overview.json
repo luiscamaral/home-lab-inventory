@@ -1593,6 +1593,177 @@
       "type": "table"
     },
     {
+      "id": 26,
+      "type": "state-timeline",
+      "title": "Probe error stage \u2014 why a probe fails (room \u00d7 probe \u00d7 band)",
+      "description": "Failing stage of the last attempt per probe slot. OK/green when passing; otherwise names the layer that broke: DNS resolution, TCP connect, TLS handshake/cert, HTTP response, timeout, or an internal/local error. Firmware >= 0.5.1.2.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "thanos"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 43
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "green",
+                  "text": "OK"
+                },
+                "1": {
+                  "color": "purple",
+                  "text": "DNS"
+                },
+                "2": {
+                  "color": "red",
+                  "text": "TCP"
+                },
+                "3": {
+                  "color": "orange",
+                  "text": "TLS"
+                },
+                "4": {
+                  "color": "yellow",
+                  "text": "HTTP"
+                },
+                "5": {
+                  "color": "dark-red",
+                  "text": "TIMEOUT"
+                },
+                "6": {
+                  "color": "text",
+                  "text": "INTERNAL"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "max": 6,
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.85,
+        "showValue": "auto",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "thanos"
+          },
+          "expr": "probe_last_error_stage{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}",
+          "instant": false,
+          "range": true,
+          "legendFormat": "{{room}} \u00b7 {{probe}} \u00b7 {{band}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "type": "timeseries",
+      "title": "Probe failures by stage over $window",
+      "description": "increase(probe_errors_total) grouped by room, probe and failing stage. Flat zero = healthy. Firmware >= 0.5.1.2.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "thanos"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 51
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 60,
+            "gradientMode": "none",
+            "lineInterpolation": "stepBefore",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
+          "decimals": 0,
+          "mappings": [],
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "thanos"
+          },
+          "expr": "sum by (room, probe, stage) (increase(probe_errors_total{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]))",
+          "instant": false,
+          "range": true,
+          "legendFormat": "{{room}} \u00b7 {{probe}} \u00b7 {{stage}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
       "datasource": {
         "type": "prometheus",
         "uid": "thanos"
@@ -1630,7 +1801,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 43
+        "y": 59
       },
       "id": 20,
       "options": {
@@ -1668,7 +1839,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 67
       },
       "id": 21,
       "panels": [],
@@ -1727,7 +1898,7 @@
         "h": 8,
         "w": 16,
         "x": 0,
-        "y": 52
+        "y": 68
       },
       "id": 22,
       "options": {
@@ -1801,7 +1972,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 52
+        "y": 68
       },
       "id": 23,
       "options": {
@@ -1907,7 +2078,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 60
+        "y": 76
       },
       "id": 24,
       "options": {
@@ -2012,7 +2183,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 69
+        "y": 85
       },
       "id": 25,
       "options": {
@@ -2046,7 +2217,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 92
       },
       "id": 31,
       "panels": [
@@ -2560,7 +2731,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 77
+        "y": 93
       },
       "id": 37,
       "panels": [
