@@ -337,7 +337,7 @@
         "type": "prometheus",
         "uid": "thanos"
       },
-      "description": "Total WiFi disconnects over $window (includes expected band-switch flaps).",
+      "description": "WiFi disconnects NOT initiated by the band scheduler (AP kick, beacon timeout, failed association) over $window. Healthy steady-state is 0; a reboot adds a couple of association retries. Deliberate band-switch flaps (~15/probe/15m by design) are tracked separately in wifi_client_disconnect_total. Firmware >= 0.5.1.5.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -393,14 +393,14 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "sum(increase(wifi_client_disconnect_total{job=\"wifi-probe\", room=~\"$room\"}[$window]))",
+          "expr": "sum(increase(wifi_client_unexpected_disconnect_total{job=\"wifi-probe\", room=~\"$room\"}[$window]))",
           "instant": false,
           "legendFormat": "disc",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "\ud83d\udd0c Disconnects ($window)",
+      "title": "\ud83d\udd0c Unexpected Disconnects ($window)",
       "type": "stat"
     },
     {
@@ -1593,20 +1593,11 @@
       "type": "table"
     },
     {
-      "id": 26,
-      "type": "state-timeline",
-      "title": "Probe error stage \u2014 why a probe fails (room \u00d7 probe \u00d7 band)",
-      "description": "Failing stage of the last attempt per probe slot. OK/green when passing; otherwise names the layer that broke: DNS resolution, TCP connect, TLS handshake/cert, HTTP response, timeout, or an internal/local error. Firmware >= 0.5.1.2.",
       "datasource": {
         "type": "prometheus",
         "uid": "thanos"
       },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 43
-      },
+      "description": "Failing stage of the last attempt per probe slot. OK/green when passing; otherwise names the layer that broke: DNS resolution, TCP connect, TLS handshake/cert, HTTP response, timeout, or an internal/local error. Firmware >= 0.5.1.2.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1652,6 +1643,8 @@
               "type": "value"
             }
           ],
+          "max": 6,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1660,12 +1653,17 @@
                 "value": null
               }
             ]
-          },
-          "max": 6,
-          "min": 0
+          }
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 43
+      },
+      "id": 26,
       "options": {
         "alignValue": "center",
         "legend": {
@@ -1689,27 +1687,20 @@
           },
           "expr": "probe_last_error_stage{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}",
           "instant": false,
-          "range": true,
           "legendFormat": "{{room}} \u00b7 {{probe}} \u00b7 {{band}}",
+          "range": true,
           "refId": "A"
         }
-      ]
+      ],
+      "title": "Probe error stage \u2014 why a probe fails (room \u00d7 probe \u00d7 band)",
+      "type": "state-timeline"
     },
     {
-      "id": 27,
-      "type": "timeseries",
-      "title": "Probe failures by stage over $window",
-      "description": "increase(probe_errors_total) grouped by room, probe and failing stage. Flat zero = healthy. Firmware >= 0.5.1.2.",
       "datasource": {
         "type": "prometheus",
         "uid": "thanos"
       },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 51
-      },
+      "description": "increase(probe_errors_total) grouped by room, probe and failing stage. Flat zero = healthy. Firmware >= 0.5.1.2.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1735,6 +1726,13 @@
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 51
+      },
+      "id": 27,
       "options": {
         "legend": {
           "calcs": [
@@ -1757,11 +1755,13 @@
           },
           "expr": "sum by (room, probe, stage) (increase(probe_errors_total{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]))",
           "instant": false,
-          "range": true,
           "legendFormat": "{{room}} \u00b7 {{probe}} \u00b7 {{stage}}",
+          "range": true,
           "refId": "A"
         }
-      ]
+      ],
+      "title": "Probe failures by stage over $window",
+      "type": "timeseries"
     },
     {
       "datasource": {
