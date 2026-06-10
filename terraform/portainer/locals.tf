@@ -97,6 +97,8 @@ locals {
         static_configs:
           - targets: [192.168.1.42:9100]
             labels: { instance: HO-WIFI-PROBE, room: home-office }
+          - targets: [192.168.1.43:9100]
+            labels: { instance: MBR-WIFI-PROBE, room: master-bedroom }
 
       # ── cadvisor — container metrics ────────────────────────────────
       - job_name: cadvisor
@@ -568,6 +570,8 @@ locals {
         static_configs:
           - targets: [192.168.1.42:9100]
             labels: { instance: HO-WIFI-PROBE, room: home-office }
+          - targets: [192.168.1.43:9100]
+            labels: { instance: MBR-WIFI-PROBE, room: master-bedroom }
 
       - job_name: cadvisor
         static_configs:
