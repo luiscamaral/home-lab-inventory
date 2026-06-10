@@ -1229,5 +1229,80 @@ locals {
                 Probe to {{ $$labels.instance }} has been taking over 5s for
                 5 minutes. Upstream is responding but slowly — could be DB
                 load, NFS contention, or downstream service degradation.
+
+      # 2026-06-10: ESP32-C5 wifi-probe fleet health. Motivated by the
+      # internet_https outage (05:53-08:33) that no rule caught: failures
+      # rendered as near-zero latency on dashboards and status-code froze
+      # at 204. blackbox-exporter also emits probe_success, so every rule
+      # here MUST filter job="wifi-probe".
+      - name: wifi-probes
+        interval: 1m
+        rules:
+          - alert: WifiProbeScrapeDown
+            expr: up{job="wifi-probe"} == 0
+            for: 5m
+            labels:
+              severity: critical
+              category: wifi-probe
+            annotations:
+              summary: "wifi-probe {{ $$labels.room }} not scrapable"
+              description: |
+                Prometheus cannot scrape {{ $$labels.instance }} for 5m.
+                Device crashed, lost WiFi, or /metrics is wedged. Try
+                http://{{ $$labels.instance }}/status then POST /reboot
+                (token) before a physical power-cycle.
+          - alert: WifiProbeInternetDown
+            expr: max by (room) (probe_success{job="wifi-probe", probe="internet_https"}) == 0
+            for: 10m
+            labels:
+              severity: critical
+              category: wifi-probe
+            annotations:
+              summary: "internet_https failing on ALL bands in {{ $$labels.room }}"
+              description: |
+                The HTTPS canary (google generate_204) is failing on every
+                band of the {{ $$labels.room }} probe for 10m. If
+                internet_ip/lan_dns are still green this is a TLS/path
+                issue, not WiFi. Check probe_last_error_stage to see the
+                failing stage (1=dns 2=tcp 3=tls 4=http 5=timeout).
+          - alert: WifiProbeProbeFailing
+            expr: probe_success{job="wifi-probe"} == 0
+            for: 20m
+            labels:
+              severity: warning
+              category: wifi-probe
+            annotations:
+              summary: "{{ $$labels.probe }} failing on {{ $$labels.room }}/{{ $$labels.band }}"
+              description: |
+                Probe {{ $$labels.probe }} ({{ $$labels.target }}) on
+                {{ $$labels.room }} band {{ $$labels.band }} has failed
+                every round for 20m. Single band/probe — likely local
+                (AP band health, DNS, or target-specific).
+          - alert: WifiProbeStale
+            expr: probe_last_success_age_seconds{job="wifi-probe"} > 1800
+            for: 5m
+            labels:
+              severity: warning
+              category: wifi-probe
+            annotations:
+              summary: "{{ $$labels.probe }} on {{ $$labels.room }}/{{ $$labels.band }} stale {{ printf \"%.0f\" $$value }}s"
+              description: |
+                No successful {{ $$labels.probe }} probe on
+                {{ $$labels.room }}/{{ $$labels.band }} for 30m. Catches a
+                frozen probe engine or a band that never reconnects even
+                when probe_success still reads 1 from a stale gauge.
+          - alert: WifiProbeHeapLow
+            expr: wifi_probe_heap_largest_free_block_bytes{job="wifi-probe"} < 32768
+            for: 15m
+            labels:
+              severity: critical
+              category: wifi-probe
+            annotations:
+              summary: "wifi-probe {{ $$labels.room }} heap fragmenting ({{ $$value }} B largest block)"
+              description: |
+                Largest contiguous free block under 32 KiB for 15m. OTA
+                needs ~16 KiB contiguous for TLS — below that the device
+                can only be recovered via /reboot or power-cycle. This is
+                the phase-12 fragmentation regression guard.
   EOT
 }
