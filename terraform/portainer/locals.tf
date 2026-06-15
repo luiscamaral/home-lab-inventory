@@ -82,25 +82,28 @@ locals {
           - targets: [192.168.4.1:9100]
             labels: { instance: pfsense }
 
-      # ── wifi-probe — ESP32-C5 per-room WiFi probes (:9100) ──────────
-      # One scrape target per deployed probe. The `room` label is the
-      # wifi-probes-overview dashboard's per-room dimension; `instance`
-      # is a friendly probe id. Probes must be reachable from this
-      # Prometheus. The dev board (desk) is the first live target; add more
-      # rooms below as probes are deployed, e.g.:
-      #   - targets: [192.168.59.81:9100]
-      #     labels: { instance: wifi-probe-bedroom, room: bedroom }
+      # ── wifi-probe — ESP32-C5 per-room WiFi probes via OTLP collector ──
+      # Probes PUSH OTLP/HTTP to the otel-collector (192.168.59.46:4318); it
+      # caches each series for 30m (metric_expiration) and serves them on :8889.
+      # Scraping the collector instead of the probes directly bridges the
+      # band-switch dark windows — the radio is single-band, so a direct
+      # :9100 scrape misses whichever band is off-air at scrape time (the
+      # success-matrix gaps). honor_labels keeps the collector's
+      # room/instance/job labels (mapped from the OTLP resource attrs:
+      # service.name=wifi-probe, room=<location>). See otelcol_config below.
       - job_name: wifi-probe
         scrape_interval: 30s
         scrape_timeout: 15s
         metrics_path: /metrics
+        honor_labels: true
         static_configs:
-          - targets: [192.168.1.42:9100]
-            labels: { instance: HO-WIFI-PROBE, room: home-office }
-          - targets: [192.168.1.43:9100]
-            labels: { instance: MBR-WIFI-PROBE, room: master-bedroom }
-          - targets: [192.168.1.44:9100]
-            labels: { instance: GARAGE-WIFI-PROBE, room: garage }
+          - targets: [192.168.59.46:8889]
+
+      # ── otel-collector — self-telemetry for the wifi-probe push pipeline ──
+      - job_name: otel-collector
+        static_configs:
+          - targets: [192.168.59.46:8888]
+            labels: { instance: otel-collector }
 
       # ── cadvisor — container metrics ────────────────────────────────
       - job_name: cadvisor
@@ -557,25 +560,28 @@ locals {
           - targets: [192.168.4.1:9100]
             labels: { instance: pfsense }
 
-      # ── wifi-probe — ESP32-C5 per-room WiFi probes (:9100) ──────────
-      # One scrape target per deployed probe. The `room` label is the
-      # wifi-probes-overview dashboard's per-room dimension; `instance`
-      # is a friendly probe id. Probes must be reachable from this
-      # Prometheus. The dev board (desk) is the first live target; add more
-      # rooms below as probes are deployed, e.g.:
-      #   - targets: [192.168.59.81:9100]
-      #     labels: { instance: wifi-probe-bedroom, room: bedroom }
+      # ── wifi-probe — ESP32-C5 per-room WiFi probes via OTLP collector ──
+      # Probes PUSH OTLP/HTTP to the otel-collector (192.168.59.46:4318); it
+      # caches each series for 30m (metric_expiration) and serves them on :8889.
+      # Scraping the collector instead of the probes directly bridges the
+      # band-switch dark windows — the radio is single-band, so a direct
+      # :9100 scrape misses whichever band is off-air at scrape time (the
+      # success-matrix gaps). honor_labels keeps the collector's
+      # room/instance/job labels (mapped from the OTLP resource attrs:
+      # service.name=wifi-probe, room=<location>). See otelcol_config below.
       - job_name: wifi-probe
         scrape_interval: 30s
         scrape_timeout: 15s
         metrics_path: /metrics
+        honor_labels: true
         static_configs:
-          - targets: [192.168.1.42:9100]
-            labels: { instance: HO-WIFI-PROBE, room: home-office }
-          - targets: [192.168.1.43:9100]
-            labels: { instance: MBR-WIFI-PROBE, room: master-bedroom }
-          - targets: [192.168.1.44:9100]
-            labels: { instance: GARAGE-WIFI-PROBE, room: garage }
+          - targets: [192.168.59.46:8889]
+
+      # ── otel-collector — self-telemetry for the wifi-probe push pipeline ──
+      - job_name: otel-collector
+        static_configs:
+          - targets: [192.168.59.46:8888]
+            labels: { instance: otel-collector }
 
       - job_name: cadvisor
         static_configs:
@@ -1279,19 +1285,34 @@ locals {
       - name: wifi-probes
         interval: 1m
         rules:
-          - alert: WifiProbeScrapeDown
-            expr: up{job="wifi-probe"} == 0
+          - alert: OtelCollectorDown
+            expr: up{job="otel-collector"} == 0
             for: 5m
             labels:
               severity: critical
               category: wifi-probe
             annotations:
-              summary: "wifi-probe {{ $$labels.room }} not scrapable"
+              summary: "otel-collector down — wifi-probe push pipeline blind"
               description: |
-                Prometheus cannot scrape {{ $$labels.instance }} for 5m.
-                Device crashed, lost WiFi, or /metrics is wedged. Try
-                http://{{ $$labels.instance }}/status then POST /reboot
-                (token) before a physical power-cycle.
+                Prometheus cannot scrape the OTLP collector
+                (192.168.59.46:8888) for 5m. ALL rooms stop reporting (probes
+                push to it; Prometheus scrapes its :8889 cache). Check the
+                otel-collector Portainer stack on dockermaster.
+          - alert: WifiProbeNoData
+            expr: changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) == 0
+            for: 10m
+            labels:
+              severity: critical
+              category: wifi-probe
+            annotations:
+              summary: "wifi-probe {{ $$labels.room }} stopped pushing"
+              description: |
+                No fresh OTLP push from {{ $$labels.instance }}
+                ({{ $$labels.room }}) for 10m — uptime stopped advancing. The
+                collector serves the last value for 30m, so this fires before
+                the series expires. Device crashed, lost WiFi, can't reach the
+                collector :4318, or its push is wedged. Try
+                http://{{ $$labels.instance }}/status then POST /reboot (token).
           - alert: WifiProbeInternetDown
             expr: max by (room) (probe_success{job="wifi-probe", probe="internet_https"}) == 0
             for: 10m
