@@ -19,12 +19,12 @@
           "uid": "thanos"
         },
         "enable": true,
-        "expr": "up{job=\"wifi-probe\", room=~\"$room\"} == 0",
+        "expr": "changes(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[5m]) == 0",
         "hide": false,
         "iconColor": "rgba(245, 54, 54, 1)",
-        "name": "Probe down",
+        "name": "Probe not reporting",
         "step": "30s",
-        "titleFormat": "{{room}} probe down"
+        "titleFormat": "{{room}} not reporting"
       }
     ]
   },
@@ -47,7 +47,7 @@
         "type": "prometheus",
         "uid": "thanos"
       },
-      "description": "Fraction of wifi-probe scrape targets Prometheus can reach (band-independent up{}). or vector(0) keeps an empty/no-target fleet at a clear 0 instead of No data.",
+      "description": "Fraction of rooms whose probe data is FRESH \u2014 uptime advanced within $window. Cutover-agnostic: holds whether Prometheus scrapes probes directly or via the OTLP collector cache (which serves the last push for 30m). or vector(0) keeps an empty fleet at a clear 0 instead of No data.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -103,14 +103,14 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "(count(up{job=\"wifi-probe\", room=~\"$room\"} == 1) / count(up{job=\"wifi-probe\", room=~\"$room\"})) or vector(0)",
+          "expr": "(count(changes(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[$window]) > 0) / count(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"})) or vector(0)",
           "instant": false,
-          "legendFormat": "up",
+          "legendFormat": "fresh",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "\ud83d\udce1 Probes Up",
+      "title": "\ud83d\udce1 Probes Reporting",
       "type": "stat"
     },
     {
@@ -118,7 +118,7 @@
         "type": "prometheus",
         "uid": "thanos"
       },
-      "description": "Distinct rooms with at least one live probe right now. Green at \u22651 so a single-room (or $room-filtered) deployment isn't falsely degraded.",
+      "description": "Distinct rooms reporting probe data. Green at \u22651 so a single-room (or $room-filtered) deployment isn't falsely degraded.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -170,7 +170,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "count(count by (room) (up{job=\"wifi-probe\", room=~\"$room\"} == 1)) or vector(0)",
+          "expr": "count(count by (room) (wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"})) or vector(0)",
           "instant": false,
           "legendFormat": "rooms",
           "range": true,
@@ -337,7 +337,7 @@
         "type": "prometheus",
         "uid": "thanos"
       },
-      "description": "WiFi disconnects NOT initiated by the band scheduler (AP kick, beacon timeout, failed association) over $window. Healthy steady-state is 0; a reboot adds a couple of association retries. Deliberate band-switch flaps (~15/probe/15m by design) are tracked separately in wifi_client_disconnect_total. Firmware >= 0.5.1.5.",
+      "description": "Total WiFi disconnects over $window (includes expected band-switch flaps).",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -393,14 +393,14 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "sum(increase(wifi_client_unexpected_disconnect_total{job=\"wifi-probe\", room=~\"$room\"}[$window]))",
+          "expr": "sum(increase(wifi_client_disconnect_total{job=\"wifi-probe\", room=~\"$room\"}[$window]))",
           "instant": false,
           "legendFormat": "disc",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "\ud83d\udd0c Unexpected Disconnects ($window)",
+      "title": "\ud83d\udd0c Disconnects ($window)",
       "type": "stat"
     },
     {
@@ -859,7 +859,7 @@
               "options": {
                 "0": {
                   "color": "red",
-                  "text": "no response"
+                  "text": "timeout"
                 },
                 "204": {
                   "color": "green",
@@ -1109,7 +1109,7 @@
             "lineWidth": 1,
             "pointSize": 6,
             "showPoints": "auto",
-            "spanNulls": false,
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
@@ -1165,7 +1165,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "probe_last_duration_seconds{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"} and (probe_success{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"} == 1)",
+          "expr": "probe_last_duration_seconds{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}",
           "instant": false,
           "legendFormat": "{{room}} \u00b7 {{probe}} \u00b7 {{band}}",
           "range": true,
@@ -1279,24 +1279,14 @@
             "lineWidth": 1,
             "pointSize": 6,
             "showPoints": "auto",
-            "spanNulls": false,
+            "spanNulls": true,
             "stacking": {
               "group": "A",
               "mode": "none"
             }
           },
           "decimals": 0,
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "text": "no response"
-                }
-              },
-              "type": "value"
-            }
-          ],
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1506,7 +1496,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "probe_last_duration_seconds{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"} and (probe_success{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"} == 1)",
+          "expr": "probe_last_duration_seconds{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}",
           "format": "table",
           "instant": true,
           "legendFormat": "lastlat",
@@ -1597,177 +1587,6 @@
         "type": "prometheus",
         "uid": "thanos"
       },
-      "description": "Failing stage of the last attempt per probe slot. OK/green when passing; otherwise names the layer that broke: DNS resolution, TCP connect, TLS handshake/cert, HTTP response, timeout, or an internal/local error. Firmware >= 0.5.1.2.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "fillOpacity": 70,
-            "lineWidth": 0,
-            "spanNulls": false
-          },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "green",
-                  "text": "OK"
-                },
-                "1": {
-                  "color": "purple",
-                  "text": "DNS"
-                },
-                "2": {
-                  "color": "red",
-                  "text": "TCP"
-                },
-                "3": {
-                  "color": "orange",
-                  "text": "TLS"
-                },
-                "4": {
-                  "color": "yellow",
-                  "text": "HTTP"
-                },
-                "5": {
-                  "color": "dark-red",
-                  "text": "TIMEOUT"
-                },
-                "6": {
-                  "color": "text",
-                  "text": "INTERNAL"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "max": 6,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 43
-      },
-      "id": 26,
-      "options": {
-        "alignValue": "center",
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "mergeValues": true,
-        "rowHeight": 0.85,
-        "showValue": "auto",
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "thanos"
-          },
-          "expr": "probe_last_error_stage{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}",
-          "instant": false,
-          "legendFormat": "{{room}} \u00b7 {{probe}} \u00b7 {{band}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Probe error stage \u2014 why a probe fails (room \u00d7 probe \u00d7 band)",
-      "type": "state-timeline"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "thanos"
-      },
-      "description": "increase(probe_errors_total) grouped by room, probe and failing stage. Flat zero = healthy. Firmware >= 0.5.1.2.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "bars",
-            "fillOpacity": 60,
-            "gradientMode": "none",
-            "lineInterpolation": "stepBefore",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            }
-          },
-          "decimals": 0,
-          "mappings": [],
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 51
-      },
-      "id": 27,
-      "options": {
-        "legend": {
-          "calcs": [
-            "sum"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "thanos"
-          },
-          "expr": "sum by (room, probe, stage) (increase(probe_errors_total{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]))",
-          "instant": false,
-          "legendFormat": "{{room}} \u00b7 {{probe}} \u00b7 {{stage}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Probe failures by stage over $window",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "thanos"
-      },
       "description": "Ranks every room\u00d7probe by staleness. CAVEAT: a never-succeeded probe shows NO bar \u2014 cross-check the success matrix (always has a lane).",
       "fieldConfig": {
         "defaults": {
@@ -1801,7 +1620,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 59
+        "y": 43
       },
       "id": 20,
       "options": {
@@ -1839,7 +1658,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 67
+        "y": 51
       },
       "id": 21,
       "panels": [],
@@ -1898,7 +1717,7 @@
         "h": 8,
         "w": 16,
         "x": 0,
-        "y": 68
+        "y": 52
       },
       "id": 22,
       "options": {
@@ -1972,7 +1791,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 68
+        "y": 52
       },
       "id": 23,
       "options": {
@@ -2078,7 +1897,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 60
       },
       "id": 24,
       "options": {
@@ -2093,7 +1912,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "last_over_time(wifi_client_rssi_dbm{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]) * on (instance, band) group_left(bssid, ssid, auth) (topk(1, last_over_time(wifi_client_bssid_info{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window])) by (instance, band))",
+          "expr": "last_over_time(wifi_client_rssi_dbm{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]) * on (instance, band) group_left(bssid, ssid, auth) last_over_time(wifi_client_bssid_info{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window])",
           "format": "table",
           "instant": true,
           "legendFormat": "rssi",
@@ -2105,7 +1924,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "last_over_time(wifi_client_channel{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]) * on (instance, band) group_left(bssid, ssid, auth) (topk(1, last_over_time(wifi_client_bssid_info{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window])) by (instance, band))",
+          "expr": "last_over_time(wifi_client_channel{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]) * on (instance, band) group_left(bssid, ssid, auth) last_over_time(wifi_client_bssid_info{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window])",
           "format": "table",
           "instant": true,
           "legendFormat": "ch",
@@ -2183,7 +2002,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 85
+        "y": 69
       },
       "id": 25,
       "options": {
@@ -2217,7 +2036,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 92
+        "y": 76
       },
       "id": 31,
       "panels": [
@@ -2731,7 +2550,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 93
+        "y": 77
       },
       "id": 37,
       "panels": [
@@ -3180,6 +2999,464 @@
       ],
       "title": "\ud83d\udce1 AP Survey \u2014 what each room sees (passive scan)",
       "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 78
+      },
+      "id": 44,
+      "panels": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "thanos"
+          },
+          "description": "otel-collector scrape target up. DOWN = the whole push pipeline is blind (no room reports). Pairs with the OtelCollectorDown alert.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 0,
+              "mappings": [
+                {
+                  "options": {
+                    "0": {
+                      "color": "red",
+                      "text": "DOWN"
+                    },
+                    "1": {
+                      "color": "green",
+                      "text": "UP"
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 0,
+            "y": 79
+          },
+          "id": 38,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "thanos"
+              },
+              "expr": "max(up{job=\"otel-collector\"})",
+              "instant": false,
+              "legendFormat": "up",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udd0c Collector",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "thanos"
+          },
+          "description": "Collector resident memory. metric_expiration (30m) bounds the held series; watch for unbounded growth.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 0,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 6,
+            "y": 79
+          },
+          "id": 39,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "thanos"
+              },
+              "expr": "max(otelcol_process_memory_rss{job=\"otel-collector\"})",
+              "instant": false,
+              "legendFormat": "rss",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83e\udde0 Collector RAM",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "thanos"
+          },
+          "description": "Receiver-refused datapoints/s \u2014 should be 0. Nonzero = malformed pushes or backpressure.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 3,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.001
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 12,
+            "y": 79
+          },
+          "id": 40,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "thanos"
+              },
+              "expr": "sum(rate(otelcol_receiver_refused_metric_points{job=\"otel-collector\"}[$window]))",
+              "instant": false,
+              "legendFormat": "refused",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udce5 Refused pts/s",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "thanos"
+          },
+          "description": "Exporter send-failed datapoints/s \u2014 should be 0. Nonzero = the :8889 Prometheus exporter is unhealthy.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "decimals": 3,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 0.001
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 18,
+            "y": 79
+          },
+          "id": 41,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "thanos"
+              },
+              "expr": "sum(rate(otelcol_exporter_send_failed_metric_points{job=\"otel-collector\"}[$window]))",
+              "instant": false,
+              "legendFormat": "failed",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udce4 Send-fail pts/s",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "thanos"
+          },
+          "description": "Datapoints/s the collector accepts from probe pushes (and re-exports to Prometheus). Each room pushes ~7 chunks per ~50-110s band cycle; a room going silent steps this down.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "opacity",
+                "lineInterpolation": "stepBefore",
+                "lineWidth": 1,
+                "pointSize": 6,
+                "showPoints": "auto",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              "decimals": 2,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 83
+          },
+          "id": 42,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "thanos"
+              },
+              "expr": "sum(rate(otelcol_receiver_accepted_metric_points{job=\"otel-collector\"}[$window]))",
+              "instant": false,
+              "legendFormat": "accepted",
+              "range": true,
+              "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "thanos"
+              },
+              "expr": "sum(rate(otelcol_exporter_sent_metric_points{job=\"otel-collector\"}[$window]))",
+              "instant": false,
+              "legendFormat": "exported",
+              "range": true,
+              "refId": "B"
+            }
+          ],
+          "title": "\ud83d\udcc8 Ingest throughput \u2014 accepted vs exported pts/s",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "thanos"
+          },
+          "description": "Per room: 1 = a push advanced uptime within the last 6m (PUSHING), 0 = STALE. The direct per-room liveness signal now that `up` reflects the collector, not each probe. 6m > one band cycle so a healthy room never flaps.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "fillOpacity": 80,
+                "lineWidth": 0
+              },
+              "mappings": [
+                {
+                  "options": {
+                    "0": {
+                      "color": "red",
+                      "text": "STALE"
+                    },
+                    "1": {
+                      "color": "green",
+                      "text": "PUSHING"
+                    }
+                  },
+                  "type": "value"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "green",
+                    "value": 1
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 83
+          },
+          "id": 43,
+          "options": {
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom"
+            },
+            "mergeValues": true,
+            "rowHeight": 0.9,
+            "showValue": "never"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "thanos"
+              },
+              "expr": "clamp_max(changes(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[6m]), 1)",
+              "instant": false,
+              "legendFormat": "{{room}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udfe2 Per-room push freshness",
+          "type": "state-timeline"
+        }
+      ],
+      "title": "\ud83d\udd0c OTLP Push Pipeline \u2014 collector & per-room freshness",
+      "type": "row"
     }
   ],
   "refresh": "30s",
@@ -3210,7 +3487,7 @@
         "multi": true,
         "name": "room",
         "query": {
-          "query": "label_values(up{job=\"wifi-probe\"}, room)",
+          "query": "label_values(wifi_probe_uptime_seconds{job=\"wifi-probe\"}, room)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
