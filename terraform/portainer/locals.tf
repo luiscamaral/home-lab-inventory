@@ -1011,6 +1011,43 @@ locals {
   EOT
 
   # ──────────────────────────────────────────────
+  # OTel Collector — OTLP/HTTP receiver → prometheus exporter
+  #
+  # Caching layer for the ESP32 wifi probes (otel-collector stack). The
+  # probes PUSH OTLP/HTTP on :4318; the prometheus exporter holds each
+  # series for 30m (metric_expiration) and serves them on :8889 for both
+  # Prometheus replicas to scrape — bridging the band-switch dark windows.
+  # resource_to_telemetry_conversion turns OTLP resource attributes
+  # (room/instance) into Prometheus labels; enable_open_metrics keeps the
+  # exposition format consistent. Collector self-telemetry on :8888.
+  # ──────────────────────────────────────────────
+  otelcol_config = <<-EOT
+    receivers:
+      otlp:
+        protocols:
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch: {}
+    exporters:
+      prometheus:
+        endpoint: 0.0.0.0:8889
+        metric_expiration: 30m
+        resource_to_telemetry_conversion:
+          enabled: true
+        enable_open_metrics: true
+    service:
+      telemetry:
+        metrics:
+          address: 0.0.0.0:8888
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [prometheus]
+  EOT
+
+  # ──────────────────────────────────────────────
   # blackbox file_sd target lists — Phase 3h
   #
   # Each local renders the JSON body Prometheus reads via file_sd_configs.
