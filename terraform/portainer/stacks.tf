@@ -423,6 +423,7 @@ resource "portainer_stack" "rundeck" {
 #   .26  thanos-query (on dockermaster)
 #   .27  alertmanager-1
 #   .29  snmp-exporter
+#   .46  otel-collector
 # ──────────────────────────────────────────────
 
 # prometheus-1 + thanos-sidecar-1 (replica A) on ds-1.
@@ -1368,6 +1369,31 @@ resource "portainer_stack" "blackbox_exporter" {
 
   stack_file_content = templatefile("${path.module}/stacks/blackbox-exporter.yml.tftpl", {
     blackbox_config = local.blackbox_config
+  })
+}
+
+# ──────────────────────────────────────────────
+# OTel Collector on dockermaster (Phase A — OTLP push cache for wifi probes)
+#
+# Always-up caching layer between the single-radio ESP32 wifi probes and
+# Prometheus. The probes PUSH OTLP/HTTP (plain, :4318); the collector's
+# prometheus exporter holds each series for 30m and serves it on :8889 for
+# both Prometheus replicas to scrape — closing the band-switch dark windows
+# that produced gaps when Prometheus scraped the probes directly.
+#
+# Static IP 192.168.59.46 from the docker-servers-net free pool (next free
+# after .45 blackbox). Config rendered from local.otelcol_config and injected
+# via docker `configs:` — same pattern as blackbox/pihole. Inert until probe
+# firmware (Phase B/C) starts pushing.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "otel_collector" {
+  name            = "otel-collector"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/otel-collector.yml.tftpl", {
+    otelcol_config = local.otelcol_config
   })
 }
 

@@ -1,0 +1,31 @@
+name: otel-collector
+
+# OpenTelemetry Collector — caching layer between the single-radio ESP32 wifi
+# probes and Prometheus. Probes PUSH OTLP/HTTP (plain, :4318); the collector holds
+# the last values (30 min) and exposes them on :8889 for Prometheus to scrape. This
+# bridges the band-switch dark windows that caused gaps when Prometheus scraped the
+# probes directly. Static IP .46 from the docker-servers-net free pool (after .45
+# blackbox). Config injected via configs: + templatefile() (same pattern as blackbox).
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+configs:
+  otelcol_yml:
+    content: |
+      ${indent(6, otelcol_config)}
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.110.0
+    hostname: otel-collector
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.46
+    command: ['--config=/etc/otelcol/config.yml']
+    configs:
+      - source: otelcol_yml
+        target: /etc/otelcol/config.yml
+    restart: unless-stopped
