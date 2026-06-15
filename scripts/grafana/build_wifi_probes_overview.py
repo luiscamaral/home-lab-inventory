@@ -54,6 +54,11 @@ OKFAIL = [{"type": "value", "options": {"0": {"text": "FAIL", "color": "red"},
                                         "1": {"text": "OK", "color": "green"}}}]
 HTTP204 = [{"type": "value", "options": {"0": {"text": "timeout", "color": "red"},
                                          "204": {"text": "204 OK", "color": "green"}}}]
+# Push freshness: 1 = uptime advanced within $window (probe still pushing), 0 = stale.
+PUSHING = [{"type": "value", "options": {"0": {"text": "STALE", "color": "red"},
+                                         "1": {"text": "PUSHING", "color": "green"}}}]
+# Pipeline error rate (refused / send-failed points/s): zero is good, any is bad.
+ERRRATE = [{"color": "green", "value": None}, {"color": "red", "value": 0.001}]
 
 _id = 0
 
@@ -202,16 +207,18 @@ def avglat_by(grp):
 
 # ══ FLEET — household verdict strip (8 stats, w=3 h=4) ═════════════════════════
 fleet = [
-    {"type": "stat", "title": "📡 Probes Up", "unit": "percentunit", "decimals": 0, "steps":
+    {"type": "stat", "title": "📡 Probes Reporting", "unit": "percentunit", "decimals": 0, "steps":
      [{"color": "red", "value": None}, {"color": "yellow", "value": 0.99}, {"color": "green", "value": 1}],
-     "desc": "Fraction of wifi-probe scrape targets Prometheus can reach (band-independent up{}). "
-             "or vector(0) keeps an empty/no-target fleet at a clear 0 instead of No data.",
-     "targets": [T(f'(count(up{{{JOB}, room=~"$room"}} == 1) / count(up{{{JOB}, room=~"$room"}})) or vector(0)', "up")]},
+     "desc": "Fraction of rooms whose probe data is FRESH — uptime advanced within $window. Cutover-agnostic: "
+             "holds whether Prometheus scrapes probes directly or via the OTLP collector cache (which serves the "
+             "last push for 30m). or vector(0) keeps an empty fleet at a clear 0 instead of No data.",
+     "targets": [T(f'(count(changes(wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}}[$window]) > 0) '
+                   f'/ count(wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}})) or vector(0)', "fresh")]},
     {"type": "stat", "title": "🏠 Rooms Covered", "unit": "none", "decimals": 0, "colormode": "value",
      "steps": [{"color": "red", "value": None}, {"color": "green", "value": 1}],
-     "desc": "Distinct rooms with at least one live probe right now. Green at ≥1 so a single-room (or "
-             "$room-filtered) deployment isn't falsely degraded.",
-     "targets": [T(f'count(count by (room) (up{{{JOB}, room=~"$room"}} == 1)) or vector(0)', "rooms")]},
+     "desc": "Distinct rooms reporting probe data. Green at ≥1 so a single-room (or $room-filtered) "
+             "deployment isn't falsely degraded.",
+     "targets": [T(f'count(count by (room) (wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}})) or vector(0)', "rooms")]},
     {"type": "stat", "title": "🌐 Worst-Room Internet", "unit": "none", "decimals": 0, "mappings": OKFAIL,
      "steps": [{"color": "red", "value": None}, {"color": "green", "value": 1}],
      "desc": "internet_https (generate_204) reachability of the weakest room. max-by-room = a room is OK if "
@@ -406,6 +413,42 @@ survey = [
          T(f'count(count by (channel) (wifi_ap_rssi_dbm{{{JOB}, room=~"$room", band=~"$band"}}))', "Channels")]},
 ]
 
+# ══ OTLP PIPELINE — push freshness + collector health ═════════════════════════
+# The probes PUSH OTLP/HTTP to the collector, which caches each series for 30m
+# (metric_expiration) and serves them on :8889 for Prometheus — bridging the
+# band-switch dark windows. These panels watch the pipeline: per-room push
+# freshness (the liveness signal now that `up` is the collector, not the probe)
+# and collector throughput/health from its :8888 self-telemetry.
+OTELJOB = 'job="otel-collector"'
+otlp = [
+    {"type": "stat", "title": "🔌 Collector", "unit": "none", "decimals": 0, "mappings": UPDOWN,
+     "steps": [{"color": "red", "value": None}, {"color": "green", "value": 1}],
+     "desc": "otel-collector scrape target up. DOWN = the whole push pipeline is blind (no room reports). "
+             "Pairs with the OtelCollectorDown alert.",
+     "targets": [T(f'max(up{{{OTELJOB}}})', "up")]},
+    {"type": "stat", "title": "🧠 Collector RAM", "unit": "bytes", "decimals": 0, "steps": GREEN,
+     "colormode": "value",
+     "desc": "Collector resident memory. metric_expiration (30m) bounds the held series; watch for unbounded growth.",
+     "targets": [T(f'max(otelcol_process_memory_rss{{{OTELJOB}}})', "rss")]},
+    {"type": "stat", "title": "📥 Refused pts/s", "unit": "short", "decimals": 3, "steps": ERRRATE,
+     "desc": "Receiver-refused datapoints/s — should be 0. Nonzero = malformed pushes or backpressure.",
+     "targets": [T(f'sum(rate(otelcol_receiver_refused_metric_points{{{OTELJOB}}}[$window]))', "refused")]},
+    {"type": "stat", "title": "📤 Send-fail pts/s", "unit": "short", "decimals": 3, "steps": ERRRATE,
+     "desc": "Exporter send-failed datapoints/s — should be 0. Nonzero = the :8889 Prometheus exporter is unhealthy.",
+     "targets": [T(f'sum(rate(otelcol_exporter_send_failed_metric_points{{{OTELJOB}}}[$window]))', "failed")]},
+    {"type": "timeseries", "title": "📈 Ingest throughput — accepted vs exported pts/s", "unit": "short",
+     "decimals": 2, "steps": GREEN, "desc": "Datapoints/s the collector accepts from probe pushes (and re-exports "
+     "to Prometheus). Each room pushes ~7 chunks per ~50-110s band cycle; a room going silent steps this down.",
+     "targets": [T(f'sum(rate(otelcol_receiver_accepted_metric_points{{{OTELJOB}}}[$window]))', "accepted"),
+                 T(f'sum(rate(otelcol_exporter_sent_metric_points{{{OTELJOB}}}[$window]))', "exported")]},
+    {"type": "state-timeline", "title": "🟢 Per-room push freshness", "steps":
+     [{"color": "red", "value": None}, {"color": "green", "value": 1}], "mappings": PUSHING,
+     "desc": "Per room: 1 = a push advanced uptime within the last 6m (PUSHING), 0 = STALE. The direct per-room "
+     "liveness signal now that `up` reflects the collector, not each probe. 6m > one band cycle so a healthy "
+     "room never flaps.",
+     "targets": [T(f'clamp_max(changes(wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}}[6m]), 1)', "{{room}}")]},
+]
+
 # ── explicit gap-free layout: (height, [(title, width), ...]) lines sum to 24 ──
 LINES = {
     "fleet": [(4, [(p["title"], 3) for p in fleet])],
@@ -431,6 +474,10 @@ LINES = {
         (10, [("📡 Surveyed APs per room (RSSI desc)", 24)]),
         (8, [("Best AP RSSI per room (strongest seen)", 12), ("Best AP RSSI per room — trend", 12)]),
         (8, [("Channel occupancy — distinct BSSIDs/channel", 12), ("📻 Airspace inventory", 12)]),
+    ],
+    "otlp": [
+        (4, [("🔌 Collector", 6), ("🧠 Collector RAM", 6), ("📥 Refused pts/s", 6), ("📤 Send-fail pts/s", 6)]),
+        (8, [("📈 Ingest throughput — accepted vs exported pts/s", 12), ("🟢 Per-room push freshness", 12)]),
     ],
 }
 
@@ -470,6 +517,7 @@ ROWS = [
     {"title": "📶 WiFi Link Quality — RSSI / channel / BSSID", "open": True, "panels": assemble(link, "link")},
     {"title": "🩺 Device Health & Identity", "open": False, "panels": assemble(health, "health")},
     {"title": "📡 AP Survey — what each room sees (passive scan)", "open": False, "panels": assemble(survey, "survey")},
+    {"title": "🔌 OTLP Push Pipeline — collector & per-room freshness", "open": False, "panels": assemble(otlp, "otlp")},
 ]
 
 # ── layout pass → panels[] with gridPos ───────────────────────────────────────
@@ -507,8 +555,8 @@ dashboard = {
         {"builtIn": 1, "datasource": {"type": "grafana", "uid": "-- Grafana --"}, "enable": True,
          "hide": True, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard"},
         {"datasource": DS, "enable": True, "hide": False, "iconColor": "rgba(245, 54, 54, 1)",
-         "name": "Probe down", "expr": f'up{{{JOB}, room=~"$room"}} == 0',
-         "titleFormat": "{{room}} probe down", "step": "30s"},
+         "name": "Probe not reporting", "expr": f'changes(wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}}[5m]) == 0',
+         "titleFormat": "{{room}} not reporting", "step": "30s"},
     ]},
     "links": [
         {"title": "ESP32-C5 WiFi Probe (repo)", "type": "link",
@@ -517,7 +565,7 @@ dashboard = {
     ],
     "templating": {"list": [
         {"name": "room", "type": "query", "datasource": DS,
-         "query": {"query": f'label_values(up{{{JOB}}}, room)', "refId": "StandardVariableQuery"},
+         "query": {"query": f'label_values(wifi_probe_uptime_seconds{{{JOB}}}, room)', "refId": "StandardVariableQuery"},
          "refresh": 2, "includeAll": True, "multi": True, "allValue": ".*",
          "current": {"text": "All", "value": "$__all"}, "sort": 1, "label": "Room"},
         {"name": "band", "type": "query", "datasource": DS,
