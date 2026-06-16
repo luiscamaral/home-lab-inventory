@@ -205,6 +205,19 @@ def avglat_by(grp):
             f'/ clamp_min(sum(increase(probe_duration_seconds_count{{{JOB}, room=~"$room", band=~"$band"}}[$window])) by ({grp}), 1)')
 
 
+# Real request latency: TTFB for the HTTPS probe (its total is ~95% fixed TLS-handshake
+# crypto on the MCU, not network — see the handshake panel), total duration for ICMP/DNS
+# (no handshake, so their total IS the round-trip). Union of two metrics with disjoint
+# series (type!="http" vs the http-only ttfb gauge), so `or` cleanly merges them.
+def reallat():
+    return (f'(probe_last_duration_seconds{{{JOB}, room=~"$room", band=~"$band", type!="http"}} '
+            f'or probe_http_ttfb_seconds{{{JOB}, room=~"$room", band=~"$band"}})')
+
+
+def reallat_avg(grp):
+    return f'avg by ({grp}) (avg_over_time({reallat()}[$window:]))'
+
+
 # ══ FLEET — household verdict strip (8 stats, w=3 h=4) ═════════════════════════
 fleet = [
     {"type": "stat", "title": "📡 Probes Reporting", "unit": "percentunit", "decimals": 0, "steps":
@@ -337,14 +350,24 @@ probe = [
      "desc": "Δsuccess/Δattempts over $window, bands merged per room×probe. Generous window smooths the "
      "per-cycle quantization; clamp_min avoids 0/0 gaps.",
      "targets": [T(ratio_by("room, probe"), "{{room}} · {{probe}}")]},
-    {"type": "timeseries", "title": "Live probe latency — last attempt", "unit": "s", "decimals": 3,
-     "steps": LAT, "colormode": "thresholds", "desc": "probe_last_duration_seconds per room×probe×band. Coarse "
-     "staircase (one step/cycle); flat held segments between cycles are normal.",
-     "targets": [T(f'probe_last_duration_seconds{{{JOB}, room=~"$room", band=~"$band"}}', "{{room}} · {{probe}} · {{band}}")]},
-    {"type": "timeseries", "title": "Avg probe latency over $window", "unit": "s", "decimals": 3, "steps": LAT,
-     "colormode": "thresholds", "desc": "Δsum/Δcount windowed mean (the only panel over duration_sum/_count). "
-     "Bands merged; clamp_min guards empty windows.",
-     "targets": [T(avglat_by("room, probe"), "{{room}} · {{probe}}")]},
+    {"type": "timeseries", "title": "📨 Request latency — TTFB (HTTPS) / RTT", "unit": "s", "decimals": 3,
+     "steps": LAT, "colormode": "thresholds", "desc": "Real request latency per room×probe×band: TTFB for the HTTPS "
+     "probe (its total is ~95% fixed TLS-handshake crypto on the MCU, not network), total duration for ICMP/DNS "
+     "(no handshake → total IS the RTT). Coarse staircase (one step/cycle); held segments are normal. The HTTPS "
+     "handshake cost lives in the next panel so it doesn't false-red here.",
+     "targets": [T(reallat(), "{{room}} · {{probe}} · {{band}}")]},
+    {"type": "timeseries", "title": "Avg request latency over $window", "unit": "s", "decimals": 3, "steps": LAT,
+     "colormode": "thresholds", "desc": "Windowed mean of the real request latency (TTFB for HTTPS, total for "
+     "ICMP/DNS), bands merged per room×probe. avg_over_time over a subquery smooths the per-cycle quantization.",
+     "targets": [T(reallat_avg("room, probe"), "{{room}} · {{probe}}")]},
+    {"type": "timeseries", "title": "🌐 HTTPS handshake vs TTFB (internet_https)", "unit": "s", "decimals": 3,
+     "colormode": "palette-classic", "calcs": ["lastNotNull", "max"],
+     "desc": "Splits the HTTPS probe: connect = DNS+TCP+TLS handshake (the ~0.7 s fixed TLS-crypto cost on the C5 "
+     "MCU — NOT network, ~10-20× a real CPU), TTFB = the real request round-trip (~20 ms, matches curl). A connect "
+     "spike (esp. with err_stage=tls / err_esp=0x8017) = a TLS regression like the 0.9.1 heap-OOM TLS failure; TTFB "
+     "is the real internet-latency signal. No threshold colouring — the ~0.7 s connect is expected here.",
+     "targets": [T(f'probe_http_connect_seconds{{{JOB}, room=~"$room", band=~"$band", probe="internet_https"}}', "{{room}} {{band}} · connect"),
+                 T(f'probe_http_ttfb_seconds{{{JOB}, room=~"$room", band=~"$band", probe="internet_https"}}', "{{room}} {{band}} · ttfb")]},
     {"type": "timeseries", "title": "HTTPS status code over time", "unit": "none", "decimals": 0,
      "steps": [{"color": "red", "value": None}, {"color": "green", "value": 204}, {"color": "yellow", "value": 205}],
      "colormode": "thresholds", "desc": "internet_https code per room/band — a flip 204→200/302 marks a captive "
@@ -352,12 +375,13 @@ probe = [
      "targets": [T(f'probe_http_status_code{{{JOB}, room=~"$room", band=~"$band", probe="internet_https"}}', "{{room}} · {{band}}")]},
     {"type": "table", "title": "📋 Probe SLA matrix — room × probe × band", "unit": "none", "decimals": 3,
      "desc": "Dense per-(room,probe,band) sheet joining every probe metric. A blank Success-age next to Up=0 is "
-     "the silently-failing / never-succeeded signature. target column confirms each probe is aimed correctly.",
+     "the silently-failing / never-succeeded signature. target column confirms each probe is aimed correctly. "
+     "Last/Avg = real request latency (TTFB for HTTPS, total for ICMP/DNS).",
      "targets": [
          T(f'probe_success{{{JOB}, room=~"$room", band=~"$band"}}', "up", instant=True),
          T(ratio_by("room, probe, band, target, type, instance"), "ratio", instant=True),
-         T(f'probe_last_duration_seconds{{{JOB}, room=~"$room", band=~"$band"}}', "lastlat", instant=True),
-         T(avglat_by("room, probe, band, target, type, instance"), "avglat", instant=True),
+         T(reallat(), "lastlat", instant=True),
+         T(reallat_avg("room, probe, band, target, type, instance"), "avglat", instant=True),
          T(f'probe_last_success_age_seconds{{{JOB}, room=~"$room", band=~"$band"}}', "age", instant=True),
          T(f'probe_attempts_total{{{JOB}, room=~"$room", band=~"$band"}}', "att", instant=True)],
      "transforms": organize(
@@ -465,8 +489,9 @@ LINES = {
     "probe": [
         (4, [("✅ Checks passing %", 6), ("📉 Worst success ratio", 6), ("⏱️ Stalest probe age", 6), ("🌐 HTTPS status (204?)", 6)]),
         (8, [("🎯 Probe success matrix — room × probe × band", 24)]),
-        (8, [("Success ratio over $window (room × probe)", 12), ("Live probe latency — last attempt", 12)]),
-        (8, [("Avg probe latency over $window", 12), ("HTTPS status code over time", 12)]),
+        (8, [("Success ratio over $window (room × probe)", 12), ("📨 Request latency — TTFB (HTTPS) / RTT", 12)]),
+        (8, [("Avg request latency over $window", 12), ("🌐 HTTPS handshake vs TTFB (internet_https)", 12)]),
+        (8, [("HTTPS status code over time", 24)]),
         (10, [("📋 Probe SLA matrix — room × probe × band", 24)]),
         (8, [("Probe freshness — last-success age", 24)]),
     ],
