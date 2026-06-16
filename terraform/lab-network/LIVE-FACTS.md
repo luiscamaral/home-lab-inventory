@@ -58,3 +58,20 @@ Read-only reconnaissance captured before any change. Source of truth for IP/leg 
 
 > `arping` is absent on Proxmox; verify each leg IP free via `ip neigh` / a live probe immediately before
 > assigning. All candidates are outside the DHCP pools above and clear of the `.59.0/26` macvlan range.
+
+## Sprint 0 outcome + Sprint 1 blockers (2026-06-16)
+
+- **Proxmox is PVE 9.1.7** (not 8.3.5 as the inventory says) — `bpg/proxmox` targets 9.x, so fine.
+- **Proxmox API token is READ-ONLY.** `secret/homelab/proxmox/api_token` = `prometheus@pam!metrics`
+  with only `*.Audit` perms — it **cannot create VMs or bridges**. Sprint 1.2 needs a NEW token with
+  `VM.Allocate`/`VM.Config.*`/`Datastore.AllocateSpace`/`Sys.Modify`, created via `pveum` (Proxmox root).
+- **MinIO writes via the workstation proxies are unreliable** (Cloudflare `502`, internal Nginx mangled
+  responses). Buckets exist; manage them from a LAN host with direct `:9000`. New TF roots use **local
+  state** (matches existing roots); S3 backend deferred.
+- **`siderolabs/talos` provider binary download hangs** from this workstation (GitHub releases /
+  `objects.githubusercontent.com` unreachable) — blocks the `kubernetes` root init (Sprint 2). Pre-stage
+  the provider or init from a better-connected host.
+- **`terraform/minio` root has lost its primary local state** (only a `.backup` remains; would try to
+  recreate live Keycloak OIDC + policies) — pre-existing; flagged, not touched.
+- VyOS rolling image still to be sourced (downloads on Proxmox, so its connectivity applies, not the
+  workstation's).
