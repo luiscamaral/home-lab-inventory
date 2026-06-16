@@ -1398,7 +1398,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
+        "w": 12,
         "x": 0,
         "y": 33
       },
@@ -1431,6 +1431,91 @@
         }
       ],
       "title": "HTTPS status code over time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "thanos"
+      },
+      "description": "histogram_quantile p95 of probe_duration_seconds for the round-trip probes (gateway / internet_ip / lan_dns), per room\u00d7probe. HTTPS is EXCLUDED \u2014 its total is TLS-handshake-dominated; use the TTFB / handshake panels for HTTPS. NOTE: the histogram observes ALL attempts incl. failures at full duration, so a p95 spike can be failures \u2014 cross-check the success matrix.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "opacity",
+            "lineInterpolation": "stepBefore",
+            "lineWidth": 1,
+            "pointSize": 6,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "decimals": 3,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.15
+              },
+              {
+                "color": "red",
+                "value": 0.5
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 33
+      },
+      "id": 20,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "thanos"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, room, probe) (rate(probe_duration_seconds_bucket{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\", type!=\"http\"}[$window])))",
+          "instant": false,
+          "legendFormat": "{{room}} \u00b7 {{probe}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "p95 latency over $window (ICMP/DNS)",
       "type": "timeseries"
     },
     {
@@ -1547,7 +1632,7 @@
         "x": 0,
         "y": 41
       },
-      "id": 20,
+      "id": 21,
       "options": {
         "footer": {
           "show": false
@@ -1710,7 +1795,7 @@
         "x": 0,
         "y": 51
       },
-      "id": 21,
+      "id": 22,
       "options": {
         "displayMode": "gradient",
         "minVizHeight": 10,
@@ -1816,7 +1901,7 @@
         "x": 0,
         "y": 59
       },
-      "id": 22,
+      "id": 23,
       "options": {
         "legend": {
           "displayMode": "list",
@@ -1888,7 +1973,7 @@
         "x": 12,
         "y": 59
       },
-      "id": 23,
+      "id": 24,
       "options": {
         "legend": {
           "calcs": [
@@ -1927,7 +2012,7 @@
         "x": 0,
         "y": 67
       },
-      "id": 24,
+      "id": 25,
       "panels": [],
       "title": "\ud83d\udcf6 WiFi Link Quality \u2014 RSSI / channel / BSSID",
       "type": "row"
@@ -1986,7 +2071,7 @@
         "x": 0,
         "y": 68
       },
-      "id": 25,
+      "id": 26,
       "options": {
         "legend": {
           "calcs": [
@@ -2060,7 +2145,7 @@
         "x": 16,
         "y": 68
       },
-      "id": 26,
+      "id": 27,
       "options": {
         "displayMode": "gradient",
         "minVizHeight": 10,
@@ -2166,7 +2251,7 @@
         "x": 0,
         "y": 76
       },
-      "id": 27,
+      "id": 28,
       "options": {
         "footer": {
           "show": false
@@ -2271,7 +2356,7 @@
         "x": 0,
         "y": 85
       },
-      "id": 28,
+      "id": 29,
       "options": {
         "legend": {
           "displayMode": "list",
@@ -2305,7 +2390,7 @@
         "x": 0,
         "y": 92
       },
-      "id": 34,
+      "id": 35,
       "panels": [
         {
           "datasource": {
@@ -2389,7 +2474,7 @@
             "x": 0,
             "y": 93
           },
-          "id": 29,
+          "id": 30,
           "options": {
             "footer": {
               "show": false
@@ -2518,7 +2603,7 @@
             "x": 0,
             "y": 101
           },
-          "id": 30,
+          "id": 31,
           "options": {
             "legend": {
               "calcs": [
@@ -2602,7 +2687,7 @@
             "x": 8,
             "y": 101
           },
-          "id": 31,
+          "id": 32,
           "options": {
             "legend": {
               "calcs": [
@@ -2709,7 +2794,7 @@
             "x": 16,
             "y": 101
           },
-          "id": 32,
+          "id": 33,
           "options": {
             "legend": {
               "calcs": [
@@ -2792,7 +2877,7 @@
             "x": 0,
             "y": 109
           },
-          "id": 33,
+          "id": 34,
           "options": {
             "legend": {
               "displayMode": "list",
@@ -2830,14 +2915,14 @@
         "x": 0,
         "y": 93
       },
-      "id": 40,
+      "id": 41,
       "panels": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "thanos"
           },
-          "description": "Passive-scan AP list per room\u00d7band\u00d7BSSID. The same BSSID at different RSSI from different rooms is your coverage map. Top ~6 APs per band; an empty table = scan not yet populated for that band.",
+          "description": "Passive-scan AP list per room\u00d7band\u00d7BSSID, enriched with the operator-assigned name (wifi_ap_info, set via PATCH /aps \u2014 blank if the BSSID isn't named). The same BSSID at different RSSI from different rooms is your coverage map. Top ~6 APs per band; an empty table = scan not yet populated for that band.",
           "fieldConfig": {
             "defaults": {
               "custom": {
@@ -2892,7 +2977,7 @@
             "x": 0,
             "y": 94
           },
-          "id": 35,
+          "id": 36,
           "options": {
             "footer": {
               "show": false
@@ -2908,9 +2993,21 @@
               "expr": "wifi_ap_rssi_dbm{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}",
               "format": "table",
               "instant": true,
-              "legendFormat": "ap",
+              "legendFormat": "rssi",
               "range": false,
               "refId": "A"
+            },
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "thanos"
+              },
+              "expr": "wifi_ap_info{job=\"wifi-probe\", room=~\"$room\"} and on (bssid, instance) wifi_ap_rssi_dbm{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "info",
+              "range": false,
+              "refId": "B"
             }
           ],
           "title": "\ud83d\udce1 Surveyed APs per room (RSSI desc)",
@@ -2924,12 +3021,14 @@
               "options": {
                 "excludeByName": {
                   "Time": true,
+                  "Value #B": true,
                   "__name__": true,
                   "cluster": true,
                   "container": true,
                   "endpoint": true,
                   "instance": true,
                   "job": true,
+                  "location": true,
                   "monitor": true,
                   "namespace": true,
                   "pod": true,
@@ -2938,10 +3037,11 @@
                   "source": true
                 },
                 "renameByName": {
-                  "Value": "RSSI",
+                  "Value #A": "RSSI",
                   "band": "Band",
                   "bssid": "BSSID",
                   "channel": "Ch",
+                  "name": "AP name",
                   "room": "Room",
                   "ssid": "SSID"
                 }
@@ -3004,7 +3104,7 @@
             "x": 0,
             "y": 104
           },
-          "id": 36,
+          "id": 37,
           "options": {
             "displayMode": "gradient",
             "minVizHeight": 10,
@@ -3088,7 +3188,7 @@
             "x": 12,
             "y": 104
           },
-          "id": 37,
+          "id": 38,
           "options": {
             "legend": {
               "calcs": [
@@ -3159,7 +3259,7 @@
             "x": 0,
             "y": 112
           },
-          "id": 38,
+          "id": 39,
           "options": {
             "displayMode": "gradient",
             "minVizHeight": 10,
@@ -3221,7 +3321,7 @@
             "x": 12,
             "y": 112
           },
-          "id": 39,
+          "id": 40,
           "options": {
             "colorMode": "value",
             "graphMode": "none",
@@ -3286,7 +3386,7 @@
         "x": 0,
         "y": 94
       },
-      "id": 47,
+      "id": 48,
       "panels": [
         {
           "datasource": {
@@ -3338,7 +3438,7 @@
             "x": 0,
             "y": 95
           },
-          "id": 41,
+          "id": 42,
           "options": {
             "colorMode": "background",
             "graphMode": "none",
@@ -3401,7 +3501,7 @@
             "x": 6,
             "y": 95
           },
-          "id": 42,
+          "id": 43,
           "options": {
             "colorMode": "value",
             "graphMode": "none",
@@ -3468,7 +3568,7 @@
             "x": 12,
             "y": 95
           },
-          "id": 43,
+          "id": 44,
           "options": {
             "colorMode": "background",
             "graphMode": "none",
@@ -3535,7 +3635,7 @@
             "x": 18,
             "y": 95
           },
-          "id": 44,
+          "id": 45,
           "options": {
             "colorMode": "background",
             "graphMode": "none",
@@ -3612,7 +3712,7 @@
             "x": 0,
             "y": 99
           },
-          "id": 45,
+          "id": 46,
           "options": {
             "legend": {
               "calcs": [
@@ -3706,7 +3806,7 @@
             "x": 12,
             "y": 99
           },
-          "id": 46,
+          "id": 47,
           "options": {
             "legend": {
               "displayMode": "list",
