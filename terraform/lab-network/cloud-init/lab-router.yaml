@@ -1,0 +1,93 @@
+#cloud-config
+# FRR-on-Debian inter-segment router for the Talos lab cluster.
+# Pivoted from VyOS (its rolling images are no longer freely downloadable — 403).
+# Interface IPs come from qm --ipconfig0..3 (cluster/svr/home/lab). This config is
+# interface-NAME-agnostic (matches by IP/subnet) so Debian's ens* naming can't break it.
+hostname: lab-router
+manage_etc_hosts: true
+ssh_authorized_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBHOF/FyuvOCbvCkgalO3XW3U5m99lQc77zzsGXLD5mC root@proxmox
+package_update: true
+packages: [frr, frr-pythontools, nftables, isc-dhcp-server, qemu-guest-agent]
+
+write_files:
+  - path: /etc/sysctl.d/99-router.conf
+    content: "net.ipv4.ip_forward=1\n"
+  - path: /etc/frr/daemons
+    append: true
+    content: |
+      bgpd=yes
+  - path: /etc/frr/frr.conf
+    content: |
+      frr defaults traditional
+      hostname lab-router
+      log syslog informational
+      !
+      router bgp 65010
+       bgp router-id 192.168.30.1
+       no bgp ebgp-requires-policy
+       neighbor 192.168.48.1 remote-as 65000
+       neighbor cluster peer-group
+       neighbor cluster remote-as 65011
+       neighbor 192.168.30.11 peer-group cluster
+       neighbor 192.168.30.12 peer-group cluster
+       neighbor 192.168.30.13 peer-group cluster
+       neighbor 192.168.30.21 peer-group cluster
+       neighbor 192.168.30.22 peer-group cluster
+       address-family ipv4 unicast
+        network 192.168.30.0/24
+        network 192.168.30.128/25
+        aggregate-address 10.244.0.0/16 summary-only
+        neighbor 192.168.48.1 activate
+        neighbor cluster activate
+       exit-address-family
+      !
+      line vty
+  - path: /etc/dhcp/dhcpd.conf
+    content: |
+      default-lease-time 600;
+      max-lease-time 7200;
+      authoritative;
+      subnet 192.168.30.0 netmask 255.255.255.0 {
+        option routers 192.168.30.1;
+        option domain-name-servers 192.168.4.1;
+      }
+      host cp-1 { hardware ethernet bc:24:11:30:00:11; fixed-address 192.168.30.11; }
+      host cp-2 { hardware ethernet bc:24:11:30:00:12; fixed-address 192.168.30.12; }
+      host cp-3 { hardware ethernet bc:24:11:30:00:13; fixed-address 192.168.30.13; }
+      host wk-1 { hardware ethernet bc:24:11:30:00:21; fixed-address 192.168.30.21; }
+      host wk-2 { hardware ethernet bc:24:11:30:00:22; fixed-address 192.168.30.22; }
+  - path: /etc/nftables.conf
+    content: |
+      #!/usr/sbin/nft -f
+      flush ruleset
+      table ip nat {
+        chain postrouting {
+          type nat hook postrouting priority srcnat; policy accept;
+          # cluster egress to everything outside the cluster → masquerade so it works
+          # BEFORE pfSense learns the route via BGP (reach Vault/MinIO/internet now).
+          ip saddr 192.168.30.0/24 ip daddr != 192.168.30.0/24 masquerade
+        }
+        chain prerouting {
+          type nat hook prerouting priority dstnat; policy accept;
+          # inbound edge → Cilium Gateway LB IP (TODO: scope to the SVR-facing iface)
+          tcp dport { 80, 443 } ip daddr != 192.168.30.0/24 dnat to 192.168.30.128
+        }
+      }
+      table inet filter {
+        chain forward {
+          type filter hook forward priority filter; policy accept;
+          # MSS clamp at the HOME jumbo(9000)→cluster(1500) boundary
+          tcp flags syn tcp option maxseg size set 1460
+        }
+      }
+      # TODO: tighten to the zone matrix in the lab-network design spec §4.2.
+
+runcmd:
+  - sysctl --system
+  - systemctl enable nftables frr
+  - systemctl restart nftables frr
+  - 'IFACE=$(ip -o -4 addr show | awk "/192\\.168\\.30\\.1\\//{print \$2; exit}")'
+  - 'sed -i "s/^INTERFACESv4=.*/INTERFACESv4=\"$IFACE\"/" /etc/default/isc-dhcp-server'
+  - systemctl enable isc-dhcp-server
+  - systemctl restart isc-dhcp-server || true

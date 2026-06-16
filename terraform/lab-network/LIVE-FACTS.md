@@ -89,3 +89,15 @@ Read-only reconnaissance captured before any change. Source of truth for IP/leg 
 - 🛑 **VyOS image not freely downloadable** — `downloads.vyos.io/...qcow2` returns **403** (VyOS dropped
   free rolling downloads). Build from source (ISO→qcow2) or use a community nightly mirror, then set
   `var.vyos_image_url` (or pre-stage the disk on Proxmox via sudo).
+
+### RESOLVED — pivoted to FRR-on-Debian; router VM LIVE (2026-06-16)
+
+- Pivoted to **FRR-on-Debian** (freely-available Debian 12 cloud image). Created VM **130 `lab-router`**
+  via `sudo qm` (bpg can't root-SSH for snippet/disk ops): 4 NICs on vmbr30/28/10/0 → eth0-3 with
+  `.30.1`/`.48.2`/`.7.2`/`.100.2`, default route via pfSense `.48.1`. cloud-init at
+  `terraform/lab-network/cloud-init/lab-router.yaml` installs frr/isc-dhcp/nftables + loads BGP (AS65010;
+  peers pfSense `.48.1`/AS65000 + 5 cluster nodes/AS65011) + masquerade for cluster egress.
+- **Verified LIVE:** FRR/DHCP/nftables active; BGP config loaded; peers Active/Connect (waiting for pfSense
+  FRR + the cluster — correct). Debug access: Proxmox root key → `debian@192.168.7.2`.
+- Remaining for full Sprint 1: pfSense FRR + BGP neighbor (1.3, production, back up config first),
+  sloppy-state + zone-firewall tighten (1.4). Reconcile the bpg VyOS TF → FRR, or keep qm-managed + import.
