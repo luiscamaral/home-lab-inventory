@@ -75,3 +75,17 @@ Read-only reconnaissance captured before any change. Source of truth for IP/leg 
   recreate live Keycloak OIDC + policies) — pre-existing; flagged, not touched.
 - VyOS rolling image still to be sourced (downloads on Proxmox, so its connectivity applies, not the
   workstation's).
+
+### Apply attempt (2026-06-16) — token RESOLVED, two environmental blockers remain
+
+- ✅ **Write-capable Proxmox token created + verified.** `sudo pveum` works (askpass helper). Created role
+  `LabIaC` + user `terraform@pve` (already had `Administrator`) + token `terraform@pve!labiac` (privsep 0);
+  stored at Vault `secret/homelab/proxmox/iac_token`. API auth confirmed (node `proxmox` online,
+  `VM.Allocate`/`Sys.Modify` present). Apply with `-var proxmox_token_vault_path=homelab/proxmox/iac_token`.
+- ✅ Leg IPs `.48.2`/`.7.2`/`.100.2` confirmed FREE (no ARP/ping reply).
+- 🛑 **No root SSH to Proxmox** (`root@192.168.32.61` denied; I am `lamaral` + sudo). bpg needs root-level
+  SSH to write `local:snippets` (root-owned) and import disks. Options: give bpg proper SSH (root key or a
+  user with write access), OR create the VM via `sudo qm` + `terraform import`.
+- 🛑 **VyOS image not freely downloadable** — `downloads.vyos.io/...qcow2` returns **403** (VyOS dropped
+  free rolling downloads). Build from source (ISO→qcow2) or use a community nightly mirror, then set
+  `var.vyos_image_url` (or pre-stage the disk on Proxmox via sudo).
