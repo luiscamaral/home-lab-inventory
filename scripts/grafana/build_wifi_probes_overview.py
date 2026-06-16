@@ -455,16 +455,28 @@ probe = [
      "flaky probe is obvious.",
      "targets": [T(f'sum by (room, probe, stage) (increase(probe_errors_total{{{JOB}, room=~"$room", band=~"$band"}}[$window]))',
                    "{{room}} · {{probe}} · {{stage}}")]},
+    {"type": "timeseries", "title": "p95 latency over $window (ICMP/DNS)", "unit": "s", "decimals": 3,
+     "steps": LAT, "colormode": "thresholds", "desc": "histogram_quantile p95 of probe_duration_seconds for the "
+     "round-trip probes (gateway / internet_ip / lan_dns), per room×probe. HTTPS is EXCLUDED — its total is "
+     "TLS-handshake-dominated; use the TTFB / handshake panels for HTTPS. NOTE: the histogram observes ALL attempts "
+     "incl. failures at full duration, so a p95 spike can be failures — cross-check the success matrix.",
+     "targets": [T(f'histogram_quantile(0.95, sum by (le, room, probe) (rate(probe_duration_seconds_bucket'
+                   f'{{{JOB}, room=~"$room", band=~"$band", type!="http"}}[$window])))', "{{room}} · {{probe}}")]},
 ]
 
 # ══ SURVEY — what each room sees ══════════════════════════════════════════════
 survey = [
     {"type": "table", "title": "📡 Surveyed APs per room (RSSI desc)", "unit": "dBm", "decimals": 0,
-     "desc": "Passive-scan AP list per room×band×BSSID. The same BSSID at different RSSI from different rooms "
+     "desc": "Passive-scan AP list per room×band×BSSID, enriched with the operator-assigned name (wifi_ap_info, "
+     "set via PATCH /aps — blank if the BSSID isn't named). The same BSSID at different RSSI from different rooms "
      "is your coverage map. Top ~6 APs per band; an empty table = scan not yet populated for that band.",
-     "targets": [T(f'wifi_ap_rssi_dbm{{{JOB}, room=~"$room", band=~"$band"}}', "ap", instant=True)],
+     "targets": [
+         T(f'wifi_ap_rssi_dbm{{{JOB}, room=~"$room", band=~"$band"}}', "rssi", instant=True),
+         T(f'wifi_ap_info{{{JOB}, room=~"$room"}} and on (bssid, instance) '
+           f'wifi_ap_rssi_dbm{{{JOB}, room=~"$room", band=~"$band"}}', "info", instant=True)],
      "transforms": organize(
-         {"room": "Room", "band": "Band", "ssid": "SSID", "bssid": "BSSID", "channel": "Ch", "Value": "RSSI"}) +
+         {"room": "Room", "band": "Band", "ssid": "SSID", "bssid": "BSSID", "channel": "Ch",
+          "name": "AP name", "Value #A": "RSSI"}, extra_exclude=["Value #B", "location"]) +
          [{"id": "sortBy", "options": {"fields": "", "sort": [{"field": "RSSI", "desc": True}]}}],
      "overrides": [col_override("RSSI", [{"id": "custom.cellOptions", "value": {"type": "color-background"}},
                                          {"id": "thresholds", "value": thr(RSSI)}])]},
@@ -547,7 +559,7 @@ LINES = {
         (8, [("🎯 Probe success matrix — room × probe × band", 24)]),
         (8, [("Success ratio over $window (room × probe)", 12), ("📨 Request latency — TTFB (HTTPS) / RTT", 12)]),
         (8, [("Avg request latency over $window", 12), ("🌐 HTTPS handshake vs TTFB (internet_https)", 12)]),
-        (8, [("HTTPS status code over time", 24)]),
+        (8, [("HTTPS status code over time", 12), ("p95 latency over $window (ICMP/DNS)", 12)]),
         (10, [("📋 Probe SLA matrix — room × probe × band", 24)]),
         (8, [("Probe freshness — last-success age", 24)]),
         (8, [("🚦 Probe error stage", 12), ("📊 Errors by stage / $window", 12)]),
