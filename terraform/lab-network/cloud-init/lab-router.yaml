@@ -45,7 +45,12 @@ write_files:
       # serve the cluster segment. etcd needs clean time. The router's own :123 query
       # to pfSense is INPUT/OUTPUT (not FORWARD), so the zone-firewall does not block it.
       server 192.168.4.1 iburst
+      pool pool.ntp.org iburst
       allow 192.168.30.0/24
+      # Serve the isolated cluster even if ALL upstreams are unreachable, so etcd nodes
+      # stay mutually consistent during a pfSense/internet outage (chrony refuses to serve
+      # while unsynchronised; `local stratum` lets it serve from its own clock as a floor).
+      local stratum 10
   - path: /etc/dhcp/dhcpd.conf
     content: |
       default-lease-time 600;
