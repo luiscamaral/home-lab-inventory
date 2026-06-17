@@ -1,44 +1,71 @@
-# `terraform/lab-network` — VyOS inter-segment router
+# `lab-network` — FRR-on-Debian inter-segment router
 
-Creates the cluster bridge (`vmbr30`) and the **VyOS router** (BGP, DHCP, NAT, NTP, MSS clamp) per
-`docs/superpowers/specs/2026-06-15-lab-network-vyos-design.md`. Companion runbook:
-`docs/superpowers/plans/2026-06-16-talos-lab-cluster.md` (Sprint 1).
+The lab cluster's inter-segment router: an FRR-on-Debian VM that owns the isolated CLUSTER segment,
+BGP-peers with pfSense, and filters east-west traffic. Design:
+`docs/superpowers/specs/2026-06-15-lab-network-vyos-design.md` (written for VyOS; **see the pivot note
+below**). Runbook for the pfSense side: `pfsense-frr-bgp.md`. Live facts: `LIVE-FACTS.md`.
 
-## Status (2026-06-16)
+## Status (2026-06-16): LIVE + verified
 
-**Schema-valid and plan-validated** (`terraform plan` → `4 to add, 0 to change, 0 to destroy`, even with
-the read-only token). **NOT applied.** Apply is gated on the prerequisites below — and on a deliberate
-go-ahead, because applying reconfigures production (Proxmox host network reload + the pfSense BGP peer).
+- **VM 130 `lab-router`** on Proxmox — FRR / isc-dhcp / nftables active; 4 legs
+  (`.30.1` cluster · `.48.2` svr · `.7.2` home · `.100.2` lab); IP-forwarding + masquerade.
+- **BGP Established** with pfSense (`192.168.48.1` AS65000 ↔ router `.48.2` AS65010); pfSense learned
+  `192.168.30.0/24` in its FIB.
+- **Zone firewall enforced** — nftables FORWARD `policy drop` + the design §4.2 allow-matrix.
 
-## Apply prerequisites
+## Why a script, not Terraform (the bpg pivot)
 
-1. **Write-capable Proxmox token** (the only existing token, `prometheus@pam!metrics`, is read-only).
-   On the Proxmox node:
+Two pivots happened during bring-up, both recorded in `LIVE-FACTS.md`:
 
-   ```bash
-   pveum role add LabIaC -privs "VM.Allocate VM.Config.Disk VM.Config.CPU VM.Config.Memory \
-     VM.Config.Network VM.Config.Cloudinit VM.Config.Options VM.PowerMgmt VM.Audit \
-     Datastore.AllocateSpace Datastore.Audit Sys.Modify Sys.Audit SDN.Use"
-   pveum user token add terraform@pam labiac --privsep 0
-   pveum acl modify / -role LabIaC -token 'terraform@pam!labiac'
-   ```
+1. **VyOS → FRR-on-Debian.** VyOS rolling images are now paywalled (HTTP 403). FRR is the same routing
+   engine VyOS wraps, on a freely-downloadable Debian cloud image — and it satisfies the project's
+   no-paywall rule. The router config lives in `cloud-init/lab-router.yaml`.
+2. **bpg/proxmox → `sudo qm`.** bpg needs **root-level SSH** to Proxmox (to upload the cloud-init snippet
+   into the root-owned `local:snippets` and import the disk). This host disables direct root SSH
+   (escalate via `sudo` only), and bpg has no sudo passthrough. So the VM is provisioned by
+   **`bootstrap-lab-router.sh`** — idempotent, version-controlled, reproducible (no snowflake).
 
-   Store `token_id`/`token_secret` in Vault `secret/homelab/proxmox/iac_token`, then set
-   `-var proxmox_token_vault_path=homelab/proxmox/iac_token`.
-2. **pfSense FRR installed** (Sprint 1.1 — manual GUI step) so the BGP neighbor comes up.
-3. **Pin `var.vyos_image_url`** to a specific VyOS rolling build (image downloads on the Proxmox node).
-4. **SSH from the apply host to the Proxmox node** for bpg file ops (`ssh` block, `root`).
+## Provision / reproduce
 
-> **Recommended:** run from a LAN host (`docker-servers-net`) — direct MinIO/Proxmox/GitHub access avoids
-> the workstation's proxy/cert/download problems (see `LIVE-FACTS.md`).
+```sh
+./bootstrap-lab-router.sh          # creates vmbr30 + downloads image + stages cloud-init + builds VM 130
+```
 
-## Apply order (staged, with rollback) — design §6
+## Move it into Terraform (the gated next step)
 
-1. `terraform apply` → `vmbr30` + VyOS up (cluster leg + DHCP). Rollback: `terraform destroy`.
-2. Verify VyOS reachable on `192.168.30.1`; bring up **BGP** to pfSense; confirm `192.168.30.0/24` in the
-   pfSense FIB. Rollback: `shutdown` the BGP neighbor.
-3. Enable pfSense **sloppy-state** for the cluster CIDRs (asymmetric-routing fix). Rollback: disable it.
-4. Tighten the **zone firewall** (the documented TODO in `vyos-config.tftpl`).
+To make this bpg-managed Terraform instead of a script, **authorize an SSH path bpg can use** — a
+security-posture change I did not make unilaterally. Cleanest: a dedicated `terraform` deploy user with a
+key + scoped perms (preferred over re-enabling root login). Then either `terraform import` VM 130 + vmbr30,
+or destroy+recreate via bpg. Sketch of the target resource:
 
-> **Verify the VyOS config syntax on first boot** — `vyos-config.tftpl` content is from the design, but
-> VyOS `set` syntax evolves across rolling builds (esp. firewall zones, DHCP `subnet-id`, `bgp system-as`).
+```hcl
+resource "proxmox_virtual_environment_vm" "lab_router" {
+  vm_id = 130
+  name  = "lab-router"
+  # cpu 2 / mem 2048 / scsi0 8G on thin-pool-ssd / 4 NICs vmbr30,28,10,0
+  # initialization { user_data_file_id = "local:snippets/lab-router-user.yaml"; ip_config × 4 }
+}
+```
+
+## Network contract (authoritative copy in `LIVE-FACTS.md`)
+
+| Item | Value |
+|---|---|
+| CLUSTER segment | `192.168.30.0/24`, gw `.30.1`, bridge `vmbr30` (internal) |
+| Cluster nodes / VIP / LB | cp `.11-.13`, wk `.21-.22`, VIP `.5`, LB pool `.128/25` |
+| BGP ASNs | pfSense 65000 · router 65010 · cluster 65011 |
+| Router legs | svr `.48.2` · home `.7.2` (MTU 9000) · lab `.100.2` |
+
+## Rollback
+
+```sh
+ssh proxmox 'SUDO_ASKPASS=$HOME/.config/bin/answer.sh sudo -A qm stop 130 && qm destroy 130 --purge'
+# bridge: remove the vmbr30 stanza from /etc/network/interfaces (backup at .bak-labrouter) + ifreload -a
+# pfSense side: see pfsense-frr-bgp.md
+```
+
+## TODO (Sprint 2)
+
+- Cluster BGP peers (`.30.11-.22`) light up when Talos exists (router already peers them).
+- Swap `isc-dhcp-server` (retired by ISC) → Kea.
+- Enable the parked edge DNAT once the Cilium Gateway LB IP exists.
