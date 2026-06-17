@@ -123,7 +123,12 @@ adversarial review then surfaced fixes, all applied LIVE (BGP stayed Established
   closed). The `local stratum 10` floor lets the relay keep serving the isolated cluster if all upstreams drop.
 - **As-built corrections:** disk **8G** (spec §3 said 10G); HOME leg MTU **1500** — the _bridge_ `vmbr10`
   is 9000 but the VM virtio NIC was never set jumbo, so the design's "HOME MTU 9000" is **not** as-built
-  (the MSS clamp is general PMTUD safety, not a jumbo-boundary guard). `local` storage `snippets`
-  content-type enabled (bootstrap now does this idempotently).
+  (the MSS clamp is general PMTUD safety, not a jumbo-boundary guard).
+- **Correction (verified live 2026-06-16):** Proxmox `local` content-types are `iso,backup,vztmpl` only —
+  `snippets` is **NOT** enabled there. The router build's `qm set --cicustom local:snippets/...` worked only
+  because the `qm` CLI tolerates a directly-written `/var/lib/vz/snippets/` file; the **bpg/API path validates
+  the content-type flag**. The bootstrap now enables it idempotently (`pvesm set local --content ...,snippets`)
+  but that is not yet applied to the live host. Alternatives already carrying `snippets,import,iso`: the NFS
+  stores `pve-servers-shared` and `pve-backups` (server `192.168.2.50`) — usable for Sprint-2 image ops.
 - **Access contract:** key-only as `debian@` via the Proxmox host `/root/.ssh/id_ed25519` (matches the
   `root@proxmox` key in cloud-init); console fallback `qm terminal 130` (serial0 configured).
