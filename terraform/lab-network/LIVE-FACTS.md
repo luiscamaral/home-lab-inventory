@@ -139,10 +139,10 @@ adversarial review then surfaced fixes, all applied LIVE (BGP stayed Established
   lab-router advertises `192.168.100.0/24` over BGP + nftables masquerades `HOME/SVR → LAB` to its `.100.2`
   leg for symmetric return. pfSense CLUSTER-IN got `seq 15 permit 192.168.100.0/24`. Verified: pfSense
   reaches `.100.1`/`.100.254` at 0% loss; cluster + DHCP + WAN unaffected. Details: `pfsense-frr-bgp.md`.
-- **HOMELAB gateway + static route are disabled/inert** (decommissioned functionally) but **could not be
-  deleted from `config.xml`**: pfSense `write_config()` throws in `cleanup_backupcache()` (`getConfig()`
-  returns an int — config.lib.inc:1523). **This blocks ALL pfSense config saves** and is the same bug behind
-  the Status→Services PHP errors. Fix this deliberately before any further pfSense config change (do not force
-  `write_config` or hand-edit `config.xml`). The live routing is correct regardless (BGP-driven).
+- **HOMELAB gateway + static route REMOVED from `config.xml`** (decommissioned). Done via a one-time
+  `DOMDocument` bypass (validated + atomic swap) because pfSense `write_config()` is **broken** — it throws in
+  `cleanup_backupcache()` (`getConfig()` returns an int — config.lib.inc:1523), the same bug behind the
+  Status→Services PHP errors. **That bug still blocks normal GUI/`write_config` config saves** — fix it
+  deliberately (see next steps); do not rely on GUI saves until then. Live routing is BGP-driven + correct.
 - **FRR restart caveat:** `service frr restart` hangs/leaves FRR down on this box; use **`frr_generate_config()`**
   to restart cleanly (also clears a zebra/kernel route desync).
