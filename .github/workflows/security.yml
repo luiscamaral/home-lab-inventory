@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Fetch full history for comprehensive secret scanning
           fetch-depth: 0
@@ -128,7 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Find all Dockerfiles
         id: find-dockerfiles
@@ -218,7 +218,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Cache Trivy database for faster subsequent runs
       - name: Cache Trivy database
@@ -305,7 +305,7 @@ jobs:
     if: github.event.inputs.scan_built_images == 'true' || github.event.inputs.scan_built_images == null
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -391,7 +391,7 @@ jobs:
     if: github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event.inputs.full_scan == 'true'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Cache dependency databases
       - name: Cache dependency scan data
@@ -446,7 +446,7 @@ jobs:
     if: always() && github.event_name == 'pull_request'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download all scan results
         uses: actions/download-artifact@v4
@@ -661,7 +661,7 @@ jobs:
     if: always()
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download scan results
         uses: actions/download-artifact@v4

@@ -72,7 +72,7 @@ jobs:
       deployment-id: ${{ steps.create-emergency-deployment.outputs.deployment-id }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Full history for git-commit rollbacks
 
@@ -240,7 +240,7 @@ jobs:
     timeout-minutes: 8
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
