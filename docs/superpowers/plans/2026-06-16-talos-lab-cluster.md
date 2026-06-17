@@ -40,9 +40,10 @@ Vault `secret/homelab/proxmox/iac_token`; MinIO buckets `tfstate`/`velero-k8s-la
 
 **Open follow-ups:** reconcile the authored bpg VyOS TF → FRR-on-Debian (or keep VM `qm`-managed +
 `terraform import`); pre-stage `siderolabs/talos` for the `kubernetes` root. **Sprint-2 verify (from the 1.5
-review):** confirm chrony reaches pfSense NTP `.4.1` from the router (public-pool fallback works today);
-re-check cluster→Vault/MinIO uses real node source IPs (masquerade now internet-only); confirm the
-SVR→CLUSTER scrape port list against the live Cilium/Talos chart values when the cluster is up.
+review):** re-check cluster→Vault/MinIO uses real node source IPs end-to-end (masquerade now internet-only;
+relies on pfSense `bypassstaticroutes` for the asymmetric return — already on); confirm the SVR→CLUSTER
+scrape port list against the live Cilium/Talos chart values; confirm the LAB Pi-hole recurses public names
+(image pulls/ACME) for cluster nodes. (Router chrony↔pfSense `.4.1` NTP already verified live.)
 
 ---
 

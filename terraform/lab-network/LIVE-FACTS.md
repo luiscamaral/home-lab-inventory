@@ -117,8 +117,10 @@ adversarial review then surfaced fixes, all applied LIVE (BGP stayed Established
 - **Firewall matrix:** added pod-CIDR transit (`10.244.0.0/16`), Alertmanager-B (`.4.238:9093` above
   the HOME drop), and SVR→CLUSTER ports for Talos apid (50000/50001), Cilium/Hubble (4244/9962/9965),
   and KSM (8080). MSS clamp switched to **clamp-to-PMTU** (`rt mtu`).
-- **NTP relay:** router runs **chrony** (`server 192.168.4.1`, `allow 192.168.30.0/24`); DHCP offers
-  `ntp-servers 192.168.30.1`. (Verify chrony reaches pfSense NTP in Sprint 2; public-pool fallback covers it.)
+- **NTP relay:** router runs **chrony** — `server 192.168.4.1` + `pool pool.ntp.org` + `local stratum 10`
+  floor + `allow 192.168.30.0/24`; DHCP offers `ntp-servers 192.168.30.1`. Verified live: synced **stratum 3**,
+  and **pfSense `.4.1` NTP is reachable + a selected source** (so the Sprint-2 "verify pfSense NTP" item is
+  closed). The `local stratum 10` floor lets the relay keep serving the isolated cluster if all upstreams drop.
 - **As-built corrections:** disk **8G** (spec §3 said 10G); HOME leg MTU **1500** — the _bridge_ `vmbr10`
   is 9000 but the VM virtio NIC was never set jumbo, so the design's "HOME MTU 9000" is **not** as-built
   (the MSS clamp is general PMTUD safety, not a jumbo-boundary guard). `local` storage `snippets`
