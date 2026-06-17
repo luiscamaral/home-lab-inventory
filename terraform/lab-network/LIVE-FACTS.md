@@ -135,10 +135,19 @@ adversarial review then surfaced fixes, all applied LIVE (BGP stayed Established
 
 ## LAB route migration + pfSense write_config bug (2026-06-17)
 
-- **LAB net now routes via the lab-router** (replacing the old pfSense HOMELAB gateway → Proxmox `.7.10`).
-  lab-router advertises `192.168.100.0/24` over BGP + nftables masquerades `HOME/SVR → LAB` to its `.100.2`
-  leg for symmetric return. pfSense CLUSTER-IN got `seq 15 permit 192.168.100.0/24`. Verified: pfSense
-  reaches `.100.1`/`.100.254` at 0% loss; cluster + DHCP + WAN unaffected. Details: `pfsense-frr-bgp.md`.
+- **LAB net routes via the DIRECT Proxmox path (`.7.10`) — CORRECTED.** First attempt routed LAB via the
+  lab-router (BGP + masquerade); that works for pfSense→LAB but **breaks LAB-originated egress** (the
+  lab-router masquerade mangles the reply source, and LAB→internet has no symmetric NAT) — it left the LAB
+  Pi-hole `.100.254` unable to reach its upstream `.4.1` or the internet (DNS dead). Root cause: the lab-router
+  is on the LAB segment but is **not** its gateway (Proxmox `.100.1` is), so it's the wrong path for LAB. Fix:
+  persistent FRR static `ip route 192.168.100.0/24 192.168.7.10` (distance 1) in pfSense `frrglobalraw` (added
+  via DOMDocument bypass; write_config still broken). LAB now egresses symmetrically via Proxmox. The lab-router
+  BGP `/24` (distance 20) remains as a backup but its masquerade makes it an **imperfect** backup — finalize the
+  architecture (remove lab-router LAB-routing, or drop its masquerade for the backup case). Verified: LAB Pi-hole
+  resolves public again; cluster (`.30/24` via lab-router) + DHCP + WAN unaffected. The lab-router is the right
+  router for the **cluster** (where it IS the gateway), not for LAB. Details: `pfsense-frr-bgp.md`.
+- **DNS server health (2026-06-17):** `.4.1` + `.4.236` + `.100.254` live + resolving; `.59.50` is reachable
+  (ping) but **not a working resolver** (not a dockermaster container; orphaned/offline — find/restart it).
 - **HOMELAB gateway + static route REMOVED from `config.xml`** (decommissioned). Done via a one-time
   `DOMDocument` bypass (validated + atomic swap) because pfSense `write_config()` is **broken** — it throws in
   `cleanup_backupcache()` (`getConfig()` returns an int — config.lib.inc:1523), the same bug behind the
