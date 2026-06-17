@@ -70,18 +70,39 @@ write_files:
         }
         chain prerouting {
           type nat hook prerouting priority dstnat; policy accept;
-          # inbound edge → Cilium Gateway LB IP (TODO: scope to the SVR-facing iface)
-          tcp dport { 80, 443 } ip daddr != 192.168.30.0/24 dnat to 192.168.30.128
+          # Edge DNAT → Cilium Gateway LB IP. Parked until the cluster LB exists (Sprint 2):
+          # 192.168.30.128 has no listener yet, so enabling it now would blackhole :80/:443.
+          # iif "eth1" tcp dport { 80, 443 } dnat to 192.168.30.128
         }
       }
       table inet filter {
+        # INPUT/OUTPUT stay open — the router's own BGP/SSH/DHCP/NTP must never be blocked.
+        chain input { type filter hook input priority filter; policy accept; }
+        chain output { type filter hook output priority filter; policy accept; }
+        # FORWARD enforces the inter-segment zone matrix (lab-network design §4.2). Default-drop.
         chain forward {
-          type filter hook forward priority filter; policy accept;
-          # MSS clamp at the HOME jumbo(9000)→cluster(1500) boundary
+          type filter hook forward priority filter; policy drop;
+          ct state established,related accept
+          ct state invalid drop
+          # MSS clamp at the HOME jumbo(9000) <-> cluster(1500) boundary (mangle, then continue)
           tcp flags syn tcp option maxseg size set 1460
+          # CLUSTER -> internet (image pulls, ACME, NTP): anything outside RFC1918
+          ip saddr 192.168.30.0/24 ip daddr != { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 } accept
+          # CLUSTER -> SVR: Vault, MinIO, registry, Prometheus/Alertmanager/Thanos
+          ip saddr 192.168.30.0/24 ip daddr 192.168.48.0/20 tcp dport { 443, 8200, 8201, 9000, 9090, 9093, 10901, 10902, 19291 } accept
+          # CLUSTER -> LAB: Pi-hole DNS + NAS NFS
+          ip saddr 192.168.30.0/24 ip daddr 192.168.100.0/24 tcp dport { 53, 111, 2049 } accept
+          ip saddr 192.168.30.0/24 ip daddr 192.168.100.0/24 udp dport { 53, 111, 2049 } accept
+          # CLUSTER -> HOME: DROP (isolation; no cluster need)
+          ip saddr 192.168.30.0/24 ip daddr 192.168.0.0/20 drop
+          # SVR -> CLUSTER: Prometheus scrape, kube-API, kubelet, Hubble
+          ip saddr 192.168.48.0/20 ip daddr 192.168.30.0/24 tcp dport { 6443, 4245, 9090, 9100, 10250 } accept
+          # HOME -> CLUSTER: published services on the LB pool only
+          ip saddr 192.168.0.0/20 ip daddr 192.168.30.128/25 tcp dport { 80, 443 } accept
+          # intra-cluster (node <-> node)
+          ip saddr 192.168.30.0/24 ip daddr 192.168.30.0/24 accept
         }
       }
-      # TODO: tighten to the zone matrix in the lab-network design spec §4.2.
 
 runcmd:
   - sysctl --system
