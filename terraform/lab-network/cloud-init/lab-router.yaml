@@ -33,6 +33,7 @@ write_files:
        neighbor 192.168.30.22 peer-group cluster
        address-family ipv4 unicast
         network 192.168.30.0/24
+        network 192.168.100.0/24
         aggregate-address 10.244.0.0/16 summary-only
         neighbor 192.168.48.1 activate
         neighbor cluster activate
@@ -80,6 +81,10 @@ write_files:
           # (SVR/HOME/LAB) rides the BGP-advertised 192.168.30.0/24 with REAL source IPs,
           # so Prometheus/Vault/MinIO see the node, not the router leg. Do not re-broaden.
           ip saddr 192.168.30.0/24 ip daddr != { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 } masquerade
+          # Inter-segment transit to LAB (this router replaces the old HOMELAB pfSense gateway).
+          # The router is on the LAB segment but NOT its gateway (Proxmox .100.1 is), so masquerade
+          # HOME/SVR->LAB to the LAB leg (.100.2) → LAB hosts reply on-link → symmetric, reliable.
+          ip saddr { 192.168.0.0/20, 192.168.48.0/20 } ip daddr 192.168.100.0/24 masquerade
         }
         chain prerouting {
           type nat hook prerouting priority dstnat; policy accept;
@@ -125,6 +130,10 @@ write_files:
           ip saddr 192.168.0.7 ip daddr 192.168.30.0/24 tcp dport { 6443, 50000 } accept
           # HOME -> CLUSTER: published services on the LB pool only
           ip saddr 192.168.0.0/20 ip daddr 192.168.30.128/25 tcp dport { 80, 443 } accept
+          # HOME/SVR -> LAB: inter-segment transit via pfSense (HOMELAB gateway replacement). pfSense
+          # routes 192.168.100.0/24 here via BGP; this router forwards on its LAB leg. Masqueraded above.
+          ip saddr 192.168.0.0/20 ip daddr 192.168.100.0/24 accept
+          ip saddr 192.168.48.0/20 ip daddr 192.168.100.0/24 accept
         }
       }
 
