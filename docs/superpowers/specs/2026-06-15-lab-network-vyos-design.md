@@ -1,7 +1,10 @@
 # Design: Lab Network — VyOS Inter-Segment Router (BGP)
 
 **Date:** 2026-06-15
-**Status:** Draft (post multi-agent review; pending sign-off)
+**Status:** ⚠️ **PIVOTED — implemented as FRR-on-Debian, not VyOS** (VyOS rolling images are now
+paywalled → HTTP 403). FRR is the same routing engine VyOS wraps, so the BGP / zone-firewall / DHCP /
+NAT design below all holds — only the OS + config syntax changed. Live reality, config, and runbook:
+`terraform/lab-network/{LIVE-FACTS.md,cloud-init/lab-router.yaml,pfsense-frr-bgp.md,README.md}`.
 **Owner:** Luis Amaral
 **Relationship:** Prerequisite for `2026-06-15-k8s-talos-proxmox-iac-design.md` (the Talos cluster). Split out per
 review because it **touches production routing** (SVR/HOME/LAB) and warrants its own staged rollout + rollback.
