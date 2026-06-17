@@ -44,6 +44,14 @@ Talos/K8s upgrades with no downtime; integrates with existing Vault, MinIO, Than
 
 Versions pinned at plan time (current stable: Talos v1.13.x, Cilium ≥1.19) verified via TF registry + Context7.
 
+> **Pinned version triangle (verified 2026-06-16 — bake these in before authoring):** Talos **v1.13.4**
+> (avoid v1.13.2 — scheduler-config bug #13350); Kubernetes **v1.36.x** — Talos v1.13 now _defaults_ to 1.36,
+> so set `kubernetes_version` **explicitly** in `data.talos_machine_configuration` (do not rely on the default);
+> Cilium **v1.19.5** (BGP v2 API GA, Gateway-API LB fix); Argo CD chart **3.3.x** (3.5 is RC). Keep
+> `siderolabs/talos ~>0.11` — **do not** bump to 0.12.x (alpha resource-model rewrite). Provider `config_patches`
+> must be strategic-merge YAML (JSON6902 was dropped in provider 0.10.0). Reconcile the local `talosctl` client
+> to **1.13.4** (the SynologyDrive-local `mise.toml` shadows the global pin at 1.12.0 → client/server skew).
+
 ---
 
 ## 3. Compute (`bpg/proxmox`)
@@ -51,6 +59,13 @@ Versions pinned at plan time (current stable: Talos v1.13.x, Cilium ≥1.19) ver
 - **Talos image** — `talos_image_factory_schematic` (extensions: `siderolabs/qemu-guest-agent`; CSI extensions added
   only after verifying Proxmox-CSI's exact needs — likely none for virtio-blk) → `data.talos_image_factory_urls`
   (platform `nocloud`) → installer image fed into machineconfig. Declarative + reproducible (no hardcoded URL).
+  > ⚠️ **As-built bring-up (decided 2026-06-16): ISO-boot, API-only — no bpg SSH.** Disk-import on LVM-thin
+  > (`thin-pool-ssd`) falls back to `qm importdisk` over SSH, which the no-root-SSH posture blocks. Instead:
+  > `data.talos_image_factory_urls` → the **ISO** URL → `proxmox_virtual_environment_download_file`
+  > (`content_type=iso`) onto an **iso-capable store** (`local` lacks `iso`+`import`+`snippets` — enable them
+  > via `pvesm set local --content ...`, or use NFS `pve-servers-shared`/`pve-backups` which already carry them) →
+  > attach as **cdrom**; the VM self-installs to `thin-pool-ssd` using the factory **installer image** in
+  > `machine.install.image`. This needs only the Proxmox API token (no `ssh{}` block).
 - **VMs** — 5 via `for_each` node map `{role, cpu, ram, disk, ip, mac}` (IPs/MACs from the shared contract), all on
   **`vmbr30`**. Stable MACs **match the DHCP reservations** → deterministic maintenance-mode IPs. System disks on
   `thin-pool-ssd`. PVs are carved on-demand by Proxmox-CSI (no pre-provisioned data disks).
@@ -88,12 +103,24 @@ to `~/.kube/config-lab` / `~/.talos/config-lab`. The MinIO state (which also con
 ## 5. Cilium (Helm, TF-bootstrapped) — order matters
 
 1. **Gateway API CRDs first** — applied by **Terraform** (`kubernetes_manifest`/`kubectl_manifest`) before Cilium, NOT
-   by Argo (Argo isn't up yet).
-2. `helm_release` Cilium: `kubeProxyReplacement=true`, `routingMode=native`, `nativeRoutingCIDR=192.168.30.0/24`,
-   `ipam=kubernetes`, `bgpControlPlane.enabled=true`, `gatewayAPI.enabled=true`, `hubble.{relay,ui}.enabled=true`. **No
-   `l2announcements`** (BGP only).
-3. **BGP v2 API** CRDs (Argo or TF): `CiliumBGPClusterConfig` (peer VyOS `192.168.30.1` AS65010), `CiliumBGPPeerConfig`,
-   `CiliumBGPAdvertisement` (two: `PodCIDR` **and** `Service` for LB IPs), `CiliumLoadBalancerIPPool 192.168.30.128/25`.
+   by Argo (Argo isn't up yet). **Vendor the EXPERIMENTAL-channel CRDs** (pinned to the version Cilium 1.19.5
+   documents, up to v1.4) into the repo — Cilium 1.19's `gatewayAPI` reconciler **fails** with standard-channel-only
+   CRDs (needs `TLSRoute`/`TCPRoute`/`UDPRoute`, cilium #38420). Do not fetch a raw GitHub URL at apply.
+2. `helm_release` Cilium: `kubeProxyReplacement=true`, `routingMode=native`, **`nativeRoutingCIDR=10.244.0.0/16`**
+   (the **pod CIDR**, NOT the node `/24` — pod IPs from `ipam=kubernetes` fall outside the node range; a node-supernet
+   here would wrongly suppress the pod→SVR masquerade-to-node-IP the firewall relies on), `ipam=kubernetes`,
+   `bgpControlPlane.enabled=true`, `gatewayAPI.enabled=true`, `hubble.{relay,ui}.enabled=true`. **No `l2announcements`**
+   (BGP only). Validate on **cp-1 first** before scaling (`cni:none` + `proxy.disabled` has no kube-proxy fallback).
+3. **BGP v2 API** CRDs — use **`apiVersion: cilium.io/v2`** (GA in 1.19; `v2alpha1`/`CiliumBGPPeeringPolicy` v1 are
+   removed and will fail to reconcile): `CiliumBGPClusterConfig` with **`localASN: 65011`** (the _cluster_ AS — NOT
+   65010, which is the router's; copying 65010 makes the OPEN get rejected and BGP never establishes);
+   `CiliumBGPPeerConfig` `peerASN: 65010`, `peerAddress: 192.168.30.1` (the lab-router);
+   `CiliumBGPAdvertisement` ×2 — **`PodCIDR` (10.244.0.0/16)** and **`Service`/LoadBalancerIP for 192.168.30.128/25**
+   ONLY (never the node `/24` — the router originates that); `CiliumLoadBalancerIPPool 192.168.30.128/25`.
+   In the **§4 machineconfig**, EXPLICITLY pin `cluster.network.podSubnets: [10.244.0.0/16]` (load-bearing — must
+   equal the pfSense CLUSTER-IN prefix-list entry) and `serviceSubnets: [10.96.0.0/12]`; do not rely on the Talos
+   default. Stage the apply: **2.1 → 2.2 (cluster live) → 2.3** — `kubernetes_manifest` server-side dry-runs at plan
+   time and needs a live cluster, so a single combined plan over 2.1+2.2+2.3 fails.
 
 > Cilium install failure with kube-proxy disabled + `cni:none` leaves nodes NotReady with no fallback → validate the
 > Helm install on first apply before scaling; pin Cilium ≥1.19 (v2 BGP API; Gateway-API LB advertisement fix).
