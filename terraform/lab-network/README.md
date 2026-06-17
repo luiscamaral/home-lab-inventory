@@ -23,13 +23,23 @@ Two pivots happened during bring-up, both recorded in `LIVE-FACTS.md`:
 2. **bpg/proxmox → `sudo qm`.** bpg needs **root-level SSH** to Proxmox (to upload the cloud-init snippet
    into the root-owned `local:snippets` and import the disk). This host disables direct root SSH
    (escalate via `sudo` only), and bpg has no sudo passthrough. So the VM is provisioned by
-   **`bootstrap-lab-router.sh`** — idempotent, version-controlled, reproducible (no snowflake).
+   **`bootstrap-lab-router.sh`** — idempotent and version-controlled (re-runnable). Note: the Debian
+   image tracks `bookworm/latest` (unpinned) and cloud-init runs `apt`, so two runs months apart can land
+   slightly different package versions — re-runnable, not bit-reproducible.
 
 ## Provision / reproduce
 
 ```sh
 ./bootstrap-lab-router.sh          # creates vmbr30 + downloads image + stages cloud-init + builds VM 130
 ```
+
+**Prerequisites / access contract:**
+
+- Proxmox `local` storage must allow the `snippets` content-type (the script enables it idempotently;
+  otherwise `qm --cicustom` aborts after the VM+disk are created).
+- The router is **key-only** login as `debian@`, reached via the Proxmox host's `/root/.ssh/id_ed25519`
+  (the private key matching the `root@proxmox` key authorized in `cloud-init/lab-router.yaml`). There is
+  no password. Console fallback if the key path breaks: `qm terminal 130` (serial0 is configured).
 
 ## Move it into Terraform (the gated next step)
 
@@ -54,7 +64,7 @@ resource "proxmox_virtual_environment_vm" "lab_router" {
 | CLUSTER segment | `192.168.30.0/24`, gw `.30.1`, bridge `vmbr30` (internal) |
 | Cluster nodes / VIP / LB | cp `.11-.13`, wk `.21-.22`, VIP `.5`, LB pool `.128/25` |
 | BGP ASNs | pfSense 65000 · router 65010 · cluster 65011 |
-| Router legs | svr `.48.2` · home `.7.2` (MTU 9000) · lab `.100.2` |
+| Router legs | svr `.48.2` · home `.7.2` (MTU 1500) · lab `.100.2` |
 
 ## Rollback
 

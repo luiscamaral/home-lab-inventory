@@ -52,9 +52,12 @@ Versions pinned at plan time (current stable: Talos v1.13.x, Cilium ≥1.19) ver
   only after verifying Proxmox-CSI's exact needs — likely none for virtio-blk) → `data.talos_image_factory_urls`
   (platform `nocloud`) → installer image fed into machineconfig. Declarative + reproducible (no hardcoded URL).
 - **VMs** — 5 via `for_each` node map `{role, cpu, ram, disk, ip, mac}` (IPs/MACs from the shared contract), all on
-  **`vmbr30`** (referenced via `terraform_remote_state` from `lab-network`). Stable MACs **match the VyOS DHCP
-  reservations** → deterministic maintenance-mode IPs. System disks on `thin-pool-ssd`. PVs are carved on-demand by
-  Proxmox-CSI (no pre-provisioned data disks).
+  **`vmbr30`**. Stable MACs **match the DHCP reservations** → deterministic maintenance-mode IPs. System disks on
+  `thin-pool-ssd`. PVs are carved on-demand by Proxmox-CSI (no pre-provisioned data disks).
+  > ⚠️ **As-built:** `lab-network` pivoted to a **script-managed FRR-on-Debian router** (no Terraform state/outputs),
+  > so `terraform_remote_state "lab-network"` **cannot resolve** — do NOT wire it. Hardcode `vmbr30` + the
+  > contract IPs/MACs from `terraform/lab-network/{LIVE-FACTS.md,cloud-init/lab-router.yaml}`, or `terraform import`
+  > the bridge. The remote_state path returns only if `lab-network` is moved into bpg Terraform (README gate).
 - Provider creds (Proxmox API token + SSH key) from Vault; `vault` provider + `data.vault_kv_secret_v2` per existing
   `terraform/portainer` pattern; `TF_VAR_vault_token` from Keychain at apply.
 
@@ -168,9 +171,14 @@ matrix. Hubble UI via Gateway.
 
 ## 11. IaC structure, upgrades, rollback
 
-**Roots:** `terraform/kubernetes/` (new), consuming `lab-network` outputs via `terraform_remote_state` (MinIO);
-`terraform/vault/` edited per the vault-wiring spec; `terraform/cloudflare/` adds the ACME CNAME. All new roots: MinIO
-S3 backend (`use_lockfile` + MinIO `skip_*`/`use_path_style`; creds via `AWS_*` env at init).
+**Roots:** `terraform/kubernetes/` (new); `terraform/vault/` edited per the vault-wiring spec; `terraform/cloudflare/`
+adds the ACME CNAME. All new roots: MinIO S3 backend (`use_lockfile` + MinIO `skip_*`/`use_path_style`; creds via
+`AWS_*` env at init).
+
+> ⚠️ **As-built:** the `lab-network` network contract is consumed as **hardcoded values** (`vmbr30`, leg IPs, node
+> MACs) from `terraform/lab-network/{LIVE-FACTS.md,cloud-init/lab-router.yaml}`, **not** `terraform_remote_state` —
+> the router pivoted to a script-managed FRR-on-Debian VM with no TF state/outputs. Re-enable remote_state only after
+> moving `lab-network` into bpg Terraform (see `terraform/lab-network/README.md` gate).
 
 **Upgrades:** Talos = bump `talos_version` + installer in machineconfig (`talos_machine_configuration_apply` rolls
 nodes); K8s = `talosctl upgrade-k8s` runbook; Cilium chart tracked to the K8s version matrix.

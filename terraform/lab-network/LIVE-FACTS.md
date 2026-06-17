@@ -45,12 +45,14 @@ Read-only reconnaissance captured before any change. Source of truth for IP/leg 
 
 ## Chosen addressing (outside all DHCP pools; verify free at apply)
 
+> Legs labelled "router" = the live FRR-on-Debian `lab-router` (VM 130), not VyOS (pivoted, see below).
+
 | Leg / node | IP | Bridge |
 |---|---|---|
-| VyOS SVR leg ↔ pfSense BGP | 192.168.48.2 ↔ 192.168.48.1 | `vmbr28` |
-| VyOS HOME leg | 192.168.7.2 | `vmbr10` |
-| VyOS LAB leg | 192.168.100.2 | `vmbr0` |
-| VyOS CLUSTER leg / gw | 192.168.30.1 | `vmbr30` (new) |
+| router SVR leg ↔ pfSense BGP | 192.168.48.2 ↔ 192.168.48.1 | `vmbr28` |
+| router HOME leg | 192.168.7.2 (1500 — see note) | `vmbr10` |
+| router LAB leg | 192.168.100.2 | `vmbr0` |
+| router CLUSTER leg / gw | 192.168.30.1 | `vmbr30` (new) |
 | cp-1/2/3 | 192.168.30.11/.12/.13 | `vmbr30` |
 | wk-1/2 | 192.168.30.21/.22 | `vmbr30` |
 | API VIP | 192.168.30.5 | `vmbr30` |
@@ -101,3 +103,25 @@ Read-only reconnaissance captured before any change. Source of truth for IP/leg 
   FRR + the cluster — correct). Debug access: Proxmox root key → `debian@192.168.7.2`.
 - Remaining for full Sprint 1: pfSense FRR + BGP neighbor (1.3, production, back up config first),
   sloppy-state + zone-firewall tighten (1.4). Reconcile the bpg VyOS TF → FRR, or keep qm-managed + import.
+
+### Sprint 1.5 hardening + review fixes (2026-06-16)
+
+Zone firewall enforced; reproducible `bootstrap-lab-router.sh`; stale VyOS TF removed. A 3-lens
+adversarial review then surfaced fixes, all applied LIVE (BGP stayed Established throughout) + in
+`cloud-init/lab-router.yaml`:
+
+- **DNS (was a Sprint-2 blocker):** cluster DHCP resolver moved `192.168.4.1` (HOME, on the dropped
+  path) → **`192.168.100.254`** (LAB Pi-hole, permitted by the CLUSTER→LAB :53 rule).
+- **Masquerade (was a Sprint-2 blocker):** scoped from "all non-cluster" → **internet-only**
+  (`ip daddr != {RFC1918}`). RFC1918 east-west now rides the BGP `/24` with real node source IPs.
+- **Firewall matrix:** added pod-CIDR transit (`10.244.0.0/16`), Alertmanager-B (`.4.238:9093` above
+  the HOME drop), and SVR→CLUSTER ports for Talos apid (50000/50001), Cilium/Hubble (4244/9962/9965),
+  and KSM (8080). MSS clamp switched to **clamp-to-PMTU** (`rt mtu`).
+- **NTP relay:** router runs **chrony** (`server 192.168.4.1`, `allow 192.168.30.0/24`); DHCP offers
+  `ntp-servers 192.168.30.1`. (Verify chrony reaches pfSense NTP in Sprint 2; public-pool fallback covers it.)
+- **As-built corrections:** disk **8G** (spec §3 said 10G); HOME leg MTU **1500** — the _bridge_ `vmbr10`
+  is 9000 but the VM virtio NIC was never set jumbo, so the design's "HOME MTU 9000" is **not** as-built
+  (the MSS clamp is general PMTUD safety, not a jumbo-boundary guard). `local` storage `snippets`
+  content-type enabled (bootstrap now does this idempotently).
+- **Access contract:** key-only as `debian@` via the Proxmox host `/root/.ssh/id_ed25519` (matches the
+  `root@proxmox` key in cloud-init); console fallback `qm terminal 130` (serial0 configured).
