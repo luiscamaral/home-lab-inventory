@@ -16,6 +16,33 @@ Proxmox-CSI + csi-driver-nfs, Velero, Kyverno, MinIO (S3 state + backups).
 
 ---
 
+## ⏱️ Live status — last updated 2026-06-16
+
+> **This table is the tracker.** The per-step checkboxes below are VyOS-centric and predate the live
+> **FRR-on-Debian pivot** (VyOS rolling images are now paywalled → HTTP 403), so track real progress here.
+> Authoritative live-status docs: `terraform/lab-network/LIVE-FACTS.md` (facts + execution outcomes) and
+> `terraform/lab-network/pfsense-frr-bgp.md` (pfSense BGP runbook + rollback). Branch
+> `feat/k8s-talos-lab-cluster`.
+
+| Sprint | Status | Notes |
+|---|---|---|
+| 0 — Foundations | ✅ **done** | facts/versions, 3 MinIO buckets exist, `lab-network` root inits+validates. Deviation: **local state** (MinIO S3 backend deferred — flaky from the workstation). |
+| 1 — Lab network (router) | ✅ **done (LIVE)** | **lab-router VM 130 (FRR-on-Debian)** up; **BGP Established** pfSense(AS65000)↔router(AS65010); pfSense learned `192.168.30.0/24` in its FIB; `filter.bypassstaticroutes` (asymmetric fix) on. Deferred: router nftables zone-firewall tighten. |
+| 2 — Cluster base (Talos) | ⬜ not started | **Clear first:** `siderolabs/talos` provider download hangs from the workstation (GitHub releases unreachable) — pre-stage it or run from a LAN host. |
+| 3 — Vault / secrets | ⬜ not started | — |
+| 4 — Storage | ⬜ not started | — |
+| 5 — Observability / DR | ⬜ not started | — |
+| 6 — Acceptance | ⬜ not started | — |
+
+**Resources created (all revertible):** Proxmox `vmbr30` + VM 130 + `LabIaC` role + `terraform@pve!labiac`
+token; pfSense FRR pkg + BGP + sloppy-state (config backup `/tmp/pfsense-config-2026-06-16-pre-frr.xml`);
+Vault `secret/homelab/proxmox/iac_token`; MinIO buckets `tfstate`/`velero-k8s-lab`/`thanos-k8s-lab`.
+
+**Open follow-ups:** reconcile the authored bpg VyOS TF → FRR-on-Debian (or keep VM `qm`-managed +
+`terraform import`); pre-stage `siderolabs/talos` for the `kubernetes` root; tighten the router zone firewall.
+
+---
+
 ## How to use this plan
 
 - **Source of truth for content:** the three specs. This plan sequences the work and defines acceptance;
