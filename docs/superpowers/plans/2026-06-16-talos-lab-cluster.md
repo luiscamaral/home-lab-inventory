@@ -27,7 +27,7 @@ Proxmox-CSI + csi-driver-nfs, Velero, Kyverno, MinIO (S3 state + backups).
 | Sprint | Status | Notes |
 |---|---|---|
 | 0 — Foundations | ✅ **done** | facts/versions, 3 MinIO buckets exist, `lab-network` root inits+validates. Deviation: **local state** (MinIO S3 backend deferred — flaky from the workstation). |
-| 1 — Lab network (router) | ✅ **done (LIVE)** | **lab-router VM 130 (FRR-on-Debian)** up; **BGP Established** pfSense(AS65000)↔router(AS65010); pfSense learned `192.168.30.0/24` in its FIB; `filter.bypassstaticroutes` (asymmetric fix) on. Deferred: router nftables zone-firewall tighten. |
+| 1 — Lab network (router) | ✅ **done (LIVE)** | **lab-router VM 130 (FRR-on-Debian)** up; **BGP Established** pfSense(AS65000)↔router(AS65010); pfSense learned `192.168.30.0/24` in its FIB; `filter.bypassstaticroutes` (asymmetric fix) on; **zone firewall enforced** (Sprint 1.5). Router reconciled to a reproducible script; full bpg-Terraform gated on a Proxmox deploy-SSH-key decision. |
 | 2 — Cluster base (Talos) | ⬜ not started | **Clear first:** `siderolabs/talos` provider download hangs from the workstation (GitHub releases unreachable) — pre-stage it or run from a LAN host. |
 | 3 — Vault / secrets | ⬜ not started | — |
 | 4 — Storage | ⬜ not started | — |

@@ -10,6 +10,10 @@
 - `2026-06-15-vault-k8s-wiring-design.md` — Vault `kubernetes` auth + ESO role/policy (addendum to
   `iac-audit-2026-04-30.md`).
 
+> **Note (2026-06-16):** the inter-segment router was implemented as **FRR-on-Debian**, not VyOS (VyOS
+> rolling images are now paywalled). Wherever this spec says "VyOS," read "the lab-router" — same role,
+> same BGP/DHCP/NAT/zone-firewall design. It's **live**: see `terraform/lab-network/`.
+
 ---
 
 ## 1. Goal & non-goals
