@@ -74,16 +74,22 @@ via the Proxmox HOME leg) was the pre-lab-router path to the LAB net. It was rep
   `frr_generate_config()`** (NOT `service frr restart`, which hangs and leaves FRR down — recover with
   `frr_generate_config()`). A fresh start makes zebra re-read the kernel FIB and install the BGP route.
 
-### HOMELAB decommission status: functionally done, config-removal BLOCKED
+### HOMELAB decommission status: DONE (config entries removed)
 
-The HOMELAB gateway + its static route are **disabled and inert** (no kernel route; LAB now rides BGP), so
-they are functionally decommissioned. **Removing the disabled entries from `config.xml` is blocked by a
-pfSense bug:** `write_config()` throws in `cleanup_backupcache()` → `getConfig(): Return value must be of
-type array, int returned` (config.lib.inc:1523). This is the **same bug behind the Status→Services PHP
-errors** — `getConfig()`'s L2 cache fallthrough returns an int. **pfSense currently cannot save ANY config
-change via the normal path.** Do NOT force `write_config` or hand-edit `config.xml` on the live router; fix
-the config-library issue deliberately first (see next steps). Pre-change backup:
-`/tmp/pfsense-config-2026-06-17-pre-labroute.xml`.
+The HOMELAB gateway + its `192.168.100.0/24` static route are **removed from `config.xml`** (verified:
+`config_get_path('gateways/gateway_item')` = WAN1GW + WAN2_DHCP only; no LAB static route). LAB rides BGP;
+production (DHCP/WAN/cluster route) unaffected.
+
+**How (important caveat):** the normal `write_config()` path is **broken** on this box — it throws in
+`cleanup_backupcache()` → `getConfig(): Return value must be of type array, int returned`
+(config.lib.inc:1523; `syncBackupCache` line ~1372 opens a config root whose XML+cache are absent, so
+`getConfig` returns its non-array default). This is the **same fault behind the Status→Services PHP errors**,
+and it means **pfSense currently cannot save config via the GUI / normal path.** The two entries were removed
+with a **one-time `DOMDocument` bypass** (load `config.xml` → remove the 2 nodes by XPath → validate with
+`parse_xml_config` + structural checks → atomic `rename` → clear `/tmp/config.cache`). `config_write_file()`
+alone did NOT work (a legacy-`$config` vs `config_set_path` API disconnect in CLI). **The underlying
+`write_config` bug is still present** — fix it deliberately before relying on GUI saves (see next steps).
+Pre-change backups: `/tmp/pfsense-config-2026-06-17-pre-labroute.xml`, `/tmp/config-pre-rmhomelab-*.xml`.
 
 ## TODO (Sprint 2-adjacent)
 
