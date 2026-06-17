@@ -37,17 +37,17 @@ variable "vm_datastore" {
 
 locals {
   # ---- Pinned version triangle (verified 2026-06-16) — see cluster spec §2 ----
-  talos_version      = "v1.13.4"  # avoid v1.13.2 (scheduler bug #13350)
-  kubernetes_version = "v1.36.1"  # pin EXPLICITLY — Talos v1.13 defaults to 1.36
+  talos_version      = "v1.13.4" # avoid v1.13.2 (scheduler bug #13350)
+  kubernetes_version = "v1.36.1" # pin EXPLICITLY — Talos v1.13 defaults to 1.36
   cilium_version     = "1.19.5"
 
   # ---- Network contract (as-built; hardcoded from lab-network cloud-init) ----
   cluster_bridge = "vmbr30"
   cluster_cidr   = "192.168.30.0/24"
-  cluster_gw     = "192.168.30.1"   # the FRR lab-router
+  cluster_gw     = "192.168.30.1" # the FRR lab-router
   api_vip        = "192.168.30.5"
   lb_pool        = "192.168.30.128/25"
-  pod_cidr       = "10.244.0.0/16"  # MUST equal pfSense CLUSTER-IN + Cilium nativeRoutingCIDR/podSubnets
+  pod_cidr       = "10.244.0.0/16" # MUST equal pfSense CLUSTER-IN + Cilium nativeRoutingCIDR/podSubnets
   service_cidr   = "10.96.0.0/12"
   node_dns       = "192.168.100.254" # LAB Pi-hole (handed by router DHCP)
   node_ntp       = "192.168.30.1"    # router chrony relay
