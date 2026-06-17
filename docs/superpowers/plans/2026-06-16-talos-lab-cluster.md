@@ -27,7 +27,7 @@ Proxmox-CSI + csi-driver-nfs, Velero, Kyverno, MinIO (S3 state + backups).
 | Sprint | Status | Notes |
 |---|---|---|
 | 0 — Foundations | ✅ **done** | facts/versions, 3 MinIO buckets exist, `lab-network` root inits+validates. Deviation: **local state** (MinIO S3 backend deferred — flaky from the workstation). |
-| 1 — Lab network (router) | ✅ **done (LIVE)** | **lab-router VM 130 (FRR-on-Debian)** up; **BGP Established** pfSense(AS65000)↔router(AS65010); pfSense learned `192.168.30.0/24` in its FIB; `filter.bypassstaticroutes` (asymmetric fix) on; **zone firewall enforced** (Sprint 1.5). Router reconciled to a reproducible script; full bpg-Terraform gated on a Proxmox deploy-SSH-key decision. |
+| 1 — Lab network (router) | ✅ **done (LIVE)** | **lab-router VM 130 (FRR-on-Debian)** up; **BGP Established** pfSense(AS65000)↔router(AS65010); pfSense learned `192.168.30.0/24` in its FIB; `filter.bypassstaticroutes` (asymmetric fix) on; **zone firewall enforced** (1.5). Router reconciled to a reproducible script; full bpg-Terraform gated on a Proxmox deploy-SSH-key decision. **1.5 review fixes (2026-06-16):** cluster DNS→LAB Pi-hole, masquerade→internet-only (real source IPs ride BGP), pod-CIDR/AM-B/Talos+Cilium scrape ports added, chrony NTP relay. See `LIVE-FACTS.md` §"Sprint 1.5 hardening". |
 | 2 — Cluster base (Talos) | ⬜ not started | **Clear first:** `siderolabs/talos` provider download hangs from the workstation (GitHub releases unreachable) — pre-stage it or run from a LAN host. |
 | 3 — Vault / secrets | ⬜ not started | — |
 | 4 — Storage | ⬜ not started | — |
@@ -39,7 +39,10 @@ token; pfSense FRR pkg + BGP + sloppy-state (config backup `/tmp/pfsense-config-
 Vault `secret/homelab/proxmox/iac_token`; MinIO buckets `tfstate`/`velero-k8s-lab`/`thanos-k8s-lab`.
 
 **Open follow-ups:** reconcile the authored bpg VyOS TF → FRR-on-Debian (or keep VM `qm`-managed +
-`terraform import`); pre-stage `siderolabs/talos` for the `kubernetes` root; tighten the router zone firewall.
+`terraform import`); pre-stage `siderolabs/talos` for the `kubernetes` root. **Sprint-2 verify (from the 1.5
+review):** confirm chrony reaches pfSense NTP `.4.1` from the router (public-pool fallback works today);
+re-check cluster→Vault/MinIO uses real node source IPs (masquerade now internet-only); confirm the
+SVR→CLUSTER scrape port list against the live Cilium/Talos chart values when the cluster is up.
 
 ---
 
@@ -179,8 +182,12 @@ flow to a cluster-segment IP; zone matrix enforced; each step proven rollback-ab
 
 - [ ] **Step 1 (implement):** `terraform/kubernetes/image.tf` = `talos_image_factory_schematic`
   (extensions from Task 0.3) + `data.talos_image_factory_urls` (nocloud); `vms.tf` = `for_each` node map
-  (IPs/MACs from labnet contract, **MACs must equal the VyOS DHCP reservations**), all on `vmbr30`
-  (via `terraform_remote_state` of `lab-network`). (cluster §3)
+  (IPs/MACs from labnet contract, **MACs must equal the DHCP reservations** in
+  `terraform/lab-network/cloud-init/lab-router.yaml`), all on `vmbr30`. (cluster §3)
+  > ⚠️ **As-built:** `lab-network` is script-managed (FRR-on-Debian) with **no TF state/outputs** —
+  > `terraform_remote_state "lab-network"` will fail. **Hardcode** `vmbr30` + the contract IPs/MACs from
+  > `LIVE-FACTS.md`/`cloud-init/lab-router.yaml` (or `terraform import` the bridge). Re-enable remote_state
+  > only if `lab-network` is later moved into bpg Terraform (lab-network/README gate).
 - [ ] **Step 2 (deploy + assert):** `plan` → `apply`; 5 VMs boot into Talos **maintenance mode** and pick
   up their reserved IPs (`talosctl -n 192.168.30.11 version --insecure` responds).
 - [ ] **Step 3 (commit):** `terraform(proxmox): talos image factory + 5 cluster VMs`.

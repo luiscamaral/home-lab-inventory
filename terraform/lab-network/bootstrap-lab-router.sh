@@ -28,6 +28,14 @@ echo "[2/4] Debian cloud image (idempotent)"
 ssh proxmox "${ASKPASS} bash -c '[ -f ${IMG} ] || curl -fsSL -o ${IMG} ${IMG_URL}'"
 
 echo "[3/4] stage cloud-init snippet from repo"
+# `local` storage must allow the `snippets` content-type or qm --cicustom (step 4) aborts AFTER
+# the VM+disk are created (default PVE `local` = iso,vztmpl,backup only). Enable it idempotently.
+ssh proxmox "${ASKPASS} bash -s" <<'EOF'
+if ! pvesm status -storage local -content snippets >/dev/null 2>&1; then
+  cur=$(pvesm config local | awk '/^\tcontent /{print $2}')
+  case ",$cur," in *,snippets,*) : ;; *) pvesm set local --content "${cur},snippets" ;; esac
+fi
+EOF
 ssh proxmox "${ASKPASS} tee /var/lib/vz/snippets/lab-router-user.yaml >/dev/null" < "${REPO_DIR}/cloud-init/lab-router.yaml"
 
 echo "[4/4] create + start VM ${VMID} (guarded if it exists)"

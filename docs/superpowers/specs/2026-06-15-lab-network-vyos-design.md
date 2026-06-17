@@ -57,6 +57,7 @@ its gateway (confirmed live). VyOS supplements, it does not replace, those gatew
 - **`vmbr30`** — `proxmox_network_linux_bridge` (confirmed supported), **no `ports`** (internal L2 only), no address.
   All Talos VMs + VyOS cluster-leg attach here. `depends_on` for every downstream VM.
 - **VyOS VM** — 2 vCPU / 2 GB / 10 GB, **4 NICs** (vmbr28, vmbr10, vmbr0, vmbr30).
+  _As-built (FRR-on-Debian): disk is **8G** (`qm resize scsi0 8G`), not 10 GB._
 - **Provider** — `bpg/proxmox ~> 0.109`, **with an `ssh {}` block** (required for image/file ops) + API token; both from
   Vault.
 - **Image** — VyOS rolling qcow2 imported via `proxmox_virtual_environment_download_file` (pin URL + SHA256).
@@ -112,6 +113,11 @@ the hidden-imperative gap). No DHCP on any other segment.
 
 HOME leg pinned **MTU 9000** (matches `vmbr10`); CLUSTER/`vmbr30` **1500**; **TCP MSS clamp 1460** on the HOME ingress
 to guard the jumbo→1500 boundary (PMTUD-safe).
+
+> _As-built (FRR-on-Debian): the HOME **leg is 1500** — only the host bridge `vmbr10` is jumbo; the VM virtio NIC was
+> never set to 9000. The MSS clamp is therefore kept as **general PMTUD safety** (`tcp option maxseg size set rt mtu`,
+> clamp-to-PMTU), not a jumbo-boundary guard. Set `mtu=9000` on the HOME NIC + in-guest later if jumbo HOME↔cluster
+> throughput is ever needed._
 
 ---
 
