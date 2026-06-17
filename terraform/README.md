@@ -37,11 +37,17 @@ terraform/
   vault/                   # Vault secret engines, policies, auth methods
   modules/
     cf-service/            # Reusable module: DNS record for *.cf.lcamaral.com
+  lab-network/             # ⚠️ script-managed FRR-on-Debian lab router — NOT a Terraform root
 ```
 
-Each directory is an **independent Terraform root** with its own state, providers,
+Each **Terraform root** directory is independent, with its own state, providers,
 and `terraform apply`. This isolation prevents failures in one domain from blocking
 changes in another.
+
+> **Exception — `lab-network/` is not a Terraform root.** It provisions the FRR-on-Debian
+> inter-segment router via `bootstrap-lab-router.sh` + cloud-init (no `.tf`, no state, no
+> `terraform apply`) because `bpg/proxmox` needs root-level SSH the host disallows. Do not run
+> `terraform init/apply` there. See `lab-network/README.md`.
 
 ## Quick Reference
 
@@ -50,6 +56,7 @@ changes in another.
 | `cloudflare/` | Cloudflare, DreamHost | Zone, DNS, tunnel, ingress, wildcard CNAME |
 | `portainer/` | Portainer, Vault | Docker stacks, settings, users |
 | `vault/` | HashiCorp Vault | Secret engines, policies |
+| `lab-network/` | _none — script-managed_ | FRR-on-Debian lab router (NOT a Terraform root) |
 
 ## Prerequisites
 
