@@ -57,6 +57,34 @@ ssh pfsense 'pkg delete -y pfSense-pkg-frr'   # full removal
 # or restore: cp /tmp/pfsense-config-2026-06-16-pre-frr.xml /conf/config.xml && reboot
 ```
 
+## LAB network route migration (2026-06-17) — HOMELAB gateway → lab-router
+
+The old pfSense **HOMELAB gateway** (`opt2 → 192.168.7.10`, a static route `192.168.100.0/24 → HOMELAB`
+via the Proxmox HOME leg) was the pre-lab-router path to the LAB net. It was replaced by the lab-router:
+
+- **lab-router** now advertises `192.168.100.0/24` too (added `network 192.168.100.0/24` to its `frr.conf`),
+  and acts as a symmetric transit: nftables FORWARD allows `HOME/SVR → 192.168.100.0/24` and **masquerades**
+  it to the LAB leg (`.100.2`) so LAB hosts reply on-link → reliable return (the lab-router is on the LAB
+  segment but is **not** its gateway — Proxmox `.100.1` is — so the masquerade is required).
+- **pfSense** CLUSTER-IN prefix-list gained `seq 15 permit 192.168.100.0/24` (via the `frrglobalraw` base64 +
+  `frr_generate_config()`). Verified: pfSense installs `192.168.100.0/24 → 192.168.48.2` and reaches
+  `.100.1`/`.100.254` at 0% loss.
+- **Gotcha — zebra/kernel desync:** after the stale static route's kernel entry was already gone, zebra still
+  held a phantom distance-0 "kernel" route that blocked the BGP route. Fix = a **full FRR restart via
+  `frr_generate_config()`** (NOT `service frr restart`, which hangs and leaves FRR down — recover with
+  `frr_generate_config()`). A fresh start makes zebra re-read the kernel FIB and install the BGP route.
+
+### HOMELAB decommission status: functionally done, config-removal BLOCKED
+
+The HOMELAB gateway + its static route are **disabled and inert** (no kernel route; LAB now rides BGP), so
+they are functionally decommissioned. **Removing the disabled entries from `config.xml` is blocked by a
+pfSense bug:** `write_config()` throws in `cleanup_backupcache()` → `getConfig(): Return value must be of
+type array, int returned` (config.lib.inc:1523). This is the **same bug behind the Status→Services PHP
+errors** — `getConfig()`'s L2 cache fallthrough returns an int. **pfSense currently cannot save ANY config
+change via the normal path.** Do NOT force `write_config` or hand-edit `config.xml` on the live router; fix
+the config-library issue deliberately first (see next steps). Pre-change backup:
+`/tmp/pfsense-config-2026-06-17-pre-labroute.xml`.
+
 ## TODO (Sprint 2-adjacent)
 
 - Cluster BGP peers (`192.168.30.11-.22`, AS65011) come up when Talos exists; the router already peers them.

@@ -4,31 +4,31 @@ Read-only reconnaissance captured before any change. Source of truth for IP/leg 
 
 ## Proxmox
 
-| Item | Value |
-|---|---|
-| RAM | 251 GiB total · ~166 GiB available (85 GiB used) — 78 GiB cluster fits |
-| SSH | non-root user; `qm`/`pvesm` need `SUDO_ASKPASS=$HOME/.config/bin/answer.sh sudo -A` |
-| Bridges (with host IP) | `vmbr0` 192.168.100.1/24 (**LAB gw**) · `vmbr10` 192.168.7.10/20 (MTU 9000) · `vmbr1`/`vmbr01` mgmt · `vmbr010` |
-| Bridges (L2-only, no host IP) | `vmbr28` (SVR/VLAN28) · `vmbr205` (IoT) |
+| Item                          | Value                                                                                                                              |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| RAM                           | 251 GiB total · ~166 GiB available (85 GiB used) — 78 GiB cluster fits                                                           |
+| SSH                           | non-root user;`qm`/`pvesm` need `SUDO_ASKPASS=$HOME/.config/bin/answer.sh sudo -A`                                           |
+| Bridges (with host IP)        | `vmbr0` 192.168.100.1/24 (**LAB gw**) · `vmbr10` 192.168.7.10/20 (MTU 9000) · `vmbr1`/`vmbr01` mgmt · `vmbr010` |
+| Bridges (L2-only, no host IP) | `vmbr28` (SVR/VLAN28) · `vmbr205` (IoT)                                                                                       |
 
 ## pfSense (Plus 26.03)
 
-| Interface | Network | Gateway IP |
-|---|---|---|
-| `ix0.10` HOME | 192.168.0.0/20 | 192.168.4.1 |
-| `ix0.28` SVR | 192.168.48.0/20 | 192.168.48.1 |
+| Interface         | Network          | Gateway IP    |
+| ----------------- | ---------------- | ------------- |
+| `ix0.10` HOME   | 192.168.0.0/20   | 192.168.4.1   |
+| `ix0.28` SVR    | 192.168.48.0/20  | 192.168.48.1  |
 | `ix0.105` GUEST | 192.168.128.0/24 | 192.168.128.1 |
-| `ix0.205` IoT | 192.168.16.0/24 | 192.168.16.1 |
-| `igc0` WAN1 | — | 192.168.28.3 |
-| `igc3` ADMIN | 192.168.32.32/27 | 192.168.32.33 |
+| `ix0.205` IoT   | 192.168.16.0/24  | 192.168.16.1  |
+| `igc0` WAN1     | —               | 192.168.28.3  |
+| `igc3` ADMIN    | 192.168.32.32/27 | 192.168.32.33 |
 
-| DHCP pool | Range |
-|---|---|
-| HOME | 192.168.15.240 – .254 |
-| SVR | 192.168.63.192 – .199 |
-| GUEST | 192.168.128.51 – .61 |
-| IoT | 192.168.16.150 – .254 |
-| ADMIN | 192.168.32.55 – .59 |
+| DHCP pool | Range                  |
+| --------- | ---------------------- |
+| HOME      | 192.168.15.240 – .254 |
+| SVR       | 192.168.63.192 – .199 |
+| GUEST     | 192.168.128.51 – .61  |
+| IoT       | 192.168.16.150 – .254 |
+| ADMIN     | 192.168.32.55 – .59   |
 
 - **FRR:** not installed; `pfSense-pkg-frr-2.1.2` + `frr10-10.5.1` confirmed available in the Plus 26.03 repo.
 - **LAB (192.168.100.0/24)** has no pfSense DHCP — it is a Proxmox-routed segment (gw `.100.1` on `vmbr0`).
@@ -47,16 +47,16 @@ Read-only reconnaissance captured before any change. Source of truth for IP/leg 
 
 > Legs labelled "router" = the live FRR-on-Debian `lab-router` (VM 130), not VyOS (pivoted, see below).
 
-| Leg / node | IP | Bridge |
-|---|---|---|
-| router SVR leg ↔ pfSense BGP | 192.168.48.2 ↔ 192.168.48.1 | `vmbr28` |
-| router HOME leg | 192.168.7.2 (1500 — see note) | `vmbr10` |
-| router LAB leg | 192.168.100.2 | `vmbr0` |
-| router CLUSTER leg / gw | 192.168.30.1 | `vmbr30` (new) |
-| cp-1/2/3 | 192.168.30.11/.12/.13 | `vmbr30` |
-| wk-1/2 | 192.168.30.21/.22 | `vmbr30` |
-| API VIP | 192.168.30.5 | `vmbr30` |
-| LB pool | 192.168.30.128/25 | (BGP) |
+| Leg / node                    | IP                             | Bridge           |
+| ----------------------------- | ------------------------------ | ---------------- |
+| router SVR leg ↔ pfSense BGP | 192.168.48.2 ↔ 192.168.48.1   | `vmbr28`       |
+| router HOME leg               | 192.168.7.2 (1500 — see note) | `vmbr10`       |
+| router LAB leg                | 192.168.100.2                  | `vmbr0`        |
+| router CLUSTER leg / gw       | 192.168.30.1                   | `vmbr30` (new) |
+| cp-1/2/3                      | 192.168.30.11/.12/.13          | `vmbr30`       |
+| wk-1/2                        | 192.168.30.21/.22              | `vmbr30`       |
+| API VIP                       | 192.168.30.5                   | `vmbr30`       |
+| LB pool                       | 192.168.30.128/25              | (BGP)            |
 
 > `arping` is absent on Proxmox; verify each leg IP free via `ip neigh` / a live probe immediately before
 > assigning. All candidates are outside the DHCP pools above and clear of the `.59.0/26` macvlan range.
@@ -98,7 +98,7 @@ Read-only reconnaissance captured before any change. Source of truth for IP/leg 
   via `sudo qm` (bpg can't root-SSH for snippet/disk ops): 4 NICs on vmbr30/28/10/0 → eth0-3 with
   `.30.1`/`.48.2`/`.7.2`/`.100.2`, default route via pfSense `.48.1`. cloud-init at
   `terraform/lab-network/cloud-init/lab-router.yaml` installs frr/isc-dhcp/nftables + loads BGP (AS65010;
-  peers pfSense `.48.1`/AS65000 + 5 cluster nodes/AS65011) + masquerade for cluster egress.
+  192.1peers pfSense `.48.1`/AS65000 + 5 cluster nodes/AS65011) + masquerade for cluster egress.
 - **Verified LIVE:** FRR/DHCP/nftables active; BGP config loaded; peers Active/Connect (waiting for pfSense
   FRR + the cluster — correct). Debug access: Proxmox root key → `debian@192.168.7.2`.
 - Remaining for full Sprint 1: pfSense FRR + BGP neighbor (1.3, production, back up config first),
@@ -132,3 +132,17 @@ adversarial review then surfaced fixes, all applied LIVE (BGP stayed Established
   stores `pve-servers-shared` and `pve-backups` (server `192.168.2.50`) — usable for Sprint-2 image ops.
 - **Access contract:** key-only as `debian@` via the Proxmox host `/root/.ssh/id_ed25519` (matches the
   `root@proxmox` key in cloud-init); console fallback `qm terminal 130` (serial0 configured).
+
+## LAB route migration + pfSense write_config bug (2026-06-17)
+
+- **LAB net now routes via the lab-router** (replacing the old pfSense HOMELAB gateway → Proxmox `.7.10`).
+  lab-router advertises `192.168.100.0/24` over BGP + nftables masquerades `HOME/SVR → LAB` to its `.100.2`
+  leg for symmetric return. pfSense CLUSTER-IN got `seq 15 permit 192.168.100.0/24`. Verified: pfSense
+  reaches `.100.1`/`.100.254` at 0% loss; cluster + DHCP + WAN unaffected. Details: `pfsense-frr-bgp.md`.
+- **HOMELAB gateway + static route are disabled/inert** (decommissioned functionally) but **could not be
+  deleted from `config.xml`**: pfSense `write_config()` throws in `cleanup_backupcache()` (`getConfig()`
+  returns an int — config.lib.inc:1523). **This blocks ALL pfSense config saves** and is the same bug behind
+  the Status→Services PHP errors. Fix this deliberately before any further pfSense config change (do not force
+  `write_config` or hand-edit `config.xml`). The live routing is correct regardless (BGP-driven).
+- **FRR restart caveat:** `service frr restart` hangs/leaves FRR down on this box; use **`frr_generate_config()`**
+  to restart cleanly (also clears a zebra/kernel route desync).
