@@ -28,7 +28,7 @@ Proxmox-CSI + csi-driver-nfs, Velero, Kyverno, MinIO (S3 state + backups).
 |---|---|---|
 | 0 — Foundations | ✅ **done** | facts/versions, 3 MinIO buckets exist, `lab-network` root inits+validates. Deviation: **local state** (MinIO S3 backend deferred — flaky from the workstation). |
 | 1 — Lab network (router) | ✅ **done (LIVE)** | **lab-router VM 130 (FRR-on-Debian)** up; **BGP Established** pfSense(AS65000)↔router(AS65010); pfSense learned `192.168.30.0/24` in its FIB; `filter.bypassstaticroutes` (asymmetric fix) on; **zone firewall enforced** (1.5). Router reconciled to a reproducible script; full bpg-Terraform gated on a Proxmox deploy-SSH-key decision. **1.5 review fixes (2026-06-16):** cluster DNS→LAB Pi-hole, masquerade→internet-only (real source IPs ride BGP), pod-CIDR/AM-B/Talos+Cilium scrape ports added, chrony NTP relay. See `LIVE-FACTS.md` §"Sprint 1.5 hardening". |
-| 2 — Cluster base (Talos) | ⬜ not started | **Clear first:** `siderolabs/talos` provider download hangs from the workstation (GitHub releases unreachable) — pre-stage it or run from a LAN host. |
+| 2 — Cluster base (Talos) | ⬜ not started | **Readiness reviewed 2026-06-16** → see the **Sprint 2 pre-flight** block below. Provider-hang fear **refuted** (cache warm, `init` green); real gates were unauthored TF + the HOME→cluster firewall lockout (operator-IP allow now live) + the Argo deploy-key producer. Bring-up = **ISO-boot**; exec from the workstation. |
 | 3 — Vault / secrets | ⬜ not started | — |
 | 4 — Storage | ⬜ not started | — |
 | 5 — Observability / DR | ⬜ not started | — |
@@ -178,6 +178,41 @@ flow to a cluster-segment IP; zone matrix enforced; each step proven rollback-ab
 ## Sprint 2 — Talos cluster base — `cluster` §3–§5, §7
 
 **Outcome:** 5-node Talos cluster Ready, Cilium BGP advertising LB IPs, Argo CD healthy.
+
+### Sprint 2 pre-flight (from the 2026-06-16 readiness review — clear before any apply)
+
+- [x] **Execution host = operator workstation (192.168.0.7, HOME).** The Sprint-1.5 firewall drops
+  HOME→cluster; a narrow per-IP allow for `192.168.0.7` to cluster `:6443/:50000` is now live + in
+  `cloud-init/lab-router.yaml`. Run `terraform`/`talosctl`/`kubectl`/`helm` from the workstation.
+- [ ] **Image bring-up = ISO-boot, API-only** (decided — see cluster spec §3 as-built note). Enable the
+  Proxmox `local` content-types (`ssh proxmox 'SUDO_ASKPASS=$HOME/.config/bin/answer.sh sudo -A pvesm set
+  local --content iso,backup,vztmpl,snippets,import'`) **or** target NFS `pve-servers-shared` (already has
+  `iso,import,snippets`). No bpg `ssh{}` block needed.
+- [ ] **Scaffold authored (prep):** `gitops/{bootstrap,infra,apps}/` + `terraform/kubernetes/{main,image,vms}.tf`
+  exist; `terraform/kubernetes/.terraform.lock.hcl` committed (pins `talos` 0.11 / `proxmox` 0.109 / `vault` 4.8 /
+  `helm` 2.17 / `kubernetes` 2.38). This — not any provider-download hang (refuted; init is green) — was the real
+  reason 2.1 couldn't plan.
+- [ ] **Argo deploy-key produced** (no Sprint step created it): generate a key, register the **public** half as a
+  read-only GitHub deploy key on `home-lab-inventory`, store the private half in Vault under the `k8s/` path (hard
+  dep in two specs), then shred the local copy:
+
+  ```sh
+  ssh-keygen -t ed25519 -N '' -f /tmp/argo-deploy-key
+  vault kv put secret/homelab/k8s/argo-deploy-key \
+    sshPrivateKey=@/tmp/argo-deploy-key type=git \
+    url=git@github.com:luiscamaral/home-lab-inventory.git
+  shred -u /tmp/argo-deploy-key
+  ```
+
+- [ ] **talosctl pinned to 1.13.4** (the SynologyDrive-local `mise.toml` shadows the global at 1.12.0 →
+  client/server skew): `mise use talosctl@1.13.4`; verify `talosctl version --client` from the repo cwd.
+- [ ] **LAB Pi-hole (192.168.100.254) verified** to resolve public (`ghcr.io`, `registry.cf.lcamaral.com`) AND
+  internal `*.d.lcamaral.com` from the cluster range: `dig @192.168.100.254 vault.d.lcamaral.com` etc. Add
+  conditional-forwarding for `.d` if missing, or use literal SVR IPs where TLS SNI permits.
+- [ ] **pfSense (optional hardening — not a hard blocker; the covering `/24` already routes the LB pool):**
+  add `ip prefix-list CLUSTER-IN seq 15 permit 192.168.30.128/25` (or `seq 5 permit 192.168.30.0/24 le 25`)
+  **and** an outbound prefix-list on the router toward `.48.1` so the AS65011 cluster can't leak arbitrary
+  prefixes upstream. Back up `config.xml` first; production change → do during a Sprint-2 window.
 
 ### Task 2.1 — Image + VMs
 
