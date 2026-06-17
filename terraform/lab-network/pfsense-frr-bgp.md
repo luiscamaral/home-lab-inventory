@@ -31,8 +31,12 @@ router bgp 65000
 exit
 ip prefix-list CLUSTER-IN seq 5 permit 192.168.30.0/24
 ip prefix-list CLUSTER-IN seq 10 permit 10.244.0.0/16
+ip route 192.168.100.0/24 192.168.7.10
 line vty
 ```
+
+> The `ip route 192.168.100.0/24 192.168.7.10` line is the **LAB direct route** added 2026-06-17 (see "LAB
+> network routing" below). Everything above it is the original cluster-BGP bring-up.
 
 Then `frr_generate_config()` (applies + restarts FRR). pfSense **advertises nothing** and accepts **only**
 the cluster prefixes inbound — additive, no overlap with existing routing. FRR is a separate daemon, so a
@@ -57,22 +61,28 @@ ssh pfsense 'pkg delete -y pfSense-pkg-frr'   # full removal
 # or restore: cp /tmp/pfsense-config-2026-06-16-pre-frr.xml /conf/config.xml && reboot
 ```
 
-## LAB network route migration (2026-06-17) — HOMELAB gateway → lab-router
+## LAB network routing (2026-06-17, final) — DIRECT via Proxmox; lab-router is cluster-only
 
-The old pfSense **HOMELAB gateway** (`opt2 → 192.168.7.10`, a static route `192.168.100.0/24 → HOMELAB`
-via the Proxmox HOME leg) was the pre-lab-router path to the LAB net. It was replaced by the lab-router:
+The old pfSense **HOMELAB gateway** (`opt2 → 192.168.7.10`, static route `192.168.100.0/24 → HOMELAB` via the
+Proxmox HOME leg) routed the LAB net. **Final design: LAB stays on the direct Proxmox path; the lab-router
+routes only the cluster.**
 
-- **lab-router** now advertises `192.168.100.0/24` too (added `network 192.168.100.0/24` to its `frr.conf`),
-  and acts as a symmetric transit: nftables FORWARD allows `HOME/SVR → 192.168.100.0/24` and **masquerades**
-  it to the LAB leg (`.100.2`) so LAB hosts reply on-link → reliable return (the lab-router is on the LAB
-  segment but is **not** its gateway — Proxmox `.100.1` is — so the masquerade is required).
-- **pfSense** CLUSTER-IN prefix-list gained `seq 15 permit 192.168.100.0/24` (via the `frrglobalraw` base64 +
-  `frr_generate_config()`). Verified: pfSense installs `192.168.100.0/24 → 192.168.48.2` and reaches
-  `.100.1`/`.100.254` at 0% loss.
-- **Gotcha — zebra/kernel desync:** after the stale static route's kernel entry was already gone, zebra still
-  held a phantom distance-0 "kernel" route that blocked the BGP route. Fix = a **full FRR restart via
-  `frr_generate_config()`** (NOT `service frr restart`, which hangs and leaves FRR down — recover with
-  `frr_generate_config()`). A fresh start makes zebra re-read the kernel FIB and install the BGP route.
+- **Why not via the lab-router:** an interim attempt advertised `192.168.100.0/24` from the lab-router + a
+  `HOME/SVR → LAB` masquerade. It made pfSense→LAB work but **broke LAB-originated egress** — the masquerade
+  mangled the reply source, so the LAB Pi-hole (`.100.254`) couldn't reach its upstream (`.4.1`) or the
+  internet (DNS dead). Root cause: the lab-router is _on_ the LAB segment but is **not** its gateway
+  (Proxmox `.100.1` is). So it's the wrong router for LAB. **That advertisement + masquerade were reverted**
+  (lab-router `frr.conf` / nftables in `cloud-init/lab-router.yaml`); the lab-router now advertises only
+  `192.168.30.0/24`.
+- **LAB route on pfSense (current):** a persistent **FRR static route** in `frrglobalraw`:
+  `ip route 192.168.100.0/24 192.168.7.10` (distance 1, beats any BGP). Symmetric egress via Proxmox
+  (Proxmox is the LAB gateway). CLUSTER-IN prefix-list = `seq 5 192.168.30.0/24` + `seq 10 10.244.0.0/16`
+  only (the interim `seq 15` for LAB was removed). Verified: pfSense installs
+  `S>* 192.168.100.0/24 via 192.168.7.10`, reaches `.100.1`/`.100.254` at 0% loss, and `.100.254` resolves
+  public names again. No automatic backup (LAB depends on Proxmox `.7.10`); add a floating route later if
+  redundancy is wanted.
+- **FRR restart caveat:** `service frr restart` hangs/leaves FRR down on this box; restart via
+  `frr_generate_config()`. A fresh start also clears any zebra/kernel route desync.
 
 ### HOMELAB decommission status: DONE (config entries removed)
 

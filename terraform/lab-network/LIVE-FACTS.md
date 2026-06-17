@@ -141,11 +141,13 @@ adversarial review then surfaced fixes, all applied LIVE (BGP stayed Established
   Pi-hole `.100.254` unable to reach its upstream `.4.1` or the internet (DNS dead). Root cause: the lab-router
   is on the LAB segment but is **not** its gateway (Proxmox `.100.1` is), so it's the wrong path for LAB. Fix:
   persistent FRR static `ip route 192.168.100.0/24 192.168.7.10` (distance 1) in pfSense `frrglobalraw` (added
-  via DOMDocument bypass; write_config still broken). LAB now egresses symmetrically via Proxmox. The lab-router
-  BGP `/24` (distance 20) remains as a backup but its masquerade makes it an **imperfect** backup — finalize the
-  architecture (remove lab-router LAB-routing, or drop its masquerade for the backup case). Verified: LAB Pi-hole
-  resolves public again; cluster (`.30/24` via lab-router) + DHCP + WAN unaffected. The lab-router is the right
-  router for the **cluster** (where it IS the gateway), not for LAB. Details: `pfsense-frr-bgp.md`.
+  via DOMDocument bypass; write_config still broken). LAB now egresses symmetrically via Proxmox. **Finalized
+  (option a):** the lab-router LAB advertisement + masquerade + `HOME/SVR→LAB` transit were **reverted** in
+  `cloud-init/lab-router.yaml`; the lab-router advertises only `192.168.30.0/24` and the pfSense `seq 15` LAB
+  permit was removed. So **LAB = direct-via-Proxmox only** (no lab-router backup — add a floating route later
+  if redundancy is wanted), and the **lab-router is cluster-only** (it IS the cluster's gateway; it is NOT
+  LAB's). Verified: LAB Pi-hole resolves public again; pfSense `S>* .100.0/24 via .7.10`; cluster (`.30/24`
+  via lab-router `.48.2`) + DHCP + WAN all healthy. Details: `pfsense-frr-bgp.md`.
 - **DNS server health (2026-06-17):** `.4.1` + `.4.236` + `.100.254` live + resolving; `.59.50` is reachable
   (ping) but **not a working resolver** (not a dockermaster container; orphaned/offline — find/restart it).
 - **HOMELAB gateway + static route REMOVED from `config.xml`** (decommissioned). Done via a one-time
