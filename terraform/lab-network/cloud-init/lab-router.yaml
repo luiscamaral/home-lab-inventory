@@ -119,6 +119,10 @@ write_files:
           ip saddr 192.168.30.0/24 ip daddr 192.168.0.0/20 drop
           # SVR -> CLUSTER: kube-API, kubelet, Talos apid, Cilium agent/Hubble + Prometheus scrape
           ip saddr 192.168.48.0/20 ip daddr 192.168.30.0/24 tcp dport { 6443, 4244, 4245, 8080, 9090, 9100, 9962, 9965, 10250, 50000, 50001 } accept
+          # HOME -> CLUSTER: operator workstation cluster-ops (kube-API + Talos apid). The Sprint-2
+          # execution host is on HOME; this narrow per-IP allow keeps the rest of HOME isolated.
+          # Update the IP if the operator workstation changes (it is static, outside the HOME DHCP pool).
+          ip saddr 192.168.0.7 ip daddr 192.168.30.0/24 tcp dport { 6443, 50000 } accept
           # HOME -> CLUSTER: published services on the LB pool only
           ip saddr 192.168.0.0/20 ip daddr 192.168.30.128/25 tcp dport { 80, 443 } accept
         }
