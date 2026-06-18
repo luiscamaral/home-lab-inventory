@@ -110,7 +110,7 @@ jobs:
 
       - name: Create emergency deployment record
         id: create-emergency-deployment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const deployment = await github.rest.repos.createDeployment({
@@ -472,7 +472,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create emergency incident issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const rollbackPlan = JSON.parse('${{ needs.rollback-preparation.outputs.rollback-plan }}');
@@ -567,7 +567,7 @@ jobs:
             console.log(`Created emergency incident issue #${issue.data.number}`);
 
       - name: Update deployment status
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const deploymentId = '${{ needs.rollback-preparation.outputs.deployment-id }}';
