@@ -78,6 +78,8 @@ grafana_data/
 *.sql
 *.dump
 *.backup
+# Vendored compose init scripts are config, not dumps
+!dockermaster/docker/compose/honcho/database-init.sql
 
 # Devin AI config (keep skills tracked in git)
 .devin/*
@@ -85,6 +87,7 @@ grafana_data/
 
 # Generated output
 output/
+graphify-out/
 
 # Timestamped backup directories inside compose trees
 backup_*/
