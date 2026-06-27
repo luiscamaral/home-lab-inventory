@@ -76,6 +76,8 @@
   - `secret/homelab/watchtower` (HTTP API token)
   - `secret/homelab/minio` (root user + password)
   - `secret/homelab/freeswitch` (ESL, SIP extension, calling card credentials)
+  - `secret/homelab/switch24a` (TL-SG3428X core switch admin login)
+  - `secret/homelab/omada-controller` (Omada V6 controller login, VM 100)
 - Terraform vars are sourced from Vault at runtime, never stored in files.
 
 ## Docker Services Structure
