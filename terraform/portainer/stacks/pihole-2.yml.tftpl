@@ -37,6 +37,11 @@ services:
       TZ: America/Denver
       FTLCONF_webserver_api_password: $${WEBPASSWORD}
       FTLCONF_dns_upstreams: 192.168.4.1
+      # Forward private-range reverse (PTR) lookups to Unbound instead of
+      # NXDOMAIN-ing them locally (v6 default is true). Upstream is our own
+      # authoritative pfSense Unbound, so this is safe and required for
+      # reverse resolution of static DHCP mappings.
+      FTLCONF_dns_bogusPriv: "false"
       FTLCONF_misc_etc_dnsmasq_d: "true"
       FTLCONF_misc_check_load: "false"
       FTLCONF_resolver_resolveIPv6: "false"
