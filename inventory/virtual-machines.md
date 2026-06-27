@@ -99,8 +99,9 @@
 - **RAM**: 2 GB
 - **Storage**: 128 GB (write-through cache)
 - **Network**:
-  - vmbr010 (disabled)
-  - vmbr1 (Management)
+  - net0 vmbr010 (HOME VLAN, `link_down=1` / disabled)
+  - net1 vmbr01 (ADMIN, untagged/eno1) — `192.168.32.41`; was on vmbr1 (tagged-VID1/eno2),
+    re-homed 2026-06-26 because the tagged-VID1 path died after the switch24a Omada rebuild
 - **OS**: Linux
 - **Purpose**: UniFi network management
 - **Auto-start**: Yes (startup delay: 120s)
