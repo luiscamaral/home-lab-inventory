@@ -23,9 +23,13 @@ configs:
     content: |
       ${indent(6, host_overrides_content)}
 
+volumes:
+  pihole-2-etc:
+    name: pihole-2-etc
+
 services:
   pihole:
-    image: pihole/pihole:2025.10.0
+    image: pihole/pihole:2026.06.0
     hostname: pihole-2
     networks:
       servers-net:
@@ -47,8 +51,14 @@ services:
       FTLCONF_resolver_resolveIPv6: "false"
       FTLCONF_ntp_sync_active: "false"
       FTLCONF_dns_listeningMode: "all"
+    # /etc/pihole on a LOCAL Docker volume (not NFS). pihole-FTL keeps its
+    # gravity.db / pihole-FTL.db here as SQLite; on the previous NFS bind it
+    # wedged in nfs_wait_bit_killable whenever tnas stopped responding
+    # (incident 2026-06-27), which is what took this instance down. Local
+    # storage makes it NFS-independent — matching pihole-3's NAS-local volume.
+    # orbital-sync (primary pihole-1) repopulates gravity/adlists.
     volumes:
-      - /nfs/dockermaster/docker/pihole-2/etc-pihole:/etc/pihole
+      - pihole-2-etc:/etc/pihole
     configs:
       - source: dlc_zone
         target: /etc/dnsmasq.d/04-d-lcamaral-com.conf
