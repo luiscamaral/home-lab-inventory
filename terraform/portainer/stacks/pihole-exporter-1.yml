@@ -38,6 +38,23 @@ services:
       PIHOLE_SCHEME: http
       PIHOLE_PORT: "80"
     restart: unless-stopped
+    # Failsafe (incident 2026-06-27): amonacoos/pihole6_exporter leaks one
+    # socket FD per failed scrape and never exits, so restart:unless-stopped
+    # cannot recover it. This instance climbed to the default 1024 nofile
+    # ceiling over 46 days of transient cross-VLAN scrape failures to
+    # pihole-1, then spin-looped a full core for ~10 days unnoticed (no
+    # healthcheck on the distroless image; up==0 never tripped because it
+    # kept serving stale scrapes). cpus caps the blast radius; nofile x64
+    # pushes the EMFILE ceiling years out; pids/mem bound the rest. Detected
+    # by PiholeExporterCpuRunaway; reset nightly by the pihole-exporter-restart
+    # Rundeck job.
+    cpus: 0.50
+    mem_limit: 64m
+    pids_limit: 256
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     healthcheck:
       # Distroless image — disable healthcheck; Prometheus scrape itself
       # confirms liveness.

@@ -1366,5 +1366,51 @@ locals {
                 needs ~16 KiB contiguous for TLS — below that the device
                 can only be recovered via /reboot or power-cycle. This is
                 the phase-12 fragmentation regression guard.
+
+      # 2026-06-27: pihole-exporter (amonacoos/pihole6_exporter) leaks one
+      # socket FD per failed scrape and never exits. exporter-1 spin-looped
+      # a full core for ~10d after reaching the 1024 nofile ceiling, and
+      # nothing caught it: restart:unless-stopped never fires (the process
+      # spins, it doesn't crash), the distroless image has no healthcheck,
+      # and up==0 never tripped because it kept serving stale scrapes.
+      # CpuRunaway is the detector that would have fired — it watches
+      # cAdvisor CPU, not liveness. Stacks now cap cpus=0.5 so a wedge sits
+      # at the cap; this rule still catches it before the nightly Rundeck
+      # reset runs.
+      - name: pihole-exporters
+        interval: 1m
+        rules:
+          - alert: PiholeExporterCpuRunaway
+            expr: rate(container_cpu_usage_seconds_total{name=~"pihole-exporter-.*"}[5m]) > 0.4
+            for: 15m
+            labels:
+              severity: warning
+              category: pihole
+            annotations:
+              summary: "pihole-exporter {{ $$labels.name }} burning CPU ({{ printf \"%.2f\" $$value }} cores)"
+              description: |
+                {{ $$labels.name }} has sustained >0.4 cores for 15m. This
+                exporter leaks a socket FD on every failed scrape; a hot spin
+                means it is approaching (or capped at) its nofile ceiling and
+                can no longer open new connections. Restart resets its FD
+                table (docker restart {{ $$labels.name }}); the nightly
+                pihole-exporter-restart Rundeck job does this automatically.
+                Root trigger is usually a flapping path to the scrape target.
+          - alert: PiholeExporterDown
+            expr: up{job="pihole"} == 0
+            for: 10m
+            labels:
+              severity: warning
+              category: pihole
+            annotations:
+              summary: "pihole-exporter for {{ $$labels.instance }} not scrapeable"
+              description: |
+                Prometheus cannot scrape the pihole-exporter for
+                {{ $$labels.instance }} for 10m. When the exporter exhausts
+                its FDs it can no longer accept the scrape connection, so this
+                fires alongside PiholeExporterCpuRunaway in a full wedge. Also
+                fires if the container is stopped or the Pi-hole itself is
+                unreachable. Check the matching pihole-exporter-N Portainer
+                stack and the path to the Pi-hole.
   EOT
 }
