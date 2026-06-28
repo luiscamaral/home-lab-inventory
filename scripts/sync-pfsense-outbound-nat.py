@@ -53,9 +53,9 @@ def api(method: str, path: str, token: str, body: dict | None = None,
         timeout: int = 60, retries: int = 3) -> dict:
     import ssl  # noqa: PLC0415
     import time  # noqa: PLC0415
+    # pfSense API is fronted by HAProxy with a Let's Encrypt cert
+    # (*.home.lcamaral.com), so default TLS verification works.
     ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
     last_err: Exception | None = None
     for attempt in range(1, retries + 1):
         req = urllib.request.Request(

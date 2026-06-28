@@ -61,11 +61,9 @@ def api(method: str, path: str, token: str, body: dict | None = None,
     occasionally slow; retry transient timeouts with a backoff."""
     import ssl  # noqa: PLC0415
     import time  # noqa: PLC0415
-    # pfSense uses a self-signed cert; the cert is for the homelab and the
-    # token is the actual auth, so we skip cert verification here.
+    # pfSense GUI/API is fronted by HAProxy with a Let's Encrypt cert for
+    # *.home.lcamaral.com (publicly trusted), so default TLS verification works.
     ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
 
     last_err: Exception | None = None
     for attempt in range(1, retries + 1):
