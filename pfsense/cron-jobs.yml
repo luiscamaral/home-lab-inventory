@@ -25,3 +25,12 @@ jobs:
     wday: "*"
     who: "root"
     command: "/usr/local/bin/dpinger_textfile_30s.sh"
+
+  - description: "node_exporter textfile feeder for ix0 10G LAN-trunk link state + flap count"
+    minute: "*"
+    hour: "*"
+    mday: "*"
+    month: "*"
+    wday: "*"
+    who: "root"
+    command: "/usr/local/bin/ix0_link_metrics.sh"
