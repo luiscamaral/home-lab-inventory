@@ -120,7 +120,11 @@ services:
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_USERS_AUTO_ASSIGN_ORG: "true"
       GF_USERS_AUTO_ASSIGN_ORG_ROLE: Viewer
-      GF_AUTH_GENERIC_OAUTH_ENABLED: "true"
+      # TEMPORARILY DISABLED (2026-06-28): Keycloak SSO is down (keycloak-db-0
+      # postgres cluster degraded), and with OAuth enabled Grafana hangs the
+      # login page trying to reach the dead IdP. Set to "false" so the local
+      # admin login form works. Flip back to "true" once Keycloak is recovered.
+      GF_AUTH_GENERIC_OAUTH_ENABLED: "false"
       GF_AUTH_GENERIC_OAUTH_NAME: Keycloak
       GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP: "true"
       GF_AUTH_GENERIC_OAUTH_CLIENT_ID: $${GRAFANA_OIDC_CLIENT_ID}
