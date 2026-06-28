@@ -1,4 +1,5 @@
 #!/bin/sh
+# pfsync-dest: /usr/local/bin/ix0_link_metrics.sh
 # pfSense node_exporter textfile metrics for the ix0 10G SFP+ LAN trunk
 # (pfSense -> switch24a port 27). Surfaces link flaps into Prometheus/Grafana.
 #

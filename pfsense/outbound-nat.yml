@@ -1,0 +1,30 @@
+# pfSense outbound (source) NAT — manual rules managed by this repo.
+#
+# Reconciled against pfSense's <nat><outbound> block in /cf/conf/config.xml
+# by scripts/sync-pfsense-outbound-nat.py.
+#   Read:  SSH to pfSense, awk the <outbound> block out of config.xml.
+#   Write: REST API /api/v2/firewall/nat/outbound/mode + /mapping.
+#   Auth:  macOS Keychain `pfsense-api-token`.
+#
+# Upsert by (interface, source). pfSense automatic rules and any manual
+# rule not listed here are LEFT UNTOUCHED ("claim what we own").
+#
+# `mode: hybrid` is required so the automatic rules keep covering the
+# directly-attached LANs while these manual rules cover routed subnets
+# (automatic outbound NAT does NOT NAT subnets reached via a downstream
+# router — that is why LAB egress broke until this rule was added).
+#
+# Apply: scripts/sync-pfsense-outbound-nat.py --apply
+
+mode: hybrid
+
+rules:
+  # LAB VLAN 192.168.100.0/24 is routed behind the lab-router (via ix0.10),
+  # so pfSense Automatic Outbound NAT skips it -> its egress left WAN with a
+  # private source IP and the ISP dropped it. NAT it on both WANs.
+  - interface: wan          # igc0 (WAN1, GFiber)
+    source: 192.168.100.0/24
+    descr: "LAB 192.168.100.0/24 outbound NAT (routed subnet) - added 2026-06-27"
+  - interface: opt1         # igc1 (WAN2, backup)
+    source: 192.168.100.0/24
+    descr: "LAB 192.168.100.0/24 outbound NAT (routed subnet) - added 2026-06-27"
