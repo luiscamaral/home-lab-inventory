@@ -1,4 +1,18 @@
-# Remote Servers
+# ⛔ Operating non-negotiables (read first)
+
+**Before ANY infrastructure change, read [`.claude/operating-rules.md`](.claude/operating-rules.md).** In short:
+
+- **IaC only — and IaC is NOT only Terraform.** Portainer/Cloudflare/Vault → `terraform/`;
+  **pfSense + hosts → `pfsense/*.yml` + `pfsense/scripts/` applied via `scripts/sync-*.py`**;
+  Rundeck → `rundeck/jobs/`. Never SSH-edit `config.xml`, run `write_config`, or hand-place cron/scripts.
+- **Destructive / host / network changes** (link bounce, `pfctl -F`, `docker rm -f`, VM/LXC stop,
+  reboot): present options + rollback, get explicit approval **first**.
+- **Re-anchor when the session gets long** — scope creep dilutes these rules; stop and re-read the
+  file. A `PreToolUse` hook also re-surfaces this on risky commands, and `SessionStart` loads it.
+
+---
+
+## Remote Servers
 
 - Access proxmox (Linux) server with `ssh proxmox`
 - For execute sudo on proxmox, set this first `SUDO_ASKPASS=$HOME/.config/bin/answer.sh`.
@@ -38,14 +52,23 @@
 - Portainer at 192.168.59.2 for container management (Terraform-managed via `terraform/portainer/`).
 - Docker registry at <https://registry.cf.lcamaral.com> (Terraform-managed Portainer stack).
 
-## Infrastructure as Code (Terraform)
+## Infrastructure as Code
 
-- All IaC lives under `terraform/` with independent state per domain:
+**IaC is NOT only Terraform** — see `.claude/operating-rules.md` for the full
+surface → source → apply map. Two layers:
+
+- **Terraform** (Portainer stacks, Cloudflare, Vault config) under `terraform/`, independent state per domain:
   - `terraform/cloudflare/` -- Zone, DNS, tunnel, DreamHost wildcard (Cloudflare + DreamHost providers)
   - `terraform/portainer/` -- Portainer stacks, settings (Portainer provider)
   - `terraform/vault/` -- Secret engines, policies (Vault provider)
   - `terraform/modules/cf-service/` -- Reusable module for `*.cf.lcamaral.com` services
-- See `terraform/README.md` for full auth, workflows, and credentials reference.
+  - See `terraform/README.md` for full auth, workflows, and credentials reference.
+- **pfSense + hosts are NOT Terraform-managed** — change them via repo declarative sources + sync
+  scripts, never direct `config.xml`/SSH writes:
+  - pfSense cron → `pfsense/cron-jobs.yml` (`scripts/sync-pfsense-cron-jobs.py`)
+  - pfSense scripts (e.g. node_exporter collectors) → `pfsense/scripts/` (`scripts/sync-pfsense-scripts.py`)
+  - pfSense ACME hooks → `pfsense/acme-actions.yml`; host overrides → `pfsense/host-overrides.yml` (`scripts/sync-host-*.py`)
+  - Rundeck jobs → `rundeck/jobs/*.yaml` (API import, see `rundeck/README.md`)
 
 ## DNS and Cloudflare Tunnel
 
