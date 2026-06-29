@@ -78,7 +78,7 @@
 - **OS**: Ubuntu Linux (clone of dockerserver-1, 2026-04-11)
 - **Purpose**: App Plane B — vault-3, Twingate B, Keycloak-2, Ollama, FreeSWITCH, RustDesk, Watchtower
 - **Portainer endpoint ID**: 13
-- **Portainer agent macvlan IP**: 192.168.59.46
+- **Portainer agent macvlan IP**: 192.168.59.42 (was .46 — collided with otel-collector; moved 2026-06-28)
 - **Auto-start**: Yes (startup order: 1, delay: 30s)
 
 #### VM 121 - Home Assistant
