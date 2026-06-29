@@ -20,6 +20,10 @@ volumes:
       type: none
       device: /var/lib/vault/raft
       o: bind
+  vault_logs:
+    # Audit log on a LOCAL volume (not NFS) — fail-closed audit sink died
+    # on the NFS bind during an ix0/NFS stall (incident 2026-06-28).
+    driver: local
 
 configs:
   vault_config:
@@ -58,7 +62,7 @@ services:
         mode: 0644
     volumes:
       - vault_raft:/vault/raft
-      - /nfs/dockermaster/docker/vault/vault-2/logs:/vault/logs
+      - vault_logs:/vault/logs
       - /nfs/dockermaster/docker/vault/vault/snapshots:/vault/snapshots
     labels:
       com.centurylinklabs.watchtower.enable: "false"
