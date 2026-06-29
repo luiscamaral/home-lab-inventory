@@ -163,6 +163,12 @@ resource "portainer_stack" "vault_3" {
   deployment_type = "standalone"
   method          = "string"
 
+  # Don't re-pull on redeploy: the image is version-pinned and cached on
+  # the node, so a re-pull only adds an egress dependency that a transient
+  # Docker Hub blip (e.g. during an ix0/WAN flap) turns into a failed
+  # recreate ("Proxy failure"). Deterministic + offline-capable redeploys.
+  pull_image      = false
+
   stack_file_content = templatefile("${path.module}/stacks/vault-3.yml.tftpl", {
     vault_config = local.vault_configs["vault-3"]
   })
@@ -178,6 +184,7 @@ resource "portainer_stack" "vault_2" {
   endpoint_id     = var.ds1_endpoint_id
   deployment_type = "standalone"
   method          = "string"
+  pull_image      = false # cached pinned image — see vault_3
 
   stack_file_content = templatefile("${path.module}/stacks/vault-2.yml.tftpl", {
     vault_config = local.vault_configs["vault-2"]
@@ -193,6 +200,7 @@ resource "portainer_stack" "vault" {
   endpoint_id     = var.endpoint_id
   deployment_type = "standalone"
   method          = "string"
+  pull_image      = false # cached pinned image — see vault_3
 
   stack_file_content = templatefile("${path.module}/stacks/vault.yml.tftpl", {
     vault_config = local.vault_configs["vault-1"]
