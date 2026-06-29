@@ -19,6 +19,13 @@ volumes:
       type: none
       device: /var/lib/vault/raft
       o: bind
+  vault_logs:
+    # Audit log on a LOCAL volume (not NFS). The file audit device is
+    # fail-closed: on the previous NFS bind, an ix0/NFS stall killed the
+    # sink and Vault returned 500 on every secret read while /sys/health
+    # stayed 200 (incident 2026-06-28). Local storage makes audit
+    # NFS-independent. Snapshots stay on NFS — backups belong off-host.
+    driver: local
 
 configs:
   vault_config:
@@ -61,7 +68,7 @@ services:
         mode: 0644
     volumes:
       - vault_raft:/vault/raft
-      - /nfs/dockermaster/docker/vault/vault/logs:/vault/logs
+      - vault_logs:/vault/logs
       - /nfs/dockermaster/docker/vault/vault/snapshots:/vault/snapshots
     labels:
       com.centurylinklabs.watchtower.enable: "false"
