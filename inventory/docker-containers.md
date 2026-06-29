@@ -398,8 +398,8 @@
 
 #### Ancillary
 
-- **portainer-agent** — `portainer/agent:latest`
-  - Network: `docker-servers-net` (192.168.59.46)
+- **portainer-agent** — `portainer/agent:2.39.1`
+  - Network: `docker-servers-net` (192.168.59.42, was .46 — otel-collector collision, moved 2026-06-28)
   - Purpose: Portainer agent for managing ds-2 from the central Portainer
 
 ---

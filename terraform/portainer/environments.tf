@@ -19,14 +19,17 @@ resource "portainer_environment" "ds1" {
 
 # ──────────────────────────────────────────────
 # dockerserver-2 — App Plane B (VM 124)
-# Portainer agent at 192.168.59.46:9001 (macvlan IP)
+# Portainer agent at 192.168.59.42:9001 (macvlan IP)
+# Moved .46 → .42 on 2026-06-28: .46 collided with the otel-collector
+# stack (dm), so the ds-2 agent could never claim it and fell back to the
+# default bridge — Portainer 502'd this endpoint. .42 is free in the pool.
 # ──────────────────────────────────────────────
 resource "portainer_environment" "ds2" {
   name                = "dockerserver-2"
-  environment_address = "tcp://192.168.59.46:9001"
+  environment_address = "tcp://192.168.59.42:9001"
   type                = 2 # Docker agent (EndpointCreationType=2)
   tls_skip_verify     = true
-  public_ip           = "tcp://192.168.59.46:9001"
+  public_ip           = "tcp://192.168.59.42:9001"
 }
 
 # ──────────────────────────────────────────────
