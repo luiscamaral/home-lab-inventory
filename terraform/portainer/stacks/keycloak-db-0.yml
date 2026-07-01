@@ -18,14 +18,22 @@ services:
       servers-net:
         ipv4_address: 192.168.59.44
     volumes:
-      - /nfs/dockermaster/docker/keycloak-ha/db-0:/bitnami/postgresql
+      # PGDATA on a LOCAL volume (not NFS). The soft NFS mount returned EIO
+      # during the 2026-06-14 ix0/NFS stall -> postgres PANIC (pg_control
+      # I/O error) and this node died, while db-1 (local disk) survived and
+      # carried SSO. Empty dir -> Bitnami repmgr clones a fresh standby from
+      # the primary (db-1). NFS original left intact for rollback.
+      - /var/lib/keycloak-ha/db-0:/bitnami/postgresql
     environment:
       POSTGRESQL_POSTGRES_PASSWORD: ${POSTGRES_ROOT_PASSWORD}
       POSTGRESQL_USERNAME: keycloak
       POSTGRESQL_PASSWORD: ${DB_PASSWORD}
       POSTGRESQL_DATABASE: keycloak
       REPMGR_PASSWORD: ${REPMGR_PASSWORD}
-      REPMGR_PRIMARY_HOST: 192.168.59.44
+      # Seed at db-1 (.54, the live primary) — NOT self (.44). With empty
+      # PGDATA, if this node can't reach a primary it must fail to start
+      # rather than bootstrap as an empty primary (split-brain guard).
+      REPMGR_PRIMARY_HOST: 192.168.59.54
       REPMGR_PRIMARY_PORT: 5432
       REPMGR_PARTNER_NODES: 192.168.59.44,192.168.59.54
       REPMGR_NODE_NAME: keycloak-db-0
