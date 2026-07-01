@@ -84,7 +84,12 @@ services:
       POSTGRES_USER: rundeck
       POSTGRES_PASSWORD: $${RUNDECK_DB_PASSWORD}
     volumes:
-      - /nfs/dockermaster/docker/rundeck/dbdata:/var/lib/postgresql/data
+      # PGDATA on a LOCAL volume (not NFS). The soft NFS mount returned EIO
+      # during the 2026-06-14 ix0/NFS stall -> postgres PANIC (pg_control
+      # I/O error, exit 139). Local storage is NFS-independent. Seeded by
+      # salvaging the intact NFS copy (pg_controldata verified) into
+      # /opt/rundeck/dbdata. Rundeck app dirs below stay on NFS for now.
+      - /opt/rundeck/dbdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "rundeck"]
       interval: 10s
