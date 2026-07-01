@@ -79,6 +79,7 @@
 - **Purpose**: App Plane B — vault-3, Twingate B, Keycloak-2, Ollama, FreeSWITCH, RustDesk, Watchtower
 - **Portainer endpoint ID**: 13
 - **Portainer agent macvlan IP**: 192.168.59.42 (was .46 — collided with otel-collector; moved 2026-06-28)
+- **Portainer agent pinned MAC**: `02:42:c0:a8:3b:2a` (encodes IP; re-pin on recreate; unpinned MAC churned)
 - **Auto-start**: Yes (startup order: 1, delay: 30s)
 
 #### VM 121 - Home Assistant
