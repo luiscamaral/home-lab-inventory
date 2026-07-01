@@ -167,7 +167,7 @@ resource "portainer_stack" "vault_3" {
   # the node, so a re-pull only adds an egress dependency that a transient
   # Docker Hub blip (e.g. during an ix0/WAN flap) turns into a failed
   # recreate ("Proxy failure"). Deterministic + offline-capable redeploys.
-  pull_image      = false
+  pull_image = false
 
   stack_file_content = templatefile("${path.module}/stacks/vault-3.yml.tftpl", {
     vault_config = local.vault_configs["vault-3"]
@@ -921,6 +921,7 @@ resource "portainer_stack" "keycloak_db_0" {
   endpoint_id     = var.endpoint_id
   deployment_type = "standalone"
   method          = "string"
+  pull_image      = false # cached bitnamilegacy/postgresql-repmgr:17.6.0 on dm — avoid Docker Hub proxy failure on recreate
 
   stack_file_content = file("${path.module}/stacks/keycloak-db-0.yml")
 
