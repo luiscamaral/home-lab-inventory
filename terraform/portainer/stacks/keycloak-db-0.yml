@@ -37,6 +37,14 @@ services:
       # Seed at db-1 (.54, the live primary) — NOT self (.44). With empty
       # PGDATA, if this node can't reach a primary it must fail to start
       # rather than bootstrap as an empty primary (split-brain guard).
+      # This is fail-closed by design. COLD-DR CAVEAT: if BOTH db-0 and db-1
+      # are ever rebuilt with empty PGDATA at the same time, neither self-
+      # elects (db-0 waits for .54, db-1 waits for .44) and the cluster
+      # deadlocks. To recover a from-scratch cluster, first bootstrap ONE
+      # node as primary by temporarily setting its REPMGR_PRIMARY_HOST to its
+      # own address (db-1 -> 192.168.59.54), let it come up, then let the
+      # other clone. Normal single-node rebuilds (the common case) are
+      # unaffected: the surviving node is primary and this node clones from it.
       REPMGR_PRIMARY_HOST: 192.168.59.54
       REPMGR_PRIMARY_PORT: 5432
       REPMGR_PARTNER_NODES: 192.168.59.44,192.168.59.54
