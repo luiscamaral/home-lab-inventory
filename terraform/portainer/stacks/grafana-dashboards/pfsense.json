@@ -770,6 +770,166 @@
       ],
       "title": "ix0 Flaps (range)",
       "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "thanos"
+      },
+      "description": "ix0 optic RX power (switch->pfSense direction) from SFF-8472 DDM via `ifconfig -v`. Healthy -3..-10 dBm; marginal below ~-12; loss-of-signal ~-17. A clean RX proves the return path is good; the fault direction (pfSense->switch TX power) is not reported by the current OEM optic. TX power appears here automatically if a replacement optic reports it.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": -14
+              },
+              {
+                "color": "green",
+                "value": -10
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "pfsense_sfp_rx_power_dbm{device=\"ix0\"}",
+          "legendFormat": "RX power (dBm)",
+          "refId": "A"
+        },
+        {
+          "expr": "pfsense_sfp_tx_power_dbm{device=\"ix0\"}",
+          "legendFormat": "TX power (dBm)",
+          "refId": "B"
+        }
+      ],
+      "title": "ix0 Optic \u2014 RX Power (dBm)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "thanos"
+      },
+      "description": "ix0 optic laser TX bias current (mA) and module temperature (C). A rising TX-bias trend can indicate a degrading laser; temperature should stay < 70 C. Baseline 2026-07-02: bias 6.86 mA, temp 52.7 C, voltage 3.25 V (all healthy) \u2014 use this to judge a replacement optic.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto"
+          },
+          "decimals": 2,
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "temp (C)"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "unit",
+                "value": "celsius"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "pfsense_sfp_tx_bias_ma{device=\"ix0\"}",
+          "legendFormat": "TX bias (mA)",
+          "refId": "A"
+        },
+        {
+          "expr": "pfsense_sfp_temperature_celsius{device=\"ix0\"}",
+          "legendFormat": "temp (C)",
+          "refId": "B"
+        }
+      ],
+      "title": "ix0 Optic \u2014 TX Bias (mA) & Temp (C)",
+      "type": "timeseries"
     }
   ],
   "preload": false,
@@ -791,6 +951,6 @@
   "timezone": "browser",
   "title": "pfSense",
   "uid": "pfsense-availability",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }
