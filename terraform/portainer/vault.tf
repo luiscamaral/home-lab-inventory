@@ -132,6 +132,21 @@ data "vault_kv_secret_v2" "alertmanager_smtp" {
   name  = "homelab/alertmanager/smtp"
 }
 
+# Telegram push alerting (2026-06-30). Bot created via @BotFather; the bot is
+# added to a private group/channel and `chat_id` is that conversation's id
+# (negative for groups, -100… for channels/supergroups). Alertmanager's
+# telegram_configs reach out to api.telegram.org directly (AM sits on
+# docker-servers-net, which has internet egress). Fields: bot_token, chat_id.
+#
+# SECURITY NOTE: bot_token is rendered into the alertmanager stack via docker
+# `configs:` (baked into the compose body Portainer stores), same tradeoff as
+# ha_metrics_token / minio_metrics_jwt above. Acceptable for the homelab
+# blast-radius; rotate by re-issuing the token in BotFather and `vault kv put`.
+data "vault_kv_secret_v2" "telegram" {
+  mount = "secret"
+  name  = "homelab/telegram/alertmanager"
+}
+
 # Proxmox API token for pve-exporter (Phase 3c). The exporter uses an
 # unprivileged read-only token `prometheus@pam!metrics` to walk the PVE
 # API. Fields: token_id (= prometheus@pam!metrics), token_secret.
