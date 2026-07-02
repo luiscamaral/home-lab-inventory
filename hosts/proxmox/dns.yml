@@ -1,0 +1,24 @@
+# Proxmox host DNS — declarative source of truth.
+# Applied with scripts/sync-proxmox-dns.py, which calls the Proxmox node
+# DNS API (`pvesh set /nodes/<node>/dns ...`). Proxmox regenerates
+# /etc/resolv.conf from this config, so it is reboot-safe and idempotent
+# (no hand-edited resolv.conf).
+#
+# Why this exists: the host previously pointed BOTH nameservers at pfSense
+# (192.168.4.1 HOME + 192.168.32.33 ADMIN). The ADMIN one did not answer on
+# :53, so the host effectively had a single resolver on the one box that
+# goes unreachable during an ix0 LAN-trunk flap — a DNS single point of
+# failure (incident 2026-06-28). This config keeps pfSense Unbound as the
+# unfiltered recursive primary and adds two genuinely independent backups:
+#   - pihole-1 (192.168.100.254) is a LXC ON this Proxmox host (vmbr0), so
+#     it stays reachable even when ix0/pfSense is down (off-trunk path).
+#   - pihole-3 (192.168.4.236) is on a different physical box (the NAS).
+
+node: proxmox
+search: home.lcamaral.com
+
+# Order = resolution preference. glibc tries in order, max 3 (MAXNS).
+nameservers:
+  - 192.168.4.1      # pfSense Unbound — unfiltered recursive resolver (primary)
+  - 192.168.100.254  # pihole-1 — LOCAL LXC on this host, survives ix0/pfSense outage
+  - 192.168.4.236    # pihole-3 — independent host (NAS)
