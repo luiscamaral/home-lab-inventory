@@ -34,3 +34,15 @@ jobs:
     wday: "*"
     who: "root"
     command: "/usr/local/bin/ix0_link_metrics.sh"
+
+  # ix0 LAN-trunk watchdog keepalive: (re)start if not running; also covers a
+  # crashed watchdog between boots. `start` is idempotent. Replaces the
+  # previously hand-placed /etc/cron.d/ix0-watchdog (retired on adoption).
+  - description: "ix0 10G LAN-trunk watchdog keepalive (start if not running)"
+    minute: "*"
+    hour: "*"
+    mday: "*"
+    month: "*"
+    wday: "*"
+    who: "root"
+    command: "/usr/local/sbin/ix0-watchdog.sh start >/dev/null 2>&1"
