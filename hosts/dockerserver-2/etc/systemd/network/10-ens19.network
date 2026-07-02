@@ -3,7 +3,13 @@ Name=ens19
 
 [Network]
 Address=192.168.48.46/20
-# If you had a gateway/DNS on ens19 via netplan, add them here:
 Gateway=192.168.48.1
+# DNS resilience (incident 2026-06-28): pfSense primary + two independent
+# pihole backups so the host is not stranded when pfSense/ix0 is down. This
+# file wins over the netplan-generated one (lower filename sort), so DNS must
+# live here, not in netplan. .59.50 is same /20 (off-trunk reachable).
 DNS=192.168.48.1
+DNS=192.168.59.50
+DNS=192.168.100.254
+Domains=home.lcamaral.com
 MACVLAN=server-net-shim
