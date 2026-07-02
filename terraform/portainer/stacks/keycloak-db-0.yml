@@ -23,6 +23,10 @@ services:
       # I/O error) and this node died, while db-1 (local disk) survived and
       # carried SSO. Empty dir -> Bitnami repmgr clones a fresh standby from
       # the primary (db-1). NFS original left intact for rollback.
+      # PRECONDITION on a fresh host: pre-create this dir owned by uid 1001
+      # (`mkdir -p /var/lib/keycloak-ha/db-0 && chown 1001:1001 ...`) — Docker
+      # auto-creates a missing bind source as root and the bitnami postgres
+      # process (uid 1001) can't write it, so the clone crash-loops otherwise.
       - /var/lib/keycloak-ha/db-0:/bitnami/postgresql
     environment:
       POSTGRESQL_POSTGRES_PASSWORD: ${POSTGRES_ROOT_PASSWORD}
