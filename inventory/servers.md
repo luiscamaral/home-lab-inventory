@@ -146,7 +146,8 @@
 - **Network**:
   - **LAN IP**: 192.168.48.45/20
   - **Macvlan**: 192.168.59.33 (host alias in `docker-servers-net`)
-  - **Macvlan shim MAC**: `02:00:00:00:00:21` (explicit, see task #31)
+  - **Macvlan shim MAC**: `02:00:00:00:00:02` (explicit; reconciled 2026-07-01
+    to match live — repo previously drifted to `:21`, never applied)
   - **machine-id**: `de152d98902944208fb3571dd969c3a9` (regenerated
     2026-04-13 — was identical to dm's before; caused shim MAC collision)
 - **Docker**: Latest CE, Portainer agent endpoint ID 9
@@ -177,10 +178,8 @@
   - **LAN IP**: 192.168.48.46/20
   - **Macvlan shim**: 192.168.59.62 (was .46 — collided with the otel-collector
     container on dm; moved to top of the /26 on 2026-07-01)
-  - **Macvlan shim MAC**: repo netdev pins `02:00:00:00:00:2e`, but the live
-    interface reports `02:00:00:00:00:03` — networkd re-addresses the pre-existing
-    macvlan without recreating it, so the netdev MAC never re-applied (harmless
-    while unique; recreate the shim to reconcile)
+  - **Macvlan shim MAC**: `02:00:00:00:00:03` (explicit; reconciled 2026-07-01
+    to match live — repo previously drifted to `:2e`, never applied)
   - **machine-id**: `3b8d239a029a4afbb7cb0e562e8b407f` (regenerated
     2026-04-13)
 - **Docker**: Latest CE, Portainer agent endpoint ID 13
