@@ -891,9 +891,11 @@ locals {
   # ──────────────────────────────────────────────
   # alertmanager.yml — routing tree from 06-dashboards-and-alerting.md
   #
-  # All severities → email luiscamaral+homelab@gmail.com via the existing
-  # postfix-relay (no auth, internal only). `info` is a black-hole so rule
-  # files can use `severity=info` for debugging without spamming.
+  # critical + warning → BOTH email (luiscamaral+homelab@gmail.com via the
+  # internal postfix-relay, no auth) AND Telegram (bot_token/chat_id from
+  # Vault secret/homelab/telegram/alertmanager; AM reaches api.telegram.org
+  # over its docker-servers-net egress). `info` is a black-hole (log-only) so
+  # rule files can use `severity=info` for debugging without spamming.
   # ──────────────────────────────────────────────
   alertmanager_config = <<-EOT
     global:
@@ -930,6 +932,16 @@ locals {
             send_resolved: true
             headers:
               Subject: '[ALERT] {{ .CommonLabels.alertname }} on {{ .CommonLabels.instance }}'
+        telegram_configs:
+          - bot_token: '${data.vault_kv_secret_v2.telegram.data["bot_token"]}'
+            chat_id: ${data.vault_kv_secret_v2.telegram.data["chat_id"]}
+            api_url: 'https://api.telegram.org'
+            parse_mode: ''
+            send_resolved: true
+            message: |-
+              [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}
+              {{ range .Alerts }}- {{ .Annotations.summary }}
+              {{ end }}
 
       - name: email-critical
         email_configs:
@@ -937,6 +949,16 @@ locals {
             send_resolved: true
             headers:
               Subject: '[CRIT] {{ .CommonLabels.alertname }}'
+        telegram_configs:
+          - bot_token: '${data.vault_kv_secret_v2.telegram.data["bot_token"]}'
+            chat_id: ${data.vault_kv_secret_v2.telegram.data["chat_id"]}
+            api_url: 'https://api.telegram.org'
+            parse_mode: ''
+            send_resolved: true
+            message: |-
+              🔴 [CRIT] {{ .CommonLabels.alertname }}
+              {{ range .Alerts }}- {{ .Annotations.summary }}
+              {{ end }}
 
       - name: email-warning
         email_configs:
@@ -944,6 +966,16 @@ locals {
             send_resolved: true
             headers:
               Subject: '[WARN] {{ .CommonLabels.alertname }}'
+        telegram_configs:
+          - bot_token: '${data.vault_kv_secret_v2.telegram.data["bot_token"]}'
+            chat_id: ${data.vault_kv_secret_v2.telegram.data["chat_id"]}
+            api_url: 'https://api.telegram.org'
+            parse_mode: ''
+            send_resolved: true
+            message: |-
+              🟡 [WARN] {{ .CommonLabels.alertname }}
+              {{ range .Alerts }}- {{ .Annotations.summary }}
+              {{ end }}
 
       - name: log-only
   EOT
@@ -1412,5 +1444,62 @@ locals {
                 fires if the container is stopped or the Pi-hole itself is
                 unreachable. Check the matching pihole-exporter-N Portainer
                 stack and the path to the Pi-hole.
+
+      # 2026-06-30: pfSense ix0 10G SFP+ LAN-trunk optic health. A marginal
+      # optic on the ix0 <-> switch24a Te1/0/27 run corrupts the pfSense-TX
+      # strand; when every LAN host behind the switch goes unreachable the
+      # ix0-watchdog bounces the trunk (down/up), blipping EVERY LAN VLAN +
+      # internet for ~30-50s. These fire off the node_exporter textfile
+      # metrics from /usr/local/bin/ix0_link_metrics.sh (instance="pfsense").
+      # Runbook: docs/network/2026-06-28-ix0-optic-flap-handoff.md
+      - name: pfsense-network
+        interval: 1m
+        rules:
+          - alert: Ix0LinkFlapping
+            expr: increase(pfsense_link_flaps_total{device="ix0"}[15m]) > 0
+            for: 0m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 LAN trunk flapped ({{ printf \"%.0f\" $$value }}x in 15m)"
+              description: |
+                The ix0 10G SFP+ trunk to switch24a Te1/0/27 bounced
+                {{ printf "%.0f" $$value }} time(s) in the last 15m — every LAN
+                VLAN + internet blipped ~30-50s per flap. Root cause is a
+                marginal optic/fiber on the ix0<->Te1/0/27 run (pfSense-TX ->
+                switch-RX strand). Clean+reseat both LC endfaces, then swap the
+                pfSense ix0 optic (most-likely part). Hardware runbook:
+                docs/network/2026-06-28-ix0-optic-flap-handoff.md
+          - alert: Ix0FlapStorm
+            expr: increase(pfsense_link_flaps_total{device="ix0"}[1h]) >= 3
+            for: 0m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "pfSense ix0 LAN trunk flap storm ({{ printf \"%.0f\" $$value }}x in 1h)"
+              description: |
+                ix0 bounced {{ printf "%.0f" $$value }} times in the last hour
+                — the optic is actively failing and the watchdog is fighting it.
+                Expect repeated whole-LAN + internet outages until the hardware
+                is swapped. Escalate now: read DDM at the rack (Omada
+                http://192.168.32.55:8088 -> switch24a -> Port 27) and walk the
+                hardware action list in
+                docs/network/2026-06-28-ix0-optic-flap-handoff.md.
+          - alert: Ix0LinkDown
+            expr: pfsense_link_up{device="ix0"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "pfSense ix0 LAN trunk DOWN"
+              description: |
+                ix0 (10G LAN trunk to switch24a Te1/0/27) has reported link
+                down for 1m. Either the ix0-watchdog already bounced it
+                (recovers in ~30-50s) or it cannot — while down, ALL LAN VLANs
+                (HOME/IoT/SVR/GUEST) + internet are offline. Check the optic and
+                STP state on switch24a Port 27.
   EOT
 }
