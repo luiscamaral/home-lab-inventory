@@ -21,10 +21,48 @@ locals {
   tfstate_projects = ["modera-platform", "premium-sre-cell"]
 }
 
+# Site replication between minio-1/minio-2 only syncs service accounts owned
+# by a real IAM user — accounts parented to root/admin are site-local by
+# MinIO design (confirmed via `mc admin replicate status`: "User replication
+# status: No Users present"). So every service account below is parented to
+# this dedicated user instead of var.minio_user (root), letting them
+# replicate across both nodes. This user's own policy is just the ceiling —
+# each service account's own inline policy (below) narrows it down to that
+# project's prefix; MinIO service-account permissions are the intersection
+# of the two, so the ceiling never grants more than the per-account policy
+# allows.
+resource "minio_iam_user" "tfstate_provisioner" {
+  name = "tfstate-provisioner"
+}
+
+resource "minio_iam_policy" "tfstate_bucket_ceiling" {
+  name = "tfstate-bucket-ceiling"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+        Resource = ["arn:aws:s3:::tfstate/*"]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket", "s3:GetBucketLocation"]
+        Resource = ["arn:aws:s3:::tfstate"]
+      }
+    ]
+  })
+}
+
+resource "minio_iam_user_policy_attachment" "tfstate_provisioner" {
+  user_name   = minio_iam_user.tfstate_provisioner.id
+  policy_name = minio_iam_policy.tfstate_bucket_ceiling.id
+}
+
 resource "minio_iam_service_account" "tfstate" {
   for_each = toset(local.tfstate_projects)
 
-  target_user = var.minio_user
+  target_user = minio_iam_user.tfstate_provisioner.id
   name        = "tfstate-${each.value}"
   description = "TF state access for ${each.value} (bucket: tfstate, prefix: ${each.value}/)"
 
