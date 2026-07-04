@@ -35,6 +35,9 @@ terraform/
   portainer/               # Portainer stacks, settings, registries
     stacks/                # Compose files referenced by Portainer stack resources
   vault/                   # Vault secret engines, policies, auth methods
+  minio/                   # MinIO IAM/OIDC (Keycloak SSO, readwrite/readonly policies) — local state currently lost, needs recovery before next apply
+  lab-buckets/             # Bootstrap root: tfstate/velero-k8s-lab/thanos-k8s-lab buckets on MinIO
+  tfstate-access/          # Scoped MinIO service accounts for external projects' TF state (one per project, shared "tfstate" bucket)
   modules/
     cf-service/            # Reusable module: DNS record for *.cf.lcamaral.com
   lab-network/             # ⚠️ script-managed FRR-on-Debian lab router — NOT a Terraform root
@@ -56,6 +59,9 @@ changes in another.
 | `cloudflare/` | Cloudflare, DreamHost | Zone, DNS, tunnel, ingress, wildcard CNAME |
 | `portainer/` | Portainer, Vault | Docker stacks, settings, users |
 | `vault/` | HashiCorp Vault | Secret engines, policies |
+| `minio/` | MinIO, Vault | IAM policies, Keycloak OIDC identity provider (⚠️ local state lost) |
+| `lab-buckets/` | MinIO | `tfstate`/`velero-k8s-lab`/`thanos-k8s-lab` buckets |
+| `tfstate-access/` | MinIO, Vault | Per-project scoped service accounts for external TF state (see below) |
 | `lab-network/` | _none — script-managed_ | FRR-on-Debian lab router (NOT a Terraform root) |
 
 ## Prerequisites
@@ -155,6 +161,54 @@ terraform apply
    cd terraform/portainer && terraform apply
    ```
 
+### Adding a New Project's TF State (MinIO S3 backend)
+
+External/unrelated projects (outside this repo) that want a remote TF state
+backend share the single `tfstate` bucket on MinIO — one key prefix per
+project, scoped with its own IAM service account so a leaked key can't touch
+other projects' state or any other bucket.
+
+1. Add the project name to `locals.tfstate_projects` in `tfstate-access/main.tf`.
+2. Apply:
+
+   ```bash
+   cd terraform/tfstate-access
+   export VAULT_ADDR="http://vault.d.lcamaral.com"
+   export VAULT_TOKEN=$(security find-generic-password -w -a "$(whoami)" -s vault-root-token)
+   export TF_VAR_minio_user=$(vault kv get -field=root_user secret/homelab/minio)
+   export TF_VAR_minio_password=$(vault kv get -field=root_password secret/homelab/minio)
+   export TF_VAR_vault_token="$VAULT_TOKEN"
+   terraform apply
+   ```
+
+3. Credentials land in Vault at `secret/homelab/minio/tfstate-<project>`
+   (`access_key`, `secret_key`, `endpoint`, `bucket`, `key_prefix`).
+4. In the _other project's own repo_, configure the S3-compatible backend:
+
+   ```hcl
+   terraform {
+     backend "s3" {
+       bucket                      = "tfstate"
+       key                         = "<project>/terraform.tfstate"
+       endpoints                   = { s3 = "https://s3.cf.lcamaral.com" }
+       region                      = "us-east-1" # required by the provider, unused by MinIO
+       skip_credentials_validation = true
+       skip_region_validation      = true
+       skip_requesting_account_id  = true
+       skip_metadata_api_check     = true
+       use_path_style              = true
+     }
+   }
+   ```
+
+   Supply credentials via environment (never hardcode):
+
+   ```bash
+   export AWS_ACCESS_KEY_ID=$(vault kv get -field=access_key secret/homelab/minio/tfstate-<project>)
+   export AWS_SECRET_ACCESS_KEY=$(vault kv get -field=secret_key secret/homelab/minio/tfstate-<project>)
+   terraform init
+   ```
+
 ### Importing Existing Resources
 
 Each directory has an `imports.tf` with HCL import blocks for existing resources.
@@ -194,3 +248,5 @@ terraform import portainer_stack.<name> <stack-id>
 | Calibre admin password | Vault: `secret/homelab/calibre` | `portainer/` |
 | GitHub PAT | Vault: `secret/homelab/github-runner` | `portainer/` |
 | DNSSEC keys backup | Vault: `secret/homelab/bind9/dnssec` | `portainer/` |
+| MinIO root user/password | Vault: `secret/homelab/minio` (`root_user`/`root_password`) | `minio/`, `lab-buckets/`, `tfstate-access/` |
+| Per-project TF-state creds | Vault: `secret/homelab/minio/tfstate-<project>` (`access_key`/`secret_key`) | external project repos |
