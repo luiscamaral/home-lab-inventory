@@ -3,9 +3,22 @@
 # prefix per project. Each service account's policy restricts it to its own
 # prefix only — a leaked key for one project can't read/write another's state
 # or any other bucket.
+#
+# GOTCHA: aminueza/minio v3.38.1's Read for minio_iam_service_account is
+# broken against this MinIO server version — a normal `terraform plan` marks
+# every already-existing entry "will be created" (false diff from a bad
+# refresh, not real drift; confirmed via TF_LOG=warn: "produced an invalid
+# plan... tolerating it because legacy plugin SDK"). Applying that plan
+# recreates the service account (new access key) and overwrites its Vault
+# secret out from under whatever already consumed the old one. Always run
+# `terraform plan -refresh=false` / `terraform apply -refresh=false` in this
+# directory. Also: creation itself intermittently errors "Provider produced
+# inconsistent result after apply" (provider bug) — the account is usually
+# created live regardless; check `terraform state list` before retrying to
+# avoid leaving a duplicate, secret-less orphan on the server.
 
 locals {
-  tfstate_projects = ["modera-platform"]
+  tfstate_projects = ["modera-platform", "premium-sre-cell"]
 }
 
 resource "minio_iam_service_account" "tfstate" {

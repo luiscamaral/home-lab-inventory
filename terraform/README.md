@@ -169,7 +169,11 @@ project, scoped with its own IAM service account so a leaked key can't touch
 other projects' state or any other bucket.
 
 1. Add the project name to `locals.tfstate_projects` in `tfstate-access/main.tf`.
-2. Apply:
+2. Apply — **always with `-refresh=false`** (the `aminueza/minio` provider's
+   Read for `minio_iam_service_account` is broken against this MinIO version;
+   a normal refresh falsely marks every existing entry "will be created" and
+   applying that recreates+rotates their credentials out from under
+   whoever's already using them — see the GOTCHA comment in `main.tf`):
 
    ```bash
    cd terraform/tfstate-access
@@ -178,8 +182,13 @@ other projects' state or any other bucket.
    export TF_VAR_minio_user=$(vault kv get -field=root_user secret/homelab/minio)
    export TF_VAR_minio_password=$(vault kv get -field=root_password secret/homelab/minio)
    export TF_VAR_vault_token="$VAULT_TOKEN"
-   terraform apply
+   terraform apply -refresh=false
    ```
+
+   If creation errors "Provider produced inconsistent result after apply",
+   run `terraform state list` before retrying — the account is often created
+   live regardless, and retrying blind can leave a duplicate, secret-less
+   orphan on the server.
 
 3. Credentials land in Vault at `secret/homelab/minio/tfstate-<project>`
    (`access_key`, `secret_key`, `endpoint`, `bucket`, `key_prefix`).
