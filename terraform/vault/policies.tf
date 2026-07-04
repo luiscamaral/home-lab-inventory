@@ -112,3 +112,16 @@ resource "vault_policy" "thanos_storage" {
     path "secret/data/homelab/thanos/s3" { capabilities = ["read"] }
   EOT
 }
+
+# ──────────────────────────────────────────────
+# tfstate-premium-sre-cell-reader
+# ──────────────────────────────────────────────
+# Read-only access to premium-sre-cell's MinIO TF-state credential only —
+# nothing else in Vault. Bound to the premium-sre-cell-ci AppRole (auth.tf).
+resource "vault_policy" "tfstate_premium_sre_cell_reader" {
+  name = "tfstate-premium-sre-cell-reader"
+
+  policy = <<-EOT
+    path "secret/data/homelab/minio/tfstate-premium-sre-cell" { capabilities = ["read"] }
+  EOT
+}

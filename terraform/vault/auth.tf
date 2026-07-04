@@ -53,6 +53,36 @@ resource "vault_auth_backend" "kubernetes" {
 }
 
 # ──────────────────────────────────────────────
+# AppRole Auth — CI/CD machine access
+# ──────────────────────────────────────────────
+resource "vault_auth_backend" "approle" {
+  type        = "approle"
+  path        = "approle"
+  description = "AppRole auth for CI/CD pipelines"
+}
+
+# premium-sre-cell's CI reads exactly one secret (its MinIO TF-state
+# credential) and nothing else. Every layer is single-use/short-lived:
+# secret_id dies after one login or 10min, the resulting token dies after
+# one read or 5min. A stored static secret_id only survives ONE pipeline
+# run under these settings — the CI job must mint a fresh secret_id per
+# run (via a separate, narrower bootstrap credential scoped to nothing but
+# `auth/approle/role/premium-sre-cell-ci/secret-id`), not reuse a stored one.
+resource "vault_approle_auth_backend_role" "premium_sre_cell_ci" {
+  backend        = vault_auth_backend.approle.path
+  role_name      = "premium-sre-cell-ci"
+  token_policies = [vault_policy.tfstate_premium_sre_cell_reader.name]
+
+  bind_secret_id     = true
+  secret_id_ttl      = 600
+  secret_id_num_uses = 1
+
+  token_ttl      = 300
+  token_max_ttl  = 600
+  token_num_uses = 1
+}
+
+# ──────────────────────────────────────────────
 # Userpass Auth
 # ──────────────────────────────────────────────
 resource "vault_auth_backend" "userpass" {
