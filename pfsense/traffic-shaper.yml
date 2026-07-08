@@ -1,0 +1,98 @@
+# pfSense dummynet traffic-shaper — WAN limiters + P2P "scavenger" class.
+#
+# Purpose: deprioritize BitTorrent/P2P (a Synology NAS at 192.168.2.50 was
+# seeding to 600+ peers and starving the WAN via FQ-CoDel per-flow fairness —
+# 602 flows each got an equal slice). Fix = a weight-aware scheduler (QFQ) with
+# a low-weight scavenger queue so P2P yields to normal traffic under contention
+# but still uses all idle spare (work-conserving).
+#
+# Apply (limiters + queues + aliases) via the REST API:
+#   uv run --no-project --with pyyaml scripts/sync-pfsense-traffic-shaper.py            # dry-run
+#   uv run --no-project --with pyyaml scripts/sync-pfsense-traffic-shaper.py --apply
+#
+# NOTE: FQ-CoDel IGNORES queue weight (per-flow discipline). QFQ is required for
+# the weighting to take effect — this is why a plain "weight 5" under the old
+# fq_codel pipe would silently do nothing.
+#
+# AQM = droptail (not codel): the pfrest RESTAPI 2.8_2 TrafficShaperLimiterQueue
+# model has a bug (ecn field conditions reference a non-existent `sched` field)
+# that 500s any codel queue write. At 720/1300 Mbit the queues are shallow, so
+# droptail bufferbloat is ~10ms — acceptable. Set queue AQM to codel via the GUI
+# later if desired (the GUI PHP path isn't affected by the API bug).
+#
+# Parent bandwidth is set BELOW real line-rate (GFiber ~1.43G down / ~0.79G up)
+# so the queue forms on pfSense (not the ISP) — mandatory for shaping to bite.
+
+limiters:
+  - name: WANDown
+    bandwidth_mbit: 1300        # ~91% of ~1.43 Gbps real download
+    scheduler: qfq              # was fq_codel; QFQ honors queue weight
+    queues:
+      - name: WANDownQ          # default/normal class
+        weight: 100
+        aqm: droptail           # codel blocked by pfrest API bug (see note above)
+      - name: WANDown_Scav      # P2P scavenger (download)
+        weight: 5
+        aqm: droptail
+  - name: WANUp
+    bandwidth_mbit: 720         # ~91% of ~0.79 Gbps real upload (the P2P seed direction)
+    scheduler: qfq
+    queues:
+      - name: WANUpQ
+        weight: 100
+        aqm: droptail
+      - name: WANUp_Scav        # P2P scavenger (upload) — the important one for seeding
+        weight: 5
+        aqm: droptail
+
+aliases:
+  - name: Scavenger_Hosts
+    type: host
+    address: ["192.168.2.50"]   # tnas (Synology 10GbE). Add more P2P hosts here.
+    descr: "P2P/scavenger penalty-box hosts (deprioritized on WAN)"
+  - name: P2P_Ports
+    type: port
+    address: ["6881:6889", "6969", "51413", "6771"]
+    descr: "Common BitTorrent/P2P ports (best-effort generic classifier)"
+
+# Classification rules — LAN-ingress "pass quick + assign scavenger pipe".
+#
+# We assign the pipe on the HOME (opt2) ingress rule where the internal source
+# IP is still visible (pre-NAT). Because the rule is quick + floating, the state
+# it creates carries dnpipe(WANUp_Scav, WANDown_Scav) for BOTH directions, so
+# the general WAN-out shaper rule does not override it (state-based). Verified:
+# NAS traffic lands in the WANDown_Scav/WANUp_Scav flowsets.
+#
+# WHY NOT the cleaner "tag on LAN, match on WAN-out" pattern: pfrest RESTAPI
+# 2.8_2 supports neither a `match` action (only pass/block/reject) nor
+# source/destination inversion — both are needed to tag-without-passing and to
+# scope to internet-only. So these were created via the API as pass/quick rules.
+#
+# ⚠️ HARDENING (do in GUI — pfrest can't invert): set each rule's Destination to
+# `NET_Private_LANS` with the *invert* ("not") box checked, so the quick-pass is
+# scoped to INTERNET-bound traffic only and does NOT bypass the HOME inter-VLAN
+# allowlist. As deployed the destination is `any` (functional, but the quick
+# pass also covers NAS→internal — acceptable for a trusted NAS, tighten when
+# convenient). NET_Private_LANS already exists = the 4 internal LAN ranges.
+rules:
+  - description: "SCAV: penalty-box hosts -> scavenger (internet-bound)"
+    action: pass
+    floating: true
+    interface: opt2            # HOME (ix0.10)
+    direction: in
+    quick: true
+    source: Scavenger_Hosts
+    destination: any           # HARDEN -> NET_Private_LANS + invert (GUI)
+    in_pipe: WANUp_Scav        # upload
+    out_pipe: WANDown_Scav     # download
+  - description: "SCAV: P2P ports any-host -> scavenger (internet-bound)"
+    action: pass
+    floating: true
+    interface: opt2
+    direction: in
+    quick: true
+    protocol: tcp/udp
+    destination: any           # HARDEN -> NET_Private_LANS + invert (GUI)
+    destination_port: P2P_Ports
+    in_pipe: WANUp_Scav
+    out_pipe: WANDown_Scav
