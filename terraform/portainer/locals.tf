@@ -336,6 +336,20 @@ locals {
           - target_label: __address__
             replacement: 192.168.59.45:9115
 
+      - job_name: blackbox-rproxy-ws
+        scrape_interval: 30s
+        metrics_path: /probe
+        params:
+          module: [tcp_connect]
+        file_sd_configs:
+          - files: ['/etc/prometheus/blackbox-targets/rproxy-ws-targets.json']
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: 192.168.59.45:9115
       - job_name: blackbox-icmp
         scrape_interval: 60s
         metrics_path: /probe
@@ -753,6 +767,20 @@ locals {
           - target_label: __address__
             replacement: 192.168.59.45:9115
 
+      - job_name: blackbox-rproxy-ws
+        scrape_interval: 30s
+        metrics_path: /probe
+        params:
+          module: [tcp_connect]
+        file_sd_configs:
+          - files: ['/etc/prometheus/blackbox-targets/rproxy-ws-targets.json']
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: 192.168.59.45:9115
       - job_name: blackbox-icmp
         scrape_interval: 60s
         metrics_path: /probe
@@ -908,19 +936,19 @@ locals {
       group_by: [alertname, cluster]
       group_wait: 30s
       group_interval: 5m
-      repeat_interval: 4h
+      repeat_interval: 24h
       routes:
         - matchers:
             - severity="critical"
           receiver: email-critical
           group_wait: 10s
-          repeat_interval: 1h
+          repeat_interval: 4h
           continue: false
         - matchers:
             - severity="warning"
           receiver: email-warning
           group_interval: 15m
-          repeat_interval: 6h
+          repeat_interval: 24h
         - matchers:
             - severity="info"
           receiver: log-only
@@ -1108,15 +1136,30 @@ locals {
   # scan). External-reachability for those endpoints belongs to a
   # 3rd-party uptime monitor.
   # ──────────────────────────────────────────────
+  # WS-only upstreams reject a plain HTTP GET probe even when healthy.
+  # Probed via tcp_connect instead (confirms nginx is listening).
+  # 2026-07-19: RProxyEndpointDown false positives for these two vhosts.
+  websocket_only_vhosts = [
+    "rustdesk.home.lcamaral.com",
+    "rustdesk-relay.home.lcamaral.com",
+  ]
+
   rproxy_probe_hosts = [
     for f in fileset("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/vhost.d", "*.conf") :
     trimsuffix(f, ".conf")
     if !can(regex("\\.cf\\.lcamaral\\.com$", trimsuffix(f, ".conf")))
+    && !contains(local.websocket_only_vhosts, trimsuffix(f, ".conf"))
   ]
 
   blackbox_rproxy_targets = jsonencode([
     {
       targets = [for h in local.rproxy_probe_hosts : "https://${h}"]
+    }
+  ])
+
+  blackbox_rproxy_ws_targets = jsonencode([
+    {
+      targets = [for h in local.websocket_only_vhosts : "${h}:443"]
     }
   ])
 

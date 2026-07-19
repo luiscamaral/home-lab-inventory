@@ -467,7 +467,8 @@ resource "portainer_stack" "prometheus" {
     blackbox_ssl_targets    = local.blackbox_ssl_targets
     blackbox_dns_targets    = local.blackbox_dns_targets
     blackbox_tcp_targets    = local.blackbox_tcp_targets
-    blackbox_rproxy_targets = local.blackbox_rproxy_targets
+    blackbox_rproxy_targets    = local.blackbox_rproxy_targets
+    blackbox_rproxy_ws_targets = local.blackbox_rproxy_ws_targets
     # Phase 5 (initial slice): TLS cert-expiry alert rules.
     prometheus_rules_yml = local.prometheus_rules_yml
   })
@@ -1349,7 +1350,8 @@ resource "portainer_stack" "prometheus_2" {
     blackbox_ssl_targets    = local.blackbox_ssl_targets
     blackbox_dns_targets    = local.blackbox_dns_targets
     blackbox_tcp_targets    = local.blackbox_tcp_targets
-    blackbox_rproxy_targets = local.blackbox_rproxy_targets
+    blackbox_rproxy_targets    = local.blackbox_rproxy_targets
+    blackbox_rproxy_ws_targets = local.blackbox_rproxy_ws_targets
     # Phase 5 (initial slice): TLS cert-expiry alert rules.
     prometheus_rules_yml = local.prometheus_rules_yml
   })
