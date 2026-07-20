@@ -53,6 +53,10 @@ locals {
                 # alertmanager-2 — Phase 2, NAS home-net (up=0 until Phase 2)
                 - 192.168.4.238:9093
 
+    alert_relabel_configs:
+      - action: labeldrop
+        regex: replica
+
     scrape_configs:
       # ── Prometheus self-scrape ──────────────────────────────────────
       - job_name: prometheus
@@ -552,6 +556,10 @@ locals {
             - targets:
                 - 192.168.59.27:9093
                 - 192.168.4.238:9093
+
+    alert_relabel_configs:
+      - action: labeldrop
+        regex: replica
 
     scrape_configs:
       - job_name: prometheus
@@ -1416,18 +1424,17 @@ locals {
                 every round for 20m. Single band/probe — likely local
                 (AP band health, DNS, or target-specific).
           - alert: WifiProbeStale
-            expr: probe_last_success_age_seconds{job="wifi-probe"} > 1800
+            expr: max without (probe, target) (probe_last_success_age_seconds{job="wifi-probe"}) > 1800
             for: 5m
             labels:
               severity: warning
               category: wifi-probe
             annotations:
-              summary: "{{ $$labels.probe }} on {{ $$labels.room }}/{{ $$labels.band }} stale {{ printf \"%.0f\" $$value }}s"
+              summary: "{{ $$labels.room }}/{{ $$labels.band }} stale {{ printf \"%.0f\" $$value }}s"
               description: |
-                No successful {{ $$labels.probe }} probe on
-                {{ $$labels.room }}/{{ $$labels.band }} for 30m. Catches a
-                frozen probe engine or a band that never reconnects even
-                when probe_success still reads 1 from a stale gauge.
+                No successful probes on {{ $$labels.room }}/{{ $$labels.band }}
+                for 30m. Catches a frozen probe engine or a band that never
+                reconnects even when probe_success still reads 1 from a stale gauge.
           - alert: WifiProbeHeapLow
             expr: wifi_probe_heap_largest_free_block_bytes{job="wifi-probe"} < 32768
             for: 15m
