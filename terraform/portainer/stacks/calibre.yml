@@ -1,6 +1,6 @@
 name: calibre
 
-# Calibre desktop (KasmVNC) + calibre-web reader on dockerserver-1.
+# Calibre desktop (Selkies remote desktop) + calibre-web reader on dockerserver-1.
 #
 # 10-keyboard.conf is delivered via Compose `configs:` instead of a host
 # bind-mount. The previous bind source on the NFS share
@@ -10,6 +10,11 @@ name: calibre
 # content lives in `_archive/calibre-server/10-keyboard.conf` (US intl
 # layout); inlining it here removes the host filesystem coupling per the
 # project's IaC-first principle.
+#
+# The openbox autostart is delivered the same way, for the same reason: it
+# previously lived only at /nfs/calibre/config/.config/openbox/autostart, an
+# untracked file on the NFS share — precisely the coupling that caused the
+# 2026-05-11 outage above. See the config content for the failure it fixes.
 
 networks:
   servers-net:
@@ -21,6 +26,30 @@ configs:
     content: |
       XKBLayout="us"
       XKBVARIANT="intl"
+
+  autostart_conf:
+    content: |
+      # Supervise the Calibre GUI.
+      #
+      # openbox-autostart runs this script once per X session. Upstream's
+      # autostart is a bare "/usr/bin/calibre", so when the app exits — a
+      # user closing the window is enough — the desktop is left empty and
+      # nothing ever relaunches it. That is what happened on 2026-06-06:
+      # calibre shut down cleanly at 11:51 MDT and the container went on
+      # reporting "healthy" for 7 weeks while streaming a blank desktop,
+      # because the healthcheck only probed nginx/selkies on :8080.
+      #
+      # The loop keeps the app present for the life of the session; the
+      # sleep bounds the respawn rate if calibre ever fails at startup.
+      #
+      # Deliberately contains no shell variables: Compose and Portainer both
+      # interpolate configs.content, so upstream's CLI_ARGS expansion cannot
+      # survive the round trip. CLI_ARGS is unset in this stack — add any
+      # arguments to the calibre line below literally if they become needed.
+      while true; do
+        /usr/bin/calibre
+        sleep 15
+      done
 
 services:
   calibre:
@@ -43,6 +72,9 @@ services:
       - source: keyboard_conf
         target: /etc/X11/xorg.conf.d/10-keyboard.conf
         mode: 0644
+      - source: autostart_conf
+        target: /config/.config/openbox/autostart
+        mode: 0644
     security_opt:
       - seccomp:unconfined
     environment:
@@ -54,12 +86,17 @@ services:
       DISABLE_IPV6: true
       LANG: en_US.UTF-8
     restart: always
+    # The pgrep arm is the point of this check: :8080 is nginx/selkies, which
+    # serves a login page whether or not Calibre is running. Probing only the
+    # HTTP port let a 7-week blank-desktop outage report "healthy" (2026-06-06
+    # → 2026-07-25). Docker will not restart an unhealthy container — the
+    # autostart respawn loop does the healing, this check does the reporting.
     healthcheck:
-      test: ["CMD-SHELL", "curl -s --max-time 5 -o /dev/null -w '%{http_code}' http://localhost:8080/ | grep -qE '^(200|401)$'"]
+      test: ["CMD-SHELL", "pgrep -x calibre >/dev/null && curl -s --max-time 5 -o /dev/null -w '%{http_code}' http://localhost:8080/ | grep -qE '^(200|401)$'"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 180s
     labels:
       com.centurylinklabs.watchtower.enable: "true"
       com.docker.stack: "calibre"
