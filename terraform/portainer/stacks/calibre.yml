@@ -31,7 +31,8 @@ configs:
     content: |
       # Supervise the Calibre GUI.
       #
-      # openbox-autostart runs this script once per X session. Upstream's
+      # The window manager runs this script once per desktop session (openbox
+      # under X pre-2026-07-21, labwc under Wayland after). Upstream's
       # autostart is a bare "/usr/bin/calibre", so when the app exits — a
       # user closing the window is enough — the desktop is left empty and
       # nothing ever relaunches it. That is what happened on 2026-06-06:
@@ -71,6 +72,14 @@ services:
     configs:
       - source: keyboard_conf
         target: /etc/X11/xorg.conf.d/10-keyboard.conf
+        mode: 0644
+      # Mounted at BOTH window-manager paths on purpose. The 2026-07-21 image
+      # switched the desktop from X/openbox to Wayland/labwc, which moved the
+      # autostart to .config/labwc/ and silently reverted the supervision fix
+      # to upstream's one-shot launcher. Covering both paths means the fix
+      # survives a flip in either direction; the unused one is inert.
+      - source: autostart_conf
+        target: /config/.config/labwc/autostart
         mode: 0644
       - source: autostart_conf
         target: /config/.config/openbox/autostart
