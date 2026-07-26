@@ -68,6 +68,8 @@ surface → source → apply map. Two layers:
   - pfSense cron → `pfsense/cron-jobs.yml` (`scripts/sync-pfsense-cron-jobs.py`)
   - pfSense scripts (e.g. node_exporter collectors) → `pfsense/scripts/` (`scripts/sync-pfsense-scripts.py`)
   - pfSense ACME hooks → `pfsense/acme-actions.yml`; host overrides → `pfsense/host-overrides.yml` (`scripts/sync-host-*.py`)
+  - pfSense DHCP reservations → `pfsense/dhcp-static-mappings.yml` (`scripts/sync-pfsense-dhcp-static-mappings.py`);
+    upsert-by-MAC, claims only listed reservations and leaves the other ~254 untouched
   - Rundeck jobs → `rundeck/jobs/*.yaml` (API import, see `rundeck/README.md`)
 
 ## DNS and Cloudflare Tunnel

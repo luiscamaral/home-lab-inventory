@@ -1,0 +1,50 @@
+# pfSense DHCP static mappings (reservations) managed by this repo.
+#
+# Reconciled against pfSense's <dhcpd><optN><staticmap> entries in
+# /cf/conf/config.xml by scripts/sync-pfsense-dhcp-static-mappings.py.
+#   Read:  SSH to pfSense, awk the <dhcpd> block out of config.xml.
+#   Write: REST API /api/v2/services/dhcp_server/static_mapping.
+#   Auth:  macOS Keychain `pfsense-api-token`.
+#
+# We read over SSH rather than REST because the static_mapping LIST endpoint
+# returns 504 through HAProxy on this build -- the HOME scope alone holds ~256
+# reservations and the enumeration exceeds the gateway timeout. Same read
+# strategy as sync-pfsense-outbound-nat.py and sync-pfsense-cron-jobs.py.
+#
+# Upsert by (interface, mac). Reservations NOT listed here are LEFT UNTOUCHED
+# ("claim what we own") -- the HOME scope holds many hand-made entries that
+# predate this manifest, and this tool must never delete them.
+#
+# MAC is the identity. Changing `ipaddr` for a listed MAC is a real change and
+# the sync script will report it as drift; it will not silently repoint a host.
+#
+# Interface keys map to VLANs as follows (see docs/network/pfsense.md):
+#   lan  = ADMIN 192.168.32.32/27   opt2 = HOME  192.168.0.0/20 (ix0.10)
+#   opt3 = SRVAN 192.168.48.0/20    opt4 = GUEST 192.168.128.0/24
+#   opt5 = IoT   192.168.16.0/24
+#
+# NOTE: the HOME dynamic pool is only 192.168.15.240-192.168.15.254, so nearly
+# every host on this VLAN is expected to hold a reservation.
+#
+# Apply: scripts/sync-pfsense-dhcp-static-mappings.py --apply
+
+mappings:
+  # Network printers. Both are reachable only by IP: neither advertises
+  # _ipp/_ipps over Bonjour, so macOS CUPS queues must use ipps://<ip>:631/ipp/print
+  # instead of a dnssd:// URI. A drifting lease would silently break printing,
+  # which is why these two are pinned here first.
+  # Epson XP-830. CUPS queue: ipps://192.168.0.33:631/ipp/print
+  # descr carries a literal "&apos;" because pfSense stored the apostrophe
+  # double-escaped inside CDATA. Reproduced verbatim so this manifest reports
+  # zero drift -- do not "fix" it here unless you also PATCH the router.
+  - interface: opt2
+    mac: "9c:ae:d3:81:fa:9e"
+    ipaddr: 192.168.0.33
+    hostname: EPSON81FA9E
+    descr: "Livia&apos;s Printer"
+  # HP OfficeJet Pro 7740. CUPS queue: ipps://192.168.0.39:631/ipp/print
+  - interface: opt2
+    mac: "b0:5c:da:bb:14:9d"
+    ipaddr: 192.168.0.39
+    hostname: HPBB149C
+    descr: "HP OfficeJet Pro 7740"

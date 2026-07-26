@@ -11,7 +11,7 @@ Every change goes through a declarative source in the repo, then a tool applies 
 | Surface | Declarative source | Apply with |
 |---|---|---|
 | Portainer stacks, Cloudflare, Vault config | `terraform/<domain>/` | `terraform apply` |
-| pfSense (cron, scripts, ACME, host-overrides) | `pfsense/*.yml`, `pfsense/scripts/` | `scripts/sync-pfsense-*.py`, `scripts/sync-host-*.py` |
+| pfSense (cron, scripts, ACME, host-overrides, DHCP reservations) | `pfsense/*.yml`, `pfsense/scripts/` | `scripts/sync-pfsense-*.py`, `scripts/sync-host-*.py` |
 | Rundeck jobs | `rundeck/jobs/*.yaml` | API import (see `rundeck/README.md`) |
 | DNS zones | pihole `dnsmasq.d/*.conf` via Compose `configs:` | `terraform/portainer` |
 | Grafana dashboards | `terraform/portainer/stacks/grafana-dashboards/*.json` | terraform + `scripts/portainer-redeploy.py` |
