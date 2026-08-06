@@ -1,0 +1,37 @@
+# pfSense firewall aliases — single source of truth
+#
+# General-purpose host/network/port aliases managed via the pfSense REST
+# API. Scoped to aliases NOT already covered by another declarative source
+# (the P2P/scavenger-QoS aliases — Scavenger_Hosts, P2P_Ports — live in
+# traffic-shaper.yml instead, next to the limiters that consume them).
+#
+# 2026-08: added after discovering ThisFirewallPfSense had drifted from
+# reality — it still listed pre-renumbering VLAN gateway IPs (SRVAN was
+# 192.168.44.0/24, IoT was 192.168.28.0/24, both since renumbered) and
+# was the source of a continuous kernel-level ARP resolution error on
+# WAN1 (igc0) for the stale 192.168.28.1 entry. See
+# docs/network/pfsense.md for current VLAN gateway IPs — verify against
+# live `/cf/conf/config.xml` interfaces block before trusting docs here,
+# since this file has already been caught stale once.
+#
+# Workflow:
+#   1. Edit this file
+#   2. Run: uv run --no-project --with pyyaml scripts/sync-pfsense-firewall-aliases.py            # dry-run
+#   3. Run: uv run --no-project --with pyyaml scripts/sync-pfsense-firewall-aliases.py --apply
+
+aliases:
+  - name: ThisFirewallPfSense
+    type: host
+    address:
+      - 192.168.4.1     # LAN (HOME, opt2)
+      - 192.168.48.1    # SRVAN (opt3)
+      - 192.168.16.1    # IoT (opt5)
+      - 192.168.32.33   # Admin (lan/igc3)
+      - 192.168.128.1   # Guest (opt4)
+    detail:
+      - LAN
+      - SRVAN
+      - IoT
+      - Admin
+      - Guest
+    descr: ""

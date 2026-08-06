@@ -16,16 +16,23 @@
 #
 # AQM = droptail (not codel): the pfrest RESTAPI 2.8_2 TrafficShaperLimiterQueue
 # model has a bug (ecn field conditions reference a non-existent `sched` field)
-# that 500s any codel queue write. At 720/1300 Mbit the queues are shallow, so
-# droptail bufferbloat is ~10ms — acceptable. Set queue AQM to codel via the GUI
-# later if desired (the GUI PHP path isn't affected by the API bug).
+# that 500s any codel queue write. Set queue AQM to codel via the GUI later if
+# desired (the GUI PHP path isn't affected by the API bug) — WORTH REVISITING
+# now that parent bandwidth is much higher: droptail bufferbloat was ~10ms and
+# "acceptable" at 720/1300 Mbit, that math has NOT been re-verified at 2275 Mbit.
+# Watch for bufferbloat under load until this is re-checked.
 #
-# Parent bandwidth is set BELOW real line-rate (GFiber ~1.43G down / ~0.79G up)
-# so the queue forms on pfSense (not the ISP) — mandatory for shaping to bite.
+# 2026-08: ISP upgraded to a 3 Gbps symmetric plan, but WAN1 (igc0) is still a
+# 2.5GbE copper port pending a 10G SFP+ transceiver for ix1 — see
+# docs/network/pfsense.md. Until that swap happens, the 2.5G port itself is the
+# real ceiling, not the ISP tier, so parent bandwidth is set to ~91% of 2.5 Gbps
+# (symmetric, replacing the old asymmetric ~1.43G/~0.79G GFiber estimate) so the
+# queue forms on pfSense (not the ISP/port) — mandatory for shaping to bite.
+# Revisit both values again once WAN1 moves to the 10G interface.
 
 limiters:
   - name: WANDown
-    bandwidth_mbit: 1300        # ~91% of ~1.43 Gbps real download
+    bandwidth_mbit: 2275        # ~91% of 2.5 Gbps (current WAN1 port ceiling)
     scheduler: qfq              # was fq_codel; QFQ honors queue weight
     queues:
       - name: WANDownQ          # default/normal class
@@ -35,7 +42,7 @@ limiters:
         weight: 5
         aqm: droptail
   - name: WANUp
-    bandwidth_mbit: 720         # ~91% of ~0.79 Gbps real upload (the P2P seed direction)
+    bandwidth_mbit: 2275        # ~91% of 2.5 Gbps (current WAN1 port ceiling)
     scheduler: qfq
     queues:
       - name: WANUpQ
