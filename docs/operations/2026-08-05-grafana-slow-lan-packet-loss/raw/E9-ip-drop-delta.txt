@@ -1,0 +1,7 @@
+=== E9: IP output-drop counter DELTA during 300-pkt ping ===
+collected: 2026-08-05T23:32:03Z
+  counters = [no_bufs] [no_route]
+  before: 3114574 1464063
+  after : 3114574 1464063
+  ping result: 300 packets transmitted, 286 packets received, 4.7% packet loss
+  DELTA: no_bufs=0  no_route=0

@@ -1,0 +1,19 @@
+=== E19: ARP-move storm quantification ===
+collected: 2026-08-06T00:19:02Z
+--- total arp-moved messages in dmesg buffer ---
+  total: 469
+--- per-IP move counts (top 10) ---
+   392 192.168.59.4
+    57 192.168.59.33
+     8 192.168.48.44
+     6 192.168.48.46
+     6 192.168.48.45
+--- distinct MACs seen per offending IP ---
+  192.168.48.44 ->        2 distinct MACs
+  192.168.48.45 ->        2 distinct MACs
+  192.168.48.46 ->        2 distinct MACs
+  192.168.59.33 ->        3 distinct MACs
+  192.168.59.4 ->      394 distinct MACs
+--- live rate: arp moves in 30s ---
+  delta over 30s: 0
+--- current ARP entries for the offending IPs ---

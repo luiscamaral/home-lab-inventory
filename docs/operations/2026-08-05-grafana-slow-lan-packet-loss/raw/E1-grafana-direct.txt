@@ -1,0 +1,11 @@
+=== E1: Grafana app health, direct, 10 samples ===
+sample=200 total=0.001886s
+sample=200 total=0.001831s
+sample=200 total=0.001982s
+sample=200 total=1.055367s
+sample=200 total=0.001790s
+sample=200 total=0.001394s
+sample=200 total=0.239442s
+sample=200 total=0.002105s
+sample=200 total=0.001494s
+sample=200 total=0.001628s

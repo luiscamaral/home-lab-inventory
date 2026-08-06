@@ -1,0 +1,5 @@
+=== E16: ICMP accounting via container kernel counters (no tcpdump needed) ===
+collected: 2026-08-06T00:15:29Z
+  BEFORE:
+  PING  : 195 packets transmitted, 191 packets received, 2.1% packet loss
+  AFTER :

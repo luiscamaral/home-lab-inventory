@@ -1,0 +1,19 @@
+=== E3: rproxy .48 failure mode ===
+collected: 2026-08-05T23:24:52Z
+--- verbose curl error ---
+*   Trying 192.168.59.48:443...
+--- raw TCP 443 / 80 ---
+Connection to 192.168.59.48 443 port [tcp/https] succeeded!
+  port 443 OPEN
+Connection to 192.168.59.48 80 port [tcp/http] succeeded!
+  port 80 OPEN
+--- ICMP ---
+3 packets transmitted, 3 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 0.306/0.387/0.449/0.060 ms
+--- ARP ---
+? (192.168.59.48) at a6:02:d5:f9:93:9c on ix0.28 expires in 1198 seconds [vlan]
+--- compare: .28 and .49 ports ---
+Connection to 192.168.59.28 443 port [tcp/https] succeeded!
+  192.168.59.28:443 OPEN
+Connection to 192.168.59.49 443 port [tcp/https] succeeded!
+  192.168.59.49:443 OPEN

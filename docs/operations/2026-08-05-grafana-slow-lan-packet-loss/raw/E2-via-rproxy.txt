@@ -1,0 +1,23 @@
+=== E2: Grafana via each rproxy from pfSense, 6 samples each ===
+collected: 2026-08-05T23:22:36Z
+--- rproxy 192.168.59.28 ---
+  http=200 connect=0.000607s ttfb=11.228219s total=11.233273s
+  http=200 connect=0.000540s ttfb=0.044399s total=0.048558s
+  http=200 connect=0.000507s ttfb=0.050084s total=0.054488s
+  http=200 connect=0.000544s ttfb=5.029330s total=5.034151s
+  http=200 connect=0.000481s ttfb=0.044805s total=0.048209s
+  http=200 connect=0.000487s ttfb=0.043635s total=0.047069s
+--- rproxy 192.168.59.48 ---
+  http=000 connect=0.000000s ttfb=0.000000s total=0.000000s
+  http=000 connect=0.000000s ttfb=0.000000s total=0.000000s
+  http=000 connect=0.000000s ttfb=0.000000s total=0.000000s
+  http=000 connect=0.000000s ttfb=0.000000s total=0.000000s
+  http=000 connect=0.000000s ttfb=0.000000s total=0.000000s
+  http=000 connect=0.000000s ttfb=0.000000s total=0.000000s
+--- rproxy 192.168.59.49 ---
+  http=200 connect=0.000315s ttfb=2.549903s total=2.552482s
+  http=200 connect=0.000351s ttfb=0.034058s total=0.036828s
+  http=200 connect=0.000334s ttfb=0.278785s total=0.281584s
+  http=200 connect=0.000338s ttfb=0.266249s total=0.269162s
+  http=200 connect=0.000419s ttfb=1.071759s total=1.074650s
+  http=200 connect=0.000471s ttfb=0.048150s total=0.051275s

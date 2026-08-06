@@ -1,0 +1,15 @@
+=== E21: re-verify after SSH drop + confirm link_irq anomaly ===
+collected: 2026-08-06T00:23:29Z
+  uptime: 58 secs, 1 user, load averages: 0.37, 0.10, 0.04
+  --- link_irq: ix0 vs all other NICs (60s window) ---
+    igc0 baseline=3
+    igc1 baseline=3
+    igc2 baseline=0
+    igc3 baseline=2
+    ix0 delta over 60s = 0  (~0/s)
+  --- ix0 media/status now ---
+    	media: Ethernet autoselect (10Gbase-SR <full-duplex,rxpause,txpause>)
+    	status: active
+  --- loss check now ---
+    grafana: 100 packets transmitted, 100 packets received, 0.0% packet loss
+    ds-2   : 100 packets transmitted, 100 packets received, 0.0% packet loss

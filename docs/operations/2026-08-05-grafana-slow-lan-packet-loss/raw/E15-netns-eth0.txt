@@ -1,0 +1,9 @@
+=== E15: netns capture on eth0 (retry, 45s window) ===
+collected: 2026-08-06T00:13:57Z
+  === INSIDE grafana netns (eth0) ===
+    total icmp frames seen: 0
+    echo REQUESTS arrived : 0
+    echo REPLIES  sent    : 0
+
+  === SENDER (pfSense) ===
+    194 packets transmitted, 186 packets received, 4.1% packet loss

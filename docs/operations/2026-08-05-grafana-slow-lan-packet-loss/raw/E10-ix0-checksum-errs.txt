@@ -1,0 +1,18 @@
+=== E10: ix0 checksum_errs growth rate + optic/link health ===
+collected: 2026-08-05T23:33:13Z
+  --- checksum_errs delta over 30s of normal traffic ---
+  t0: 41890
+  t30: 41893
+  DELTA over 30s: 3  (~0/sec)
+  --- link / optic status ---
+    ix0: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 mtu 1500
+    	media: Ethernet autoselect (10Gbase-SR <full-duplex,rxpause,txpause>)
+    	status: active
+  --- SFP+ diagnostics if exposed ---
+    dev.ix.0.%desc: Intel(R) X520 82599ES (SFI/SFP+)
+  --- other error counters for context ---
+    dev.ix.0.mac_stats.rx_missed_packets: 0
+    dev.ix.0.mac_stats.rec_len_errs: 0
+    dev.ix.0.mac_stats.short_discards: 0
+    dev.ix.0.mac_stats.crc_errs: 0
+    dev.ix.0.mac_stats.rx_errs: 1

@@ -1,0 +1,16 @@
+=== E23: post-reboot state, 1h42m uptime ===
+collected: 2026-08-06T02:05:51Z
+--- uptime ---
+   8:05PM  up  1:43, 1 user, load averages: 0.28, 0.30, 0.32
+--- is a crash dump device configured? (absence of dumps may be meaningless) ---
+  dumpdev: gpt/swap1
+  panic_reboot_wait: 15
+--- link_irq rate now (was 33/s pre-reboot) ---
+  ix0 link_irq: 6 -> 6  delta/30s=0
+--- packet loss now (was 2-5% pre-reboot) ---
+  192.168.59.39    0.0% packet loss
+  192.168.59.28    0.0% packet loss
+  192.168.48.46    0.0% packet loss
+  192.168.59.49    0.0% packet loss
+--- arp moves since boot ---
+  arp_moves_since_boot: 462

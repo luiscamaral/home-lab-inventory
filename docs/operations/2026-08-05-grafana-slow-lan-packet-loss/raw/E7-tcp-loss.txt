@@ -1,0 +1,8 @@
+=== E7: TCP-level loss, same-VLAN vs through-pfSense ===
+collected: 2026-08-05T23:30:42Z
+  --- SAME VLAN (switch only, no pfSense) ---
+    ds-2 -> grafana:3000  : ok=60 fail=0 slow(>100ms)=0  of 60
+    ds-2 -> rproxy:443    : ok=60 fail=0 slow(>100ms)=0  of 60
+  --- THROUGH pfSense (inter-VLAN routing, SRVAN->HOME) ---
+    ds-2 -> tnas:5000     : ok=60 fail=0 slow(>100ms)=4  of 60
+    ds-2 -> pfSense:443   : ok=60 fail=0 slow(>100ms)=2  of 60

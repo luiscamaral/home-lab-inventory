@@ -1,0 +1,31 @@
+=== E8: pfSense drop-location counters, delta across 300-packet ping ===
+collected: 2026-08-05T23:31:23Z
+  ix0 columns: Ipkts Ierrs Idrop Opkts Oerrs
+  before: 1480659676 1 0 612430001294 1491806139
+  --- ping 300 pkts to grafana (.39) ---
+    300 packets transmitted, 293 packets received, 2.3% packet loss
+    round-trip min/avg/max/stddev = 0.184/0.380/1.021/0.078 ms
+  after : 1480678434 1 0 612437903660 1491825762
+  --- system-wide IP/TCP error counters ---
+    	90 bad header checksums
+    	0 with bad options
+    	0 fragments dropped (dup or out of space)
+    	0 fragments dropped after timeout
+    	3114574 output packets dropped due to no bufs, etc.
+    	1464063 output packets discarded due to no route
+    	0 datagrams with bad address in header
+  --- ix0 hardware drop counters ---
+    dev.ix.0.mac_stats.checksum_errs: 41881
+    dev.ix.0.mac_stats.rx_missed_packets: 0
+    dev.ix.0.mac_stats.rec_len_errs: 0
+    dev.ix.0.mac_stats.short_discards: 0
+    dev.ix.0.mac_stats.byte_errs: 0
+    dev.ix.0.mac_stats.ill_errs: 0
+    dev.ix.0.mac_stats.crc_errs: 0
+    dev.ix.0.mac_stats.rx_errs: 1
+    dev.ix.0.queue7.rx_discarded: 0
+    dev.ix.0.queue7.irqs: 49181673
+    dev.ix.0.queue6.rx_discarded: 0
+    dev.ix.0.queue6.irqs: 829818306
+    dev.ix.0.queue5.rx_discarded: 0
+    dev.ix.0.queue5.irqs: 312313473

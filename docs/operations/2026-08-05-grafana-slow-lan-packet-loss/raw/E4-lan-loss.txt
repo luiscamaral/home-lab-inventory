@@ -1,0 +1,8 @@
+=== E4: LAN packet loss, 200 pkts @100ms to each macvlan host ===
+collected: 2026-08-05T23:25:25Z
+  192.168.59.28    200 packets transmitted, 197 packets received, 1.5% packet loss  min/avg/max/stddev = 0.191/0.403/2.195/0.148 ms
+  192.168.59.48    200 packets transmitted, 198 packets received, 1.0% packet loss  min/avg/max/stddev = 0.167/0.396/1.209/0.100 ms
+  192.168.59.49    200 packets transmitted, 196 packets received, 2.0% packet loss  min/avg/max/stddev = 0.206/0.357/0.563/0.064 ms
+  192.168.59.39    200 packets transmitted, 190 packets received, 5.0% packet loss  min/avg/max/stddev = 0.204/0.401/0.573/0.072 ms
+  192.168.48.45    200 packets transmitted, 198 packets received, 1.0% packet loss  min/avg/max/stddev = 0.165/0.386/0.695/0.076 ms
+  192.168.48.46    200 packets transmitted, 195 packets received, 2.5% packet loss  min/avg/max/stddev = 0.200/0.357/0.716/0.064 ms

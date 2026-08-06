@@ -1,0 +1,12 @@
+=== E14: capture INSIDE grafana container netns (decisive direction test) ===
+collected: 2026-08-06T00:13:01Z
+  grafana container PID=62860
+  netns iface: lo 127.0.0.1/8
+  netns iface: eth1 172.24.0.7/16
+  netns iface: eth0 192.168.59.39/20
+  === INSIDE grafana netns ===
+    echo REQUESTS arrived : 0
+    echo REPLIES  sent    : 0
+
+  === SENDER (pfSense) ===
+    195 packets transmitted, 184 packets received, 5.6% packet loss

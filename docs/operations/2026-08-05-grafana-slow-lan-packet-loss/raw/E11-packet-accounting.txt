@@ -1,0 +1,8 @@
+=== E11: packet-level accounting of the 5% loss (pfSense -> .39) ===
+collected: 2026-08-05T23:34:24Z
+  --- ping result ---
+    195 packets transmitted, 187 packets received, 4.1% packet loss
+  --- what actually appeared on the wire (ix0.28) ---
+    echo REQUESTS seen leaving :      195
+    echo REPLIES  seen arriving:      187
+    => missing replies: 8

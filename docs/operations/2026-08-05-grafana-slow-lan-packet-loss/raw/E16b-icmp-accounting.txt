@@ -1,0 +1,19 @@
+=== E16b: ICMP accounting, raw ===
+collected: 2026-08-06T00:16:22Z
+--- BEFORE ---
+Icmp: InMsgs InErrors InCsumErrors InDestUnreachs InTimeExcds InParmProbs InSrcQuenchs InRedirects InEchos InEchoReps InTimestamps InTimestampReps InAddrMasks InAddrMaskReps OutMsgs OutErrors OutRateLimitGlobal OutRateLimitHost OutDestUnreachs OutTimeExcds OutParmProbs OutSrcQuenchs OutRedirects OutEchos OutEchoReps OutTimestamps OutTimestampReps OutAddrMasks OutAddrMaskReps
+Icmp: 1916 0 0 3 0 0 0 0 1913 0 0 0 0 0 1914 0 0 0 1 0 0 0 0 0 1913 0 0 0 0
+IcmpMsg: InType3 InType8 OutType0 OutType3
+ETH0RX 620882
+PING: 194 packets transmitted, 189 packets received, 2.6% packet loss
+--- AFTER ---
+Icmp: InMsgs InErrors InCsumErrors InDestUnreachs InTimeExcds InParmProbs InSrcQuenchs InRedirects InEchos InEchoReps InTimestamps InTimestampReps InAddrMasks InAddrMaskReps OutMsgs OutErrors OutRateLimitGlobal OutRateLimitHost OutDestUnreachs OutTimeExcds OutParmProbs OutSrcQuenchs OutRedirects OutEchos OutEchoReps OutTimestamps OutTimestampReps OutAddrMasks OutAddrMaskReps
+Icmp: 2105 0 0 3 0 0 0 0 2102 0 0 0 0 0 2103 0 0 0 1 0 0 0 0 0 2102 0 0 0 0
+IcmpMsg: InType3 InType8 OutType0 OutType3
+ETH0RX 621098
+--- DELTA ---
+  InEchos      delta = 189
+  OutEchoReps  delta = 189
+  InMsgs       delta = 189
+  OutMsgs      delta = 189
+  InErrors     delta = 0

@@ -1,0 +1,20 @@
+=== E22: was the reboot a crash? did I cause it? ===
+collected: 2026-08-06T02:04:28Z
+--- crash dumps present? ---
+  total 17
+  drwxr-x---   2 root wheel  2 Jun 22  2025 .
+  drwxr-xr-x  31 root wheel 32 Jun 16 17:16 ..
+--- was last shutdown clean? (dmesg boot banner) ---
+  Copyright (c) 1992-2026 The FreeBSD Project.
+  Copyright (c) 1979, 1980, 1983, 1986, 1988, 1989, 1991, 1992, 1993, 1994
+--- system log around the reboot ---
+--- uptime + boot time ---
+  boottime: { sec = 1785975750, usec = 429509 } Wed Aug  5 18:22:30 2026
+  now     : Wed Aug  5 20:04:28 MDT 2026
+--- any prior reboots today? (wtmp) ---
+  shutdown time                              Wed Aug  5 18:22
+  shutdown time                              Sat Jun 27 22:06
+  shutdown time                              Thu Jun 18 16:33
+  shutdown time                              Thu May 28 19:30
+  shutdown time                              Sun May 24 12:32
+  shutdown time                              Sat Apr 11 20:08

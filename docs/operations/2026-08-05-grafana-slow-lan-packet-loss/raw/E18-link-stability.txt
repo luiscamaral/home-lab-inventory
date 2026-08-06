@@ -1,0 +1,19 @@
+=== E18: ix0 link_irq rate (link stability) + comparison to other NICs ===
+collected: 2026-08-06T00:17:56Z
+--- uptime ---
+   6:17PM  up 4 days, 20:10, 1 user, load averages: 0.22, 0.31, 0.31
+--- link_irq delta over 30s ---
+  ix0  link_irq: 3748824 -> 3749841   delta=1017 over 30s  (~33/s)
+  igc0 link_irq: 9 -> 9 (WAN, for comparison)
+--- has the link actually bounced? (dmesg link events) ---
+  arp: 192.168.59.33 moved from 02:00:00:00:00:21 to 2a:b7:4d:54:09:5c on ix0.28
+  arp: 192.168.59.4 moved from e2:69:d8:ae:54:63 to 2e:85:35:b9:f2:b9 on ix0.28
+  arp: 192.168.59.4 moved from 2e:85:35:b9:f2:b9 to de:0c:ab:b5:40:49 on ix0.28
+  arp: 192.168.59.4 moved from de:0c:ab:b5:40:49 to 4e:9f:40:5c:dd:59 on ix0.28
+  arp: 192.168.59.4 moved from 4e:9f:40:5c:dd:59 to 9e:ce:68:19:9a:71 on ix0.28
+  arp: 192.168.59.4 moved from 9e:ce:68:19:9a:71 to 92:d5:dc:9f:04:2b on ix0.28
+  arp: 192.168.59.33 moved from 2a:b7:4d:54:09:5c to 02:00:00:00:00:21 on ix0.28
+  arp: 192.168.59.4 moved from 92:d5:dc:9f:04:2b to ae:9b:f9:57:fb:13 on ix0.28
+--- interface uptime / last change ---
+  	media: Ethernet autoselect (10Gbase-SR <full-duplex,rxpause,txpause>)
+  	status: active

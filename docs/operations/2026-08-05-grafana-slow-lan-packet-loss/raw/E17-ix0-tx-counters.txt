@@ -1,0 +1,42 @@
+=== E17: pfSense ix0 TX-side counters + flow control ===
+collected: 2026-08-06T00:17:28Z
+--- ix0 tx/rx error + drop counters (named) ---
+  dev.ix.0.mac_stats.rx_errs: 1
+  dev.ix.0.queue7.rx_discarded: 0
+  dev.ix.0.queue6.rx_discarded: 0
+  dev.ix.0.queue5.rx_discarded: 0
+  dev.ix.0.queue4.rx_discarded: 0
+  dev.ix.0.queue3.rx_discarded: 0
+  dev.ix.0.queue2.rx_discarded: 0
+  dev.ix.0.queue1.rx_discarded: 0
+  dev.ix.0.queue0.rx_discarded: 0
+  dev.ix.0.link_irq: 3747869
+  dev.ix.0.watchdog_events: 0
+--- mac_stats TX side ---
+  dev.ix.0.mac_stats.tx_frames_1024_1522: 273544243
+  dev.ix.0.mac_stats.tx_frames_512_1023: 16924970
+  dev.ix.0.mac_stats.tx_frames_256_511: 490567424
+  dev.ix.0.mac_stats.tx_frames_128_255: 513827822
+  dev.ix.0.mac_stats.tx_frames_65_127: 180347935
+  dev.ix.0.mac_stats.tx_frames_64: 21011815
+--- flow-control setting (pause frames) ---
+  dev.ix.0.fc: 3
+  dev.ix.0.mac_stats.xoff_recvd: 0
+  dev.ix.0.mac_stats.xoff_txd: 0
+  dev.ix.0.mac_stats.xon_recvd: 0
+  dev.ix.0.mac_stats.xon_txd: 0
+--- per-queue TX drops ---
+  dev.ix.0.queue7.tx_packets: 30924110
+  dev.ix.0.queue7.txd_tail: 632
+  dev.ix.0.queue7.txd_head: 632
+  dev.ix.0.queue6.tx_packets: 433047382
+  dev.ix.0.queue6.txd_tail: 1524
+  dev.ix.0.queue6.txd_head: 1524
+  dev.ix.0.queue5.tx_packets: 167969864
+  dev.ix.0.queue5.txd_tail: 523
+  dev.ix.0.queue5.txd_head: 523
+  dev.ix.0.queue4.tx_packets: 166840806
+--- netstat ix0 (Oerrs / Drop columns, header aligned) ---
+  Name    Mtu Network        Address                             Ipkts Ierrs Idrop        Ibytes       Opkts Oerrs        Obytes  Coll
+  ix0    1500 <Link#1>       a8:b8:e0:03:70:35              1486952100     1     0  618657559007  1496220200     0  683591607924     0
+  ix0       - fe80::%ix0/64  fe80::aab8:e0ff:fe03:7035%ix0           0     -     -             0           1     -            76     -

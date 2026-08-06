@@ -1,0 +1,5 @@
+=== E13: which host runs grafana + each rproxy (verified, not assumed) ===
+collected: 2026-08-05T23:36:16Z
+  dockermaster: /grafana-grafana-1 -> docker-servers-net=192.168.59.39 rproxy=172.24.0.7
+  dockermaster: /rproxy -> docker-servers-net=192.168.59.28 rproxy=172.24.0.11
+  dockerserver-2: /rproxy-3 -> docker-servers-net=192.168.59.49 rproxy=172.18.0.3

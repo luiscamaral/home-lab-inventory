@@ -1,0 +1,6 @@
+=== E12: simultaneous capture at RECEIVER (dockermaster) ===
+collected: 2026-08-05T23:35:31Z
+  capturing on dockermaster iface=ens19
+  RECEIVER SIDE: requests_arrived=0  replies_sent=0
+
+  SENDER SIDE: 195 packets transmitted, 190 packets received, 2.6% packet loss

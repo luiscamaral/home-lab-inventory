@@ -1,0 +1,17 @@
+=== E24: identify the ARP-storm source (192.168.59.4) ===
+collected: 2026-08-06T02:07:54Z
+--- per-IP move counts since boot ---
+   370 192.168.59.4
+    63 192.168.59.33
+    12 192.168.48.44
+    10 192.168.48.45
+     5 192.168.48.46
+     3 192.168.59.42
+--- current ARP entry for .59.4 ---
+--- live rate over 60s ---
+  moves in 60s: 0
+--- restart counts: any container crash-looping? ---
+  dockerserver-1: ollama restarts=0 state=exited ip=invalid IP
+  dockerserver-1: cadvisor-ds1-cadvisor-1 restarts=10 state=running ip=invalid IP
+  dockerserver-1: github-runner-homelab restarts=12979 state=restarting ip=invalid IP
+  dockerserver-2: minio-2-minio-1 restarts=13 state=running ip=192.168.59.37

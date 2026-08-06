@@ -1,0 +1,9 @@
+=== E5: host-to-host loss (bypasses pfSense) ===
+collected: 2026-08-05T23:28:09Z
+  source: dockerserver-2 192.168.48.46/20 192.168.59.62/32
+  --- same-VLAN, does NOT traverse pfSense ---
+    192.168.59.39    200 packets transmitted, 200 received, 0% packet loss, time 20702ms  min/avg/max/mdev = 0.192/0.404/0.672/0.103 ms
+    192.168.59.28    200 packets transmitted, 200 received, 0% packet loss, time 20696ms  min/avg/max/mdev = 0.185/0.420/0.918/0.110 ms
+    192.168.48.45    200 packets transmitted, 200 received, 0% packet loss, time 20697ms  min/avg/max/mdev = 0.156/0.395/2.263/0.161 ms
+  --- to pfSense gateway (one hop) ---
+    192.168.48.1     200 packets transmitted, 196 received, 2% packet loss, time 20699ms  min/avg/max/mdev = 0.158/0.272/0.497/0.055 ms

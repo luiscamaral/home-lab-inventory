@@ -1,0 +1,5 @@
+=== E20: loss vs ARP-churn correlation, 6 x 30s windows ===
+collected: 2026-08-06T00:21:08Z
+  window1: loss=2.5% packet loss   arp_moves=-2
+  window2: loss=5.0% packet loss   arp_moves=-1
+Connection to 192.168.4.1 closed by remote host.

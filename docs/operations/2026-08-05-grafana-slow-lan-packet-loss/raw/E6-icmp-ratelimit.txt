@@ -1,0 +1,19 @@
+=== E6: is the loss an ICMP rate-limit artifact? ===
+collected: 2026-08-05T23:30:08Z
+--- ICMP rate limiting sysctls ---
+  net.inet.icmp.icmplim: 0
+  net.inet.icmp.icmplim_output: 1
+--- ICMP ratelimit drop counter (before) ---
+  	14 errors not generated in response to an icmp message
+  	286278 message responses generated
+  	ICMP address mask responses are disabled
+--- pf: any ICMP state-limit or scrub drops? ---
+  Counters
+    match                           49293140          118.7/s
+    bad-offset                             0            0.0/s
+    fragment                               0            0.0/s
+    short                                  0            0.0/s
+    normalize                              2            0.0/s
+    memory                                 2            0.0/s
+    bad-timestamp                          0            0.0/s
+    congestion                             0            0.0/s
