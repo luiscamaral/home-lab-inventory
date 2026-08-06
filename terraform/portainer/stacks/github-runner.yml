@@ -6,7 +6,14 @@ networks:
 
 services:
   runner:
-    image: myoung34/github-runner:latest
+    # Pinned, NOT :latest. An unpinned tag was cached on the host 2026-04-12 and never
+    # refreshed, so the bundled runner aged into v2.333.1 — which GitHub then refused
+    # ("deprecated and cannot receive messages"). That deadlocks: the runner cannot
+    # self-update (updates arrive over the queue GitHub is refusing) and watchtower will
+    # not update a container that is never stably running. Result was 13k restart loops,
+    # each drawing a new macvlan MAC on .59.4 and churning pfSense's ARP table.
+    # Bump this tag deliberately; see docs/operations/2026-08-05-grafana-slow-lan-packet-loss/
+    image: myoung34/github-runner:2.336.0
     container_name: github-runner-homelab
     hostname: dockerserver-1-runner
     networks:
