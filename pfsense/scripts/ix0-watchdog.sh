@@ -73,7 +73,7 @@ DEGRADED_WINDOW=5    # window size (5 x 60s = last ~5 min)
 DEGRADED_MIN_GAP=7200    # 2 h between degraded-triggered bounces (base, before backoff)
 DEGRADED_MAX_PER_DAY=3   # hard daily cap on degraded-triggered bounces
 SETTLE_SECS=180      # wait after a bounce before judging whether it worked
-SUCCESS_LOSS_PCT=2   # post-bounce worst-target loss below this = bounce succeeded
+SUCCESS_LOSS_PCT=2   # post-bounce MEAN loss at or below this = bounce succeeded
 MAX_CONSEC_FAILURES=2    # consecutive failed bounces before self-disarm
 
 # --- shared guards ---
@@ -143,18 +143,25 @@ measure_loss() {   # $1=target -> integer loss percent, or -1 if unmeasurable
 
 LOSS_KV=""        # "target=pct target=pct" from the most recent sweep
 WORST_LOSS=-1
-sweep_loss() {    # measure every LOSS_TARGET; sets LOSS_KV and WORST_LOSS
-  LOSS_KV=""; WORST_LOSS=-1
+LOSS_MEAN=-1      # mean across measurable targets (-1 = not enough data)
+LOSS_MIN=-1       # best target, used as the sick-host guard
+LOSS_N=0          # how many targets were measurable
+sweep_loss() {    # measure every LOSS_TARGET; sets LOSS_KV/WORST_LOSS/LOSS_MEAN/LOSS_MIN/LOSS_N
+  LOSS_KV=""; WORST_LOSS=-1; LOSS_MEAN=-1; LOSS_MIN=-1; LOSS_N=0
+  sum=0
   for t in $LOSS_TARGETS; do
     l=$(measure_loss "$t")
     LOSS_KV="$LOSS_KV $t=$l"
+    [ "$l" -lt 0 ] && continue
     [ "$l" -gt "$WORST_LOSS" ] && WORST_LOSS="$l"
+    if [ "$LOSS_MIN" -lt 0 ] || [ "$l" -lt "$LOSS_MIN" ]; then LOSS_MIN="$l"; fi
+    sum=$((sum + l)); LOSS_N=$((LOSS_N + 1))
   done
   LOSS_KV="${LOSS_KV# }"
+  [ "$LOSS_N" -gt 0 ] && LOSS_MEAN=$((sum / LOSS_N))
 }
 
-DEGRADED_MEAN=-1
-degraded() {      # 0 = degraded; 1 = healthy. Sets DEGRADED_MEAN.
+degraded() {      # 0 = degraded; 1 = healthy. Reads what sweep_loss computed.
   # AGGREGATE, then threshold -- do NOT threshold each target and count.
   # Measured 2026-08-17 with true loss ~10%: per-target estimates over 100
   # packets have a standard error of ~3% (sqrt(p(1-p)/n)), so they swing +-6%.
@@ -163,21 +170,13 @@ degraded() {      # 0 = degraded; 1 = healthy. Sets DEGRADED_MEAN.
   # trunk was plainly degraded -- the automation was effectively inert.
   # Averaging doubles the effective sample and tests what we actually care
   # about: "is the trunk dropping ~10% of large frames right now".
-  sum=0; n=0; min=-1
-  for kv in $LOSS_KV; do
-    l="${kv#*=}"
-    [ "$l" -lt 0 ] && continue                    # unmeasurable target
-    sum=$((sum + l)); n=$((n + 1))
-    if [ "$min" -lt 0 ] || [ "$l" -lt "$min" ]; then min="$l"; fi
-  done
-  [ "$n" -ge "$LOSS_MIN_TARGETS" ] || return 1    # need corroboration
-  DEGRADED_MEAN=$((sum / n))
-  [ "$DEGRADED_MEAN" -ge "$LOSS_TRIGGER_PCT" ] || return 1
+  [ "$LOSS_N" -ge "$LOSS_MIN_TARGETS" ] || return 1   # need corroboration
+  [ "$LOSS_MEAN" -ge "$LOSS_TRIGGER_PCT" ] || return 1
   # Sick-host guard, replacing what the count-based rule gave us: one broken
   # target must not drag the mean over on its own. If the trunk is genuinely
   # bad every target sees it, so require the BEST target to be at least half
   # the threshold. (100% + 0% averages to 50% but min=0 -> correctly rejected.)
-  [ "$min" -ge $((LOSS_TRIGGER_PCT / 2)) ] || return 1
+  [ "$LOSS_MIN" -ge $((LOSS_TRIGGER_PCT / 2)) ] || return 1
   return 0
 }
 
@@ -199,10 +198,10 @@ write_metrics() {
       t="${kv%%=*}"; l="${kv#*=}"
       [ "$l" -ge 0 ] && echo "pfsense_ix0_large_frame_loss_percent{device=\"$IFACE\",target=\"$t\",size=\"$LOSS_SIZE\"} $l"
     done
-    if [ "$DEGRADED_MEAN" -ge 0 ]; then
+    if [ "$LOSS_MEAN" -ge 0 ]; then
       echo "# HELP pfsense_ix0_large_frame_loss_mean_percent Mean large-frame loss across probe targets (this is what the auto-bounce decides on)"
       echo "# TYPE pfsense_ix0_large_frame_loss_mean_percent gauge"
-      echo "pfsense_ix0_large_frame_loss_mean_percent{device=\"$IFACE\",size=\"$LOSS_SIZE\"} $DEGRADED_MEAN"
+      echo "pfsense_ix0_large_frame_loss_mean_percent{device=\"$IFACE\",size=\"$LOSS_SIZE\"} $LOSS_MEAN"
     fi
     echo "# HELP pfsense_ix0_watchdog_bounces_total Link bounces performed by the watchdog, by trigger"
     echo "# TYPE pfsense_ix0_watchdog_bounces_total counter"
@@ -263,12 +262,20 @@ handle_degraded_bounce() {
   log "verifying: settling ${SETTLE_SECS}s before re-measuring loss"
   sleep "$SETTLE_SECS"
   sweep_loss
-  if [ "$WORST_LOSS" -ge 0 ] && [ "$WORST_LOSS" -lt "$SUCCESS_LOSS_PCT" ]; then
+  # Judge on the MEAN, inclusively, and consistently with the trigger.
+  # 2026-08-17: the first real auto-bounce took loss 12% -> 2%/1% and was scored
+  # FAILED, because the test was `worst < 2` and worst was exactly 2. That is a
+  # plainly successful retrain reported as a failure -- which raises a critical
+  # alert and counts toward self-disarm. Two errors: an exclusive comparison on
+  # a boundary value, and judging on `worst`, the noisiest available statistic
+  # (single-target estimates swing +-6% at these packet counts) rather than the
+  # mean the bounce decision itself uses.
+  if [ "$LOSS_N" -ge "$LOSS_MIN_TARGETS" ] && [ "$LOSS_MEAN" -le "$SUCCESS_LOSS_PCT" ]; then
     LAST_BOUNCE_RESULT=1; CONSEC_FAILURES=0
-    log "RESULT: bounce SUCCEEDED — worst loss ${WORST_LOSS}% (< ${SUCCESS_LOSS_PCT}%) [$LOSS_KV]"
+    log "RESULT: bounce SUCCEEDED — mean loss ${LOSS_MEAN}% (<= ${SUCCESS_LOSS_PCT}%) [$LOSS_KV]"
   else
     LAST_BOUNCE_RESULT=0; CONSEC_FAILURES=$((CONSEC_FAILURES + 1))
-    log "RESULT: bounce FAILED — worst loss ${WORST_LOSS}% (>= ${SUCCESS_LOSS_PCT}%) [$LOSS_KV]; consecutive failures=$CONSEC_FAILURES"
+    log "RESULT: bounce FAILED — mean loss ${LOSS_MEAN}% (> ${SUCCESS_LOSS_PCT}%) [$LOSS_KV]; consecutive failures=$CONSEC_FAILURES"
     if [ "$CONSEC_FAILURES" -ge "$MAX_CONSEC_FAILURES" ]; then
       DISARMED=1
       log "DISARM: $CONSEC_FAILURES consecutive failed bounces — auto-bounce DISABLED. Bouncing no longer restores this link; the optic must be replaced (docs/network/2026-06-28-ix0-optic-flap-handoff.md). Re-arm with: ix0-watchdog.sh reset"
@@ -325,7 +332,7 @@ run() {
       hist=$(printf '%s' "$hist" | tail -c "$DEGRADED_WINDOW")
       degraded_count=$(printf '%s' "$hist" | tr -cd '1' | wc -c | tr -d ' ')
       if degraded; then
-        log "degraded: mean ${DEGRADED_MEAN}% >= ${LOSS_TRIGGER_PCT}% (${degraded_count}/${DEGRADED_THRESHOLD} in last ${DEGRADED_WINDOW} probes) [$LOSS_KV]"
+        log "degraded: mean ${LOSS_MEAN}% >= ${LOSS_TRIGGER_PCT}% (${degraded_count}/${DEGRADED_THRESHOLD} in last ${DEGRADED_WINDOW} probes) [$LOSS_KV]"
         if [ "$degraded_count" -ge "$DEGRADED_THRESHOLD" ]; then
           now=$(date +%s); gap=$(degraded_gap)
           # Every suppressed path clears the window so we re-observe from
@@ -352,7 +359,7 @@ run() {
       elif [ "$degraded_count" -gt 0 ]; then
         # Below threshold on THIS probe, but the window still holds recent bad
         # ones -- report it rather than looking silently healthy.
-        log "below threshold this probe (mean ${DEGRADED_MEAN}%), window still ${degraded_count}/${DEGRADED_THRESHOLD} [$LOSS_KV]"
+        log "below threshold this probe (mean ${LOSS_MEAN}%), window still ${degraded_count}/${DEGRADED_THRESHOLD} [$LOSS_KV]"
       fi
       write_metrics
     fi
@@ -383,9 +390,9 @@ case "${1:-}" in
     probe || { echo "BLACKOUT: all LAN targets unreachable (ix0 link=$(link_status))"; exit 0; }
     sweep_loss
     echo "reachable; large-frame(${LOSS_SIZE}B) loss: $LOSS_KV  worst=${WORST_LOSS}%"
-    # `degraded` populates DEGRADED_MEAN, so evaluate it before reporting.
+    # `degraded` populates LOSS_MEAN, so evaluate it before reporting.
     if degraded; then verdict="DEGRADED — would count toward a bounce"; else verdict="not degraded by the trigger rule"; fi
-    echo "mean=${DEGRADED_MEAN}% (trigger at >=${LOSS_TRIGGER_PCT}% over >=${LOSS_MIN_TARGETS} targets)"
+    echo "mean=${LOSS_MEAN}% (trigger at >=${LOSS_TRIGGER_PCT}% over >=${LOSS_MIN_TARGETS} targets)"
     echo "STATUS: $verdict"
     exit 0
     ;;
