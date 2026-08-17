@@ -63,7 +63,13 @@ LOSS_PKTS=100        # packets per target per probe (~2 s at -i 0.02)
 LOSS_SIZE=1400       # MUST be large; 56 B is blind to this failure mode
 LOSS_TRIGGER_PCT=10  # per-target loss that counts as degraded
 LOSS_MIN_TARGETS=2   # how many targets must agree (guards against one sick host)
-DEGRADED_THRESHOLD=3 # consecutive degraded probes before bouncing (3 x 60s = 3 min)
+# Sustain rule is "N of the last M probes", NOT N consecutive. Observed
+# 2026-08-17: loss oscillates 5-24% around the threshold, so a strict
+# consecutive counter kept resetting on a single dip (logged 1/3, then
+# "degraded cleared" at 7%/8%) and would rarely fire during a genuinely bad
+# stretch. A sliding window tolerates the oscillation without lowering the bar.
+DEGRADED_THRESHOLD=3 # degraded probes required within the window
+DEGRADED_WINDOW=5    # window size (5 x 60s = last ~5 min)
 DEGRADED_MIN_GAP=7200    # 2 h between degraded-triggered bounces (base, before backoff)
 DEGRADED_MAX_PER_DAY=3   # hard daily cap on degraded-triggered bounces
 SETTLE_SECS=180      # wait after a bounce before judging whether it worked
@@ -249,8 +255,8 @@ handle_degraded_bounce() {
 
 run() {
   load_state; roll_day
-  log "started (iface=$IFACE blackout='${THRESHOLD}x${INTERVAL}s' degraded='>=${LOSS_TRIGGER_PCT}% @${LOSS_SIZE}B on >=${LOSS_MIN_TARGETS} targets x${DEGRADED_THRESHOLD}' min_gap=${MIN_FLAP_GAP}s degraded_gap=$(degraded_gap)s cap=${DEGRADED_MAX_PER_DAY}/day disarmed=$DISARMED)"
-  fails=0; degraded_count=0; tick=0
+  log "started (iface=$IFACE blackout='${THRESHOLD}x${INTERVAL}s' degraded='>=${LOSS_TRIGGER_PCT}% @${LOSS_SIZE}B on >=${LOSS_MIN_TARGETS} targets, ${DEGRADED_THRESHOLD} of last ${DEGRADED_WINDOW} probes' min_gap=${MIN_FLAP_GAP}s degraded_gap=$(degraded_gap)s cap=${DEGRADED_MAX_PER_DAY}/day disarmed=$DISARMED)"
+  fails=0; degraded_count=0; tick=0; hist=""
   # Warm-up guard: treat daemon start as if we had just flapped, so starting (or
   # the cron keepalive restarting) the daemon into an ALREADY-degraded link can
   # not bounce immediately — MIN_FLAP_GAP must elapse first. Deploying this into
@@ -290,33 +296,39 @@ run() {
     # ---- DEGRADED (every LOSS_PROBE_EVERY ticks) ----
     if [ $((tick % LOSS_PROBE_EVERY)) -eq 0 ]; then
       sweep_loss
+      # Sliding window of the last DEGRADED_WINDOW verdicts, newest on the right.
+      if degraded; then hist="${hist}1"; else hist="${hist}0"; fi
+      hist=$(printf '%s' "$hist" | tail -c "$DEGRADED_WINDOW")
+      degraded_count=$(printf '%s' "$hist" | tr -cd '1' | wc -c | tr -d ' ')
       if degraded; then
-        degraded_count=$((degraded_count + 1))
-        log "degraded: large-frame loss over threshold (${degraded_count}/${DEGRADED_THRESHOLD}) [$LOSS_KV]"
+        log "degraded: large-frame loss over threshold (${degraded_count}/${DEGRADED_THRESHOLD} in last ${DEGRADED_WINDOW} probes) [$LOSS_KV]"
         if [ "$degraded_count" -ge "$DEGRADED_THRESHOLD" ]; then
           now=$(date +%s); gap=$(degraded_gap)
+          # Every suppressed path clears the window so we re-observe from
+          # scratch rather than re-triggering on the next single bad probe.
           if [ "$DISARMED" -eq 1 ]; then
             log "DISARMED — not bouncing; replace the optic (worst loss ${WORST_LOSS}%)"
-            degraded_count=0
+            hist=""
           elif [ -f "$NOBOUNCE_FLAG" ]; then
-            log "nobounce flag set — NOT bouncing (degraded)"
-            degraded_count=0
+            log "nobounce flag set — NOT bouncing (degraded, worst ${WORST_LOSS}%)"
+            hist=""
           elif [ "$DAY_BOUNCES" -ge "$DEGRADED_MAX_PER_DAY" ]; then
             log "daily cap reached ($DAY_BOUNCES/${DEGRADED_MAX_PER_DAY}) — NOT bouncing"
-            degraded_count=0
+            hist=""
           elif [ $((now - last_flap)) -lt "$MIN_FLAP_GAP" ] || [ $((now - LAST_BOUNCE_TS)) -lt "$gap" ]; then
             log "rate-limited: last bounce $((now - LAST_BOUNCE_TS))s ago (< ${gap}s effective gap) — NOT bouncing"
-            degraded_count=0
+            hist=""
           else
             handle_degraded_bounce
-            last_flap=$(date +%s); degraded_count=0
+            last_flap=$(date +%s); hist=""
             sleep "$COOLDOWN"
             continue
           fi
         fi
-      else
-        [ "$degraded_count" -gt 0 ] && log "degraded cleared [$LOSS_KV]"
-        degraded_count=0
+      elif [ "$degraded_count" -gt 0 ]; then
+        # Below threshold on THIS probe, but the window still holds recent bad
+        # ones -- report it rather than looking silently healthy.
+        log "below threshold this probe, window still ${degraded_count}/${DEGRADED_THRESHOLD} [$LOSS_KV]"
       fi
       write_metrics
     fi
