@@ -1501,5 +1501,197 @@ locals {
                 (recovers in ~30-50s) or it cannot — while down, ALL LAN VLANs
                 (HOME/IoT/SVR/GUEST) + internet are offline. Check the optic and
                 STP state on switch24a Port 27.
+
+          # ---- 2026-08-17: optic degradation early-warning + auto-bounce
+          # outcome. Added after this failure mode ran undetected through three
+          # incidents (2026-08-05, -08-13, -08-16). remote_faults is the switch
+          # telling us it cannot cleanly receive our TX; it is the EARLIEST
+          # signal we get and it climbs for days before humans notice slowness.
+          # Thresholds from measured history: healthy-after-bounce 0.03/s,
+          # degrading 3-13/s, fully faulted 60/s. NOTE the rate is NOT
+          # proportional to loss (60/s gave 3-6%; 13.3/s gave 24%) — treat it as
+          # "the optic is drifting", and use the loss alerts below for impact.
+          - alert: Ix0OpticDegrading
+            expr: rate(pfsense_ix0_remote_faults_total{device="ix0"}[15m]) > 0.5
+            for: 15m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 optic degrading ({{ printf \"%.1f\" $$value }} remote faults/s)"
+              description: |
+                switch24a Te1/0/27 is signalling Remote Fault at
+                {{ printf "%.1f" $$value }}/s — it cannot cleanly receive
+                pfSense's TX on the ix0 10Gbase-SR run. This climbs for DAYS
+                before bulk TCP visibly collapses, so act now rather than
+                waiting for "the internet is slow".
+                Confirm the direction is still TX-only (local_faults and
+                crc_errs should stay flat):
+                  ssh pfsense 'sysctl dev.ix.0.mac_stats | grep faults'
+                The real fix is hardware — replace the pfSense-side OEM optic:
+                docs/network/2026-06-28-ix0-optic-flap-handoff.md
+          - alert: Ix0OpticFaultStorm
+            expr: rate(pfsense_ix0_remote_faults_total{device="ix0"}[5m]) > 10
+            for: 5m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "pfSense ix0 optic faulting hard ({{ printf \"%.1f\" $$value }}/s)"
+              description: |
+                Remote Fault rate {{ printf "%.1f" $$value }}/s on ix0. At this
+                level large-frame loss has historically been 10-25%, which
+                collapses every LAN client's throughput to single-digit Mbps
+                (Mathis: ~1.22*MSS/(RTT*sqrt(loss))) while the router's own WAN
+                path stays fast — so it will NOT look like an outage.
+                Replace the optic: docs/network/2026-06-28-ix0-optic-flap-handoff.md
+
+          # ---- Measured impact. This is what actually decides the auto-bounce,
+          # and it MUST be measured with large frames: loss here is bit-error
+          # driven, so 56 B probes read ~0% while 1400 B reads 20%.
+          - alert: Ix0LargeFrameLoss
+            expr: pfsense_ix0_large_frame_loss_percent{device="ix0"} >= 5
+            for: 5m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 dropping {{ printf \"%.0f\" $$value }}% of large frames to {{ $$labels.target }}"
+              description: |
+                {{ printf "%.0f" $$value }}% loss at 1400B toward
+                {{ $$labels.target }} across the ix0 trunk. Small-packet probes
+                (ping, dpinger, DNS) may still look perfectly clean — this only
+                bites bulk TCP until it gets much worse.
+          - alert: Ix0LargeFrameLossCritical
+            expr: pfsense_ix0_large_frame_loss_percent{device="ix0"} >= 15
+            for: 5m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "pfSense ix0 dropping {{ printf \"%.0f\" $$value }}% of large frames to {{ $$labels.target }}"
+              description: |
+                Severe large-frame loss ({{ printf "%.0f" $$value }}%) toward
+                {{ $$labels.target }}. Every LAN client is effectively at a few
+                Mbps. Small packets are now affected too at this level, so DNS,
+                dpinger, Prometheus scrapes and NFS heartbeats are exposed —
+                expect second-order failures that do not look network-related.
+
+          # ---- Auto-bounce outcome. The watchdog verifies its own work: after
+          # a degraded-triggered bounce it settles 180s and re-measures. A FAILED
+          # bounce is the signal that deferring the hardware swap has stopped
+          # being viable — bouncing used to restore 0.0% loss (2026-08-13) and
+          # by 2026-08-17 only reached 8.3%.
+          - alert: Ix0AutoBounceFailed
+            expr: pfsense_ix0_watchdog_last_bounce_succeeded{device="ix0"} == 0
+            for: 0m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "pfSense ix0 auto-bounce did NOT restore the link"
+              description: |
+                ix0-watchdog bounced the trunk (costing a ~30-50s whole-LAN
+                outage) and large-frame loss did NOT drop below the success
+                threshold afterwards. The retrain workaround is wearing out.
+                Schedule the optic replacement now — every further bounce is an
+                outage that buys nothing:
+                docs/network/2026-06-28-ix0-optic-flap-handoff.md
+          - alert: Ix0WatchdogDisarmed
+            expr: pfsense_ix0_watchdog_disarmed{device="ix0"} == 1
+            for: 0m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "pfSense ix0 auto-bounce has DISARMED itself"
+              description: |
+                ix0-watchdog hit its consecutive-failure limit and disabled
+                auto-bouncing, because bouncing no longer restores the link.
+                The LAN will now stay degraded until the hardware is fixed —
+                nothing is going to rescue it automatically.
+                Replace the pfSense-side optic (SN CS101O32050), then re-arm:
+                  ssh pfsense '/usr/local/sbin/ix0-watchdog.sh reset'
+                Runbook: docs/network/2026-06-28-ix0-optic-flap-handoff.md
+          - alert: Ix0AutoBounceOccurred
+            expr: increase(pfsense_ix0_watchdog_bounces_total{device="ix0",reason="degraded"}[15m]) > 0
+            for: 0m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 auto-bounced due to large-frame loss"
+              description: |
+                ix0-watchdog detected sustained large-frame loss and bounced the
+                trunk, blipping every LAN VLAN + internet for ~30-50s. This is
+                the automation working as designed — but it is a workaround for
+                a failing optic, not a fix.
+
+          # ---- Staleness. The collector silently stopped updating for days at
+          # a time before 2026-08-17 (a falsy last command suppressed the atomic
+          # `mv`), which would have made every alert above quietly useless. Alert
+          # on the heartbeat, and on the metric vanishing entirely.
+          - alert: Ix0MetricsStale
+            expr: time() - pfsense_link_metrics_last_run_timestamp_seconds{device="ix0"} > 600
+            for: 5m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 link metrics are stale ({{ printf \"%.0f\" $$value }}s old)"
+              description: |
+                /usr/local/bin/ix0_link_metrics.sh has not published for over
+                10 minutes, so every ix0 optic alert is flying blind. Check the
+                cron entry (pfsense/cron-jobs.yml) and run it by hand.
+          - alert: Ix0WatchdogNotRunning
+            expr: absent(pfsense_ix0_watchdog_up{device="ix0"}) == 1 or time() - pfsense_ix0_watchdog_last_run_timestamp_seconds{device="ix0"} > 600
+            for: 10m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0-watchdog is not reporting"
+              description: |
+                The ix0-watchdog daemon has stopped publishing its heartbeat, so
+                nothing is watching for the degraded (large-frame-loss) failure
+                mode and nothing will auto-bounce.
+                  ssh pfsense '/usr/local/sbin/ix0-watchdog.sh status'
+                A per-minute keepalive cron should restart it; if it does not,
+                the daemon is crash-looping.
+
+          # ---- Optic DDM. Listed as an open follow-up in the 2026-06-28
+          # runbook and never built. RX power reads the switch->pfSense
+          # direction (still pristine at -3.0 dBm, which is what exonerates the
+          # switch); TX bias rising is the classic dying-laser signature.
+          - alert: Ix0OpticRxPowerLow
+            expr: pfsense_sfp_rx_power_dbm{device="ix0"} < -12
+            for: 10m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 optic RX power low ({{ printf \"%.2f\" $$value }} dBm)"
+              description: |
+                RX power {{ printf "%.2f" $$value }} dBm on the ix0 optic
+                (10G-SR healthy range -3..-10, marginal below about -12, loss of
+                signal near -17). This measures the switch->pfSense direction.
+                It degrading would be a NEW fault: through the 2026 optic saga
+                this direction stayed clean at -3.0 dBm. Suspect a dirty or bent
+                LC endface, or the switch-side transmitter.
+          - alert: Ix0OpticTxBiasHigh
+            expr: pfsense_sfp_tx_bias_ma{device="ix0"} > 10
+            for: 10m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 optic TX bias climbing ({{ printf \"%.2f\" $$value }} mA)"
+              description: |
+                Laser TX bias {{ printf "%.2f" $$value }} mA (baseline 6.86 mA).
+                A rising bias current means the laser is being driven harder to
+                hold output power — the classic signature of a dying
+                transmitter, and this module's TX strand is already the
+                suspected fault. Replace it:
+                docs/network/2026-06-28-ix0-optic-flap-handoff.md
   EOT
 }
