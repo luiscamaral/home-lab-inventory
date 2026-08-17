@@ -32,10 +32,14 @@
 # per-day cap, and — for DEGRADED — verification that the bounce actually helped,
 # with exponential backoff and eventual self-disarm when it stops helping.
 #
-# Self-disarm matters: the optic is decaying. 2026-08-13's bounce restored 0.0%
-# loss; 2026-08-17's only reached 8.3%. Once bounces stop working, continuing to
-# bounce is pure outage for no benefit — so the watchdog gives up and says so
-# (metric + log) rather than becoming a 30-50 s outage generator.
+# Self-disarm matters, but "did not fully restore" is NOT "did not help". The
+# optic is decaying (2026-08-13 a bounce reached 0.0% loss; by 2026-08-17 the
+# best was 6%), so an absolute-only success test would eventually mark every
+# bounce a failure and disarm the watchdog exactly when it is the only thing
+# keeping the LAN usable. Success is therefore "fully restored OR materially
+# improved" — see SUCCESS_IMPROVE_FACTOR. Disarm is reserved for bounces that
+# genuinely change nothing (observed: 41% -> 43%), where continuing would be
+# pure outage for no benefit.
 #
 # Modes: start | stop | status | check | testbounce | reset | run(internal)
 #   testbounce — deliberate on-demand bounce with before/after measurement,
@@ -75,7 +79,18 @@ DEGRADED_WINDOW=5    # window size (5 x 60s = last ~5 min)
 DEGRADED_MIN_GAP=7200    # 2 h between degraded-triggered bounces (base, before backoff)
 DEGRADED_MAX_PER_DAY=3   # hard daily cap on degraded-triggered bounces
 SETTLE_SECS=180      # wait after a bounce before judging whether it worked
-SUCCESS_LOSS_PCT=2   # post-bounce MEAN loss at or below this = bounce succeeded
+# A bounce counts as successful if it FULLY restored the link (mean <= this)...
+SUCCESS_LOSS_PCT=2
+# ...OR if it materially helped: mean improved by at least this factor, starting
+# from a genuinely bad state. Measured 2026-08-17 across three bounces:
+#   46% -> 6%   (7.7x, hugely valuable)      scored FAILED under absolute-only
+#   ?   -> 8%   (large, kept the LAN usable) scored FAILED under absolute-only
+#   41% -> 43%  (no help at all)             correctly FAILED
+# As the optic decays a bounce may never reach 2% again, so an absolute-only
+# test eventually calls every bounce a failure -- which doubles the backoff and
+# self-disarms the watchdog precisely when it is the only thing keeping the LAN
+# usable. "Did it help?" is the question that matters; "is it perfect?" is not.
+SUCCESS_IMPROVE_FACTOR=3
 MAX_CONSEC_FAILURES=2    # consecutive failed bounces before self-disarm
 
 # --- shared guards ---
@@ -232,6 +247,19 @@ write_metrics() {
   return 0
 }
 
+bounce_succeeded() {  # $1 = pre-bounce mean; uses LOSS_MEAN/LOSS_N (post-bounce)
+  [ "$LOSS_N" -ge "$LOSS_MIN_TARGETS" ] || return 1
+  [ "$LOSS_MEAN" -ge 0 ] || return 1
+  # Fully restored.
+  [ "$LOSS_MEAN" -le "$SUCCESS_LOSS_PCT" ] && return 0
+  # Or materially improved from a genuinely bad starting point. Guarding on the
+  # trigger threshold stops noise around a healthy link counting as a "win".
+  before="$1"
+  [ "$before" -ge "$LOSS_TRIGGER_PCT" ] || return 1
+  [ $((LOSS_MEAN * SUCCESS_IMPROVE_FACTOR)) -le "$before" ] && return 0
+  return 1
+}
+
 # --- actions ----------------------------------------------------------------
 
 do_bounce() {   # $1 = reason label
@@ -256,6 +284,7 @@ degraded_gap() {
 }
 
 handle_degraded_bounce() {
+  before_mean="$LOSS_MEAN"     # captured BEFORE the bounce overwrites it
   do_bounce degraded
   BOUNCES_DEGRADED=$((BOUNCES_DEGRADED + 1))
   DAY_BOUNCES=$((DAY_BOUNCES + 1))
@@ -272,12 +301,12 @@ handle_degraded_bounce() {
   # a boundary value, and judging on `worst`, the noisiest available statistic
   # (single-target estimates swing +-6% at these packet counts) rather than the
   # mean the bounce decision itself uses.
-  if [ "$LOSS_N" -ge "$LOSS_MIN_TARGETS" ] && [ "$LOSS_MEAN" -le "$SUCCESS_LOSS_PCT" ]; then
+  if bounce_succeeded "$before_mean"; then
     LAST_BOUNCE_RESULT=1; CONSEC_FAILURES=0
-    log "RESULT: bounce SUCCEEDED — mean loss ${LOSS_MEAN}% (<= ${SUCCESS_LOSS_PCT}%) [$LOSS_KV]"
+    log "RESULT: bounce SUCCEEDED — mean ${before_mean}% -> ${LOSS_MEAN}% [$LOSS_KV]"
   else
     LAST_BOUNCE_RESULT=0; CONSEC_FAILURES=$((CONSEC_FAILURES + 1))
-    log "RESULT: bounce FAILED — mean loss ${LOSS_MEAN}% (> ${SUCCESS_LOSS_PCT}%) [$LOSS_KV]; consecutive failures=$CONSEC_FAILURES"
+    log "RESULT: bounce FAILED — mean ${before_mean}% -> ${LOSS_MEAN}% (no material improvement) [$LOSS_KV]; consecutive failures=$CONSEC_FAILURES"
     if [ "$CONSEC_FAILURES" -ge "$MAX_CONSEC_FAILURES" ]; then
       DISARMED=1
       log "DISARM: $CONSEC_FAILURES consecutive failed bounces — auto-bounce DISABLED. Bouncing no longer restores this link; the optic must be replaced (docs/network/2026-06-28-ix0-optic-flap-handoff.md). Re-arm with: ix0-watchdog.sh reset"
@@ -433,13 +462,13 @@ case "${1:-}" in
     rf_after=$(sysctl -n dev.ix.0.mac_stats.remote_faults 2>/dev/null)
     echo "  remote_faults=$rf_after (delta=$((rf_after - rf_before)) over the run)"
 
-    if [ "$LOSS_N" -ge "$LOSS_MIN_TARGETS" ] && [ "$LOSS_MEAN" -le "$SUCCESS_LOSS_PCT" ]; then
+    if bounce_succeeded "$before_mean"; then
       LAST_BOUNCE_RESULT=1
-      echo "  VERDICT: SUCCEEDED (mean ${LOSS_MEAN}% <= ${SUCCESS_LOSS_PCT}%)"
+      echo "  VERDICT: SUCCEEDED (mean ${before_mean}% -> ${LOSS_MEAN}%)"
       log "TEST: testbounce SUCCEEDED — mean ${before_mean}% -> ${LOSS_MEAN}% [$LOSS_KV]"
     else
       LAST_BOUNCE_RESULT=0
-      echo "  VERDICT: FAILED (mean ${LOSS_MEAN}% > ${SUCCESS_LOSS_PCT}%)"
+      echo "  VERDICT: FAILED (mean ${before_mean}% -> ${LOSS_MEAN}%, no material improvement)"
       log "TEST: testbounce FAILED — mean ${before_mean}% -> ${LOSS_MEAN}% [$LOSS_KV]"
     fi
     save_state; write_metrics
