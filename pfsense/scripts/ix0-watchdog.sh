@@ -37,7 +37,9 @@
 # bounce is pure outage for no benefit — so the watchdog gives up and says so
 # (metric + log) rather than becoming a 30-50 s outage generator.
 #
-# Modes: start | stop | status | check | reset | run(internal)
+# Modes: start | stop | status | check | testbounce | reset | run(internal)
+#   testbounce — deliberate on-demand bounce with before/after measurement,
+#                for validating the pipeline (costs a ~30-50 s LAN outage).
 #   reset — clear a self-disarm (after the optic is replaced) and re-arm.
 #
 # Hardware runbook (the ACTUAL fix — replace the pfSense-side OEM optic):
@@ -396,6 +398,53 @@ case "${1:-}" in
     echo "STATUS: $verdict"
     exit 0
     ;;
+  testbounce)
+    # Deliberate on-demand bounce, for validating the pipeline end to end.
+    # Exercises the REAL path: measure -> bounce -> settle -> re-measure ->
+    # score with the same criterion production uses. Bypasses only the
+    # rate-limit/daily-cap guards, since those exist to stop the DAEMON from
+    # acting too often, not to stop a human testing deliberately.
+    # It does NOT touch CONSEC_FAILURES/DISARMED: a test run against an
+    # already-healthy link would otherwise push the watchdog toward disarming
+    # itself for no reason.
+    if [ -f "$NOBOUNCE_FLAG" ]; then
+      echo "refusing: $NOBOUNCE_FLAG is set (rack work in progress?)"; exit 1
+    fi
+    load_state
+    echo "=== BEFORE ==="
+    sweep_loss
+    echo "  loss@${LOSS_SIZE}B: $LOSS_KV"
+    echo "  mean=${LOSS_MEAN}%  worst=${WORST_LOSS}%  link=$(link_status)"
+    rf_before=$(sysctl -n dev.ix.0.mac_stats.remote_faults 2>/dev/null)
+    echo "  remote_faults=$rf_before"
+    before_mean="$LOSS_MEAN"
+
+    log "TEST: manual testbounce requested (before: mean ${LOSS_MEAN}% [$LOSS_KV])"
+    do_bounce manual-test
+    LAST_BOUNCE_TS=$(date +%s)
+
+    echo "=== settling ${SETTLE_SECS}s ==="
+    sleep "$SETTLE_SECS"
+
+    echo "=== AFTER ==="
+    sweep_loss
+    echo "  loss@${LOSS_SIZE}B: $LOSS_KV"
+    echo "  mean=${LOSS_MEAN}%  worst=${WORST_LOSS}%  link=$(link_status)"
+    rf_after=$(sysctl -n dev.ix.0.mac_stats.remote_faults 2>/dev/null)
+    echo "  remote_faults=$rf_after (delta=$((rf_after - rf_before)) over the run)"
+
+    if [ "$LOSS_N" -ge "$LOSS_MIN_TARGETS" ] && [ "$LOSS_MEAN" -le "$SUCCESS_LOSS_PCT" ]; then
+      LAST_BOUNCE_RESULT=1
+      echo "  VERDICT: SUCCEEDED (mean ${LOSS_MEAN}% <= ${SUCCESS_LOSS_PCT}%)"
+      log "TEST: testbounce SUCCEEDED — mean ${before_mean}% -> ${LOSS_MEAN}% [$LOSS_KV]"
+    else
+      LAST_BOUNCE_RESULT=0
+      echo "  VERDICT: FAILED (mean ${LOSS_MEAN}% > ${SUCCESS_LOSS_PCT}%)"
+      log "TEST: testbounce FAILED — mean ${before_mean}% -> ${LOSS_MEAN}% [$LOSS_KV]"
+    fi
+    save_state; write_metrics
+    exit 0
+    ;;
   reset)
     load_state
     DISARMED=0; CONSEC_FAILURES=0; LAST_BOUNCE_RESULT=-1
@@ -403,5 +452,5 @@ case "${1:-}" in
     log "reset: disarm cleared, failure counter zeroed (re-armed)"
     echo "re-armed"
     ;;
-  *) echo "usage: $0 {start|stop|status|check|reset}"; exit 1 ;;
+  *) echo "usage: $0 {start|stop|status|check|testbounce|reset}"; exit 1 ;;
 esac
