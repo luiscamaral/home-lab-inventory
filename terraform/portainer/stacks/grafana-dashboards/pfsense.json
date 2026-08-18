@@ -770,6 +770,506 @@
       ],
       "title": "ix0 Flaps (range)",
       "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "thanos"
+      },
+      "description": "ix0 optic RX power (switch->pfSense direction) from SFF-8472 DDM via `ifconfig -v`. Healthy -3..-10 dBm; marginal below ~-12; loss-of-signal ~-17. A clean RX proves the return path is good; the fault direction (pfSense->switch TX power) is not reported by the current OEM optic. TX power appears here automatically if a replacement optic reports it.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": -14
+              },
+              {
+                "color": "green",
+                "value": -10
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 28
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "pfsense_sfp_rx_power_dbm{device=\"ix0\"}",
+          "legendFormat": "RX power (dBm)",
+          "refId": "A"
+        },
+        {
+          "expr": "pfsense_sfp_tx_power_dbm{device=\"ix0\"}",
+          "legendFormat": "TX power (dBm)",
+          "refId": "B"
+        }
+      ],
+      "title": "ix0 Optic \u2014 RX Power (dBm)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "thanos"
+      },
+      "description": "ix0 optic laser TX bias current (mA) and module temperature (C). A rising TX-bias trend can indicate a degrading laser; temperature should stay < 70 C. Baseline 2026-07-02: bias 6.86 mA, temp 52.7 C, voltage 3.25 V (all healthy) \u2014 use this to judge a replacement optic.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto"
+          },
+          "decimals": 2,
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "temp (C)"
+            },
+            "properties": [
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "unit",
+                "value": "celsius"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 28
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "pfsense_sfp_tx_bias_ma{device=\"ix0\"}",
+          "legendFormat": "TX bias (mA)",
+          "refId": "A"
+        },
+        {
+          "expr": "pfsense_sfp_temperature_celsius{device=\"ix0\"}",
+          "legendFormat": "temp (C)",
+          "refId": "B"
+        }
+      ],
+      "title": "ix0 Optic \u2014 TX Bias (mA) & Temp (C)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "thanos"
+      },
+      "description": "Mean packet loss at 1400B across the watchdog's two probe targets. THIS is what the auto-bounce decides on: it fires when the mean is >=10% on 3 of the last 5 probes (60s cadence). Small-packet loss reads far lower and is why this fault stayed invisible for months \u2014 56B read 0.0% while 1400B read 24.4% on the same path. Per-target series are shown for corroboration; a single target over threshold does NOT trigger.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 36
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "pfsense_ix0_large_frame_loss_mean_percent{device=\"ix0\"}",
+          "legendFormat": "mean (trigger metric)",
+          "refId": "A"
+        },
+        {
+          "expr": "pfsense_ix0_large_frame_loss_percent{device=\"ix0\"}",
+          "legendFormat": "{{target}}",
+          "refId": "B"
+        }
+      ],
+      "title": "ix0 Large-Frame Loss \u2014 Auto-Bounce Trigger",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "thanos"
+      },
+      "description": "remote_faults/s is the switch signalling it cannot cleanly receive pfSense's TX on the 10Gbase-SR run. Earliest signal available \u2014 climbs for hours before loss becomes user-visible. Healthy = 0/s. Observed: 0.03-0.4/s just after a good bounce, 13-20/s degrading, 51-60/s fully faulted, 184/s at worst. local_faults and crc_errs are OUR receive side and must stay flat; if they climb, the fault direction changed and the diagnosis needs revisiting.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "rate(pfsense_ix0_remote_faults_total{device=\"ix0\"}[5m])",
+          "legendFormat": "remote_faults/s (partner cannot RX us)",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(pfsense_ix0_local_faults_total{device=\"ix0\"}[5m])",
+          "legendFormat": "local_faults/s (our RX \u2014 expect 0)",
+          "refId": "B"
+        },
+        {
+          "expr": "rate(pfsense_ix0_crc_errs_total{device=\"ix0\"}[5m])",
+          "legendFormat": "crc_errs/s (our RX \u2014 expect 0)",
+          "refId": "C"
+        }
+      ],
+      "title": "ix0 Optic \u2014 Fault Rate (leading indicator)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "thanos"
+      },
+      "description": "Outcome of the most recent auto-bounce. A bounce is a LOTTERY, not a repair \u2014 each link re-negotiation trains the optic to a random quality (observed 46%->6%, 23%->2%, 41%->43%, and once 2%->56% from a healthy link). Success = restored to <=2% mean OR improved >=3x from a bad start. Two consecutive genuinely-useless bounces self-disarm the watchdog.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 0
+          },
+          "mappings": [
+            {
+              "options": {
+                "-1": {
+                  "color": "text",
+                  "index": 0,
+                  "text": "no bounce yet"
+                },
+                "0": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "FAILED \u2014 did not help"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 2,
+                  "text": "SUCCEEDED"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 44
+      },
+      "id": 17,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "mergeValues": true,
+        "showValue": "auto",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "expr": "pfsense_ix0_watchdog_last_bounce_succeeded{device=\"ix0\"}",
+          "legendFormat": "last bounce result",
+          "refId": "A"
+        }
+      ],
+      "title": "ix0 Auto-Bounce \u2014 Last Outcome",
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "thanos"
+      },
+      "description": "Operational state of the auto-bounce. Daily budget capped at 8 bounces (raised from 3 on 2026-08-18 after the optic's ~2h decay cycle exhausted the old cap by early afternoon, leaving the LAN degraded with no automatic relief). disarmed=1 means bouncing has stopped helping entirely and the optic must be physically replaced \u2014 re-arm with `ix0-watchdog.sh reset` after the swap.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 2
+              },
+              {
+                "color": "red",
+                "value": 8
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 44
+      },
+      "id": 18,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "increase(pfsense_ix0_watchdog_bounces_total{device=\"ix0\",reason=\"degraded\"}[24h])",
+          "legendFormat": "degraded bounces (24h) \u2014 cap 8",
+          "refId": "A"
+        },
+        {
+          "expr": "pfsense_ix0_watchdog_consecutive_failures{device=\"ix0\"}",
+          "legendFormat": "consecutive failures (disarms at 2)",
+          "refId": "B"
+        },
+        {
+          "expr": "pfsense_ix0_watchdog_disarmed{device=\"ix0\"}",
+          "legendFormat": "DISARMED (1 = gave up)",
+          "refId": "C"
+        },
+        {
+          "expr": "pfsense_ix0_watchdog_up{device=\"ix0\"}",
+          "legendFormat": "watchdog running",
+          "refId": "D"
+        }
+      ],
+      "title": "ix0 Watchdog \u2014 Health & Daily Budget",
+      "type": "timeseries"
     }
   ],
   "preload": false,
@@ -791,6 +1291,6 @@
   "timezone": "browser",
   "title": "pfSense",
   "uid": "pfsense-availability",
-  "version": 2,
+  "version": 4,
   "weekStart": ""
 }
