@@ -42,8 +42,10 @@
 # pure outage for no benefit.
 #
 # Modes: start | stop | status | check | testbounce | reset | run(internal)
-#   testbounce — deliberate on-demand bounce with before/after measurement,
-#                for validating the pipeline (costs a ~30-50 s LAN outage).
+#   testbounce [--force] — deliberate on-demand bounce with before/after
+#                measurement (costs a ~30-50 s LAN outage). Refuses on an
+#                already-healthy link without --force: a draw can make things
+#                far worse (observed 2026-08-17: 2% -> 56%).
 #   reset — clear a self-disarm (after the optic is replaced) and re-arm.
 #
 # Hardware runbook (the ACTUAL fix — replace the pfSense-side OEM optic):
@@ -92,6 +94,10 @@ SUCCESS_LOSS_PCT=2
 # usable. "Did it help?" is the question that matters; "is it perfect?" is not.
 SUCCESS_IMPROVE_FACTOR=3
 MAX_CONSEC_FAILURES=2    # consecutive failed bounces before self-disarm
+# A draw that leaves the link WORSE gets an immediate re-draw rather than a
+# backoff. Bounded so a decaying optic cannot turn this into an outage loop;
+# still subject to DEGRADED_MAX_PER_DAY.
+MAX_RECOVERY_DRAWS=3
 
 # --- shared guards ---
 DOWN_SECS=5          # hold ix0 down this long during a flap
@@ -284,34 +290,55 @@ degraded_gap() {
 }
 
 handle_degraded_bounce() {
-  before_mean="$LOSS_MEAN"     # captured BEFORE the bounce overwrites it
-  do_bounce degraded
-  BOUNCES_DEGRADED=$((BOUNCES_DEGRADED + 1))
-  DAY_BOUNCES=$((DAY_BOUNCES + 1))
-  save_state; write_metrics
+  # A bounce is a LOTTERY, not a repair. Each re-negotiation trains the link to
+  # a random quality. Measured 2026-08-17 across six draws on this optic:
+  #   46% -> 6%    big win        23% -> 2%    big win
+  #   53% -> 24%   partial        35% -> 13%   partial
+  #   41% -> 43%   no change       2% -> 56%   CATASTROPHIC
+  # So a single draw is not a verdict on whether bouncing helps -- and crucially
+  # a draw can leave the link far WORSE than it started. Backing off for hours
+  # after that would strand the LAN in a bad state we ourselves created, which
+  # is the worst possible response. Re-draw instead, exactly as the manual
+  # recovery did on 2026-08-17 (53% -> 24% -> 2%, good after two draws).
+  first_mean="$LOSS_MEAN"
+  before_mean="$LOSS_MEAN"
+  draw=0
+  while :; do
+    draw=$((draw + 1))
+    do_bounce degraded
+    BOUNCES_DEGRADED=$((BOUNCES_DEGRADED + 1))
+    DAY_BOUNCES=$((DAY_BOUNCES + 1))
+    save_state; write_metrics
 
-  log "verifying: settling ${SETTLE_SECS}s before re-measuring loss"
-  sleep "$SETTLE_SECS"
-  sweep_loss
-  # Judge on the MEAN, inclusively, and consistently with the trigger.
-  # 2026-08-17: the first real auto-bounce took loss 12% -> 2%/1% and was scored
-  # FAILED, because the test was `worst < 2` and worst was exactly 2. That is a
-  # plainly successful retrain reported as a failure -- which raises a critical
-  # alert and counts toward self-disarm. Two errors: an exclusive comparison on
-  # a boundary value, and judging on `worst`, the noisiest available statistic
-  # (single-target estimates swing +-6% at these packet counts) rather than the
-  # mean the bounce decision itself uses.
-  if bounce_succeeded "$before_mean"; then
-    LAST_BOUNCE_RESULT=1; CONSEC_FAILURES=0
-    log "RESULT: bounce SUCCEEDED — mean ${before_mean}% -> ${LOSS_MEAN}% [$LOSS_KV]"
-  else
+    log "verifying: settling ${SETTLE_SECS}s before re-measuring loss (draw ${draw}/${MAX_RECOVERY_DRAWS})"
+    sleep "$SETTLE_SECS"
+    sweep_loss
+
+    if bounce_succeeded "$before_mean"; then
+      LAST_BOUNCE_RESULT=1; CONSEC_FAILURES=0
+      log "RESULT: bounce SUCCEEDED — mean ${first_mean}% -> ${LOSS_MEAN}% after ${draw} draw(s) [$LOSS_KV]"
+      break
+    fi
+
+    # Did this draw leave us WORSE than we started? If so the right response is
+    # another draw, not a multi-hour backoff -- we broke it, we fix it.
+    if [ "$LOSS_MEAN" -gt "$before_mean" ] && [ "$draw" -lt "$MAX_RECOVERY_DRAWS" ] \
+       && [ "$DAY_BOUNCES" -lt "$DEGRADED_MAX_PER_DAY" ]; then
+      log "RESULT: draw ${draw} made it WORSE (${before_mean}% -> ${LOSS_MEAN}%) — re-drawing immediately [$LOSS_KV]"
+      before_mean="$LOSS_MEAN"
+      save_state; write_metrics
+      continue
+    fi
+
+    # No material improvement and not worse: bouncing genuinely is not helping.
     LAST_BOUNCE_RESULT=0; CONSEC_FAILURES=$((CONSEC_FAILURES + 1))
-    log "RESULT: bounce FAILED — mean ${before_mean}% -> ${LOSS_MEAN}% (no material improvement) [$LOSS_KV]; consecutive failures=$CONSEC_FAILURES"
+    log "RESULT: bounce FAILED — mean ${first_mean}% -> ${LOSS_MEAN}% after ${draw} draw(s), no material improvement [$LOSS_KV]; consecutive failures=$CONSEC_FAILURES"
     if [ "$CONSEC_FAILURES" -ge "$MAX_CONSEC_FAILURES" ]; then
       DISARMED=1
-      log "DISARM: $CONSEC_FAILURES consecutive failed bounces — auto-bounce DISABLED. Bouncing no longer restores this link; the optic must be replaced (docs/network/2026-06-28-ix0-optic-flap-handoff.md). Re-arm with: ix0-watchdog.sh reset"
+      log "DISARM: $CONSEC_FAILURES consecutive failed bounces — auto-bounce DISABLED. Bouncing no longer restores this link; the optic must be replaced (docs/network/2026-08-17-ix0-optic-replacement-procedure.md). Re-arm with: ix0-watchdog.sh reset"
     fi
-  fi
+    break
+  done
   save_state; write_metrics
 }
 
@@ -442,6 +469,17 @@ case "${1:-}" in
     load_state
     echo "=== BEFORE ==="
     sweep_loss
+    # Never gamble with a healthy link. On 2026-08-17 a testbounce took a 2%
+    # link to 56% -- the downside of a draw is unbounded, so refuse unless the
+    # caller explicitly accepts that risk.
+    if [ "$LOSS_N" -ge "$LOSS_MIN_TARGETS" ] && [ "$LOSS_MEAN" -le "$SUCCESS_LOSS_PCT" ] \
+       && [ "${2:-}" != "--force" ]; then
+      echo "  loss@${LOSS_SIZE}B: $LOSS_KV  (mean=${LOSS_MEAN}%)"
+      echo "refusing: link is already healthy (mean ${LOSS_MEAN}% <= ${SUCCESS_LOSS_PCT}%)."
+      echo "A bounce is a lottery and can make it far worse (observed 2% -> 56%)."
+      echo "Re-run with: $0 testbounce --force"
+      exit 1
+    fi
     echo "  loss@${LOSS_SIZE}B: $LOSS_KV"
     echo "  mean=${LOSS_MEAN}%  worst=${WORST_LOSS}%  link=$(link_status)"
     rf_before=$(sysctl -n dev.ix.0.mac_stats.remote_faults 2>/dev/null)
@@ -481,5 +519,5 @@ case "${1:-}" in
     log "reset: disarm cleared, failure counter zeroed (re-armed)"
     echo "re-armed"
     ;;
-  *) echo "usage: $0 {start|stop|status|check|testbounce|reset}"; exit 1 ;;
+  *) echo "usage: $0 {start|stop|status|check|testbounce [--force]|reset}"; exit 1 ;;
 esac
