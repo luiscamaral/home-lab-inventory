@@ -79,7 +79,12 @@ LOSS_MIN_TARGETS=2   # minimum measurable targets before we trust the mean
 DEGRADED_THRESHOLD=3 # degraded probes required within the window
 DEGRADED_WINDOW=5    # window size (5 x 60s = last ~5 min)
 DEGRADED_MIN_GAP=7200    # 2 h between degraded-triggered bounces (base, before backoff)
-DEGRADED_MAX_PER_DAY=3   # hard daily cap on degraded-triggered bounces
+# Daily cap. Originally 3, on the assumption bounces mostly failed. Evidence from
+# 2026-08-17/18 says otherwise -- 46->6, 23->2, 53->24->2 and 19->1 all worked,
+# and the optic decays back to ~20% loss roughly every 2 h. At 3/day the LAN sat
+# degraded for most of the day with the watchdog logging "daily cap reached" and
+# refusing to act. 8 matches the observed decay rate; each bounce costs ~30-50 s.
+DEGRADED_MAX_PER_DAY=8   # hard daily cap on degraded-triggered bounces
 SETTLE_SECS=180      # wait after a bounce before judging whether it worked
 # A bounce counts as successful if it FULLY restored the link (mean <= this)...
 SUCCESS_LOSS_PCT=2
