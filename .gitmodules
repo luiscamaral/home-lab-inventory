@@ -1,3 +1,7 @@
 [submodule "monitoring/esp32-c5-wifi-probe"]
 	path = monitoring/esp32-c5-wifi-probe
 	url = https://github.com/luiscamaral/esp32-c5-wifi-probe.git
+	# Build artifacts (build/ is ~275 MB of ESP-IDF output) and local tool caches
+	# constantly show as "untracked content" in the parent. Only report real
+	# committed-state drift of the pinned SHA, not the working directory.
+	ignore = untracked
