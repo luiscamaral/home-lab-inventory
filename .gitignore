@@ -104,3 +104,6 @@ terraform/**/tfplan
 
 # Git worktrees (isolated dev workspaces)
 .worktrees/
+# Tool caches — Serena MCP index and token-save cache, machine-local
+.serena/
+.tokensave/
