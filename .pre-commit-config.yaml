@@ -108,6 +108,20 @@ repos:
         files: ^\.github/workflows/.*\.ya?ml$
         require_serial: false
 
+  # Block unpinned Docker image tags (`:latest`, no tag at all, or
+  # generic floating majors like `postgres:17` written with no minor)
+  # in Compose files and Terraform templates. Allowlist for images
+  # that intentionally float (watchtower-managed, internal registry
+  # rebuilds) lives in scripts/check-image-pins.sh.
+  - repo: local
+    hooks:
+      - id: check-image-pins
+        name: Check Docker image tag pins
+        entry: scripts/check-image-pins.sh
+        language: script
+        files: '(docker-compose\.ya?ml|\.yml\.tftpl|/stacks/.*\.ya?ml)$'
+        require_serial: false
+
 # Global configuration
 default_stages: [pre-commit]
 fail_fast: false
