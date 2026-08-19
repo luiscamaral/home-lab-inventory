@@ -1,8 +1,10 @@
 # ⛔ Operating non-negotiables — homelab inventory
 
 Read this before ANY infrastructure change. It overrides speed/convenience.
-Auto-loaded at session start and re-surfaced by the IaC-guard hook on risky commands.
-This file is the single source of truth — CLAUDE.md and the hooks point here.
+Auto-loaded at session start. The IaC-guard `PreToolUse` hook that re-surfaced these on risky Bash
+commands was **removed 2026-08-18**, so there is no tool-time gate any more — these rules are
+self-enforced, which matters most in long sessions where context decays.
+This file is the single source of truth — CLAUDE.md points here.
 
 ## 1. IaC only — never touch a host/router config directly
 Every change goes through a declarative source in the repo, then a tool applies it.
