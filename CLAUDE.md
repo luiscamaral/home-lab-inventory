@@ -8,7 +8,8 @@
 - **Destructive / host / network changes** (link bounce, `pfctl -F`, `docker rm -f`, VM/LXC stop,
   reboot): present options + rollback, get explicit approval **first**.
 - **Re-anchor when the session gets long** — scope creep dilutes these rules; stop and re-read the
-  file. A `PreToolUse` hook also re-surfaces this on risky commands, and `SessionStart` loads it.
+  file. `SessionStart` loads it; there is **no tool-time gate** (the IaC-guard `PreToolUse` hook was
+  removed 2026-08-18), so these are self-enforced.
 
 ---
 
