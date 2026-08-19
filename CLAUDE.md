@@ -4,7 +4,9 @@
 
 - **IaC only — and IaC is NOT only Terraform.** Portainer/Cloudflare/Vault → `terraform/`;
   **pfSense + hosts → `pfsense/*.yml` + `pfsense/scripts/` applied via `scripts/sync-*.py`**;
-  Rundeck → `rundeck/jobs/`. Never SSH-edit `config.xml`, run `write_config`, or hand-place cron/scripts.
+  Rundeck → `rundeck/jobs/` **(NOT IMPLEMENTED — verified 2026-08-18: Rundeck runs on ds-1 but no
+  `rundeck/` directory exists on any branch, so its jobs are live and unversioned)**.
+  Never SSH-edit `config.xml`, run `write_config`, or hand-place cron/scripts.
 - **Destructive / host / network changes** (link bounce, `pfctl -F`, `docker rm -f`, VM/LXC stop,
   reboot): present options + rollback, get explicit approval **first**.
 - **Re-anchor when the session gets long** — scope creep dilutes these rules; stop and re-read the
