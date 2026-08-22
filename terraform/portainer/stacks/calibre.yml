@@ -54,7 +54,7 @@ configs:
 
 services:
   calibre:
-    image: linuxserver/calibre:latest
+    image: linuxserver/calibre:v9.13.0-ls416
     hostname: calibre
     container_name: calibre
     shm_size: '2gb'
@@ -113,7 +113,7 @@ services:
       portainer.autodeploy: "false"
 
   calibre-web:
-    image: lscr.io/linuxserver/calibre-web:latest
+    image: lscr.io/linuxserver/calibre-web:0.6.27-ls397
     container_name: calibre-web
     hostname: calibre-web
     networks:
