@@ -33,6 +33,13 @@ ALLOWLIST_REGEX=(
   # so the colonless form below is *not* this; the tagged variant
   # `openspeedtest/latest` (no tag) is the actual upstream name.
   '^openspeedtest/latest$'
+  # Calibre desktop + calibre-web (ds-1). Both carry
+  # com.centurylinklabs.watchtower.enable=true, so Watchtower owns their
+  # update cadence — pinning here would silently neuter that and freeze
+  # the pair on whatever version happened to be running. LinuxServer.io
+  # publishes a rolling :latest per image; tracking it is intentional.
+  '^linuxserver/calibre:latest$'
+  '^lscr\.io/linuxserver/calibre-web:latest$'
 )
 
 # Reject patterns for the tag portion (after the colon). Matches indicate

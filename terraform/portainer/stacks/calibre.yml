@@ -80,7 +80,19 @@ services:
       - DOCKER_MODS=linuxserver/mods:universal-calibre
       - OAUTHLIB_RELAX_TOKEN_SCOPE=1
     volumes:
-      - /nfs/calibre/calibre-web/config:/config
+      # /config holds calibre-web's SQLite app.db and MUST stay on local disk.
+      # It previously lived on /nfs/calibre/calibre-web/config, an NFS4 export
+      # mounted `soft,local_lock=none`. SQLite cannot survive that: a transient
+      # NFS stall returns an I/O error instead of retrying, and there is no file
+      # locking. On 2026-08-24 ~22:56 MDT that produced a burst of
+      # `sqlite3.OperationalError: disk I/O error` + `OSError: [Errno 5]` on
+      # /login, immediately after the nightly Rundeck `calibre-replication` job
+      # (22:10 MDT) rsync'd into this same directory while the DB was open.
+      # That job also carries a stale desktop-side app.db (Apr 2025) which `rsync
+      # -a` would copy over the live one — moving /config off the NFS path
+      # removes it from the rsync target and closes that clobber hole too.
+      # Library/books stays on NFS: large, read-mostly, no SQLite writers.
+      - /opt/calibre-web/config:/config
       - /nfs/calibre/calibre-web/Library:/books
     restart: unless-stopped
     healthcheck:

@@ -261,8 +261,13 @@
 
 - **calibre-web** — `lscr.io/linuxserver/calibre-web:latest`
   - Network: `docker-servers-net` (192.168.59.6)
-  - Volumes: `/nfs/calibre/calibre-web/{Library,config}`
+  - Volumes: `/opt/calibre-web/config` (**local ext4 disk**), `/nfs/calibre/calibre-web/Library`
   - Purpose: Web-based e-book reader UI
+  - ⚠️ `/config` (SQLite `app.db`) moved off NFS → local disk on 2026-09-06.
+    The NFS export is mounted `soft,local_lock=none`, which cannot host SQLite:
+    it caused `disk I/O error` / `OSError: [Errno 5]` bursts on 2026-08-24.
+    Do **not** move `/config` back to `/nfs/calibre/...`.
+    Old NFS dir `/nfs/calibre/calibre-web/config` is now orphaned (kept as rollback).
 
 - `github-runner-homelab` — `myoung34/github-runner:latest`
   - Network: `docker-servers-net` (192.168.59.4)
