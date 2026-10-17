@@ -1,6 +1,20 @@
 name: calibre
 
-# Calibre desktop (KasmVNC) + calibre-web reader on dockerserver-1.
+# Calibre desktop (Selkies) + calibre-web reader on dockerserver-1.
+#
+# Desktop access is HTTPS-ONLY. linuxserver/calibre moved its remote-desktop
+# layer from KasmVNC to Selkies; Selkies needs a browser secure context, so
+# plain http://192.168.59.7:8080 now loads the sidebar and then fails with
+# "This application requires a secure connection (HTTPS)". Use:
+#   https://calibre.d.lcamaral.com     (nginx-rproxy → https://192.168.59.7:8181)
+#   https://192.168.59.7:8181          (direct, self-signed cert)
+#
+# Image is pinned (not :latest + Watchtower). The KasmVNC→Selkies swap
+# arrived silently via Watchtower and broke the documented access URL;
+# pinning makes base-image changes a reviewed diff. v9.11.0-ls413 is the
+# exact digest that was running when pinned (sha256:150db5b3…), so the pin
+# itself changes no bits. Bump deliberately and verify the UI, not just a
+# status code.
 #
 # 10-keyboard.conf is delivered via Compose `configs:` instead of a host
 # bind-mount. The previous bind source on the NFS share
@@ -24,7 +38,7 @@ configs:
 
 services:
   calibre:
-    image: linuxserver/calibre:latest
+    image: linuxserver/calibre:v9.11.0-ls413
     hostname: calibre
     container_name: calibre
     shm_size: '2gb'
@@ -55,13 +69,15 @@ services:
       LANG: en_US.UTF-8
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "curl -s --max-time 5 -o /dev/null -w '%{http_code}' http://localhost:8080/ | grep -qE '^(200|401)$'"]
+      # Probe the HTTPS listener (8181) — the only path Selkies supports.
+      # 401 = basic-auth prompt, i.e. the web front is serving.
+      test: ["CMD-SHELL", "curl -sk --max-time 5 -o /dev/null -w '%{http_code}' https://localhost:8181/ | grep -qE '^(200|401)$'"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
     labels:
-      com.centurylinklabs.watchtower.enable: "true"
+      com.centurylinklabs.watchtower.enable: "false"  # pinned — see header
       com.docker.stack: "calibre"
       com.docker.service: "calibre"
       portainer.autodeploy: "false"
