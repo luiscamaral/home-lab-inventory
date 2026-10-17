@@ -254,8 +254,10 @@
 
 #### Workloads (single instance)
 
-- **calibre** — `linuxserver/calibre:latest`
+- **calibre** — `linuxserver/calibre:v9.11.0-ls413` (pinned; Watchtower disabled)
   - Network: `docker-servers-net` (192.168.59.7)
+  - Access: **HTTPS only** (Selkies) — `https://calibre.d.lcamaral.com` or
+    `https://192.168.59.7:8181`. Plain `http://…:8080` fails with "requires a secure connection".
   - Volumes: `/nfs/calibre/Library`, `/nfs/calibre/config`, `/nfs/calibre/upload`, `/nfs/calibre/plugins`
   - Purpose: E-book library management (single — SQLite store)
 

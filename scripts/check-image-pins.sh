@@ -33,12 +33,12 @@ ALLOWLIST_REGEX=(
   # so the colonless form below is *not* this; the tagged variant
   # `openspeedtest/latest` (no tag) is the actual upstream name.
   '^openspeedtest/latest$'
-  # Calibre desktop + calibre-web (ds-1). Both carry
-  # com.centurylinklabs.watchtower.enable=true, so Watchtower owns their
-  # update cadence — pinning here would silently neuter that and freeze
-  # the pair on whatever version happened to be running. LinuxServer.io
-  # publishes a rolling :latest per image; tracking it is intentional.
-  '^linuxserver/calibre:latest$'
+  # calibre-web (ds-1) carries com.centurylinklabs.watchtower.enable=true,
+  # so Watchtower owns its update cadence; LinuxServer.io publishes a
+  # rolling :latest and tracking it is intentional.
+  # NOTE: linuxserver/calibre (desktop) was REMOVED from this list on
+  # 2026-10-17 and is now pinned — a silent KasmVNC→Selkies base swap via
+  # Watchtower broke its HTTP access path. See terraform/portainer/stacks/calibre.yml.
   '^lscr\.io/linuxserver/calibre-web:latest$'
 )
 
