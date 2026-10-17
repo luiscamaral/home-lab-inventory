@@ -11,10 +11,11 @@ name: calibre
 #
 # Image is pinned (not :latest + Watchtower). The KasmVNC→Selkies swap
 # arrived silently via Watchtower and broke the documented access URL;
-# pinning makes base-image changes a reviewed diff. v9.11.0-ls413 is the
-# exact digest that was running when pinned (sha256:150db5b3…), so the pin
-# itself changes no bits. Bump deliberately and verify the UI, not just a
-# status code.
+# pinning makes base-image changes a reviewed diff. First pinned at
+# v9.11.0-ls413 (the digest then running, sha256:150db5b3…); bumped
+# 2026-10-17 to v9.16.0-ls427 (same ports 8080/8181, HOME=/config, still
+# Selkies; only the encoder list grew). Bump deliberately and verify the
+# UI over HTTPS, not just a status code.
 #
 # 10-keyboard.conf is delivered via Compose `configs:` instead of a host
 # bind-mount. The previous bind source on the NFS share
@@ -38,7 +39,7 @@ configs:
 
 services:
   calibre:
-    image: linuxserver/calibre:v9.11.0-ls413
+    image: linuxserver/calibre:v9.16.0-ls427
     hostname: calibre
     container_name: calibre
     shm_size: '2gb'
