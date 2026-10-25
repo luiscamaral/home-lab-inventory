@@ -2,6 +2,10 @@
 
 Status: **DESIGN / PLAN** (nothing applied). Authored 2026-06-26.
 
+> ⚠️ **SUPERSEDED 2026-10-24** by [`2026-10-24-lan-resilience-redesign.md`](2026-10-24-lan-resilience-redesign.md).
+> Never applied. Both planned sessions shared the `ix0` trunk, so it would not have survived the
+> 2026-06-18 or 2026-10-24 outages. Session B now goes over the ADMIN network as a floating backup.
+
 Goal (user): internal networks should have **more than one path** — not every internal route
 funnelled through pfSense as a single chokepoint. Build real path redundancy (and, where the
 topology allows, equal-cost load-sharing) on the BGP fabric.
