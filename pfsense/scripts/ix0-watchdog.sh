@@ -161,6 +161,19 @@ log() {
   logger -t ix0-watchdog -p daemon.notice "$1" 2>/dev/null
 }
 running() { [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null; }
+
+# Single-instance guard. `start` from the rc.d hook and the every-minute
+# keepalive cron can race at boot and leave TWO daemons (seen 2026-10-25), each
+# with its own in-memory counters -- which defeats every rate limit. A daemon
+# that finds PIDFILE naming a different LIVE process steps down.
+# $1 = own pid. Returns 0 = keep running, 1 = superseded.
+owns_pidfile() {
+  p=$(read_epoch "$PIDFILE")          # numeric read; 0 if missing/garbage
+  [ "$p" -eq 0 ] && return 0          # not written yet (start writes it after fork)
+  [ "$p" -eq "$1" ] && return 0
+  kill -0 "$p" 2>/dev/null && return 1
+  return 0                            # stale pidfile: owner is dead
+}
 link_status() { /sbin/ifconfig "$IFACE" 2>/dev/null | grep -q "status: active" && echo up || echo down; }
 
 load_state() {
@@ -464,6 +477,10 @@ run() {
   last_flap=$(date +%s)
 
   while :; do
+    if ! owns_pidfile "$$"; then
+      log "another instance owns $PIDFILE (pid $(cat "$PIDFILE" 2>/dev/null)) — this one ($$) exiting"
+      exit 0
+    fi
     tick=$((tick + 1))
     roll_day
     sync_external_flap || true

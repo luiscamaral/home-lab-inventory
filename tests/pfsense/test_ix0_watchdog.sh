@@ -102,6 +102,19 @@ DAY_STAMP="19700101"; DAY_BLACKOUTS=4; roll_day
 eq "roll_day resets DAY_BLACKOUTS" "$DAY_BLACKOUTS" 0
 
 # =============================================================================
+echo "owns_pidfile (single-instance guard)"
+rm -f "$PIDFILE"
+if owns_pidfile 4242; then ok "no pidfile yet -> keep running"; else bad "no pidfile yet -> keep running"; fi
+echo 4242 > "$PIDFILE"
+if owns_pidfile 4242; then ok "own pid -> keep running"; else bad "own pid -> keep running"; fi
+command sleep 30 & other=$!
+echo "$other" > "$PIDFILE"
+if owns_pidfile 4242; then bad "other LIVE pid -> step down"; else ok "other LIVE pid -> step down"; fi
+kill "$other" 2>/dev/null; wait "$other" 2>/dev/null
+if owns_pidfile 4242; then ok "stale pidfile (dead owner) -> keep running"; else bad "stale pidfile -> keep running"; fi
+rm -f "$PIDFILE"
+
+# =============================================================================
 # Scenario harness: run the REAL daemon loop (run) against a fake clock.
 #   CLOCK file   - fake epoch, advanced by the sleep() stub
 #   PROBE        - "fail" or "ok" (or "ok_after:<epoch>")
