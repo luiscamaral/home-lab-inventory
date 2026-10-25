@@ -193,7 +193,9 @@ Vault (`192.168.59.25`) sits on SVR behind `ix0`.
 | `testbounce` does not coordinate with the running daemon | Manual bounce at 23:41; the daemon bounced again at **23:44:45** (inside the 10-min floor, during testbounce's settle) | Shared lock file; the daemon re-reads `LAST_BOUNCE_TS` from state each loop; `testbounce` pauses the daemon until its verdict |
 | Blackout bounces ignore `DISARMED` and have **no cap** | Bounces at 23:44:45 and 23:55:03, then every 10 min indefinitely | Blackout bounces count toward the daily cap; stop after N with no carrier |
 | Bouncing on a hard **no-carrier** link has no upside | Reboot and bounces did not restore the link; remote faults kept rising | If there is still no carrier after one bounce, stop and raise an alert |
-| `testbounce` "healthy" check under-samples | Tool: 0 % loss; 5,000-packet sample: **0.1–0.7 %** | Larger or longer sample, or use `remote_faults` rate as a second signal |
+| `testbounce`'s "healthy" refusal was **correct** (0.1–0.7 % < 2 %); the operator forced past it | Refused at 16:21; `--force` at 23:41 → no carrier | Keep the guard. `--force` now prints the 2026-10-24 outcome, a 1000-pkt precise loss and the `remote_faults` rate, and the verdict reports **LINK DOWN** explicitly |
+| `stop` does not stop it (the keepalive cron restarts it within 60 s), yet the docs said "stop before rack work" | `pfsense/cron-jobs.yml` every-minute `start` | New `pause [reason]` / `resume` (persistent flag); `stop` warns |
+| A signal between `ifconfig down` and `up` leaves the LAN down | Code review | `do_bounce` ignores HUP/INT/TERM during down/up; `testbounce` ignores HUP |
 | After P0 | — | Change the degraded action from **bounce** to **demote `ix0`** (lagg fails over to `igc2`); never bounce the only active lagg member |
 
 Code lives in `pfsense/scripts/ix0-watchdog.sh` and is deployed with `scripts/sync-pfsense-scripts.py`.
@@ -219,7 +221,7 @@ means it is **not established** regardless of tonight's outage. Fix it before ad
 | Step | Change | Outage | Effort |
 |---|---|---|---|
 | 0 | Repair `ix0` (cable, switch port, or X520 port); set `nobounce` | done in the incident | — |
-| 1 | P3 watchdog fixes (branch + sync) | none | S |
+| 1 | P3 watchdog fixes — **done** on `fix/ix0-watchdog-safety` (35 tests; replay of 2026-10-24: 24 → 1 bounces) | none (restart of the daemon only) | S |
 | 2 | P2 break-glass credentials + switch SSH from ADMIN + `*-oob` SSH aliases | none | S |
 | 3 | §3A ADMIN legs: dockermaster mgmt NIC, ADMIN Pi-hole, Vault on ADMIN (with policy routing + firewall) | short per-VM NIC hot-add | M |
 | 3b | P1 DHCP DNS ordering (ADMIN Pi-hole first on ADMIN) | none (applies at lease renewal) | S |
