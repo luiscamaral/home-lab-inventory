@@ -14,7 +14,8 @@ name: calibre
 # pinning makes base-image changes a reviewed diff. First pinned at
 # v9.11.0-ls413 (the digest then running, sha256:150db5b3…); bumped
 # 2026-10-17 to v9.16.0-ls427 (same ports 8080/8181, HOME=/config, still
-# Selkies; only the encoder list grew). Bump deliberately and verify the
+# Selkies; only the encoder list grew), then 2026-10-30 to v9.17.0-ls430
+# (image config byte-identical to ls427). Bump deliberately and verify the
 # UI over HTTPS, not just a status code.
 #
 # 10-keyboard.conf is delivered via Compose `configs:` instead of a host
@@ -39,7 +40,7 @@ configs:
 
 services:
   calibre:
-    image: linuxserver/calibre:v9.16.0-ls427
+    image: linuxserver/calibre:v9.17.0-ls430
     hostname: calibre
     container_name: calibre
     shm_size: '2gb'

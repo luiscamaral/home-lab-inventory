@@ -254,7 +254,7 @@
 
 #### Workloads (single instance)
 
-- **calibre** — `linuxserver/calibre:v9.16.0-ls427` (pinned; Watchtower disabled)
+- **calibre** — `linuxserver/calibre:v9.17.0-ls430` (pinned; Watchtower disabled)
   - Network: `docker-servers-net` (192.168.59.7)
   - Access: **HTTPS only** (Selkies) — `https://calibre.d.lcamaral.com` or
     `https://192.168.59.7:8181`. Plain `http://…:8080` fails with "requires a secure connection".
