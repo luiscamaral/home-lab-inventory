@@ -1,27 +1,38 @@
 name: portainer-agent
 
-# Portainer Edge Agent for NAS (Synology)
+# Portainer Docker Agent (Direct mode, type=2) for the NAS endpoint (ID 14).
 # Deployed at: /volume2/docker/portainer-agent/
-# Connects outbound to Portainer at 192.168.59.2:8000 (WebSocket tunnel)
-# NAS cannot be reached directly from dockermaster — edge agent reverses the connection.
+# Switched from Edge Agent (type=4) on 2026-04-16 — the Edge tunnel's
+# cross-VLAN poll cycle had intermittent timeouts (~1/hour) that made
+# terraform stack deploys fail. Direct mode uses inbound TCP from
+# Portainer → 192.168.4.235:9001 which is reliable per pf state tests.
+# See task #38 investigation for full root-cause analysis.
 #
-# EdgeKey embeds: https://192.168.59.2:9443 | 192.168.59.2:8000 | token | endpoint_id=6
-# EDGE_ID and EDGE_KEY are stored in Vault at secret/homelab/portainer-nas-agent
+# Version must match the Portainer server (2.45.3, bumped 2026-10-30 from 2.39.1).
+# Rollback: image portainer/agent:2.39.1-rollback (kept on the NAS) with this same file.
+#
+# This file was previously stale (it described the Edge agent). It now matches
+# the live Direct-mode file on the NAS, with only the image changed.
+
+networks:
+  home-net:
+    name: home-net
+    external: true
 
 services:
   portainer-agent:
-    image: portainer/agent:2.39.1
+    image: portainer/agent:2.45.3
     container_name: portainer-agent
     restart: always
-    environment:
-      EDGE: "1"
-      EDGE_ID: "${EDGE_ID}"
-      EDGE_KEY: "${EDGE_KEY}"
-      EDGE_INSECURE_POLL: "1"
-      AGENT_CLUSTER_ADDR: ""
+    networks:
+      home-net:
+        ipv4_address: 192.168.4.235
+    dns:
+      - 192.168.4.1
+      - 1.1.1.1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /volume2/@docker/volumes:/var/lib/docker/volumes
     labels:
       com.lcamaral.home.service: "portainer-agent"
-      com.lcamaral.home.managed-by: "portainer-edge"
+      com.lcamaral.home.managed-by: "terraform"
