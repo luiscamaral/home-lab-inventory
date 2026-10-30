@@ -1,4 +1,27 @@
-name: dockermaster-portainer
+
+# Portainer CE server on dockermaster (192.168.59.2, macvlan docker-servers-net).
+#
+# Bootstrap-only: Portainer cannot manage its own container, so this file is the
+# declarative source and is applied with `docker compose` on dockermaster
+# (not via the Portainer API / Terraform).
+#
+# Version: pinned. Bump deliberately with a volume backup first.
+#   2.39.1 -> 2.45.3 (LTS) on 2026-10-30. Rollback: image tag
+#   portainer/portainer-ce:2.39.1-rollback + tar backup of the data volume
+#   (/var/backups/portainer/portainer-data-2.39.1-*.tgz). The DB migration
+#   is one-way; restoring the tar is the only rollback.
+#
+# Data volume: portainer-ce_portainer_data was created by the former compose
+# project "portainer-ce" and holds portainer.db, the key and the stack files.
+# Declared external so it is never recreated or renamed by compose.
+#
+# --trusted-origins (2.41+ CSRF): full URLs with scheme are required; bare
+# hostnames stop the server from starting. Browsers reach Portainer through
+# nginx-rproxy (portainer.d / portainer.cf) and directly on 192.168.59.2:9443.
+#
+# Watchtower is disabled: upgrades are reviewed diffs, not :latest pulls.
+
+name: portainer-ce
 
 networks:
   servers-net:
@@ -6,12 +29,21 @@ networks:
     driver: macvlan
     external: true
 
+volumes:
+  portainer_data:
+    external: true
+    name: portainer-ce_portainer_data
+
 services:
   portainer:
-    image: portainer/portainer-ce:latest
+    image: portainer/portainer-ce:2.45.3
     container_name: portainer
     hostname: portainer
-    restart: always
+    restart: unless-stopped
+    command:
+      - --trusted-origins=https://portainer.d.lcamaral.com,https://portainer.cf.lcamaral.com,https://192.168.59.2:9443
+    ports:
+      - 9443:9443
     expose:
       - 9000
       - 9443
@@ -21,6 +53,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
-
-volumes:
-  portainer_data:
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "portainer"
+      com.docker.service: "portainer"
