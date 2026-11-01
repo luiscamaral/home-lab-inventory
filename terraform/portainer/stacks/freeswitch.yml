@@ -7,7 +7,10 @@ networks:
 
 services:
   freeswitch:
-    image: ghcr.io/patrickbaus/freeswitch-docker
+    # Pinned to the digest that was running before the 2026-10-31 log-cap
+    # recreate. Unpinned :latest had moved to a different digest upstream, so a
+    # recreate would have silently upgraded FreeSWITCH. Bump deliberately.
+    image: ghcr.io/patrickbaus/freeswitch-docker@sha256:9fae8124caa79d3436e3622ad572f25f9091196949a90c3468af662a0755bfcc
     container_name: freeswitch
     hostname: freeswitch
     networks:
@@ -28,6 +31,13 @@ services:
       CC_PASSWORD: ${CC_PASSWORD}
       CC_DID: ${CC_DID}
     restart: unless-stopped
+    # Log cap. Docker json-file has no default size limit: a SQLite core-DB error
+    # loop grew this container's log to 68 GB and filled the ds-2 disk (2026-10-30).
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     # The upstream image bakes in a HEALTHCHECK that runs
     # `fs_cli -x status` with no password flag (defaults to ClueCon).
     # This homelab uses a rotated ESL password, so the baked-in probe
