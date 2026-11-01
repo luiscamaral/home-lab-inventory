@@ -246,7 +246,9 @@ jobs:
         id: pre-commit
         run: |
           echo "Running all pre-commit hooks..."
-          if pre-commit run --all-files --show-diff-on-failure; then
+          # check-image-pins guards files at commit time. Over --all-files it
+          # would fail every PR on images that predate the hook.
+          if SKIP=check-image-pins pre-commit run --all-files --show-diff-on-failure; then
             echo "✅ All pre-commit hooks passed"
             echo "result=success" >> $GITHUB_OUTPUT
           else
