@@ -87,7 +87,8 @@ surface → source → apply map. Two layers:
 
 ## Secret Management
 
-- All secrets are centralized in Vault. Only the Vault root token is in macOS Keychain (`vault-root-token`).
+- All secrets are centralized in Vault. macOS Keychain holds only the Vault root token (`vault-root-token`) and
+  the NAS sudo password (`nas-sudo-password`, also in Vault).
 - Vault paths:
   - `secret/homelab/cloudflare` (API token + tunnel token)
   - `secret/homelab/dreamhost` (DreamHost API key)
@@ -104,6 +105,7 @@ surface → source → apply map. Two layers:
   - `secret/homelab/freeswitch` (ESL, SIP extension, calling card credentials)
   - `secret/homelab/switch24a` (TL-SG3428X core switch admin login)
   - `secret/homelab/omada-controller` (Omada V6 controller login, VM 100)
+  - `secret/homelab/nas-sudo-password` (NAS sudo password, field `password`; use only with user acknowledgment)
 - Terraform vars are sourced from Vault at runtime, never stored in files.
 
 ## Docker Services Structure
