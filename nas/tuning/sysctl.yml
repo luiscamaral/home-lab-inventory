@@ -1,0 +1,30 @@
+---
+# NAS (Synology DS1522+, DSM 7.4.1) kernel tuning — declarative source of truth.
+#
+# Apply:    scripts/sync-nas-tuning.py            # dry-run (diff + live values)
+#           scripts/sync-nas-tuning.py --apply    # install boot hook + apply live
+# Rollback: scripts/sync-nas-tuning.py --rollback # restore DSM defaults, remove hook
+#
+# Persistence: the sync script renders a boot hook into script_path. DSM runs every
+# /usr/local/etc/rc.d/*.sh with `start` at boot (pkg-rclocal.service, After=
+# multi-user.target), i.e. after volume.sh — so these values win over DSM's.
+# Do NOT edit /etc/sysctl.conf on the NAS: DSM regenerates it.
+#
+# See nas/tuning/README.md for the evidence behind each value.
+
+script_path: /usr/local/etc/rc.d/zz-iac-nas-tuning.sh
+
+# Desired values, applied in this order.
+sysctl:
+  # Start background writeback at 64 MiB of dirty pages (DSM default: 10% of
+  # available memory, ~465 MiB). Sequential writes >=1 MiB bypass the NVMe
+  # write-back cache and land on the RAID5 HDDs that also serve media reads;
+  # smaller, earlier flushes keep those reads from stalling.
+  vm.dirty_background_bytes: 67108864
+  # Throttle writers at 256 MiB dirty (DSM default: 20%, ~930 MiB).
+  vm.dirty_bytes: 268435456
+
+# DSM defaults, written by --rollback. Setting a *_ratio zeroes its *_bytes twin.
+restore:
+  vm.dirty_background_ratio: 10
+  vm.dirty_ratio: 20
