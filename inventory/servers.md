@@ -70,17 +70,18 @@
 
 ### NAS Server
 
-- **Type**: Synology NAS
+- **Type**: Synology NAS (DS1522+, DSM 7.4.1)
 - **Network Interfaces**:
   - `eth0`: 192.168.0.50
   - `bond0.10`: 192.168.1.50
   - `eth4.10`: 192.168.2.50 (NFS storage interface)
 - **Hardware**:
-  - **CPU**: x86_64 / 4 CPUs
-  - **RAM**: 7.7 GiB
+  - **CPU**: AMD Ryzen Embedded R1600 / 4 CPUs
+  - **RAM**: 7.7 GiB (supports up to 32 GB ECC DDR4)
   - **Kernel**: 4.4.302+
 - **Storage**:
-  - `/volume2`: 25TB total, 6.7TB free, btrfs filesystem
+  - `/volume2`: 25TB total, 2.5TB free (90% used, 2026-11-03), btrfs on RAID5 (5 HDD)
+    behind a 2x NVMe RAID1 write-back SSD cache
 - **Docker Environment** (Synology Container Manager):
   - **Docker Binary**: `/var/packages/ContainerManager/target/usr/bin/docker`
   - **Docker Version**: 24.0.2 (API 1.43)
@@ -98,6 +99,8 @@
 - **Services**:
   - NFS shares for VM storage and backups
   - Docker containers via Portainer Edge (4 active stacks — see `docker-containers.md`)
+- **Kernel tuning**: IaC-managed writeback limits — `nas/tuning/sysctl.yml`, applied by
+  `scripts/sync-nas-tuning.py` (see `nas/tuning/README.md`)
 - **Access**: SSH via `ssh nas`
 
 ## Virtual Servers

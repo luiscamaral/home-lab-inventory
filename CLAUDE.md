@@ -72,6 +72,8 @@ surface → source → apply map. Two layers:
   - pfSense scripts (e.g. node_exporter collectors) → `pfsense/scripts/` (`scripts/sync-pfsense-scripts.py`)
   - pfSense ACME hooks → `pfsense/acme-actions.yml`; host overrides → `pfsense/host-overrides.yml` (`scripts/sync-host-*.py`)
   - Rundeck jobs → `rundeck/jobs/*.yaml` (API import, see `rundeck/README.md`)
+  - NAS kernel tuning → `nas/tuning/sysctl.yml` (`scripts/sync-nas-tuning.py`; DSM boot hook in
+    `/usr/local/etc/rc.d/`, never `/etc/sysctl.conf` — see `nas/tuning/README.md`)
 
 ## DNS and Cloudflare Tunnel
 
