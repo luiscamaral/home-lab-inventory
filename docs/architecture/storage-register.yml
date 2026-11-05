@@ -10,20 +10,6 @@
 #   manual:  true when the scanner cannot see the data (writable layer)
 # Removing a violation is done by moving the data to NAS and deleting the entry.
 entries:
-  - file: dockermaster/docker/compose/docker-vault/docker-compose.yml
-    service: vault
-    target: /vault/file/
-    class: violation
-    reason: Legacy compose (docker-vault/) that does not match the live Vault project (vault/). Its file-backend
-      volume is unused. Verify, then remove the file and volume, or move to NAS.
-    status: open
-  - file: dockermaster/docker/compose/docker-vault/docker-compose.yml
-    service: vault-init
-    target: /vault/file/
-    class: violation
-    reason: Legacy compose (docker-vault/) that does not match the live Vault project (vault/). Its file-backend
-      volume is unused. Verify, then remove the file and volume, or move to NAS.
-    status: open
   - file: dockermaster/docker/compose/portainer/docker-compose.yml
     service: portainer
     target: /data
@@ -39,20 +25,6 @@ entries:
     reason: 'Prometheus TSDB is write-latency sensitive; the audit says keep local. Thanos sidecar ships blocks
       to MinIO for durability. Source: docs/architecture/storage-pattern-audit-2026-05-27.md.'
     exception_class: tsdb
-  - file: dockermaster/docker/compose/puppet/docker-compose.yml
-    service: puppetserver
-    target: /etc/puppetlabs
-    class: violation
-    reason: 'Puppet config and CA on a local volume. Undocumented: no exception class covers it. Verify the stack
-      is deployed. If it is, move to NAS and keep CA permissions tight.'
-    status: open
-  - file: dockermaster/docker/compose/puppet/docker-compose.yml
-    service: puppetserver
-    target: /var/log/puppetlabs
-    class: violation
-    reason: 'Puppet logs on a local volume. Undocumented: not Raft state and not in any exception class. Verify
-      the stack is deployed. Move to NAS, or document logs as scratch.'
-    status: open
   - file: dockermaster/docker/compose/vault/docker-compose.yml
     service: vault
     target: /vault/raft

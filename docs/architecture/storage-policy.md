@@ -106,7 +106,8 @@ rebuild path. "Local" is not a backup.
 4. **Rundeck Postgres:** `postgres` exception with a reason, or move to NAS?
 5. **Logs** (Vault, Rundeck, Puppet): does a `scratch` class for logs exist, or do logs
    default to NAS?
-6. **Legacy files:** remove `docker-vault/`, verify `puppet/`.
+6. **Legacy files:** DECIDED and removed 2026-11-05 (not deployed on any host).
+   Orphaned NAS volume `vault_vault-data` kept, pending owner decision.
 7. **Postfix DKIM keys:** move to Vault, which the secrets rule already requires.
 8. **Keycloak HA:** local PGDATA stays (`postgres`), but split-brain fencing or a witness is
    a separate design task. NAS does not fix it.
