@@ -1,0 +1,278 @@
+# Storage register: the single list of local persistent storage.
+# Policy: docs/architecture/storage-policy.md. Enforced by scripts/check-storage-placement.py.
+#
+# Every local persistent mount must have an entry here.
+#   file:    repo compose path, or "live:<host>" for running containers found by --live
+#   service: compose service name (repo) or container name (live)
+#   target:  container path
+#   class:   exception (documented, allowed reason class) | violation (debt, must be fixed or decided)
+#   status:  violation -> open | planned ; exception -> implied accepted
+#   manual:  true when the scanner cannot see the data (writable layer)
+# Removing a violation is done by moving the data to NAS and deleting the entry.
+entries:
+  - file: dockermaster/docker/compose/docker-vault/docker-compose.yml
+    service: vault
+    target: /vault/file/
+    class: violation
+    reason: Legacy compose (docker-vault/) that does not match the live Vault project (vault/). Its file-backend
+      volume is unused. Verify, then remove the file and volume, or move to NAS.
+    status: open
+  - file: dockermaster/docker/compose/docker-vault/docker-compose.yml
+    service: vault-init
+    target: /vault/file/
+    class: violation
+    reason: Legacy compose (docker-vault/) that does not match the live Vault project (vault/). Its file-backend
+      volume is unused. Verify, then remove the file and volume, or move to NAS.
+    status: open
+  - file: dockermaster/docker/compose/portainer/docker-compose.yml
+    service: portainer
+    target: /data
+    class: violation
+    reason: 'Portainer state (portainer.db, key, stack files) on a local Docker volume, with a manual tarball backup
+      in /var/backups/portainer. Default is NAS. Open question: BoltDB locking may not be NFS-safe (same class as
+      SQLite). Decide: move to NAS, or a sqlite exception.'
+    status: open
+  - file: dockermaster/docker/compose/prometheus/docker-compose.yaml
+    service: prometheus
+    target: /prometheus
+    class: exception
+    reason: 'Prometheus TSDB is write-latency sensitive; the audit says keep local. Thanos sidecar ships blocks
+      to MinIO for durability. Source: docs/architecture/storage-pattern-audit-2026-05-27.md.'
+    exception_class: tsdb
+  - file: dockermaster/docker/compose/puppet/docker-compose.yml
+    service: puppetserver
+    target: /etc/puppetlabs
+    class: violation
+    reason: 'Puppet config and CA on a local volume. Undocumented: no exception class covers it. Verify the stack
+      is deployed. If it is, move to NAS and keep CA permissions tight.'
+    status: open
+  - file: dockermaster/docker/compose/puppet/docker-compose.yml
+    service: puppetserver
+    target: /var/log/puppetlabs
+    class: violation
+    reason: 'Puppet logs on a local volume. Undocumented: not Raft state and not in any exception class. Verify
+      the stack is deployed. Move to NAS, or document logs as scratch.'
+    status: open
+  - file: dockermaster/docker/compose/vault/docker-compose.yml
+    service: vault
+    target: /vault/raft
+    class: exception
+    reason: 'Raft consensus store. NFS latency breaks heartbeats; durability comes from 3-way replication across
+      vault-1/2/3. Source: docs/architecture/storage-pattern-audit-2026-05-27.md.'
+    exception_class: raft
+  - file: terraform/portainer/stacks/calibre.yml
+    service: calibre-web
+    target: /config
+    class: exception
+    reason: calibre-web app.db is SQLite. NFS soft mount caused disk I/O errors (2026-08-24). Documented in terraform/portainer/stacks/calibre.yml
+      header.
+    exception_class: sqlite
+  - file: terraform/portainer/stacks/keycloak-db-0.yml
+    service: postgresql
+    target: /bitnami/postgresql
+    class: exception
+    reason: 'Keycloak HA pair (repmgr) on local disk per docs/ha-architecture.md. A shared NFS PGDATA is rejected.
+      Open gap: fencing or a witness for split-brain (incident 2026-10-30).'
+    exception_class: postgres
+  - file: terraform/portainer/stacks/keycloak-db-1.yml
+    service: postgresql
+    target: /bitnami/postgresql
+    class: exception
+    reason: 'Keycloak HA pair (repmgr) on local disk per docs/ha-architecture.md. A shared NFS PGDATA is rejected.
+      Open gap: fencing or a witness for split-brain (incident 2026-10-30).'
+    exception_class: postgres
+  - file: live:dockermaster
+    service: keycloak-db-0
+    target: /bitnami/postgresql
+    class: exception
+    reason: 'Keycloak HA pair (repmgr) on local disk per docs/ha-architecture.md. A shared NFS PGDATA is rejected.
+      Open gap: fencing or a witness for split-brain (incident 2026-10-30).'
+    exception_class: postgres
+  - file: live:dockermaster
+    service: portainer
+    target: /data
+    class: violation
+    reason: 'Same as dockermaster/docker/compose/portainer: Portainer state on a local volume. Default is NAS. Decide:
+      NAS, or sqlite exception if BoltDB locking is unsafe on NFS.'
+    status: open
+  - file: live:dockermaster
+    service: postfix-relay
+    target: /etc/opendkim/keys
+    class: violation
+    reason: 'postfix-relay state on a local volume: DKIM private keys, config and mail spool. Undocumented. Move
+      to NAS; DKIM keys also belong in Vault.'
+    status: open
+  - file: live:dockermaster
+    service: postfix-relay
+    target: /etc/postfix
+    class: violation
+    reason: 'postfix-relay state on a local volume: DKIM private keys, config and mail spool. Undocumented. Move
+      to NAS; DKIM keys also belong in Vault.'
+    status: open
+  - file: live:dockermaster
+    service: postfix-relay
+    target: /var/spool/postfix
+    class: violation
+    reason: 'postfix-relay state on a local volume: DKIM private keys, config and mail spool. Undocumented. Move
+      to NAS; DKIM keys also belong in Vault.'
+    status: open
+  - file: live:dockermaster
+    service: vault
+    target: /vault/raft
+    class: exception
+    reason: 'Raft consensus store. NFS latency breaks heartbeats; durability comes from 3-way replication across
+      vault-1/2/3. Source: docs/architecture/storage-pattern-audit-2026-05-27.md.'
+    exception_class: raft
+  - file: live:dockermaster
+    service: vault
+    target: /vault/logs
+    class: violation
+    reason: 'Vault audit/server logs on a local volume. Undocumented: not Raft state and not in any exception class.
+      Move to NAS, or decide logs are scratch and document it.'
+    status: open
+  - file: live:dockermaster
+    service: vault
+    target: /vault/file
+    class: violation
+    reason: Vault file-backend volume. Vault uses raft storage, so this is unused leftover state. Verify unused,
+      then remove the volume or move it to NAS.
+    status: open
+  - file: live:dockerserver-1
+    service: ae05c0ac0bc4_pihole-2-pihole-1
+    target: /etc/pihole
+    class: violation
+    reason: Pi-hole config (blocklists, custom DNS) on a local volume in a DNS HA pair. Undocumented. Move to NAS.
+    status: open
+  - file: live:dockerserver-1
+    service: alertmanager-alertmanager-1-1
+    target: /alertmanager
+    class: violation
+    reason: Alertmanager silences and state on a local volume. Small and undocumented. Move to NAS, or document
+      as scratch.
+    status: open
+  - file: live:dockerserver-1
+    service: bfbb0c8a5398_postgres-rundeck
+    target: /var/lib/postgresql/data
+    class: violation
+    reason: 'Rundeck Postgres on local /opt/rundeck/dbdata. Not covered by a documented exception. Candidate postgres
+      exception: needs an explicit decision and a documented reason.'
+    status: open
+  - file: live:dockerserver-1
+    service: calibre-web
+    target: /config
+    class: exception
+    reason: calibre-web app.db is SQLite. NFS soft mount caused disk I/O errors (2026-08-24). Documented in terraform/portainer/stacks/calibre.yml
+      header.
+    exception_class: sqlite
+  - file: live:dockerserver-1
+    service: keycloak-db-1
+    target: /bitnami/postgresql
+    class: exception
+    reason: 'Keycloak HA pair (repmgr) on local disk per docs/ha-architecture.md. A shared NFS PGDATA is rejected.
+      Open gap: fencing or a witness for split-brain (incident 2026-10-30).'
+    exception_class: postgres
+  - file: live:dockerserver-1
+    service: prometheus-prometheus-1-1
+    target: /prometheus
+    class: exception
+    reason: 'Prometheus TSDB is write-latency sensitive; the audit says keep local. Thanos sidecar ships blocks
+      to MinIO for durability. Source: docs/architecture/storage-pattern-audit-2026-05-27.md.'
+    exception_class: tsdb
+  - file: live:dockerserver-1
+    service: prometheus-thanos-sidecar-1-1
+    target: /prometheus
+    class: exception
+    reason: 'Prometheus TSDB is write-latency sensitive; the audit says keep local. Thanos sidecar ships blocks
+      to MinIO for durability. Source: docs/architecture/storage-pattern-audit-2026-05-27.md.'
+    exception_class: tsdb
+  - file: live:dockerserver-1
+    service: rundeck
+    target: /home/rundeck/var/logs
+    class: violation
+    reason: Rundeck logs on a local volume. Undocumented. Move to NAS, or document logs as scratch.
+    status: open
+  - file: live:dockerserver-1
+    service: thanos-store-thanos-store-gw-1
+    target: /var/thanos/store
+    class: exception
+    reason: 'Thanos store-gateway block cache. Rebuildable from object storage. Source: docs/architecture/storage-pattern-audit-2026-05-27.md
+      (scratch and cache rules).'
+    exception_class: cache
+  - file: live:dockerserver-1
+    service: vault-2
+    target: /vault/raft
+    class: exception
+    reason: 'Raft consensus store. NFS latency breaks heartbeats; durability comes from 3-way replication across
+      vault-1/2/3. Source: docs/architecture/storage-pattern-audit-2026-05-27.md.'
+    exception_class: raft
+  - file: live:dockerserver-1
+    service: vault-2
+    target: /vault/logs
+    class: violation
+    reason: 'Vault audit/server logs on a local volume. Undocumented: not Raft state and not in any exception class.
+      Move to NAS, or decide logs are scratch and document it.'
+    status: open
+  - file: live:dockerserver-1
+    service: vault-2
+    target: /vault/file
+    class: violation
+    reason: Vault file-backend volume. Vault uses raft storage, so this is unused leftover state. Verify unused,
+      then remove the volume or move it to NAS.
+    status: open
+  - file: live:dockerserver-2
+    service: minio-2-minio-1
+    target: /data
+    class: violation
+    reason: minio-2 object data on the ds-2 root disk (73 GB). The repo declares NFS, so the repo and live state
+      drifted. docs/architecture/storage-pattern-audit-2026-05-27.md says move. Planned move to /nfs/dockermaster/docker/MinIO/minio-2-data,
+      pending approval (minio-2 outage).
+    status: planned
+  - file: live:dockerserver-2
+    service: thanos-compact-thanos-compact-1
+    target: /var/thanos/compact
+    class: exception
+    reason: 'Thanos compactor scratch. Rebuilt from the bucket on restart. Source: docs/architecture/storage-pattern-audit-2026-05-27.md.'
+    exception_class: scratch
+  - file: live:dockerserver-2
+    service: thanos-rule-thanos-rule-1
+    target: /var/thanos/rule
+    class: exception
+    reason: 'Thanos rule WAL. Per-host and ephemeral. Source: docs/architecture/storage-pattern-audit-2026-05-27.md.'
+    exception_class: scratch
+  - file: live:dockerserver-2
+    service: vault-3
+    target: /vault/raft
+    class: exception
+    reason: 'Raft consensus store. NFS latency breaks heartbeats; durability comes from 3-way replication across
+      vault-1/2/3. Source: docs/architecture/storage-pattern-audit-2026-05-27.md.'
+    exception_class: raft
+  - file: live:dockerserver-2
+    service: vault-3
+    target: /vault/logs
+    class: violation
+    reason: 'Vault audit/server logs on a local volume. Undocumented: not Raft state and not in any exception class.
+      Move to NAS, or decide logs are scratch and document it.'
+    status: open
+  - file: live:dockerserver-2
+    service: vault-3
+    target: /vault/file
+    class: violation
+    reason: Vault file-backend volume. Vault uses raft storage, so this is unused leftover state. Verify unused,
+      then remove the volume or move it to NAS.
+    status: open
+  - file: live:nas
+    service: openspeedtest
+    target: /var/log/letsencrypt
+    class: violation
+    reason: Let's Encrypt state inside the openspeedtest container on a local volume. Undocumented. Move to a NAS
+      path, or document as scratch.
+    status: open
+  - file: terraform/portainer/stacks/freeswitch.yml
+    service: freeswitch
+    target: /var/spool/freeswitch/db
+    class: violation
+    reason: 'FreeSWITCH SQLite core DB lives in the container writable layer, not a mount, so the scanner cannot
+      see it, and it is lost on recreate. Undocumented. Open question: SQLite on NFS is unsafe (see calibre-web),
+      so decide between a sqlite exception and a NAS-backed volume with careful locking.'
+    status: open
+    manual: true

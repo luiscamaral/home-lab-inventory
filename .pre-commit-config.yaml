@@ -122,6 +122,21 @@ repos:
         files: '(docker-compose\.ya?ml|\.yml\.tftpl|/stacks/.*\.ya?ml)$'
         require_serial: false
 
+  # Storage placement guard: every local persistent mount (bind outside /nfs/
+  # or a named volume not on NAS) needs a register entry with a documented
+  # reason. Undocumented local storage fails the commit.
+  # Policy: docs/architecture/storage-policy.md. Register: docs/architecture/storage-register.yml.
+  - repo: local
+    hooks:
+      - id: check-storage-placement
+        name: Check storage placement (NAS default)
+        entry: scripts/check-storage-placement.py
+        language: python
+        additional_dependencies: ['pyyaml>=6']
+        files: '(docker-compose\.ya?ml|/stacks/.*\.ya?ml|dockermaster/docker/.*\.ya?ml|dockerserver-[12]/.*\.ya?ml|nas/docker/.*\.ya?ml|storage-register\.yml)$'
+        pass_filenames: true
+        require_serial: false
+
 # Global configuration
 default_stages: [pre-commit]
 fail_fast: false

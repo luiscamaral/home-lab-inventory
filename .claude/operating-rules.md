@@ -37,3 +37,14 @@ this file** before continuing. Long sessions dilute these rules — re-anchor de
 ## 5. Secrets: Vault only
 `vault.d.lcamaral.com` round-robins across rproxy IPs and flaps if one is dead — use the
 direct address `http://192.168.59.25:8200` when it times out. Never hardcode secrets.
+
+## 6. Storage placement: NAS by default (applies to every change)
+Persistent data lives on the NAS under `/nfs/`, mounted at the **same path on every host**.
+Undocumented local storage is a **violation by default**. Documented exceptions are only
+the classes in `docs/architecture/storage-policy.md` (postgres, raft, tsdb, sqlite, cache,
+scratch, other), each with a reason and a recovery plan.
+Before any change that adds, moves or re-points data (new service, new volume, bind
+mount, DB path, log path), run the checklist in the `storage-placement` skill
+(`.claude/skills/storage-placement/SKILL.md`). The commit guard
+`scripts/check-storage-placement.py` enforces the register; `--live` audits running hosts.
+

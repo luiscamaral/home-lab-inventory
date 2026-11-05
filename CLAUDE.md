@@ -110,6 +110,17 @@ surface → source → apply map. Two layers:
   - `secret/homelab/nas-sudo-password` (NAS sudo password, field `password`; use only with user acknowledgment)
 - Terraform vars are sourced from Vault at runtime, never stored in files.
 
+## Storage Placement (NAS by default)
+
+- Persistent data lives on the NAS under `/nfs/`, mounted at the same path on every host.
+  Undocumented local storage is a violation by default.
+- Policy and reasoning: `docs/architecture/storage-policy.md`. Every exception and violation:
+  `docs/architecture/storage-register.yml`.
+- Enforced at commit time by `scripts/check-storage-placement.py` (pre-commit). Audit live
+  hosts with `scripts/check-storage-placement.py --live`.
+- Any change that adds or moves data must follow the checklist in
+  `.claude/skills/storage-placement/SKILL.md`.
+
 ## Docker Services Structure
 
 - Current and valid services are stored at dockermaster:/nfs/dockermaster/Docker/<service_name>/
