@@ -131,7 +131,7 @@
     `ALTER SYSTEM` (persisted in `postgresql.auto.conf` in the data
     volume). See commits `4aa8d6f` and `7172d61`.
 
-- **homelab-portal** — `registry.cf.lcamaral.com/homelab-portal:latest`
+- **homelab-portal** — `zot.d.lcamaral.com/homelab/homelab-portal:latest` (from zot since 2026-11-06)
   - Networks: `docker-servers-net` (192.168.59.18) + `rproxy` bridge (172.24.0.9)
   - **HA:** stateless replica 1 of 2 (cookie-based session state, shared secrets)
   - Purpose: Custom SSO login UI (`login.cf.lcamaral.com`) backed by Keycloak
@@ -143,9 +143,17 @@
   - **HA:** Raft node 1 of 3 (voter)
   - Purpose: Secret management (`vault.d.lcamaral.com`, `vault.cf.lcamaral.com`)
 
-- **registry** — `registry:2`
+- **zot** — `ghcr.io/project-zot/zot:v2.1.22` (+ one-shot `zot-auth-init`, `busybox:1.37.0`)
+  - Networks: `docker-servers-net` (192.168.59.5) + `rproxy` bridge
+  - Volumes: `/nfs/dockermaster/docker/zot/data` (NAS), `zot-auth` (regenerated htpasswd)
+  - Purpose: OCI registry for `homelab/*` images + on-demand pull-through cache for
+    docker.io, ghcr.io, quay.io, registry.k8s.io, gcr.io (`zot.d.lcamaral.com`, LAN only).
+    Single instance. See `docs/zot-registry.md`
+
+- **registry** — `registry:2` — **LEGACY, cool-off** (superseded by zot 2026-11-06)
   - Networks: `docker-servers-net` (192.168.59.16) + `rproxy` bridge (172.24.0.3)
-  - Purpose: Private Docker image registry (`registry.cf.lcamaral.com`) — single instance
+  - Purpose: Old private registry (`registry.cf.lcamaral.com`). Kept read-compatible during
+    cool-off; nothing pushes to it. Decommission criteria in `docs/zot-registry.md`
 
 - **postfix-relay** — `boky/postfix:latest`
   - Network: `rproxy` bridge (172.24.0.2)
@@ -229,7 +237,7 @@
   - **HA:** repmgr standby (or primary after failover)
   - Purpose: PostgreSQL HA peer for Keycloak
 
-- **homelab-portal-2** — `registry.cf.lcamaral.com/homelab-portal:latest`
+- **homelab-portal-2** — `zot.d.lcamaral.com/homelab/homelab-portal:latest` (from zot since 2026-11-06)
   - Network: `docker-servers-net` (192.168.59.38)
   - **HA:** stateless replica 2 of 2
   - Purpose: Homelab portal replica
@@ -405,6 +413,7 @@
 | .2 | portainer | dm |
 | .3 | bind-dns-bind9-1 | dm |
 | .4 | `github-runner-homelab` | ds-1 |
+| .5 | zot | dm |
 | .6 | calibre-web | ds-1 |
 | .7 | calibre | ds-1 |
 | .9 | vault-2 | ds-1 |
@@ -413,7 +422,7 @@
 | .12 | twingate-sepia-hornet | ds-1 |
 | .13 | keycloak | dm |
 | .15 | vault-3 | ds-2 |
-| .16 | registry | dm |
+| .16 | registry (legacy, cool-off) | dm |
 | .17 | minio-minio-1 | ds-1 |
 | .18 | homelab-portal | dm |
 | .22 | rundeck | ds-1 |
@@ -458,7 +467,8 @@ Authoritative list in `terraform/portainer/stacks.tf`:
 
 | Stack | Endpoint |
 | --- | --- |
-| `docker-registry` | dm |
+| `zot` | dm |
+| `docker-registry` (legacy, cool-off) | dm |
 | `cloudflare-tunnel`, `cloudflare-tunnel-2`, `cloudflare-tunnel-3` | dm, ds-1, ds-2 |
 | `bind-dns` | dm |
 | `reverse-proxy`, `reverse-proxy-2`, `reverse-proxy-3` | dm, ds-1, ds-2 |

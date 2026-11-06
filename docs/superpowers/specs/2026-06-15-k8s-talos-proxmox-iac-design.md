@@ -89,7 +89,7 @@ data     talos_cluster_kubeconfig                   # after bootstrap; feeds hel
 ```
 
 **machineconfig patches:** static IP + gateway `.30.1`; **VIP `.30.5`**; `cluster.network.cni.name = none`;
-`cluster.proxy.disabled = true`; install disk + installer image; **registry mirror → `registry.cf.lcamaral.com`**
+`cluster.proxy.disabled = true`; install disk + installer image; **registry mirrors → zot pull-through cache** (`https://zot.d.lcamaral.com/v2/<upstream>` with `overridePath: true` for docker.io/ghcr.io/quay.io/registry.k8s.io; see `docs/zot-registry.md`; was `registry.cf.lcamaral.com`)
 (node-level auth, avoids per-pod imagePullSecrets); `machine.time.servers = [192.168.30.1]` (NTP via VyOS);
 `kubernetesTalosAPIAccess` enabled on control planes (for `talos-backup`). All control-plane nodes share `vmbr30` (VIP
 L2 requirement satisfied).
