@@ -76,7 +76,7 @@
 - **IP**: 192.168.48.46
 - **MAC**: bc:24:11:84:bc:16
 - **OS**: Ubuntu Linux (clone of dockerserver-1, 2026-04-11)
-- **Purpose**: App Plane B — vault-3, Twingate B, Keycloak-2, Ollama, FreeSWITCH, RustDesk, Watchtower
+- **Purpose**: App Plane B — vault-3, Twingate B, Keycloak-2, FreeSWITCH, RustDesk, Watchtower
 - **Portainer endpoint ID**: 13
 - **Portainer agent macvlan IP**: 192.168.59.42 (was .46 — collided with otel-collector; moved 2026-06-28)
 - **Portainer agent pinned MAC**: `02:42:c0:a8:3b:2a` (encodes IP; re-pin on recreate; unpinned MAC churned)
