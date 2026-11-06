@@ -33,7 +33,6 @@ dockermaster/
 │       ├── litellm/            # [INACTIVE] LLM proxy
 │       ├── n8n-stack/          # [INACTIVE] Workflow automation
 │       ├── nginx-rproxy/       # [ACTIVE] Reverse proxy
-│       ├── ollama/             # [INACTIVE] Local LLM
 │       ├── portainer/          # [ACTIVE] Docker management
 │       ├── puppet/             # [INACTIVE] Config management
 │       └── rundeck/            # [ACTIVE] Job scheduler
@@ -80,7 +79,6 @@ dockermaster/
 - Docker-vault (HashiCorp Vault)
 - litellm (LLM proxy service)
 - n8n-stack (Workflow automation)
-- ollama (Local LLM inference)
 - puppet (Configuration management)
 
 ## Network Configuration

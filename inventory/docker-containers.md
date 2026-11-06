@@ -318,20 +318,6 @@
   - **HA:** 2 of 3 pihole instances
   - Purpose: Authoritative DNS + ad-blocking for SRVAN-local clients
 
-#### Embedding service
-
-- **ollama** — `ollama/ollama:latest`
-  - Network: `docker-servers-net` (192.168.59.53)
-  - Terraform: `portainer_stack.ollama` in `terraform/portainer/stacks.tf`
-  - Compose: `terraform/portainer/stacks/ollama.yml.tftpl`
-  - Image: watchtower-managed
-  - Resource limits: 4 cores / 12 GB RAM (1 GB reservation)
-  - Storage: `/nfs/dockermaster/ollama/data`
-  - Models: `qwen3-embedding:8b-q8_0` (4096-dim, ~9 GB)
-  - URL (internal): <http://ollama.d.lcamaral.com:11434>
-  - Purpose: Embedding service for Honcho deriver + API
-  - Spec: `docs/superpowers/specs/2026-05-21-ollama-deployment-design.md`
-
 #### Ancillary
 
 - **portainer-agent** — `portainer/agent:2.39.1`
@@ -448,7 +434,6 @@
 | .48 | rproxy-2 (edge 2/3) | ds-1 |
 | .49 | rproxy-3 (edge 3/3) | ds-2 |
 | .50 | pihole-2 | ds-1 |
-| .53 | ollama | ds-1 |
 | .54 | keycloak-db-1 | ds-1 |
 
 ## Removed services (since last refresh)
@@ -465,6 +450,7 @@ The following services were present in the pre-HA inventory and have been remove
 | vault on NAS | Superseded by 3-node Vault Raft cluster |
 | ocr-photo-tag on NAS | Removed (non-portable) |
 | paperless-ngx on NAS | Removed — zombie stack (endpoint 6) deleted in commit `43dde4b` |
+| ollama on ds-1 (`.53`) | Removed — stopped for months; sole planned consumer (Honcho) never deployed |
 
 ## Terraform-managed Portainer stacks
 
@@ -498,7 +484,6 @@ Authoritative list in `terraform/portainer/stacks.tf`:
 | `pve-exporter` | dm |
 | `thanos-query` | dm |
 | `pihole-2` | ds-1 |
-| `ollama` | ds-1 |
 | `pihole-3` | nas |
 | `openspeedtest` | nas |
 | `netbootxyz` | nas |
