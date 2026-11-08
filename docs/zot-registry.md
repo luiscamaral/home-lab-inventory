@@ -195,6 +195,32 @@ the first pull of an image can take a while (timeouts are 900 s).
 `no basic auth credentials` and silently pulls from Docker Hub instead (the containerd image store
 ignores the challenge). Found with a throwaway dind test, 2026-11-08.
 
+## Sparse on-demand caching (what to expect in the cache namespaces)
+
+zot v2.1.22 syncs on demand **sparsely**: pulling a multi-arch tag stores the index and only the platform
+child that the client then requests by digest (zot fetches that child, with its config and layers, before it
+answers). The sync `platforms` allowlist applies to periodic sync only, which is not enabled here. A cached
+`docker.io/library/alpine:3.21` therefore holds an index that lists about 16 platforms but contains one.
+This is by design, and it has three visible effects:
+
+- **Scrub noise.** The daily scrub logs `blobs/manifest affected … blob not found` for the missing platform
+  children of every cached index in `docker.io/*`, `ghcr.io/*`, `quay.io/*` and the other cache namespaces.
+  These warnings are expected and are not corruption. Real damage in those repos is hard to see among
+  them, so treat scrub output on the cache namespaces as noise. `homelab/*` is not sparse: a warning
+  there is real.
+- **GC prunes index-only entries.** GC keeps a sparse index while at least one of its children exists, and
+  drops the tag entry only when **none** does (for example a tag that was only looked up, never pulled).
+  The next request syncs it again, so the prune is harmless. The 24h GC log lines
+  `skipping missing image manifest blob, continuing GC` belong to the same behaviour.
+- **First-pull latency.** The first pull of an uncached image blocks while zot copies the platform child from
+  Docker Hub. A large image can take longer than the client waits (containerd gave up after about 30 s on
+  `grafana/promtail:3.4.2`, which needed about 78 s). dockerd then falls back to Docker Hub for that pull and
+  the pull still succeeds, while zot finishes the sync in the background. Later pulls are served from the cache.
+  To warm a large image ahead of time, pull it once through `hub.d` (or with skopeo against
+  `zot.d.lcamaral.com/docker.io/…`).
+
+No zot setting changes this for on-demand sync, so none is configured.
+
 ## Not done yet (needs approval: host-level)
 
 - **Hosts using the mirror** (`registry-mirrors` in `/etc/docker/daemon.json`, `hosts/<host>/etc/docker/daemon.json`
