@@ -1350,7 +1350,14 @@ locals {
                 push to it; Prometheus scrapes its :8889 cache). Check the
                 otel-collector Portainer stack on dockermaster.
           - alert: WifiProbeNoData
-            expr: changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) == 0
+            # Every probe seen in 24h whose uptime hasn't advanced in 10m. The
+            # old `changes(...[10m]) == 0` needs the series to exist, so it
+            # silently RESOLVED ~10m after the collector expired a dead probe
+            # (30m) — garage 2026-11-08: firing 12:11, resolved 12:30, still
+            # dead until 12:40. Retiring/renaming a probe => silence for 24h.
+            expr: >-
+              max by (room, instance) (last_over_time(wifi_probe_uptime_seconds{job="wifi-probe"}[24h]))
+              unless on (instance) changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) > 0
             for: 10m
             labels:
               severity: critical
@@ -1359,9 +1366,9 @@ locals {
               summary: "wifi-probe {{ $$labels.room }} stopped pushing"
               description: |
                 No fresh OTLP push from {{ $$labels.instance }}
-                ({{ $$labels.room }}) for 10m — uptime stopped advancing. The
-                collector serves the last value for 30m, so this fires before
-                the series expires. Device crashed, lost WiFi, can't reach the
+                ({{ $$labels.room }}) for 10m — uptime stopped advancing. Keeps
+                firing after the collector expires the series (30m), for up to
+                24h of silence. Device crashed, lost WiFi, can't reach the
                 collector :4318, or its push is wedged. Try
                 http://{{ $$labels.instance }}/status then POST /reboot (token).
           - alert: WifiProbeInternetDown
