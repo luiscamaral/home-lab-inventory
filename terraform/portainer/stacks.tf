@@ -391,16 +391,16 @@ resource "portainer_stack" "rustdesk" {
 # ──────────────────────────────────────────────
 # Rundeck + PostgreSQL → dockerserver-1
 # Automation server — DB and storage passwords from Vault
-# Image: registry.cf.lcamaral.com/la-rundeck:latest (local on ds-1 only; never landed in
-# registry:2). Copied to zot as zot.d.lcamaral.com/homelab/la-rundeck:latest on
-# 2026-11-06; switching this stack to the zot ref is pending (docs/zot-registry.md).
+# Image: zot.d.lcamaral.com/homelab/la-rundeck:latest (copied from the ds-1 local image on
+# 2026-11-06; registry:2 never received it). The stack switched to the zot ref on 2026-11-08
+# (docs/zot-registry.md, cool-off). postgres is pinned by digest to the running build.
 # ──────────────────────────────────────────────
 resource "portainer_stack" "rundeck" {
   name            = "la-rundeck"
   endpoint_id     = var.ds1_endpoint_id
   deployment_type = "standalone"
   method          = "string"
-  # cached postgres:17 + la-rundeck on ds-1: a Docker Hub blip must not fail a recreate
+  # postgres is cached on ds-1 (digest-pinned); la-rundeck is pulled from zot by `compose up` when missing
   pull_image = false
 
   stack_file_content = templatefile("${path.module}/stacks/rundeck.yml.tftpl", {
