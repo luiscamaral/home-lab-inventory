@@ -96,7 +96,7 @@ zot signs users in through the Keycloak `homelab` realm (OIDC, authorization-cod
 | Groups claim | `groups` (plain names, no leading `/`) from the client's group-membership mapper, in the ID token and userinfo |
 | Admin group | `zot-admins` (Terraform: `keycloak_group.zot_admins`, members in `keycloak_group_memberships.zot_admins`) |
 | Authorization | `accessControl.adminPolicy` = user `admin` or group `zot-admins`. Other signed-in users keep `read` (the `defaultPolicy`). Anonymous access is unchanged: read on the cache namespaces, none on `homelab/**`. |
-| Secrets | Vault `secret/homelab/zot`: `oidc_client_secret`, `session_hash_key`, `session_encrypt_key` (hex, so no `$`). Vault is the source; Terraform pushes the client secret to Keycloak. |
+| Secrets | Vault `secret/homelab/zot`: `oidc_client_secret`, `session_hash_key`, `session_encrypt_key` (hex, so no `$`). Vault is the source; Terraform pushes the client secret to Keycloak, so it also sits in the local Terraform state, like the other stack secrets. |
 | zot settings | `http.externalUrl`, `auth.openid.providers.oidc`, `auth.sessionKeysFile`, `auth.apikey`, `auth.secureSession` (the proxy terminates TLS) |
 
 **Why that issuer.** The realm has a fixed frontend URL, so the discovery document and every token carry
