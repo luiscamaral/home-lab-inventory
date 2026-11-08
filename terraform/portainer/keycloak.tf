@@ -26,12 +26,12 @@ data "keycloak_realm" "homelab" {
 # secret out of TF state avoids a circular write loop and keeps it
 # human-rotatable without a `terraform apply`.
 resource "keycloak_openid_client" "grafana" {
-  realm_id            = data.keycloak_realm.homelab.id
-  client_id           = "grafana"
-  name                = "Grafana"
-  description         = "Homelab Grafana — Phase 4 monitoring dashboards"
-  enabled             = true
-  access_type         = "CONFIDENTIAL"
+  realm_id    = data.keycloak_realm.homelab.id
+  client_id   = "grafana"
+  name        = "Grafana"
+  description = "Homelab Grafana — Phase 4 monitoring dashboards"
+  enabled     = true
+  access_type = "CONFIDENTIAL"
 
   root_url  = "https://grafana.d.lcamaral.com"
   admin_url = "https://grafana.d.lcamaral.com"
@@ -60,4 +60,80 @@ resource "keycloak_openid_client" "grafana" {
   # attribute when omitted: the resource is content-addressed by the
   # other fields and TF won't drift on the secret value. Rotation
   # happens via Keycloak UI → Vault out-of-band.
+}
+
+# ──────────────────────────────────────────────
+# zot registry SSO (zot.d.lcamaral.com) — docs/zot-registry.md
+#
+# Unlike grafana above, Vault is the source here: the client secret is
+# generated into Vault (`secret/homelab/zot`, field `oidc_client_secret`)
+# and pushed to Keycloak by Terraform, so zot (via zot-auth-init) and the
+# Keycloak client always read the same value. Rotate by patching Vault and
+# applying `keycloak_openid_client.zot` + `portainer_stack.zot`.
+#
+# Issuer note: the realm has a fixed frontend URL, so tokens and the
+# discovery document carry `https://auth.cf.lcamaral.com/realms/homelab`
+# no matter which hostname is used. zot must use exactly that issuer.
+# ──────────────────────────────────────────────
+resource "keycloak_openid_client" "zot" {
+  realm_id    = data.keycloak_realm.homelab.id
+  client_id   = "zot"
+  name        = "zot registry"
+  description = "Homelab zot OCI registry (zot.d.lcamaral.com) — UI and API-key login"
+  enabled     = true
+  access_type = "CONFIDENTIAL"
+
+  client_secret = data.vault_kv_secret_v2.zot.data["oidc_client_secret"]
+
+  root_url  = "https://zot.d.lcamaral.com"
+  admin_url = "https://zot.d.lcamaral.com"
+  base_url  = "/"
+
+  # zot callback path is /zot/auth/callback/<provider key>; the key is `oidc`.
+  valid_redirect_uris = [
+    "https://zot.d.lcamaral.com/zot/auth/callback/oidc",
+  ]
+  web_origins = [
+    "https://zot.d.lcamaral.com",
+  ]
+
+  standard_flow_enabled        = true
+  implicit_flow_enabled        = false
+  direct_access_grants_enabled = false
+  service_accounts_enabled     = false
+
+  access_token_lifespan = "300"
+  use_refresh_tokens    = false
+}
+
+# Group claim (`groups`, plain names, no leading slash) in the ID token,
+# access token and userinfo. zot reads it from ID token and userinfo and
+# compares against `accessControl.adminPolicy.groups` in zot-config.json.
+resource "keycloak_openid_group_membership_protocol_mapper" "zot_groups" {
+  realm_id  = data.keycloak_realm.homelab.id
+  client_id = keycloak_openid_client.zot.id
+  name      = "groups"
+
+  claim_name          = "groups"
+  full_path           = false
+  add_to_id_token     = true
+  add_to_access_token = true
+  add_to_userinfo     = true
+}
+
+# Owned by Terraform. Other groups in the realm are not managed here.
+resource "keycloak_group" "zot_admins" {
+  realm_id = data.keycloak_realm.homelab.id
+  name     = "zot-admins"
+}
+
+# Authoritative for the members of zot-admins only (adds/removes users of
+# this one group); users themselves stay unmanaged.
+resource "keycloak_group_memberships" "zot_admins" {
+  realm_id = data.keycloak_realm.homelab.id
+  group_id = keycloak_group.zot_admins.id
+
+  members = [
+    "luiscamaral+kcloak@gmail.com",
+  ]
 }
