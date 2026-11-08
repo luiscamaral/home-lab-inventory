@@ -149,6 +149,8 @@
   - Purpose: OCI registry for `homelab/*` images + on-demand pull-through cache for
     `docker.io`, `ghcr.io`, `quay.io`, `registry.k8s.io`, `gcr.io` (`zot.d.lcamaral.com`, LAN only).
     Single instance. See `docs/zot-registry.md`
+  - Also served as a pull-only Docker Hub mirror at `hub.d.lcamaral.com` (rproxy vhost rewrite
+    `/v2/<repo>` → `/v2/docker.io/<repo>`, LAN only) for dockerd `registry-mirrors`
 
 - **registry** — `registry:2` — **LEGACY, cool-off** (superseded by zot 2026-11-06)
   - Networks: `docker-servers-net` (192.168.59.16) + `rproxy` bridge (172.24.0.3)

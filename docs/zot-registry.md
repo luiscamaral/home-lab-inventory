@@ -112,15 +112,31 @@ it as an open violation). Do not move it back to `/nfs/dockermaster/docker/runde
 directory is a stale pre-salvage copy. The host path is not IaC-managed, so back up with
 `pg_dump` before any recreate. Rundeck's own `data` and `container-plugins` stay on NFS.
 
+## Docker Hub mirror endpoint (`hub.d.lcamaral.com`)
+
+dockerd's `registry-mirrors` expects a Docker Hub mirror at the registry **root**, and zot serves
+Docker Hub under `/docker.io`. The rproxy vhost `hub.d.lcamaral.com.conf` bridges them:
+
+| Request to `hub.d.lcamaral.com` | Sent to zot (`192.168.59.5:5000`) |
+|---|---|
+| `GET /v2/` | `GET /v2/` |
+| `GET\|HEAD /v2/library/alpine/manifests/3.20` | `/v2/docker.io/library/alpine/manifests/3.20` |
+| `GET\|HEAD /v2/grafana/grafana/blobs/sha256:…` | `/v2/docker.io/grafana/grafana/blobs/sha256:…` |
+| `GET /v2/docker.io/…` | unchanged (so zot's `Link` pagination headers stay valid) |
+| any other method (push, delete, upload) | **405**, never reaches zot |
+| `GET /v2/_catalog`, anything outside `/v2/` | 404 |
+
+It is LAN-only (3 rproxy replicas, DNS `.28/.48/.49`, `*.d.lcamaral.com` cert) and anonymous: the
+`Authorization` header is stripped, so the name can never act with the zot admin credentials and can
+only ever read the `docker.io/` namespace. On a cache miss zot fetches from Docker Hub on demand, so
+the first pull of an image can take a while (timeouts are 900 s).
+
 ## Not done yet (needs approval: host-level)
 
-- **Transparent mirroring for Docker Engine** (`registry-mirrors` in `/etc/docker/daemon.json`)
-  needs a dockerd restart on each host. Remember to restart `portainer-agent` afterwards (see
-  the Keycloak/host-restart runbook). Also, dockerd expects a Docker Hub mirror at the
-  registry root, and zot serves Docker Hub under `/docker.io`. Options:
-  1. An Nginx rewrite vhost (for example `hub.d.lcamaral.com`: `/v2/(.*)` → `/v2/docker.io/$1`).
-  2. Reference cached images explicitly (`zot.d.lcamaral.com/docker.io/...`) in stacks.
-  3. With the containerd image store, a `hosts.toml` mirror with a path override.
+- **Hosts using the mirror** (`registry-mirrors` in `/etc/docker/daemon.json`, `hosts/<host>/etc/docker/daemon.json`
+  applied with `scripts/sync-docker-daemon.py`) needs a dockerd restart on each host. Remember to
+  restart `portainer-agent` afterwards (see the Keycloak/host-restart runbook). The endpoint above
+  is in place; switching the hosts is a separate change.
 - **Talos/K8s:** the cluster design (`docs/superpowers/specs/2026-06-15-k8s-talos-proxmox-iac-design.md`)
   should use zot. Talos `machine.registries.mirrors` supports `overridePath: true`, e.g.
   `docker.io` → `https://zot.d.lcamaral.com/v2/docker.io`.
