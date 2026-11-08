@@ -1039,6 +1039,22 @@ locals {
             insecure_skip_verify: true
           fail_if_ssl: false
           fail_if_not_ssl: true
+      # Registry-mirror vhosts (hub.d -> zot): "/" is a 404 and "/v2/" is a
+      # static Nginx 200, so neither proves the upstream answers. Probe a
+      # repo that never exists: only zot's registry API returns 404 with a
+      # NAME_UNKNOWN body (tags/list never triggers an upstream sync). zot
+      # down => Nginx 502 HTML => no body match => probe fails.
+      http_registry_api:
+        prober: http
+        timeout: 10s
+        http:
+          preferred_ip_protocol: ip4
+          valid_status_codes: [404]
+          fail_if_body_not_matches_regexp: ['"code":"NAME_UNKNOWN"']
+          tls_config:
+            insecure_skip_verify: true
+          fail_if_ssl: false
+          fail_if_not_ssl: true
       icmp:
         prober: icmp
         timeout: 5s
@@ -1129,11 +1145,30 @@ locals {
     if !can(regex("\\.cf\\.lcamaral\\.com$", trimsuffix(f, ".conf")))
   ]
 
-  blackbox_rproxy_targets = jsonencode([
-    {
-      targets = [for h in local.rproxy_probe_hosts : "https://${h}"]
+  # Per-vhost probe overrides for hosts whose "/" is not a meaningful health
+  # check. The per-target __param_module label overrides the job's default
+  # module (http_rproxy_alive), so these stay in job="blackbox-rproxy" and
+  # are covered by the same RProxyEndpointDown/Slow alerts.
+  rproxy_probe_overrides = {
+    "hub.d.lcamaral.com" = {
+      path   = "/v2/library/zz-blackbox-canary/tags/list"
+      module = "http_registry_api"
     }
-  ])
+  }
+  blackbox_rproxy_targets = jsonencode(concat(
+    [{
+      targets = [
+        for h in local.rproxy_probe_hosts : "https://${h}"
+        if !contains(keys(local.rproxy_probe_overrides), h)
+      ]
+    }],
+    [
+      for h, o in local.rproxy_probe_overrides : {
+        targets = ["https://${h}${o.path}"]
+        labels  = { __param_module = o.module }
+      } if contains(local.rproxy_probe_hosts, h)
+    ]
+  ))
 
   blackbox_http_targets = jsonencode([
     {
