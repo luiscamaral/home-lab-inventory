@@ -285,7 +285,11 @@ def endpoint_up(host: Host) -> tuple[bool, str]:
     if code != 200:
         return False, f"GET endpoint {host.endpoint_id} -> {code}"
     status = json.loads(body).get("Status")
-    return status == 1, f"endpoint {host.endpoint_id} Status={status}"
+    if status != 1:
+        return False, f"endpoint {host.endpoint_id} Status={status}"
+    # Status can read 1 while the agent still holds a stale docker.sock; the proxied call proves it.
+    code, _ = portainer_request("GET", f"/api/endpoints/{host.endpoint_id}/docker/containers/json", jwt=jwt)
+    return code == 200, f"endpoint {host.endpoint_id} Status=1, proxied docker API -> {code}"
 
 
 def restart_and_verify(label: str, host: Host, backup: str | None) -> None:
