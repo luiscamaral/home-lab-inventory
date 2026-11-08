@@ -221,12 +221,35 @@ This is by design, and it has three visible effects:
 
 No zot setting changes this for on-demand sync, so none is configured.
 
+## Docker hosts use the mirror
+
+`dockermaster`, `dockerserver-1` and `dockerserver-2` have `"registry-mirrors": ["https://hub.d.lcamaral.com"]`
+in `/etc/docker/daemon.json` (source: `hosts/<host>/etc/docker/daemon.json`, applied with
+`scripts/sync-docker-daemon.py`; see `hosts/README.md`). A plain `docker pull alpine:3.21` or
+`image: grafana/grafana:…` (Docker Hub images only) now goes
+**host → hub.d (rproxy) → zot → Docker Hub on a cache miss**, so Docker Hub sees zot's single IP and
+every later pull is served from the NAS-backed cache. Images from `ghcr.io`, `quay.io` and other
+registries are not affected (mirrors only apply to Docker Hub); reference those through
+`zot.d.lcamaral.com/<registry>/…` explicitly if you want them cached.
+
+- **Fallback:** dockerd tries each mirror first and then Docker Hub itself, so if `hub.d` or zot is down
+  or returns an error for a pull, the pull falls back to Docker Hub directly. Pulls only fail if both are
+  unreachable. (`docker info` lists the mirror under "Registry Mirrors".)
+- **Bootstrap:** zot runs on dockermaster and `hub.d` resolves via the pihole instances, so a cold start
+  of the whole fleet still works: the mirror is simply skipped until it answers.
+- **dockermaster** uses the containerd image store, the other two use classic overlay2. Both work, but
+  only because `hub.d` answers `GET /v2/` itself (see above). Each host was verified with a pull that
+  appeared in the zot log.
+- **Also changed on dockermaster:** `live-restore: true` and `json-file` log caps (50m × 3) now match
+  ds-1 and ds-2. The first restart that enabled live-restore stopped dockermaster's containers once
+  (it had no live-restore); later dockerd restarts keep containers running.
+- **NAS excluded:** it is a Synology DSM host, not one of the three Ubuntu Docker VMs under `hosts/`,
+  and it also holds zot's storage (NFS), so it should not depend on zot for its own pulls.
+- Rollback: remove the `registry-mirrors` key from the host's file, re-run
+  `scripts/sync-docker-daemon.py --host <h> --apply --restart`.
+
 ## Not done yet (needs approval: host-level)
 
-- **Hosts using the mirror** (`registry-mirrors` in `/etc/docker/daemon.json`, `hosts/<host>/etc/docker/daemon.json`
-  applied with `scripts/sync-docker-daemon.py`) needs a dockerd restart on each host. Remember to
-  restart `portainer-agent` afterwards (see the Keycloak/host-restart runbook). The endpoint above
-  is in place; switching the hosts is a separate change.
 - **Talos/K8s:** the cluster design (`docs/superpowers/specs/2026-06-15-k8s-talos-proxmox-iac-design.md`)
   should use zot. Talos `machine.registries.mirrors` supports `overridePath: true`, e.g.
   `docker.io` → `https://zot.d.lcamaral.com/v2/docker.io`.
