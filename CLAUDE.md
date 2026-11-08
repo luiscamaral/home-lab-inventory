@@ -60,7 +60,10 @@
 - GitHub runner service (GitHub-runner-homelab) is a Terraform-managed Portainer stack running on dockermaster for CI/CD.
 - Vault server at <http://vault.d.lcamaral.com> (192.168.59.25) for secret management.
 - Portainer at 192.168.59.2 for container management (Terraform-managed via `terraform/portainer/`).
-- Docker registry at <https://registry.cf.lcamaral.com> (Terraform-managed Portainer stack).
+- Container registry: **Zot** at <https://zot.d.lcamaral.com> (LAN only; `homelab/*` images +
+  pull-through cache for `docker.io`, `ghcr.io`, `quay.io`, `registry.k8s.io`, `gcr.io` under those prefixes).
+  Terraform-managed Portainer stack `zot`; see `docs/zot-registry.md`. The old registry:2 at
+  <https://registry.cf.lcamaral.com> is legacy (cool-off, no new pushes).
 
 ## Infrastructure as Code
 
@@ -110,6 +113,8 @@ surface → source → apply map. Two layers:
   - `secret/homelab/bind9/dnssec` (DNSSEC keys backup)
   - `secret/homelab/rundeck` (DB + storage converter passwords)
   - `secret/homelab/watchtower` (HTTP API token)
+  - `secret/homelab/zot` (Zot registry admin user, password, htpasswd)
+  - `secret/homelab/registry` (legacy registry:2 admin + htpasswd)
   - `secret/homelab/minio` (root user + password)
   - `secret/homelab/freeswitch` (ESL, SIP extension, calling card credentials)
   - `secret/homelab/switch24a` (TL-SG3428X core switch admin login)

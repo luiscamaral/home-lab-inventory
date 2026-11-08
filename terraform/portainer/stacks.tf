@@ -17,6 +17,24 @@ resource "portainer_stack" "docker_registry" {
 }
 
 # ──────────────────────────────────────────────
+# Zot registry — successor to docker-registry (kept for cool-off).
+# Hosts homelab/* images + on-demand pull-through cache for docker.io,
+# ghcr.io, quay.io, registry.k8s.io, gcr.io. LAN-only via
+# zot.d.lcamaral.com (rproxy vhost). See docs/zot-registry.md.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "zot" {
+  name            = "zot"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/zot.yml.tftpl", {
+    zot_config = file("${path.module}/stacks/zot-config.json")
+    htpasswd   = data.vault_kv_secret_v2.zot.data["htpasswd"]
+  })
+}
+
+# ──────────────────────────────────────────────
 # Cloudflare Tunnel (replica 1 on dockermaster)
 # Connects homelab to Cloudflare edge via tunnel "bologna"
 # Token injected from Vault at apply time
@@ -373,7 +391,9 @@ resource "portainer_stack" "rustdesk" {
 # ──────────────────────────────────────────────
 # Rundeck + PostgreSQL → dockerserver-1
 # Automation server — DB and storage passwords from Vault
-# Image pushed to registry as registry.cf.lcamaral.com/la-rundeck:latest
+# Image: registry.cf.lcamaral.com/la-rundeck:latest (local on ds-1 only; never landed in
+# registry:2). Copied to zot as zot.d.lcamaral.com/homelab/la-rundeck:latest on
+# 2026-11-06; switching this stack to the zot ref is pending (docs/zot-registry.md).
 # ──────────────────────────────────────────────
 resource "portainer_stack" "rundeck" {
   name            = "la-rundeck"

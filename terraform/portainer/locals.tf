@@ -273,6 +273,14 @@ locals {
           - targets: [192.168.59.16:5001]
             labels: { instance: registry-1 }
 
+      # Zot registry (successor to registry:2). /metrics is on the main
+      # listener; anonymous read is allowed for metrics in zot-config.json.
+      - job_name: zot
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.5:5000]
+            labels: { instance: zot-1 }
+
       # ── Phase 3a: Watchtower (HTTP API on :8080) ────────────────────
       # WATCHTOWER_HTTP_API_METRICS=true (already set) exposes /v1/metrics
       # behind the same bearer token as the update-trigger API. Two
@@ -703,6 +711,13 @@ locals {
         static_configs:
           - targets: [192.168.59.16:5001]
             labels: { instance: registry-1 }
+
+      # Zot registry — see replica-A comment.
+      - job_name: zot
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.5:5000]
+            labels: { instance: zot-1 }
 
       # ── Phase 3a: Watchtower (HTTP API on :8080) ────────────────────
       # TODO: bearer token wiring — see replica-A comment.

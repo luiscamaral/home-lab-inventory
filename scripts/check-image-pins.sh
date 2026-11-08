@@ -27,6 +27,8 @@ set -euo pipefail
 ALLOWLIST_REGEX=(
   # Internal registry — rebuilt on every CI push, :latest IS the contract.
   '^registry\.cf\.lcamaral\.com/.+:latest$'
+  # Zot (successor to the registry above) — same contract for homelab/*.
+  '^zot\.d\.lcamaral\.com/homelab/.+:latest$'
   # Watchtower itself — its own design uses :latest.
   '^containrrr/watchtower:latest$'
   # openspeedtest publishes the image as `openspeedtest/latest:*`,
