@@ -58,6 +58,7 @@ Every change goes through a declarative source in the repo, then a tool applies 
 | DNS zones | pihole `dnsmasq.d/*.conf` via Compose `configs:` | `terraform/portainer` |
 | Grafana dashboards | `terraform/portainer/stacks/grafana-dashboards/*.json` | terraform + `scripts/portainer-redeploy.py` |
 | NAS kernel tuning (sysctl) | `nas/tuning/sysctl.yml` | `scripts/sync-nas-tuning.py` |
+| Docker daemon config | `hosts/<host>/etc/docker/daemon.json` | `scripts/sync-docker-daemon.py` |
 
 **Never** SSH in and edit `config.xml`, run `write_config`, hand-place a cron/script,
 or scp config to a host. If a surface has no IaC path yet, **add one** (declarative
