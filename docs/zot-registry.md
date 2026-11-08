@@ -178,7 +178,7 @@ Docker Hub under `/docker.io`. The rproxy vhost `hub.d.lcamaral.com.conf` bridge
 
 | Request to `hub.d.lcamaral.com` | Sent to zot (`192.168.59.5:5000`) |
 |---|---|
-| `GET /v2/` | `GET /v2/` |
+| `GET /v2/` | answered by Nginx itself (`200 {}`, see below), not sent to zot |
 | `GET\|HEAD /v2/library/alpine/manifests/3.20` | `/v2/docker.io/library/alpine/manifests/3.20` |
 | `GET\|HEAD /v2/grafana/grafana/blobs/sha256:…` | `/v2/docker.io/grafana/grafana/blobs/sha256:…` |
 | `GET /v2/docker.io/…` | unchanged (so zot's `Link` pagination headers stay valid) |
@@ -189,6 +189,11 @@ It is LAN-only (3 rproxy replicas, DNS `.28/.48/.49`, `*.d.lcamaral.com` cert) a
 `Authorization` header is stripped, so the name can never act with the zot admin credentials and can
 only ever read the `docker.io/` namespace. On a cache miss zot fetches from Docker Hub on demand, so
 the first pull of an image can take a while (timeouts are 900 s).
+
+`GET /v2/` is answered by Nginx, not zot: zot answers Docker clients on `/v2/` with `401` and
+`Www-Authenticate: Basic realm="zot"`, and classic (overlay2) dockerd then rejects the mirror with
+`no basic auth credentials` and silently pulls from Docker Hub instead (the containerd image store
+ignores the challenge). Found with a throwaway dind test, 2026-11-08.
 
 ## Not done yet (needs approval: host-level)
 
