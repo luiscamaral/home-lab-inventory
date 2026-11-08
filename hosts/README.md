@@ -67,6 +67,31 @@ ens19            inet 192.168.48.46/20 ...
 server-net-shim  inet 192.168.59.46/32 ...
 ```
 
+## Docker daemon config (`daemon.json`)
+
+`hosts/<host>/etc/docker/daemon.json` is the source for `/etc/docker/daemon.json` on
+`dockermaster`, `dockerserver-1` and `dockerserver-2` (the NAS is not managed). Apply it with
+`scripts/sync-docker-daemon.py`, never by editing the file on the host.
+
+```bash
+scripts/sync-docker-daemon.py                          # dry run, all hosts: JSON diff repo vs live
+scripts/sync-docker-daemon.py --check                  # same, exit 1 if any host differs
+scripts/sync-docker-daemon.py --host ds-2 --apply      # validate + back up + install, NO restart
+scripts/sync-docker-daemon.py --host ds-2 --apply --restart
+```
+
+- `--apply` needs `--host` (one host at a time). It uploads the file to a temp path, runs
+  `dockerd --validate`, backs up the live file to `/etc/docker/daemon.json.bak-<ts>`, then installs
+  it atomically. The daemon only reads the file at start, so nothing changes until a restart.
+- `--restart` restarts dockerd, restarts the host's `portainer-agent`, then checks that the same
+  containers are running, none is unhealthy, the daemon reports the repo settings, and the
+  Portainer endpoint is up. If dockerd does not come back, the backup is restored.
+- A restart stops every container on a host **without** `live-restore`. `dockermaster` is in that
+  state until its file enables it, and Portainer itself runs there. Plan a window.
+- Order for a fleet-wide change: `dockerserver-2`, `dockerserver-1`, then `dockermaster`.
+- Rollback: copy the `.bak-<ts>` file back over `/etc/docker/daemon.json` and restart dockerd (or
+  revert the repo file and re-run the script).
+
 ## Netplan status
 
 Each host has `/etc/netplan/00-installer-config.yaml` from the original Ubuntu
