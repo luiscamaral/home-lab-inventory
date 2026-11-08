@@ -96,9 +96,10 @@ Consumers switched:
 
 - [x] `homelab-portal` (dm) → `zot.d.lcamaral.com/homelab/homelab-portal:latest`
 - [x] `homelab-portal-2` (ds-1) → same
-- [ ] `la-rundeck` (ds-1): **pending.** The image is in zot, but switching the reference
-  recreates Rundeck, and pinning `postgres:17` to the running `17.9` recreates the DB container.
-  Do both together in a planned window.
+- [x] `la-rundeck` (ds-1): switched to `zot.d.lcamaral.com/homelab/la-rundeck:latest` on 2026-11-08
+  (same image: config `sha256:5c0c9da1…`). In the same recreate `postgres:17` became
+  `postgres:17.9@sha256:7ad98329…`, the exact running build. The `17.9` tag alone was rebuilt on
+  Docker Hub after the container was pulled, so only the digest guarantees no change to PGDATA.
 
 ### Rundeck PGDATA exception (local disk, not NAS)
 
@@ -130,10 +131,13 @@ directory is a stale pre-salvage copy. The host path is not IaC-managed, so back
 The old registry stays up, unchanged, at `registry.cf.lcamaral.com` (stack `docker-registry`,
 `192.168.59.16`). Nothing writes to it any more. Remove it once all of these hold:
 
-1. `la-rundeck` has moved to the zot reference.
+1. ~~`la-rundeck` has moved to the zot reference.~~ Done 2026-11-08.
 2. No container on any host references `registry.cf.lcamaral.com`:
    `docker ps --format '{{.Image}}' | grep registry.cf` on dm, ds-1 and ds-2.
 3. The Nginx access log shows no `registry.cf.lcamaral.com` traffic for 30 days.
+
+**Cool-off started 2026-11-08** (the day `la-rundeck` moved to zot, the last consumer). Earliest
+decommission: **2026-12-08**, once the three conditions above hold.
 
 Then, in one change: delete `portainer_stack.docker_registry`, `portainer_registry.homelab_registry`,
 the `registry.cf.lcamaral.com.conf` vhost, the Cloudflare DNS record and tunnel ingress
