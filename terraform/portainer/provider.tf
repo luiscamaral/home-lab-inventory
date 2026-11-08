@@ -3,16 +3,19 @@ terraform {
 
   required_providers {
     portainer = {
+      # >= 1.35: state carries attributes (source_id) that older releases can't
+      # decode. The exact version is pinned by the committed .terraform.lock.hcl.
       source  = "portainer/portainer"
-      version = "~> 1.11"
+      version = "~> 1.35"
     }
     vault = {
       source  = "hashicorp/vault"
       version = "~> 4.0"
     }
     keycloak = {
+      # >= 5.10: keycloak_openid_client schema v1; no downgrade once upgraded.
       source  = "keycloak/keycloak"
-      version = "~> 5.0"
+      version = "~> 5.10"
     }
   }
 }

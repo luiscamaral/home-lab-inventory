@@ -31,6 +31,9 @@ No step may be skipped or reordered.
      `-target` for this PR's resources and report the drift to the user.
    - Portainer Terraform state is local: pass
      `-state=<main worktree>/terraform/portainer/terraform.tfstate` and back it up first.
+   - Run `terraform init` in the apply checkout so it uses the **committed**
+     `.terraform.lock.hcl`. Never symlink or borrow another checkout's `.terraform`, which
+     may hold different provider versions than the ones that wrote the shared state.
 6. **Verify + record.** Check the live result, then post the evidence as a PR comment
    (the plan shows "No changes", health checks, and so on).
 

@@ -106,6 +106,20 @@ terraform plan
 terraform apply
 ```
 
+### Provider lock files
+
+Every root commits its `.terraform.lock.hcl` (hashes for `darwin_arm64` and
+`linux_amd64`). All checkouts and worktrees share the same local state files, so they
+must all use the same provider versions. An older provider can't decode attributes a
+newer one wrote (for example portainer `source_id`, or the keycloak client schema v1).
+
+- After pulling or creating a worktree, run `terraform init`. It installs exactly the
+  locked versions. Never run `init -upgrade` outside a PR.
+- To upgrade a provider, do it in a PR: bump the constraint if needed, then run
+  `terraform init -upgrade` and
+  `terraform providers lock -platform=darwin_arm64 -platform=linux_amd64`. Commit the
+  lock file, and re-init every checkout after the PR merges.
+
 ### Adding a New Service Behind Cloudflare Tunnel
 
 1. **Cloudflare DNS** -- add a `cf-service` module call in `cloudflare/main.tf`:
