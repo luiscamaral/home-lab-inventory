@@ -29,8 +29,12 @@ resource "portainer_stack" "zot" {
   method          = "string"
 
   stack_file_content = templatefile("${path.module}/stacks/zot.yml.tftpl", {
-    zot_config = file("${path.module}/stacks/zot-config.json")
-    htpasswd   = data.vault_kv_secret_v2.zot.data["htpasswd"]
+    zot_config          = file("${path.module}/stacks/zot-config.json")
+    htpasswd            = data.vault_kv_secret_v2.zot.data["htpasswd"]
+    oidc_client_id      = keycloak_openid_client.zot.client_id
+    oidc_client_secret  = data.vault_kv_secret_v2.zot.data["oidc_client_secret"]
+    session_hash_key    = data.vault_kv_secret_v2.zot.data["session_hash_key"]
+    session_encrypt_key = data.vault_kv_secret_v2.zot.data["session_encrypt_key"]
   })
 }
 

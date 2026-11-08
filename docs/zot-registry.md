@@ -13,10 +13,11 @@ keeps running for a cool-off period. See [Cool-off and decommission](#cool-off-a
 | Container IP | `192.168.59.5:5000` on `docker-servers-net` (+ `rproxy` bridge) |
 | Storage | `/nfs/dockermaster/docker/zot/data` (NAS, hard NFS mount) |
 | Config | `terraform/portainer/stacks/zot-config.json`, rendered via Compose `configs:` |
-| Credentials | Vault `secret/homelab/zot` (`admin_user`, `admin_password`, `htpasswd`) |
+| Credentials | Vault `secret/homelab/zot` (`admin_user`, `admin_password`, `htpasswd`, plus the SSO fields `oidc_client_secret`, `session_hash_key`, `session_encrypt_key`) |
+| SSO | Keycloak realm `homelab`, client `zot`; admins = group `zot-admins` (see [Single sign-on](#single-sign-on-keycloak)) |
 | Portainer registry | "Zot Registry" (`portainer_registry.zot_registry`) so stacks can pull `homelab/*` |
 | Metrics | Prometheus job `zot` (`192.168.59.5:5000/metrics`, both replicas); blackbox-rproxy probe on `https://zot.d.lcamaral.com` |
-| UI | `https://zot.d.lcamaral.com/` (log in with the Vault credentials) |
+| UI | `https://zot.d.lcamaral.com/` (Keycloak login, or `admin` with the Vault password as break-glass) |
 
 It is **not** published on Cloudflare (`*.cf`). Anonymous reads are allowed for the cache
 namespaces, so exposing it to the internet would make an open proxy. The LAN path also avoids
@@ -81,6 +82,64 @@ rewritten on every deploy, so the volume holds no persistent data. This avoids t
 To rotate the password, update all three fields in `secret/homelab/zot` (regenerate the
 `htpasswd` line with `htpasswd -nbB -C 10 admin <password>`), then run
 `terraform apply -target=portainer_stack.zot -target=portainer_registry.zot_registry`.
+
+## Single sign-on (Keycloak)
+
+zot signs users in through the Keycloak `homelab` realm (OIDC, authorization-code flow). The htpasswd
+`admin` user keeps working (break-glass, and what Portainer uses to pull `homelab/*`).
+
+| Item | Value |
+|---|---|
+| Keycloak client | `zot` (confidential, standard flow only), `keycloak_openid_client.zot` in `terraform/portainer/keycloak.tf` |
+| Redirect URI | `https://zot.d.lcamaral.com/zot/auth/callback/oidc` (zot uses `/zot/auth/callback/<provider key>`; the key is `oidc`) |
+| Issuer | `https://auth.cf.lcamaral.com/realms/homelab` |
+| Groups claim | `groups` (plain names, no leading `/`) from the client's group-membership mapper, in the ID token and userinfo |
+| Admin group | `zot-admins` (Terraform: `keycloak_group.zot_admins`, members in `keycloak_group_memberships.zot_admins`) |
+| Authorization | `accessControl.adminPolicy` = user `admin` or group `zot-admins`. Other signed-in users keep `read` (the `defaultPolicy`). Anonymous access is unchanged: read on the cache namespaces, none on `homelab/**`. |
+| Secrets | Vault `secret/homelab/zot`: `oidc_client_secret`, `session_hash_key`, `session_encrypt_key` (hex, so no `$`). Vault is the source; Terraform pushes the client secret to Keycloak, so it also sits in the local Terraform state, like the other stack secrets. |
+| zot settings | `http.externalUrl`, `auth.openid.providers.oidc`, `auth.sessionKeysFile`, `auth.apikey`, `auth.secureSession` (the proxy terminates TLS) |
+
+**Why that issuer.** The realm has a fixed frontend URL, so the discovery document and every token carry
+`https://auth.cf.lcamaral.com/realms/homelab`, even when the request came in on `keycloak.d.lcamaral.com`
+(checked: both return the same `issuer`). zot discovers the provider from `issuer` and rejects a token whose `iss`
+differs, so the configured value must be that one. The browser and zot's token request therefore go through
+Cloudflare to the `bologna` tunnel, the same path as `homelab-portal` (`KEYCLOAK_PUBLIC_URL`).
+
+`zot-auth-init` writes `oidc-credentials.json` (`clientid`, `clientsecret`) and `session-keys.json` (`hashKey`,
+`encryptKey`) next to the htpasswd, from the same Vault read, on every deploy. Fixed session keys keep logins valid
+across restarts. Sessions are stored under the zot data directory.
+
+### Logging in
+
+- **Browser:** open `https://zot.d.lcamaral.com/`, choose **Keycloak**, sign in. Sign-in goes through
+  `https://zot.d.lcamaral.com/zot/auth/login?provider=oidc`.
+- **`docker login` / CLI:** OIDC does not work for command-line clients, so create an **API key** while signed in
+  (it carries the same permissions as you; the key is shown once). Use the API keys page of the UI user menu, or the
+  REST call below with the browser session cookie:
+
+  ```bash
+  curl -s -X POST https://zot.d.lcamaral.com/zot/auth/apikey -H 'Cookie: session=<cookie>' \
+    -d '{"label":"laptop","expirationDate":"2027-11-08T00:00:00Z"}'
+  docker login zot.d.lcamaral.com -u '<keycloak username>' --password-stdin <<< 'zak_...'
+  ```
+
+  The Docker username is the Keycloak `preferred_username` (the account's email address). Revoke with
+  `DELETE /zot/auth/apikey?id=<uuid>`. Store keys in Vault or a password manager, not in dotfiles.
+- **Break-glass:** `admin` with `vault kv get -field=admin_password secret/homelab/zot` still works if Keycloak is
+  down. Keycloak runs on ds-1/ds-2 and is itself reached through the same rproxies.
+
+### Admin access
+
+Add or remove a user in `keycloak_group_memberships.zot_admins` (the Keycloak username, not a display name) and apply
+`-target=keycloak_group_memberships.zot_admins`. The change takes effect at the user's next sign-in, because zot stores
+the groups it saw at the last login. Existing API keys use the groups from that last sign-in.
+
+### Rotation
+
+- Client secret: patch `oidc_client_secret` in Vault (`vault kv patch`, never `put`), then apply
+  `-target=keycloak_openid_client.zot -target=portainer_stack.zot` and run `scripts/portainer-redeploy.py zot`.
+- Session keys: patch both fields, apply `-target=portainer_stack.zot` and redeploy. This signs everyone out and
+  invalidates existing sessions (API keys keep working).
 
 ## Migration record (2026-11-06)
 

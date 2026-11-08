@@ -112,6 +112,9 @@
           "update",
           "delete"
         ],
+        "groups": [
+          "zot-admins"
+        ],
         "users": [
           "admin"
         ]
@@ -140,14 +143,36 @@
     },
     "address": "0.0.0.0",
     "auth": {
+      "apikey": true,
       "failDelay": 5,
       "htpasswd": {
         "path": "/etc/zot/auth/htpasswd"
-      }
+      },
+      "openid": {
+        "providers": {
+          "oidc": {
+            "claimMapping": {
+              "groups": "groups",
+              "username": "preferred_username"
+            },
+            "credentialsFile": "/etc/zot/auth/oidc-credentials.json",
+            "issuer": "https://auth.cf.lcamaral.com/realms/homelab",
+            "name": "Keycloak",
+            "scopes": [
+              "openid",
+              "profile",
+              "email"
+            ]
+          }
+        }
+      },
+      "secureSession": true,
+      "sessionKeysFile": "/etc/zot/auth/session-keys.json"
     },
     "compat": [
       "docker2s2"
     ],
+    "externalUrl": "https://zot.d.lcamaral.com",
     "port": "5000",
     "realm": "zot"
   },

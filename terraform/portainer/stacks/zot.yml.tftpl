@@ -15,6 +15,12 @@ name: zot
 # survives Compose `$` interpolation for bcrypt hashes) into the
 # `zot-auth` volume, then zot starts. The file is regenerated on every
 # deploy, so the volume holds no persistent data.
+#
+# SSO: the same init container also writes the OIDC credentialsFile and the
+# session cookie keys (all from Vault, passed via env; hex values, no `$`).
+# zot signs users in through the Keycloak `zot` client (terraform/portainer/
+# keycloak.tf); members of the Keycloak group `zot-admins` are zot admins.
+# `admin` (htpasswd) stays as break-glass. See docs/zot-registry.md.
 
 networks:
   rproxy:
@@ -39,13 +45,19 @@ services:
     network_mode: none
     environment:
       HTPASSWD_CONTENT: "${replace(htpasswd, "$", "$$")}"
+      OIDC_CLIENT_ID: "${oidc_client_id}"
+      OIDC_CLIENT_SECRET: "${replace(oidc_client_secret, "$", "$$")}"
+      SESSION_HASH_KEY: "${replace(session_hash_key, "$", "$$")}"
+      SESSION_ENCRYPT_KEY: "${replace(session_encrypt_key, "$", "$$")}"
     command:
       - /bin/sh
       - -c
       - |
         umask 077 && \
         printf '%s\n' "$$HTPASSWD_CONTENT" > /auth/htpasswd && \
-        chmod 0600 /auth/htpasswd
+        printf '{"clientid":"%s","clientsecret":"%s"}\n' "$$OIDC_CLIENT_ID" "$$OIDC_CLIENT_SECRET" > /auth/oidc-credentials.json && \
+        printf '{"hashKey":"%s","encryptKey":"%s"}\n' "$$SESSION_HASH_KEY" "$$SESSION_ENCRYPT_KEY" > /auth/session-keys.json && \
+        chmod 0600 /auth/htpasswd /auth/oidc-credentials.json /auth/session-keys.json
     volumes:
       - zot-auth:/auth
     restart: "no"
