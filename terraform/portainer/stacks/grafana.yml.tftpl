@@ -21,6 +21,11 @@ name: grafana
 # terraform/portainer/stacks/grafana-dashboards/*.json. NO bind-mount, NO
 # manual scp — everything lands via terraform apply. To add a dashboard:
 # drop a JSON file in stacks/grafana-dashboards/ and re-apply.
+# The `homelab` provider has allowUiUpdates: false (2026-11-08): UI saves of
+# repo dashboards are refused, so they can't silently drift and then be
+# overwritten on the next apply. To change one, edit the JSON (or its
+# generator under scripts/grafana/) and re-apply; to experiment, use
+# "Save as" to make an unprovisioned copy.
 #
 # Network: docker-servers-net macvlan (.59.43) for direct Prometheus reach,
 # plus rproxy bridge so nginx-rproxy can fan out to grafana.d.lcamaral.com.
@@ -69,7 +74,7 @@ configs:
           disableDeletion: false
           editable: true
           updateIntervalSeconds: 60
-          allowUiUpdates: true
+          allowUiUpdates: false
           options:
             path: /var/lib/grafana/dashboards
         - name: observability
