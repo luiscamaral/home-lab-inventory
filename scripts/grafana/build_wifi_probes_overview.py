@@ -55,9 +55,11 @@ OKFAIL = [{"type": "value", "options": {"0": {"text": "FAIL", "color": "red"},
                                         "1": {"text": "OK", "color": "green"}}}]
 HTTP204 = [{"type": "value", "options": {"0": {"text": "timeout", "color": "red"},
                                          "204": {"text": "204 OK", "color": "green"}}}]
-# Push freshness: 1 = uptime advanced within $window (probe still pushing), 0 = stale.
+# Push freshness: 1 = uptime advanced within LIVE (probe still pushing), 0 = stale.
 PUSHING = [{"type": "value", "options": {"0": {"text": "STALE", "color": "red"},
                                          "1": {"text": "PUSHING", "color": "green"}}}]
+ONOFF = [{"type": "value", "options": {"0": {"text": "OFFLINE", "color": "red"},
+                                       "1": {"text": "ONLINE", "color": "green"}}}]
 # Pipeline error rate (refused / send-failed points/s): zero is good, any is bad.
 ERRRATE = [{"color": "green", "value": None}, {"color": "red", "value": 0.001}]
 # probe_last_error_stage enum -> human label (matches firmware probe stage codes).
@@ -236,71 +238,118 @@ def reallat_avg(grp):
     return f'avg by ({grp}) (avg_over_time({reallat()}[$window:1m]))'
 
 
+# ── liveness ──────────────────────────────────────────────────────────────────
+# The OTLP collector serves each probe's LAST push for 30m (metric_expiration),
+# so a dead probe keeps emitting frozen values. The only proof of life is the
+# uptime counter still advancing. LIVE is a FIXED window (not $window): with
+# $window=6h a probe dead for 5h would still read "fresh". 6m > one ~50-110s
+# band cycle (several pushes per cycle), so a healthy probe never flaps.
+LIVE = "6m"
+# Rooms stay listed (as OFFLINE) for this long after their last push, instead of
+# vanishing when the collector expires the series at 30m.
+KNOWN = "24h"
+
+
+def fresh():
+    """Instance-level freshness gate: use as `<expr> and on (instance) {fresh()}`."""
+    return f'(changes(wifi_probe_uptime_seconds{{{JOB}}}[{LIVE}]) > 0)'
+
+
+def alive_by_room():
+    """1 = room's probe pushed within LIVE, 0 = stale (or expired, seen within KNOWN)."""
+    up = f'wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}}'
+    return (f'(max by (room) (clamp_max(changes({up}[{LIVE}]), 1)) '
+            f'or max by (room) (0 * last_over_time({up}[{KNOWN}])))')
+
+
+def connected_live():
+    """wifi_client_connected per room/instance, forced to 0 when the probe is stale."""
+    c = f'max by (room, instance) (wifi_client_connected{{{JOB}, room=~"$room"}})'
+    return f'(({c} and on (instance) {fresh()}) or (0 * {c}))'
+
+
 # ══ FLEET — household verdict strip (8 stats, w=3 h=4) ═════════════════════════
 fleet = [
-    {"type": "stat", "title": "📡 Probes Reporting", "unit": "percentunit", "decimals": 0, "steps":
-     [{"color": "red", "value": None}, {"color": "yellow", "value": 0.99}, {"color": "green", "value": 1}],
-     "desc": "Fraction of rooms whose probe data is FRESH — uptime advanced within $window. Cutover-agnostic: "
-             "holds whether Prometheus scrapes probes directly or via the OTLP collector cache (which serves the "
-             "last push for 30m). sum-of-bool numerator (not count) so it never vanishes at a total outage; "
-             "or vector(0) keeps an empty fleet at a clear 0 instead of No data.",
-     "targets": [T(f'(sum(changes(wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}}[$window]) > bool 0) '
-                   f'/ count(wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}})) or vector(0)', "fresh")]},
-    {"type": "stat", "title": "🏠 Rooms Covered", "unit": "none", "decimals": 0, "colormode": "value",
+    {"type": "stat", "title": "🟢 Probe status — per room", "unit": "none", "decimals": 0, "mappings": ONOFF,
+     "steps": [{"color": "red", "value": None}, {"color": "green", "value": 1}], "textmode": "value_and_name",
+     "desc": f"ONLINE = the room's probe pushed fresh data within the last {LIVE} (uptime counter advanced). "
+             f"OFFLINE = no fresh push: the collector may still be serving its last values (cached 30m), so "
+             f"panels that show raw values can look healthy for a dead probe. A room stays listed as OFFLINE for "
+             f"{KNOWN} after its last push. Pairs with the WifiProbeNoData alert (10m).",
+     "targets": [T(alive_by_room(), "{{room}}")]},
+    {"type": "stat", "title": "📡 Probes Reporting", "unit": "percentunit", "decimals": 0, "min": 0, "max": 1,
+     "steps": [{"color": "red", "value": None}, {"color": "yellow", "value": 0.99}, {"color": "green", "value": 1}],
+     "desc": f"Fraction of known rooms (seen within {KNOWN}) whose probe pushed fresh data within {LIVE}. Fixed "
+             f"window, independent of $window, so a long $window can't hide a dead probe; the {KNOWN} denominator "
+             f"keeps a dead room counted after the collector expires its series (30m). or vector(0) keeps an "
+             f"empty fleet at a clear 0 instead of No data.",
+     "targets": [T(f'(sum({alive_by_room()}) / count({alive_by_room()})) or vector(0)', "fresh")]},
+    {"type": "stat", "title": f"🏠 Rooms Known ({KNOWN})", "unit": "none", "decimals": 0, "colormode": "value",
      "steps": [{"color": "red", "value": None}, {"color": "green", "value": 1}],
-     "desc": "Distinct rooms reporting probe data. Green at ≥1 so a single-room (or $room-filtered) "
-             "deployment isn't falsely degraded.",
-     "targets": [T(f'count(count by (room) (wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}})) or vector(0)', "rooms")]},
+     "desc": f"Distinct rooms that pushed data within {KNOWN}, online or not (see Probe status). Green at ≥1 so "
+             f"a single-room (or $room-filtered) deployment isn't falsely degraded.",
+     "targets": [T(f'count({alive_by_room()}) or vector(0)', "rooms")]},
     {"type": "stat", "title": "🌐 Worst-Room Internet", "unit": "none", "decimals": 0, "mappings": OKFAIL,
      "steps": [{"color": "red", "value": None}, {"color": "green", "value": 1}],
      "desc": "internet_https (generate_204) reachability of the weakest room, on its recently-reported working "
              "band. max-by-room = a room is OK if EITHER band reached the internet (avoids a false FAIL from the "
              "stale off-band); outer min = FAIL only if some room has no working band. probe_success is "
-             "freshness-gated (changes(uptime)>0) so a dead probe's cache-frozen success can't show green.",
+             f"freshness-gated (uptime advanced within {LIVE}) so a dead probe's cache-frozen success can't show "
+             "green.",
      "targets": [T(f'min(max by (room) (probe_success{{{JOB}, probe="internet_https", room=~"$room", band=~"$band"}} '
-                   f'and on (instance) (changes(wifi_probe_uptime_seconds{{{JOB}}}[$window]) > 0)))', "worst")]},
+                   f'and on (instance) {fresh()}))', "worst")]},
     {"type": "stat", "title": "📶 Weakest Link RSSI", "unit": "dBm", "decimals": 0, "steps": RSSI,
-     "desc": "Most negative connected-link RSSI across selected rooms/bands.",
-     "targets": [T(f'min(wifi_client_rssi_dbm{{{JOB}, room=~"$room", band=~"$band"}})', "weakest")]},
+     "desc": f"Most negative connected-link RSSI across selected rooms/bands, ONLINE probes only (uptime "
+             f"advanced within {LIVE}) — a dead probe's cached reading is ignored.",
+     "targets": [T(f'min(wifi_client_rssi_dbm{{{JOB}, room=~"$room", band=~"$band"}} and on (instance) {fresh()})',
+                   "weakest")]},
     {"type": "stat", "title": "🔌 Disconnects ($window)", "unit": "none", "decimals": 0, "steps": DISC,
      "desc": "Unexpected WiFi disconnects over $window. Excludes the ~once-per-cycle band-switch flaps, so a "
              "healthy probe sits at 0.",
      "targets": [T(f'sum(increase(wifi_client_unexpected_disconnect_total{{{JOB}, room=~"$room"}}[$window]))', "disc")]},
     {"type": "stat", "title": "🧠 Min Contiguous Heap", "unit": "bytes", "decimals": 0, "steps": HEAP,
      "desc": "Smallest largest-contiguous free block among selected probes — the real OOM predictor (what the "
-             "HeapLow alert fires on, <32768). A big total heap can still OOM if it's fragmented.",
-     "targets": [T(f'min(wifi_probe_heap_largest_free_block_bytes{{{JOB}, room=~"$room"}})', "min heap")]},
+             "HeapLow alert fires on, <32768). A big total heap can still OOM if it's fragmented. ONLINE probes "
+             "only — a dead probe's last cached heap is ignored.",
+     "targets": [T(f'min(wifi_probe_heap_largest_free_block_bytes{{{JOB}, room=~"$room"}} and on (instance) {fresh()})',
+                   "min heap")]},
     {"type": "stat", "title": "⏱️ Max Probe Staleness", "unit": "s", "decimals": 0, "steps": AGE,
      "desc": "Oldest probe last-success age. NOTE: a never-succeeded probe emits no age series; pair with Probes "
              "Failing. Frozen at last push for a dead probe — read with Per-room push freshness.",
      "targets": [T(f'max(probe_last_success_age_seconds{{{JOB}, room=~"$room", band=~"$band"}})', "stalest")]},
     {"type": "stat", "title": "❌ Probes Failing", "unit": "none", "decimals": 0, "steps": DISC,
      "desc": "Count of room×probe×band checks that are failing OR stale: an explicit last-attempt failure "
-             "(success==0 on a fresh probe) OR a probe whose uptime hasn't advanced within $window (cache-frozen, "
+             f"(success==0 on a fresh probe) OR a probe whose uptime hasn't advanced within {LIVE} (cache-frozen, "
              "counted as failing so a dead probe frozen at success=1 can't read green). or vector(0) keeps a "
              "healthy 0 green.",
      "targets": [T(f'count((probe_success{{{JOB}, room=~"$room", band=~"$band"}} == 0 '
-                   f'and on (instance) (changes(wifi_probe_uptime_seconds{{{JOB}}}[$window]) > 0)) '
+                   f'and on (instance) {fresh()}) '
                    f'or (probe_success{{{JOB}, room=~"$room", band=~"$band"}} '
-                   f'unless on (instance) (changes(wifi_probe_uptime_seconds{{{JOB}}}[$window]) > 0))) '
+                   f'unless on (instance) {fresh()})) '
                    f'or vector(0)', "failing")]},
 ]
 
 # ══ HEALTH — device identity + system ═════════════════════════════════════════
 health = [
     {"type": "table", "title": "🏷️ Probe identity & build — per room", "unit": "none",
-     "desc": "One row per probe: build_info labels (incl. firmware self-reported location) joined with "
-             "uptime, free heap, and live connected flag. Compare `Self-reported room` to `Room` (scrape "
-             "label) to confirm a probe is physically where its target claims.",
+     "desc": f"One row per probe: build_info labels (incl. firmware self-reported location) joined with "
+             f"liveness, uptime, free heap, and connected flag. Online = pushed within {LIVE}; for an OFFLINE "
+             f"probe Uptime/Heap are its LAST pushed values (collector cache) and Connected is forced DOWN. "
+             f"Compare `Self-reported room` to `Room` (scrape label) to confirm a probe is physically where its "
+             f"target claims.",
      "targets": [
          T(with_identity(f'max by (room, instance) (wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}})'), "uptime"),
          T(with_identity(f'max by (room, instance) (wifi_probe_heap_free_bytes{{{JOB}, room=~"$room"}})'), "heap"),
-         T(with_identity(f'max by (room, instance) (wifi_client_connected{{{JOB}, room=~"$room"}})'), "conn")],
+         T(with_identity(connected_live()), "conn"),
+         T(with_identity(f'max by (room, instance) (clamp_max(changes(wifi_probe_uptime_seconds'
+                         f'{{{JOB}, room=~"$room"}}[{LIVE}]), 1))'), "online")],
      "transforms": organize(
          {"room": "Room", "instance": "Probe", "version": "FW", "idf": "IDF", "chip": "Chip",
           "location": "Self-reported room", "Value #A": "Uptime", "Value #B": "Heap free",
-          "Value #C": "Connected"}, keep=["instance"]),
+          "Value #C": "Connected", "Value #D": "Online"}, keep=["instance"]),
      "overrides": [
+         col_override("Online", [{"id": "mappings", "value": ONOFF},
+                                 {"id": "custom.cellOptions", "value": {"type": "color-background"}}]),
          col_override("Uptime", [{"id": "unit", "value": "s"}]),
          col_override("Heap free", [{"id": "unit", "value": "bytes"}]),
          col_override("Connected", [{"id": "mappings", "value": UPDOWN},
@@ -322,9 +371,10 @@ health = [
      "targets": [T(f'increase(wifi_client_unexpected_disconnect_total{{{JOB}, room=~"$room"}}[$window])', "{{room}} disc/$window")]},
     {"type": "state-timeline", "title": "📶 Connected state — band-switch flaps", "steps":
      [{"color": "red", "value": None}, {"color": "green", "value": 1}], "mappings": UPDOWN,
-     "desc": "One lane per room. max by(room,instance) suppresses cosmetic single-scrape dips on band switch; "
-     "a sustained red band is a real outage.",
-     "targets": [T(f'max by (room, instance) (wifi_client_connected{{{JOB}, room=~"$room"}})', "{{room}}")]},
+     "desc": f"One lane per room. max by(room,instance) suppresses cosmetic single-scrape dips on band switch; "
+     f"a sustained red band is a real outage. Forced DOWN when the probe hasn't pushed within {LIVE}, so a "
+     f"dead probe's cached connected=1 can't read UP.",
+     "targets": [T(connected_live(), "{{room}}")]},
 ]
 
 # ══ LINK — WiFi link quality ══════════════════════════════════════════════════
@@ -358,20 +408,25 @@ link = [
 ]
 
 # ══ PROBE — reachability SLA (core) ═══════════════════════════════════════════
+# Rendered as a row REPEATED per $room (one section per room), so inside it $room
+# is a single value and legends/titles drop the room dimension. Cross-room panels
+# live in the `compare` row below.
 probe = [
     {"type": "stat", "title": "✅ Checks passing %", "unit": "percentunit", "decimals": 1, "steps": RATIO,
-     "desc": "Share of room×probe×band checks whose last attempt succeeded. A fraction (not a raw count) so "
-             "the verdict stays correct when you filter $room or $band. Numerator is freshness-gated "
-             "(changes(uptime)>0) — a cache-frozen dead probe drops out of the numerator but stays in the full "
-             "denominator, so it drags the verdict down instead of falsely passing.",
+     "min": 0, "max": 1,
+     "desc": f"Share of this room's probe×band checks whose last attempt succeeded. A fraction (not a raw "
+             f"count) so the verdict stays correct when you filter $band. Numerator is freshness-gated (uptime "
+             f"advanced within {LIVE}) — a cache-frozen dead probe drops out of the numerator but stays in the "
+             f"denominator, so it drags the verdict down instead of falsely passing.",
      "targets": [T(f'sum(probe_success{{{JOB}, room=~"$room", band=~"$band"}} '
-                   f'and on (instance) (changes(wifi_probe_uptime_seconds{{{JOB}}}[$window]) > 0)) '
+                   f'and on (instance) {fresh()}) '
                    f'/ count(probe_success{{{JOB}, room=~"$room", band=~"$band"}})', "passing")]},
     {"type": "stat", "title": "📉 Worst success ratio", "unit": "percentunit", "decimals": 3, "steps": RATIO,
-     "desc": "Single worst room×probe success ratio over $window. clamp_min avoids 0/0; prefer $window ≥15m.",
+     "min": 0, "max": 1,
+     "desc": "This room's single worst probe success ratio over $window. clamp_min avoids 0/0; prefer $window ≥15m.",
      "targets": [T(f'min({ratio_by("room, probe")})', "min ratio")]},
     {"type": "stat", "title": "⏱️ Stalest probe age", "unit": "s", "decimals": 0, "steps": AGE,
-     "desc": "Oldest last-success across room×probe. Never-succeeded probes are omitted here — see the matrix. "
+     "desc": "Oldest last-success across this room's probes. Never-succeeded probes are omitted here — see the matrix. "
              "Frozen at last push for a dead probe — read with Per-room push freshness.",
      "targets": [T(f'max(probe_last_success_age_seconds{{{JOB}, room=~"$room", band=~"$band"}})', "max age")]},
     {"type": "stat", "title": "🌐 HTTPS status (204?)", "unit": "none", "decimals": 0, "mappings": HTTP204,
@@ -381,39 +436,39 @@ probe = [
              "200/302; or vector(0) shows a clean 0 (timeout) when every band is timing out.",
      "targets": [T(f'min(probe_http_status_code{{{JOB}, room=~"$room", band=~"$band", probe="internet_https"}} != 0) '
                    f'or vector(0)', "min code")]},
-    {"type": "state-timeline", "title": "🎯 Probe success matrix — room × probe × band", "steps":
+    {"type": "state-timeline", "title": "🎯 Probe success matrix — probe × band", "steps":
      [{"color": "red", "value": None}, {"color": "green", "value": 1}], "mappings": OKFAIL,
-     "desc": "THE core SLA view: OK/FAIL lane per room×probe×band over time. spanNulls holds value across the "
-     "off-band phase. Per-band lanes expose a band-specific dead spot.",
-     "targets": [T(f'probe_success{{{JOB}, room=~"$room", band=~"$band"}}', "{{room}} · {{probe}} · {{band}}")]},
+     "desc": "THE core SLA view for this room: OK/FAIL lane per probe×band over time. spanNulls holds value "
+     "across the off-band phase. Per-band lanes expose a band-specific dead spot.",
+     "targets": [T(f'probe_success{{{JOB}, room=~"$room", band=~"$band"}}', "{{probe}} · {{band}}")]},
     {"type": "timeseries", "title": "Success ratio over $window (room × probe)", "unit": "percentunit",
      "decimals": 4, "steps": RATIO, "colormode": "thresholds", "calcs": ["lastNotNull", "min"],
      "desc": "Δsuccess/Δattempts over $window, bands merged per room×probe. Generous window smooths the "
      "per-cycle quantization; clamp_min avoids 0/0 gaps.",
      "targets": [T(ratio_by("room, probe"), "{{room}} · {{probe}}")]},
     {"type": "timeseries", "title": "📨 Request latency — TTFB (HTTPS) / RTT", "unit": "s", "decimals": 3,
-     "steps": LAT, "colormode": "thresholds", "desc": "Real request latency per room×probe×band: TTFB for the HTTPS "
+     "steps": LAT, "colormode": "thresholds", "desc": "Real request latency per probe×band: TTFB for the HTTPS "
      "probe (its total is ~95% fixed TLS-handshake crypto on the MCU, not network), total duration for ICMP/DNS "
      "(no handshake → total IS the RTT). Coarse staircase (one step/cycle); held segments are normal. The HTTPS "
      "handshake cost lives in the next panel so it doesn't false-red here.",
-     "targets": [T(reallat(), "{{room}} · {{probe}} · {{band}}")]},
+     "targets": [T(reallat(), "{{probe}} · {{band}}")]},
     {"type": "timeseries", "title": "Avg request latency over $window", "unit": "s", "decimals": 3, "steps": LAT,
      "colormode": "thresholds", "desc": "Windowed mean of the real request latency (TTFB for HTTPS, total for "
-     "ICMP/DNS), bands merged per room×probe. avg_over_time over a subquery smooths the per-cycle quantization.",
-     "targets": [T(reallat_avg("room, probe"), "{{room}} · {{probe}}")]},
+     "ICMP/DNS), bands merged per probe. avg_over_time over a subquery smooths the per-cycle quantization.",
+     "targets": [T(reallat_avg("room, probe"), "{{probe}}")]},
     {"type": "timeseries", "title": "🌐 HTTPS handshake vs TTFB (internet_https)", "unit": "s", "decimals": 3,
      "colormode": "palette-classic", "calcs": ["lastNotNull", "max"],
      "desc": "Splits the HTTPS probe: connect = DNS+TCP+TLS handshake (the ~0.7 s fixed TLS-crypto cost on the C5 "
      "MCU — NOT network, ~10-20× a real CPU), TTFB = the real request round-trip (~20 ms, matches curl). A connect "
      "spike (esp. with err_stage=tls / err_esp=0x8017) = a TLS regression like the 0.9.1 heap-OOM TLS failure; TTFB "
      "is the real internet-latency signal. No threshold colouring — the ~0.7 s connect is expected here.",
-     "targets": [T(f'probe_http_connect_seconds{{{JOB}, room=~"$room", band=~"$band", probe="internet_https"}}', "{{room}} {{band}} · connect"),
-                 T(f'probe_http_ttfb_seconds{{{JOB}, room=~"$room", band=~"$band", probe="internet_https"}}', "{{room}} {{band}} · ttfb")]},
+     "targets": [T(f'probe_http_connect_seconds{{{JOB}, room=~"$room", band=~"$band", probe="internet_https"}}', "{{band}} · connect"),
+                 T(f'probe_http_ttfb_seconds{{{JOB}, room=~"$room", band=~"$band", probe="internet_https"}}', "{{band}} · ttfb")]},
     {"type": "timeseries", "title": "HTTPS status code over time", "unit": "none", "decimals": 0,
      "steps": [{"color": "red", "value": None}, {"color": "green", "value": 204}, {"color": "yellow", "value": 205}],
-     "colormode": "thresholds", "desc": "internet_https code per room/band — a flip 204→200/302 marks a captive "
+     "colormode": "thresholds", "desc": "internet_https code per band — a flip 204→200/302 marks a captive "
      "portal; 0 marks a hard timeout.",
-     "targets": [T(f'probe_http_status_code{{{JOB}, room=~"$room", band=~"$band", probe="internet_https"}}', "{{room}} · {{band}}")]},
+     "targets": [T(f'probe_http_status_code{{{JOB}, room=~"$room", band=~"$band", probe="internet_https"}}', "{{band}}")]},
     {"type": "table", "title": "📋 Probe SLA matrix — room × probe × band", "unit": "none", "decimals": 3,
      "desc": "Dense per-(room,probe,band) sheet joining every probe metric. A blank Success-age next to Up=0 is "
      "the silently-failing / never-succeeded signature. target column confirms each probe is aimed correctly. "
@@ -438,31 +493,46 @@ probe = [
          col_override("Avg (s)", [{"id": "unit", "value": "s"}]),
          col_override("Age (s)", [{"id": "unit", "value": "s"}, {"id": "decimals", "value": 0}])]},
     {"type": "bargauge", "title": "Probe freshness — last-success age", "unit": "s", "decimals": 0, "steps": AGE,
-     "desc": "Ranks every room×probe by staleness. CAVEAT: a never-succeeded probe shows NO bar — cross-check "
-     "the success matrix (always has a lane). Frozen at last push for a dead probe — read with Per-room push "
-     "freshness.",
+     "desc": "Ranks this room's probes by staleness. CAVEAT: a never-succeeded probe shows NO bar — cross-check "
+     "the success matrix (always has a lane). Frozen at last push for a dead probe — read with Probe status.",
      "targets": [T(f'max by (room, probe) (probe_last_success_age_seconds{{{JOB}, room=~"$room", band=~"$band"}})',
-                   "{{room}} · {{probe}}", instant=True)]},
+                   "{{probe}}", instant=True)]},
     {"type": "state-timeline", "title": "🚦 Probe error stage", "mappings": ERRSTAGE, "showvalue": "auto",
      "steps": [{"color": "green", "value": None}, {"color": "yellow", "value": 1}, {"color": "red", "value": 3}],
-     "desc": "Last error stage per room×probe×band over time (the WifiProbeInternetDown alert points here): "
+     "desc": "Last error stage per probe×band over time (the WifiProbeInternetDown alert points here): "
      "0 ok · 1 dns · 2 tcp · 3 tls · 4 http · 5 timeout · 6 internal. A sustained tls/timeout lane pins the "
      "failing stage of a down probe.",
-     "targets": [T(f'probe_last_error_stage{{{JOB}, room=~"$room", band=~"$band"}}', "{{room}} · {{probe}} · {{band}}")]},
+     "targets": [T(f'probe_last_error_stage{{{JOB}, room=~"$room", band=~"$band"}}', "{{probe}} · {{band}}")]},
     {"type": "timeseries", "title": "📊 Errors by stage / $window", "unit": "none", "decimals": 0,
      "fill": 25, "stack": True, "desc": "increase() of probe_errors_total bucketed by failing stage over $window, "
-     "summed per room×probe×stage. Stacked so the dominant failure mode (dns / tcp / tls / http / timeout) for a "
+     "summed per probe×stage. Stacked so the dominant failure mode (dns / tcp / tls / http / timeout) for a "
      "flaky probe is obvious.",
      "targets": [T(f'sum by (room, probe, stage) (increase(probe_errors_total{{{JOB}, room=~"$room", band=~"$band"}}[$window]))',
-                   "{{room}} · {{probe}} · {{stage}}")]},
+                   "{{probe}} · {{stage}}")]},
     {"type": "timeseries", "title": "p95 latency over $window (ICMP/DNS)", "unit": "s", "decimals": 3,
      "steps": LAT, "colormode": "thresholds", "desc": "histogram_quantile p95 of probe_duration_seconds for the "
-     "round-trip probes (gateway / internet_ip / lan_dns), per room×probe. HTTPS is EXCLUDED — its total is "
+     "round-trip probes (gateway / internet_ip / lan_dns), per probe. HTTPS is EXCLUDED — its total is "
      "TLS-handshake-dominated; use the TTFB / handshake panels for HTTPS. NOTE: the histogram observes ALL attempts "
      "incl. failures at full duration, so a p95 spike can be failures — cross-check the success matrix.",
      "targets": [T(f'histogram_quantile(0.95, sum by (le, room, probe) (rate(probe_duration_seconds_bucket'
-                   f'{{{JOB}, room=~"$room", band=~"$band", type!="http"}}[$window])))', "{{room}} · {{probe}}")]},
+                   f'{{{JOB}, room=~"$room", band=~"$band", type!="http"}}[$window])))', "{{probe}}")]},
 ]
+
+# ══ COMPARE — cross-room view (not repeated) ═══════════════════════════════════
+# Rooms side by side, so a whole-house outage (every room red at once) is easy
+# to tell apart from a single-room problem. Detail per room lives in the
+# repeated probe row.
+COMPARE_FROM_PROBE = ("Success ratio over $window (room × probe)", "📋 Probe SLA matrix — room × probe × band")
+compare = [
+    {"type": "state-timeline", "title": "🏘️ Probe success — room × probe (all bands)", "steps":
+     [{"color": "red", "value": None}, {"color": "green", "value": 1}], "mappings": OKFAIL,
+     "desc": "One OK/FAIL lane per room×probe, bands merged with min (FAIL if ANY band failed its last attempt). "
+     "Several rooms red at the same time = a household/upstream problem; one room red = local. Drill into that "
+     "room's section for the failing band.",
+     "targets": [T(f'min by (room, probe) (probe_success{{{JOB}, room=~"$room", band=~"$band"}})',
+                   "{{room}} · {{probe}}")]},
+] + [s for s in probe if s["title"] in COMPARE_FROM_PROBE]
+probe = [s for s in probe if s["title"] not in COMPARE_FROM_PROBE]
 
 # ══ SURVEY — what each room sees ══════════════════════════════════════════════
 survey = [
@@ -535,15 +605,19 @@ otlp = [
                  T(f'sum(rate(otelcol_exporter_sent_metric_points{{{OTELJOB}}}[$window]))', "exported")]},
     {"type": "state-timeline", "title": "🟢 Per-room push freshness", "steps":
      [{"color": "red", "value": None}, {"color": "green", "value": 1}], "mappings": PUSHING,
-     "desc": "Per room: 1 = a push advanced uptime within the last 6m (PUSHING), 0 = STALE. The direct per-room "
-     "liveness signal now that `up` reflects the collector, not each probe. 6m > one band cycle so a healthy "
-     "room never flaps.",
-     "targets": [T(f'clamp_max(changes(wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}}[6m]), 1)', "{{room}}")]},
+     "desc": f"Per room: 1 = a push advanced uptime within the last {LIVE} (PUSHING), 0 = STALE. The direct "
+     f"per-room liveness signal now that `up` reflects the collector, not each probe. {LIVE} > one band cycle so "
+     f"a healthy room never flaps. A room stays as a STALE lane for {KNOWN} after its last push instead of "
+     f"going blank when the collector expires its series (30m). Same signal as the Probe status strip.",
+     "targets": [T(alive_by_room(), "{{room}}")]},
 ]
 
 # ── explicit gap-free layout: (height, [(title, width), ...]) lines sum to 24 ──
 LINES = {
-    "fleet": [(4, [(p["title"], 3) for p in fleet])],
+    "fleet": [
+        (3, [("🟢 Probe status — per room", 24)]),
+        (4, [(p["title"], 3) for p in fleet if p["title"] != "🟢 Probe status — per room"]),
+    ],
     "health": [
         (8, [("🏷️ Probe identity & build — per room", 24)]),
         (8, [("⏱️ Uptime since boot — per room", 8), ("🧠 Free heap — leak watch", 8), ("🔌 Disconnects — increase/$window", 8)]),
@@ -554,14 +628,17 @@ LINES = {
         (9, [("Current link detail per room", 24)]),
         (7, [("Link channel over time (roams)", 24)]),
     ],
+    "compare": [
+        (8, [("🏘️ Probe success — room × probe (all bands)", 24)]),
+        (8, [("Success ratio over $window (room × probe)", 24)]),
+        (10, [("📋 Probe SLA matrix — room × probe × band", 24)]),
+    ],
     "probe": [
         (4, [("✅ Checks passing %", 6), ("📉 Worst success ratio", 6), ("⏱️ Stalest probe age", 6), ("🌐 HTTPS status (204?)", 6)]),
-        (8, [("🎯 Probe success matrix — room × probe × band", 24)]),
-        (8, [("Success ratio over $window (room × probe)", 12), ("📨 Request latency — TTFB (HTTPS) / RTT", 12)]),
-        (8, [("Avg request latency over $window", 12), ("🌐 HTTPS handshake vs TTFB (internet_https)", 12)]),
-        (8, [("HTTPS status code over time", 12), ("p95 latency over $window (ICMP/DNS)", 12)]),
-        (10, [("📋 Probe SLA matrix — room × probe × band", 24)]),
-        (8, [("Probe freshness — last-success age", 24)]),
+        (8, [("🎯 Probe success matrix — probe × band", 24)]),
+        (8, [("📨 Request latency — TTFB (HTTPS) / RTT", 12), ("Avg request latency over $window", 12)]),
+        (8, [("🌐 HTTPS handshake vs TTFB (internet_https)", 12), ("HTTPS status code over time", 12)]),
+        (8, [("p95 latency over $window (ICMP/DNS)", 12), ("Probe freshness — last-success age", 12)]),
         (8, [("🚦 Probe error stage", 12), ("📊 Errors by stage / $window", 12)]),
     ],
     "survey": [
@@ -607,7 +684,9 @@ def pack(specs, y0):
 
 ROWS = [
     {"title": None, "open": True, "panels": assemble(fleet, "fleet")},
-    {"title": "🎯 Probe Results — reachability SLA (per room × probe)", "open": True, "panels": assemble(probe, "probe")},
+    {"title": "🏘️ Room comparison — room × probe", "open": True, "panels": assemble(compare, "compare")},
+    # Repeated once per selected room (Grafana row repeat on the multi-value $room var).
+    {"title": "🎯 Probe Results — ${room}", "open": True, "repeat": "room", "panels": assemble(probe, "probe")},
     {"title": "📶 WiFi Link Quality — RSSI / channel / BSSID", "open": True, "panels": assemble(link, "link")},
     {"title": "🩺 Device Health & Identity", "open": False, "panels": assemble(health, "health")},
     {"title": "📡 AP Survey — what each room sees (passive scan)", "open": False, "panels": assemble(survey, "survey")},
@@ -623,8 +702,11 @@ for r in ROWS:
         panels.extend(rendered)
         continue
     if r["open"]:
-        panels.append({"id": nid(), "type": "row", "title": r["title"], "collapsed": False,
-                       "panels": [], "gridPos": {"h": 1, "w": 24, "x": 0, "y": y}})
+        row = {"id": nid(), "type": "row", "title": r["title"], "collapsed": False,
+               "panels": [], "gridPos": {"h": 1, "w": 24, "x": 0, "y": y}}
+        if r.get("repeat"):
+            row["repeat"] = r["repeat"]
+        panels.append(row)
         y += 1
         rendered, y = pack(r["panels"], y)
         panels.extend(rendered)
@@ -638,10 +720,11 @@ for r in ROWS:
 dashboard = {
     "uid": "wifi-probes-overview",
     "title": "📡 WiFi Probes — Household Coverage",
-    "description": "Per-room ESP32-C5 WiFi probe fleet: fleet verdict strip, reachability SLA "
-                   "(gateway/DNS/internet/HTTPS), link quality (RSSI/channel/BSSID), device health, "
-                   "and per-room AP survey. Rooms come from the scrape-time `room` label. "
-                   "Generated by scripts/grafana/build_wifi_probes_overview.py.",
+    "description": "Per-room ESP32-C5 WiFi probe fleet: per-room ONLINE/OFFLINE strip and fleet verdicts, "
+                   "cross-room comparison, one reachability SLA section per room (gateway/DNS/internet/HTTPS), "
+                   "link quality (RSSI/channel/BSSID), device health, and per-room AP survey. Rooms come from "
+                   "the scrape-time `room` label. GENERATED by scripts/grafana/build_wifi_probes_overview.py — "
+                   "UI saves are disabled (allowUiUpdates: false); change the generator and re-apply.",
     "tags": ["wifi", "esp32", "wifi-probe", "wireless", "homelab", "coverage", "overview"],
     "timezone": "browser", "schemaVersion": 39, "version": 1, "editable": True, "weekStart": "",
     "refresh": "30s", "time": {"from": "now-6h", "to": "now"}, "timepicker": {},

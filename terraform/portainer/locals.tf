@@ -1329,6 +1329,10 @@ locals {
       # rendered as near-zero latency on dashboards and status-code froze
       # at 204. blackbox-exporter also emits probe_success, so every rule
       # here MUST filter job="wifi-probe".
+      # 2026-11-08: the collector serves a dead probe's LAST push for 30m, so
+      # state alerts (InternetDown / ProbeFailing / HeapLow) are gated on
+      # the probe still pushing (uptime advanced within 10m). A dead probe
+      # then raises only WifiProbeNoData, not stale-value noise.
       - name: wifi-probes
         interval: 1m
         rules:
@@ -1361,7 +1365,9 @@ locals {
                 collector :4318, or its push is wedged. Try
                 http://{{ $$labels.instance }}/status then POST /reboot (token).
           - alert: WifiProbeInternetDown
-            expr: max by (room) (probe_success{job="wifi-probe", probe="internet_https"}) == 0
+            expr: >-
+              max by (room) (probe_success{job="wifi-probe", probe="internet_https"}
+              and on (instance) changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) > 0) == 0
             for: 10m
             labels:
               severity: critical
@@ -1375,7 +1381,9 @@ locals {
                 issue, not WiFi. Check probe_last_error_stage to see the
                 failing stage (1=dns 2=tcp 3=tls 4=http 5=timeout).
           - alert: WifiProbeProbeFailing
-            expr: probe_success{job="wifi-probe"} == 0
+            expr: >-
+              probe_success{job="wifi-probe"} == 0
+              and on (instance) changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) > 0
             for: 20m
             labels:
               severity: warning
@@ -1401,7 +1409,9 @@ locals {
                 frozen probe engine or a band that never reconnects even
                 when probe_success still reads 1 from a stale gauge.
           - alert: WifiProbeHeapLow
-            expr: wifi_probe_heap_largest_free_block_bytes{job="wifi-probe"} < 32768
+            expr: >-
+              wifi_probe_heap_largest_free_block_bytes{job="wifi-probe"} < 32768
+              and on (instance) changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) > 0
             for: 15m
             labels:
               severity: critical
