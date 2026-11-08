@@ -286,12 +286,12 @@
   - Volumes: `/var/run/docker.sock`, `/nfs/dockermaster/Docker` (read-only)
   - Purpose: Self-hosted GitHub Actions runner for CI/CD
 
-- **rundeck** — `registry.cf.lcamaral.com/la-rundeck:latest`
+- **rundeck** — `zot.d.lcamaral.com/homelab/la-rundeck:latest` (switched from registry.cf on 2026-11-08)
   - Network: `docker-servers-net` (192.168.59.22)
   - Volumes: `/nfs/dockermaster/docker/rundeck/data`, `/var/run/docker.sock`
   - Purpose: Job scheduler / runbook automation
 
-- **postgres-rundeck** — `postgres:17`
+- **postgres-rundeck** — `postgres:17.9@sha256:7ad98329…` (PG 17.9-1.pgdg13+1, digest-pinned 2026-11-08)
   - Network: `docker-servers-net` (192.168.59.23)
   - Volumes: `/opt/rundeck/dbdata` (**local ds-1 disk**, not NFS; salvaged 2026-06-30 after the NFS EIO
     PANIC, see `docs/zot-registry.md`). `/nfs/dockermaster/docker/rundeck/dbdata` is a stale copy

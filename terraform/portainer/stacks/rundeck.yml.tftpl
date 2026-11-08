@@ -24,7 +24,7 @@ configs:
 
 services:
   rundeck:
-    image: registry.cf.lcamaral.com/la-rundeck:latest
+    image: zot.d.lcamaral.com/homelab/la-rundeck:latest
     pull_policy: if_not_present
     container_name: rundeck
     hostname: rundeck-local
@@ -70,7 +70,9 @@ services:
       portainer.autodeploy: "false"
 
   postgres:
-    image: postgres:17
+    # Pinned to the exact running build (17.9-1.pgdg13+1) by digest: the 17.9 tag
+    # was rebuilt on Docker Hub since, and a different build must not touch PGDATA.
+    image: postgres:17.9@sha256:7ad98329d513dd497293b951c195ca354274a77f12ddbbbbf85e68a811823d72
     container_name: postgres-rundeck
     hostname: postgres-rundeck
     networks:
