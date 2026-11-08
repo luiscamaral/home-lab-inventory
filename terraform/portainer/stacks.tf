@@ -400,6 +400,8 @@ resource "portainer_stack" "rundeck" {
   endpoint_id     = var.ds1_endpoint_id
   deployment_type = "standalone"
   method          = "string"
+  # cached postgres:17 + la-rundeck on ds-1: a Docker Hub blip must not fail a recreate
+  pull_image = false
 
   stack_file_content = templatefile("${path.module}/stacks/rundeck.yml.tftpl", {
     # admin user line for realm.properties: MD5-hashed password from
