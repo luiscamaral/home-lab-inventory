@@ -51,6 +51,13 @@ GREEN = [{"color": "green", "value": None}]
 # 0/1 and status value mappings
 UPDOWN = [{"type": "value", "options": {"0": {"text": "DOWN", "color": "red"},
                                         "1": {"text": "UP", "color": "green"}}}]
+# Tri-state probe result (see tristate()): -1 = STALE (probe not pushing / expired).
+STALE_GREY = "#8e8e8e"
+OKFAILSTALE = [{"type": "value", "options": {"-1": {"text": "STALE", "color": STALE_GREY},
+                                             "0": {"text": "FAIL", "color": "red"},
+                                             "1": {"text": "OK", "color": "green"}}}]
+OKFAILSTALE_STEPS = [{"color": STALE_GREY, "value": None}, {"color": "red", "value": 0},
+                     {"color": "green", "value": 1}]
 OKFAIL = [{"type": "value", "options": {"0": {"text": "FAIL", "color": "red"},
                                         "1": {"text": "OK", "color": "green"}}}]
 HTTP204 = [{"type": "value", "options": {"0": {"text": "timeout", "color": "red"},
@@ -142,8 +149,12 @@ def mk(s, gp):
                 "targets": targets}
 
     if t == "state-timeline":
+        # Grafana's state-timeline legend lists threshold buckets ("< 1", "1+") whenever
+        # color mode is `thresholds`; with `fixed` it lists the displayed states, so
+        # panels with value mappings get an OK/FAIL/STALE legend from the mapping colors.
+        cmode = "fixed" if s.get("mappings") else "thresholds"
         return {**common, "type": "state-timeline",
-                "fieldConfig": {"defaults": {"color": {"mode": "thresholds"},
+                "fieldConfig": {"defaults": {"color": {"mode": cmode},
                                              "custom": {"fillOpacity": 80, "lineWidth": 0},
                                              "thresholds": thr(s.get("steps") or GREEN),
                                              "mappings": s.get("mappings", [])},
@@ -202,9 +213,15 @@ def with_identity(value_expr):
             f'topk(1, wifi_probe_build_info{{{JOB}, room=~"$room"}}) by (instance)')
 
 
+# topk(1) by (instance, band): after a roam the collector cache (30m) + $window hold
+# 2+ bssid_info series per (instance, band) and a bare RHS fails the whole panel with
+# "many-to-many matching not allowed". The cached series carry identical scrape
+# timestamps, so "latest" can't be picked here — the table may show the previous
+# BSSID for up to ~30m after a roam until firmware exports an association time.
 def with_bssid(value_expr):
     return (f'{value_expr} * on (instance, band) group_left(bssid, ssid, auth) '
-            f'last_over_time(wifi_client_bssid_info{{{JOB}, room=~"$room", band=~"$band"}}[$window])')
+            f'topk by (instance, band) (1, last_over_time(wifi_client_bssid_info'
+            f'{{{JOB}, room=~"$room", band=~"$band"}}[$window]))')
 
 
 def ratio_by(grp):
@@ -260,6 +277,41 @@ def alive_by_room():
     up = f'wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}}'
     return (f'(max by (room) (clamp_max(changes({up}[{LIVE}]), 1)) '
             f'or max by (room) (0 * last_over_time({up}[{KNOWN}])))')
+
+
+def fresh_rooms():
+    """Rooms (label set {room}) whose probe pushed within LIVE."""
+    return f'({alive_by_room()} == 1)'
+
+
+def tristate(sel, by):
+    """probe_success per `by` as 1 OK / 0 FAIL for ONLINE rooms, -1 STALE otherwise.
+
+    Without this a dead probe's cached success=1 reads OK for up to 30m and then the
+    lane goes blank when the collector expires the series. The STALE branch keeps
+    every lane seen within KNOWN visible (grey) for as long as the probe is silent.
+    """
+    return (f'(min by ({by}) ({sel}) and on (room) {fresh_rooms()}) '
+            f'or (-1 * group by ({by}) (last_over_time({sel}[{KNOWN}])))')
+
+
+def tristate_raw(sel):
+    """Like tristate() but keeps the series' own labels (for table merges): 1/0 when
+    the room is ONLINE, -1 while it is stale-but-cached. Expired rows vanish together
+    with the table's other columns, so no 24h branch is needed here."""
+    return (f'({sel} and on (room) {fresh_rooms()}) '
+            f'or (-1 * ({sel} unless on (room) {fresh_rooms()}))')
+
+
+def not_reporting():
+    """Probes seen within KNOWN whose uptime hasn't advanced in 10m (= WifiProbeNoData).
+
+    Unlike `changes(...[10m]) == 0`, this keeps matching after the collector expires
+    a dead probe's series (30m), so the alert/annotation doesn't silently resolve.
+    """
+    up = f'wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}}'
+    return (f'max by (room, instance) (last_over_time({up}[{KNOWN}])) '
+            f'unless on (instance) (changes({up}[10m]) > 0)')
 
 
 def connected_live():
@@ -436,11 +488,14 @@ probe = [
              "200/302; or vector(0) shows a clean 0 (timeout) when every band is timing out.",
      "targets": [T(f'min(probe_http_status_code{{{JOB}, room=~"$room", band=~"$band", probe="internet_https"}} != 0) '
                    f'or vector(0)', "min code")]},
-    {"type": "state-timeline", "title": "🎯 Probe success matrix — probe × band", "steps":
-     [{"color": "red", "value": None}, {"color": "green", "value": 1}], "mappings": OKFAIL,
-     "desc": "THE core SLA view for this room: OK/FAIL lane per probe×band over time. spanNulls holds value "
-     "across the off-band phase. Per-band lanes expose a band-specific dead spot.",
-     "targets": [T(f'probe_success{{{JOB}, room=~"$room", band=~"$band"}}', "{{probe}} · {{band}}")]},
+    {"type": "state-timeline", "title": "🎯 Probe success matrix — probe × band", "steps": OKFAILSTALE_STEPS,
+     "mappings": OKFAILSTALE,
+     "desc": f"THE core SLA view for this room: OK/FAIL lane per probe×band over time, STALE (grey) while the "
+     f"probe isn't pushing (no fresh push within {LIVE}) — so a dead probe's cached OK can't read green and "
+     f"its lanes don't go blank when the collector expires them. spanNulls holds value across the off-band "
+     f"phase. Per-band lanes expose a band-specific dead spot.",
+     "targets": [T(tristate(f'probe_success{{{JOB}, room=~"$room", band=~"$band"}}', "room, probe, band"),
+                   "{{probe}} · {{band}}")]},
     {"type": "timeseries", "title": "Success ratio over $window (room × probe)", "unit": "percentunit",
      "decimals": 4, "steps": RATIO, "colormode": "thresholds", "calcs": ["lastNotNull", "min"],
      "desc": "Δsuccess/Δattempts over $window, bands merged per room×probe. Generous window smooths the "
@@ -471,10 +526,11 @@ probe = [
      "targets": [T(f'probe_http_status_code{{{JOB}, room=~"$room", band=~"$band", probe="internet_https"}}', "{{band}}")]},
     {"type": "table", "title": "📋 Probe SLA matrix — room × probe × band", "unit": "none", "decimals": 3,
      "desc": "Dense per-(room,probe,band) sheet joining every probe metric. A blank Success-age next to Up=0 is "
-     "the silently-failing / never-succeeded signature. target column confirms each probe is aimed correctly. "
+     "the silently-failing / never-succeeded signature. Up = STALE when the room's probe isn't pushing (its "
+     "other columns are then cached last values). target column confirms each probe is aimed correctly. "
      "Last/Avg = real request latency (TTFB for HTTPS, total for ICMP/DNS).",
      "targets": [
-         T(f'probe_success{{{JOB}, room=~"$room", band=~"$band"}}', "up", instant=True),
+         T(tristate_raw(f'probe_success{{{JOB}, room=~"$room", band=~"$band"}}'), "up", instant=True),
          T(ratio_by("room, probe, band, target, type, instance"), "ratio", instant=True),
          T(reallat(), "lastlat", instant=True),
          T(reallat_avg("room, probe, band, target, type, instance"), "avglat", instant=True),
@@ -486,7 +542,7 @@ probe = [
           "Value #E": "Age (s)", "Value #F": "Attempts"},
          extra_exclude=["type"]),
      "overrides": [
-         col_override("Up", [{"id": "mappings", "value": OKFAIL},
+         col_override("Up", [{"id": "mappings", "value": OKFAILSTALE},
                              {"id": "custom.cellOptions", "value": {"type": "color-background"}}]),
          col_override("Ratio", [{"id": "unit", "value": "percentunit"}, {"id": "decimals", "value": 3}]),
          col_override("Last (s)", [{"id": "unit", "value": "s"}]),
@@ -524,12 +580,14 @@ probe = [
 # repeated probe row.
 COMPARE_FROM_PROBE = ("Success ratio over $window (room × probe)", "📋 Probe SLA matrix — room × probe × band")
 compare = [
-    {"type": "state-timeline", "title": "🏘️ Probe success — room × probe (all bands)", "steps":
-     [{"color": "red", "value": None}, {"color": "green", "value": 1}], "mappings": OKFAIL,
-     "desc": "One OK/FAIL lane per room×probe, bands merged with min (FAIL if ANY band failed its last attempt). "
-     "Several rooms red at the same time = a household/upstream problem; one room red = local. Drill into that "
-     "room's section for the failing band.",
-     "targets": [T(f'min by (room, probe) (probe_success{{{JOB}, room=~"$room", band=~"$band"}})',
+    {"type": "state-timeline", "title": "🏘️ Probe success — room × probe (all bands)", "steps": OKFAILSTALE_STEPS,
+     "mappings": OKFAILSTALE,
+     "desc": f"One OK/FAIL lane per room×probe, bands merged with min (FAIL if ANY band failed its last attempt); "
+     f"STALE (grey) while the room's probe isn't pushing (no fresh push within {LIVE}), kept for {KNOWN} after "
+     f"its last push instead of going blank. Several rooms red at the same time = a household/upstream "
+     f"problem; one room red = local; grey = the probe itself is down. Drill into that room's section for the "
+     f"failing band.",
+     "targets": [T(tristate(f'probe_success{{{JOB}, room=~"$room", band=~"$band"}}', "room, probe"),
                    "{{room}} · {{probe}}")]},
 ] + [s for s in probe if s["title"] in COMPARE_FROM_PROBE]
 probe = [s for s in probe if s["title"] not in COMPARE_FROM_PROBE]
@@ -732,7 +790,7 @@ dashboard = {
         {"builtIn": 1, "datasource": {"type": "grafana", "uid": "-- Grafana --"}, "enable": True,
          "hide": True, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard"},
         {"datasource": DS, "enable": True, "hide": False, "iconColor": "rgba(245, 54, 54, 1)",
-         "name": "Probe not reporting", "expr": f'changes(wifi_probe_uptime_seconds{{{JOB}, room=~"$room"}}[10m]) == 0',
+         "name": "Probe not reporting", "expr": not_reporting(),
          "titleFormat": "{{room}} not reporting", "step": "30s"},
     ]},
     "links": [

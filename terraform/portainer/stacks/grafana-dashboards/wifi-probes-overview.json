@@ -19,7 +19,7 @@
           "uid": "thanos"
         },
         "enable": true,
-        "expr": "changes(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[10m]) == 0",
+        "expr": "max by (room, instance) (last_over_time(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[24h])) unless on (instance) (changes(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[10m]) > 0)",
         "hide": false,
         "iconColor": "rgba(245, 54, 54, 1)",
         "name": "Probe not reporting",
@@ -717,11 +717,11 @@
         "type": "prometheus",
         "uid": "thanos"
       },
-      "description": "One OK/FAIL lane per room\u00d7probe, bands merged with min (FAIL if ANY band failed its last attempt). Several rooms red at the same time = a household/upstream problem; one room red = local. Drill into that room's section for the failing band.",
+      "description": "One OK/FAIL lane per room\u00d7probe, bands merged with min (FAIL if ANY band failed its last attempt); STALE (grey) while the room's probe isn't pushing (no fresh push within 6m), kept for 24h after its last push instead of going blank. Several rooms red at the same time = a household/upstream problem; one room red = local; grey = the probe itself is down. Drill into that room's section for the failing band.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "fixed"
           },
           "custom": {
             "fillOpacity": 80,
@@ -730,6 +730,10 @@
           "mappings": [
             {
               "options": {
+                "-1": {
+                  "color": "#8e8e8e",
+                  "text": "STALE"
+                },
                 "0": {
                   "color": "red",
                   "text": "FAIL"
@@ -746,8 +750,12 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "#8e8e8e",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
               },
               {
                 "color": "green",
@@ -780,7 +788,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "min by (room, probe) (probe_success{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"})",
+          "expr": "(min by (room, probe) (probe_success{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}) and on (room) ((max by (room) (clamp_max(changes(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[6m]), 1)) or max by (room) (0 * last_over_time(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[24h]))) == 1)) or (-1 * group by (room, probe) (last_over_time(probe_success{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[24h])))",
           "instant": false,
           "legendFormat": "{{room}} \u00b7 {{probe}}",
           "range": true,
@@ -880,7 +888,7 @@
         "type": "prometheus",
         "uid": "thanos"
       },
-      "description": "Dense per-(room,probe,band) sheet joining every probe metric. A blank Success-age next to Up=0 is the silently-failing / never-succeeded signature. target column confirms each probe is aimed correctly. Last/Avg = real request latency (TTFB for HTTPS, total for ICMP/DNS).",
+      "description": "Dense per-(room,probe,band) sheet joining every probe metric. A blank Success-age next to Up=0 is the silently-failing / never-succeeded signature. Up = STALE when the room's probe isn't pushing (its other columns are then cached last values). target column confirms each probe is aimed correctly. Last/Avg = real request latency (TTFB for HTTPS, total for ICMP/DNS).",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -904,6 +912,10 @@
                 "value": [
                   {
                     "options": {
+                      "-1": {
+                        "color": "#8e8e8e",
+                        "text": "STALE"
+                      },
                       "0": {
                         "color": "red",
                         "text": "FAIL"
@@ -1002,7 +1014,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "probe_success{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}",
+          "expr": "(probe_success{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"} and on (room) ((max by (room) (clamp_max(changes(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[6m]), 1)) or max by (room) (0 * last_over_time(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[24h]))) == 1)) or (-1 * (probe_success{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"} unless on (room) ((max by (room) (clamp_max(changes(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[6m]), 1)) or max by (room) (0 * last_over_time(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[24h]))) == 1)))",
           "format": "table",
           "instant": true,
           "legendFormat": "up",
@@ -1433,11 +1445,11 @@
         "type": "prometheus",
         "uid": "thanos"
       },
-      "description": "THE core SLA view for this room: OK/FAIL lane per probe\u00d7band over time. spanNulls holds value across the off-band phase. Per-band lanes expose a band-specific dead spot.",
+      "description": "THE core SLA view for this room: OK/FAIL lane per probe\u00d7band over time, STALE (grey) while the probe isn't pushing (no fresh push within 6m) \u2014 so a dead probe's cached OK can't read green and its lanes don't go blank when the collector expires them. spanNulls holds value across the off-band phase. Per-band lanes expose a band-specific dead spot.",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "fixed"
           },
           "custom": {
             "fillOpacity": 80,
@@ -1446,6 +1458,10 @@
           "mappings": [
             {
               "options": {
+                "-1": {
+                  "color": "#8e8e8e",
+                  "text": "STALE"
+                },
                 "0": {
                   "color": "red",
                   "text": "FAIL"
@@ -1462,8 +1478,12 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "#8e8e8e",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
               },
               {
                 "color": "green",
@@ -1496,7 +1516,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "probe_success{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}",
+          "expr": "(min by (room, probe, band) (probe_success{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}) and on (room) ((max by (room) (clamp_max(changes(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[6m]), 1)) or max by (room) (0 * last_over_time(wifi_probe_uptime_seconds{job=\"wifi-probe\", room=~\"$room\"}[24h]))) == 1)) or (-1 * group by (room, probe, band) (last_over_time(probe_success{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[24h])))",
           "instant": false,
           "legendFormat": "{{probe}} \u00b7 {{band}}",
           "range": true,
@@ -2013,7 +2033,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "fixed"
           },
           "custom": {
             "fillOpacity": 80,
@@ -2443,7 +2463,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "last_over_time(wifi_client_rssi_dbm{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]) * on (instance, band) group_left(bssid, ssid, auth) last_over_time(wifi_client_bssid_info{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window])",
+          "expr": "last_over_time(wifi_client_rssi_dbm{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]) * on (instance, band) group_left(bssid, ssid, auth) topk by (instance, band) (1, last_over_time(wifi_client_bssid_info{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]))",
           "format": "table",
           "instant": true,
           "legendFormat": "rssi",
@@ -2455,7 +2475,7 @@
             "type": "prometheus",
             "uid": "thanos"
           },
-          "expr": "last_over_time(wifi_client_channel{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]) * on (instance, band) group_left(bssid, ssid, auth) last_over_time(wifi_client_bssid_info{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window])",
+          "expr": "last_over_time(wifi_client_channel{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]) * on (instance, band) group_left(bssid, ssid, auth) topk by (instance, band) (1, last_over_time(wifi_client_bssid_info{job=\"wifi-probe\", room=~\"$room\", band=~\"$band\"}[$window]))",
           "format": "table",
           "instant": true,
           "legendFormat": "ch",
@@ -3058,7 +3078,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "thresholds"
+                "mode": "fixed"
               },
               "custom": {
                 "fillOpacity": 80,
@@ -3987,7 +4007,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "thresholds"
+                "mode": "fixed"
               },
               "custom": {
                 "fillOpacity": 80,
