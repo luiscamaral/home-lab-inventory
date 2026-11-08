@@ -97,9 +97,19 @@ Consumers switched:
 - [x] `homelab-portal` (dm) → `zot.d.lcamaral.com/homelab/homelab-portal:latest`
 - [x] `homelab-portal-2` (ds-1) → same
 - [ ] `la-rundeck` (ds-1): **pending.** The image is in zot, but switching the reference
-  recreates Rundeck. Also, `rundeck.yml.tftpl` already fails the image-pin guard
-  (`postgres:17`, line 73), so any commit that touches it must pin that tag first, and
-  pinning recreates the DB container. Do both together in a planned window.
+  recreates Rundeck, and pinning `postgres:17` to the running `17.9` recreates the DB container.
+  Do both together in a planned window.
+
+### Rundeck PGDATA exception (local disk, not NAS)
+
+`postgres-rundeck` keeps PGDATA on **local ds-1 disk** (`/opt/rundeck/dbdata`), not on the NAS.
+The soft NFS mount returned EIO during the 2026-06-14 ix0/NFS stall and Postgres PANIC'd, so the
+data was salvaged to local disk on 2026-06-30 (`terraform/portainer/stacks/rundeck.yml.tftpl`
+carries the same comment). This is a deliberate `postgres` exception to the NAS-by-default
+storage placement (register: `feat/storage-policy`, `docs/architecture/storage-register.yml`, which still lists
+it as an open violation). Do not move it back to `/nfs/dockermaster/docker/rundeck/dbdata`; that
+directory is a stale pre-salvage copy. The host path is not IaC-managed, so back up with
+`pg_dump` before any recreate. Rundeck's own `data` and `container-plugins` stay on NFS.
 
 ## Not done yet (needs approval: host-level)
 
