@@ -291,7 +291,8 @@
 
 - **postgres-rundeck** — `postgres:17`
   - Network: `docker-servers-net` (192.168.59.23)
-  - Volumes: `/nfs/dockermaster/docker/rundeck/dbdata`
+  - Volumes: `/opt/rundeck/dbdata` (**local ds-1 disk**, not NFS; salvaged 2026-06-30 after the NFS EIO
+    PANIC, see `docs/zot-registry.md`). `/nfs/dockermaster/docker/rundeck/dbdata` is a stale copy
   - Purpose: Database backend for Rundeck
 
 #### Monitoring stack (Prometheus)

@@ -12,6 +12,11 @@
 #   image: foo/bar:v1.2
 #   image: foo/bar:RELEASE.2025-09-07T16-13-09Z
 #   image: foo/bar:9.20-24.10_edge              (date-bound stable, e.g. ubuntu/bind9)
+#   image: postgres:17                          (numeric-only tag is a tag, not a port)
+#   image: host:5000/repo:1.0                   (port in the host part is not the tag)
+#
+# Rejected as untagged: `registry:5000`, `registry.local:5000`, `localhost:5000`,
+# `host:5000/repo` (host:port with no tag). See tests/test_check_image_pins.py.
 #
 # An allowlist exists for images that legitimately float: watchtower-
 # managed sidecars and internally rebuilt registry images. Document
@@ -84,19 +89,26 @@ for file in "$@"; do
       continue
     fi
 
-    # Find the tag: everything after the LAST colon, but only if that
-    # colon is in the path-after-host portion. We approximate: take the
-    # last colon, but ignore it if the part before contains `/` and the
-    # part after looks like a port (only digits).
-    if [[ "$raw" == *:* ]]; then
-      tag="${raw##*:}"
-      # If it looks numeric only (port), there's no tag.
-      if [[ "$tag" =~ ^[0-9]+$ ]] && [[ "$raw" != */*:[0-9]* ]]; then
-        # ambiguous host:port with no tag — treat as untagged.
-        tag=""
+    # Find the tag. Only a colon in the LAST path component (after the final
+    # `/`) can introduce a tag; an earlier colon is a registry port
+    # (`host:5000/repo` has no tag).
+    #
+    # A bare `name:digits` with no `/` is ambiguous: `postgres:17` is a repo
+    # with a numeric tag, `registry:5000` is a host:port with no repo.
+    # Docker itself reads the former as tag. We treat it as host:port (no
+    # tag) only when it looks like one: the name contains a dot or is
+    # `localhost` (a hostname), or the number has 4-5 digits (a port; real
+    # numeric tags such as 7, 8, 17 are shorter).
+    last="${raw##*/}"
+    tag=""
+    if [[ "$last" == *:* ]]; then
+      tag="${last##*:}"
+      if [[ "$raw" != */* ]] && [[ "$tag" =~ ^[0-9]+$ ]]; then
+        name="${last%:*}"
+        if [[ "$name" == *.* || "$name" == "localhost" || "$tag" =~ ^[0-9]{4,5}$ ]]; then
+          tag=""
+        fi
       fi
-    else
-      tag=""
     fi
 
     if [[ -z "$tag" ]]; then
