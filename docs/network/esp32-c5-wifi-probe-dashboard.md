@@ -39,9 +39,23 @@ Where to look on the dashboard:
 
 Panels that show raw values (Weakest RSSI, Min Heap, Connected state, identity table)
 are freshness-gated: a stale probe is ignored or forced DOWN, so cached values can't read
-healthy. The state alerts (`WifiProbeInternetDown`, `WifiProbeProbeFailing`,
-`WifiProbeHeapLow`) are gated the same way (10m), so a dead probe only raises
-`WifiProbeNoData`.
+healthy. The probe-success matrices (🏘️ room × probe, 🎯 probe × band) and the SLA
+table's **Up** column use three states: **OK** / **FAIL** for a live probe and grey
+**STALE** while it isn't pushing. Without that, a dead probe's cached OK showed green for
+30 min and its lanes then went blank. The "Probe not reporting" annotation marks the
+outage window on every time panel.
+
+The state alerts (`WifiProbeInternetDown`, `WifiProbeProbeFailing`, `WifiProbeHeapLow`)
+are gated the same way (10m), so a dead probe only raises `WifiProbeNoData`. That alert
+covers every probe seen in the last 24h, so it **keeps firing after the collector expires
+the series**; the old `changes(...[10m]) == 0` form resolved on its own about 40 min into
+an outage. When you retire or rename a probe, silence `WifiProbeNoData` for that
+instance for 24h.
+
+Known limitation: **Current link detail per room** picks one BSSID per probe/band with
+`topk`. For up to ~30 min after a roam it may show the previous BSSID, because the
+collector re-serves cached series with identical timestamps. A firmware-side association
+time would fix this.
 
 Layout: top strip (status + fleet verdicts) → **🏘️ Room comparison** (rooms side by side) →
 **🎯 Probe Results — ${room}** (row repeated once per selected room) → link quality →
