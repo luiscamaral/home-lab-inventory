@@ -147,7 +147,7 @@
   - Networks: `docker-servers-net` (192.168.59.5) + `rproxy` bridge
   - Volumes: `/nfs/dockermaster/docker/zot/data` (NAS), `zot-auth` (regenerated htpasswd)
   - Purpose: OCI registry for `homelab/*` images + on-demand pull-through cache for
-    docker.io, ghcr.io, quay.io, registry.k8s.io, gcr.io (`zot.d.lcamaral.com`, LAN only).
+    `docker.io`, `ghcr.io`, `quay.io`, `registry.k8s.io`, `gcr.io` (`zot.d.lcamaral.com`, LAN only).
     Single instance. See `docs/zot-registry.md`
 
 - **registry** — `registry:2` — **LEGACY, cool-off** (superseded by zot 2026-11-06)

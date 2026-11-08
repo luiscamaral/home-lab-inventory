@@ -54,7 +54,7 @@
 - Vault server at <http://vault.d.lcamaral.com> (192.168.59.25) for secret management.
 - Portainer at 192.168.59.2 for container management (Terraform-managed via `terraform/portainer/`).
 - Container registry: **Zot** at <https://zot.d.lcamaral.com> (LAN only; `homelab/*` images +
-  pull-through cache for docker.io/ghcr.io/quay.io/registry.k8s.io/gcr.io under those prefixes).
+  pull-through cache for `docker.io`, `ghcr.io`, `quay.io`, `registry.k8s.io`, `gcr.io` under those prefixes).
   Terraform-managed Portainer stack `zot`; see `docs/zot-registry.md`. The old registry:2 at
   <https://registry.cf.lcamaral.com> is legacy (cool-off, no new pushes).
 

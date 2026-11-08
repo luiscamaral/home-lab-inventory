@@ -1,47 +1,121 @@
 {
   "distSpecVersion": "1.1.1",
-  "storage": {
-    "rootDirectory": "/var/lib/registry",
-    "dedupe": false,
-    "gc": true,
-    "gcDelay": "1h",
-    "gcInterval": "24h",
-    "retention": {
-      "delay": "24h",
-      "policies": [
+  "extensions": {
+    "metrics": {
+      "enable": true,
+      "prometheus": {
+        "path": "/metrics"
+      }
+    },
+    "scrub": {
+      "enable": true,
+      "interval": "24h"
+    },
+    "search": {
+      "enable": true
+    },
+    "sync": {
+      "enable": true,
+      "registries": [
         {
-          "repositories": [
-            "docker.io/**",
-            "ghcr.io/**",
-            "quay.io/**",
-            "registry.k8s.io/**",
-            "gcr.io/**"
-          ],
-          "deleteReferrers": true,
-          "deleteUntagged": true,
-          "keepTags": [
+          "content": [
             {
-              "pulledWithin": "2160h"
+              "destination": "/docker.io",
+              "prefix": "**"
             }
+          ],
+          "maxRetries": 3,
+          "onDemand": true,
+          "retryDelay": "10s",
+          "syncTimeout": "15m",
+          "tlsVerify": true,
+          "urls": [
+            "https://index.docker.io"
+          ]
+        },
+        {
+          "content": [
+            {
+              "destination": "/ghcr.io",
+              "prefix": "**"
+            }
+          ],
+          "maxRetries": 3,
+          "onDemand": true,
+          "retryDelay": "10s",
+          "syncTimeout": "15m",
+          "tlsVerify": true,
+          "urls": [
+            "https://ghcr.io"
+          ]
+        },
+        {
+          "content": [
+            {
+              "destination": "/quay.io",
+              "prefix": "**"
+            }
+          ],
+          "maxRetries": 3,
+          "onDemand": true,
+          "retryDelay": "10s",
+          "syncTimeout": "15m",
+          "tlsVerify": true,
+          "urls": [
+            "https://quay.io"
+          ]
+        },
+        {
+          "content": [
+            {
+              "destination": "/registry.k8s.io",
+              "prefix": "**"
+            }
+          ],
+          "maxRetries": 3,
+          "onDemand": true,
+          "retryDelay": "10s",
+          "syncTimeout": "15m",
+          "tlsVerify": true,
+          "urls": [
+            "https://registry.k8s.io"
+          ]
+        },
+        {
+          "content": [
+            {
+              "destination": "/gcr.io",
+              "prefix": "**"
+            }
+          ],
+          "maxRetries": 3,
+          "onDemand": true,
+          "retryDelay": "10s",
+          "syncTimeout": "15m",
+          "tlsVerify": true,
+          "urls": [
+            "https://gcr.io"
           ]
         }
       ]
+    },
+    "ui": {
+      "enable": true
     }
   },
   "http": {
-    "address": "0.0.0.0",
-    "port": "5000",
-    "realm": "zot",
-    "compat": [
-      "docker2s2"
-    ],
-    "auth": {
-      "htpasswd": {
-        "path": "/etc/zot/auth/htpasswd"
-      },
-      "failDelay": 5
-    },
     "accessControl": {
+      "adminPolicy": {
+        "actions": [
+          "read",
+          "create",
+          "update",
+          "delete"
+        ],
+        "users": [
+          "admin"
+        ]
+      },
       "metrics": {
         "anonymousPolicy": [
           "read"
@@ -62,124 +136,50 @@
             "read"
           ]
         }
-      },
-      "adminPolicy": {
-        "users": [
-          "admin"
-        ],
-        "actions": [
-          "read",
-          "create",
-          "update",
-          "delete"
-        ]
       }
-    }
+    },
+    "address": "0.0.0.0",
+    "auth": {
+      "failDelay": 5,
+      "htpasswd": {
+        "path": "/etc/zot/auth/htpasswd"
+      }
+    },
+    "compat": [
+      "docker2s2"
+    ],
+    "port": "5000",
+    "realm": "zot"
   },
   "log": {
     "level": "info"
   },
-  "extensions": {
-    "sync": {
-      "enable": true,
-      "registries": [
+  "storage": {
+    "dedupe": false,
+    "gc": true,
+    "gcDelay": "1h",
+    "gcInterval": "24h",
+    "retention": {
+      "delay": "24h",
+      "policies": [
         {
-          "urls": [
-            "https://index.docker.io"
-          ],
-          "content": [
+          "deleteReferrers": true,
+          "deleteUntagged": true,
+          "keepTags": [
             {
-              "prefix": "**",
-              "destination": "/docker.io"
+              "pulledWithin": "2160h"
             }
           ],
-          "onDemand": true,
-          "tlsVerify": true,
-          "maxRetries": 3,
-          "retryDelay": "10s",
-          "syncTimeout": "15m"
-        },
-        {
-          "urls": [
-            "https://ghcr.io"
-          ],
-          "content": [
-            {
-              "prefix": "**",
-              "destination": "/ghcr.io"
-            }
-          ],
-          "onDemand": true,
-          "tlsVerify": true,
-          "maxRetries": 3,
-          "retryDelay": "10s",
-          "syncTimeout": "15m"
-        },
-        {
-          "urls": [
-            "https://quay.io"
-          ],
-          "content": [
-            {
-              "prefix": "**",
-              "destination": "/quay.io"
-            }
-          ],
-          "onDemand": true,
-          "tlsVerify": true,
-          "maxRetries": 3,
-          "retryDelay": "10s",
-          "syncTimeout": "15m"
-        },
-        {
-          "urls": [
-            "https://registry.k8s.io"
-          ],
-          "content": [
-            {
-              "prefix": "**",
-              "destination": "/registry.k8s.io"
-            }
-          ],
-          "onDemand": true,
-          "tlsVerify": true,
-          "maxRetries": 3,
-          "retryDelay": "10s",
-          "syncTimeout": "15m"
-        },
-        {
-          "urls": [
-            "https://gcr.io"
-          ],
-          "content": [
-            {
-              "prefix": "**",
-              "destination": "/gcr.io"
-            }
-          ],
-          "onDemand": true,
-          "tlsVerify": true,
-          "maxRetries": 3,
-          "retryDelay": "10s",
-          "syncTimeout": "15m"
+          "repositories": [
+            "docker.io/**",
+            "ghcr.io/**",
+            "quay.io/**",
+            "registry.k8s.io/**",
+            "gcr.io/**"
+          ]
         }
       ]
     },
-    "search": {
-      "enable": true
-    },
-    "ui": {
-      "enable": true
-    },
-    "metrics": {
-      "enable": true,
-      "prometheus": {
-        "path": "/metrics"
-      }
-    },
-    "scrub": {
-      "enable": true,
-      "interval": "24h"
-    }
+    "rootDirectory": "/var/lib/registry"
   }
 }

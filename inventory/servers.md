@@ -133,7 +133,8 @@
 - **Services Hosted** (12 containers):
   - **Edge tier (HA 1/3):** rproxy (`.28`), cloudflare-tunnel-cloudflare-1, reverse-proxy-promtail-1
   - **Auth tier:** keycloak (`.13`, HA 1/2), keycloak-db-0 (`.44`, PG HA primary), homelab-portal (`.18`, HA 1/2)
-  - **Backing:** vault (`.25`, raft 1/3), bind-dns-bind9-1 (`.3`), zot registry (`.5`), registry:2 legacy (`.16`, cool-off), postfix-relay
+  - **Backing:** vault (`.25`, raft 1/3), bind-dns-bind9-1 (`.3`), zot registry (`.5`),
+    registry:2 legacy (`.16`, cool-off), postfix-relay
   - **Management:** portainer (`.2`), watchtower
 - **Access**: SSH via `ssh dockermaster`
 

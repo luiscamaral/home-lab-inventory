@@ -107,7 +107,7 @@ Consumers switched:
   needs a dockerd restart on each host. Remember to restart `portainer-agent` afterwards (see
   the Keycloak/host-restart runbook). Also, dockerd expects a Docker Hub mirror at the
   registry root, and zot serves Docker Hub under `/docker.io`. Options:
-  1. An nginx rewrite vhost (for example `hub.d.lcamaral.com`: `/v2/(.*)` → `/v2/docker.io/$1`).
+  1. An Nginx rewrite vhost (for example `hub.d.lcamaral.com`: `/v2/(.*)` → `/v2/docker.io/$1`).
   2. Reference cached images explicitly (`zot.d.lcamaral.com/docker.io/...`) in stacks.
   3. With the containerd image store, a `hosts.toml` mirror with a path override.
 - **Talos/K8s:** the cluster design (`docs/superpowers/specs/2026-06-15-k8s-talos-proxmox-iac-design.md`)
@@ -123,7 +123,7 @@ The old registry stays up, unchanged, at `registry.cf.lcamaral.com` (stack `dock
 1. `la-rundeck` has moved to the zot reference.
 2. No container on any host references `registry.cf.lcamaral.com`:
    `docker ps --format '{{.Image}}' | grep registry.cf` on dm, ds-1 and ds-2.
-3. The nginx access log shows no `registry.cf.lcamaral.com` traffic for 30 days.
+3. The Nginx access log shows no `registry.cf.lcamaral.com` traffic for 30 days.
 
 Then, in one change: delete `portainer_stack.docker_registry`, `portainer_registry.homelab_registry`,
 the `registry.cf.lcamaral.com.conf` vhost, the Cloudflare DNS record and tunnel ingress
