@@ -15,7 +15,7 @@ ESP-IDF v6 C firmware that compiles clean under warnings-as-errors for target `e
 Always read the full spec before writing any code:
 `docs/superpowers/specs/2026-06-06-esp32-c5-wifi-probe-design.md`
 
-The firmware submodule will eventually live at `monitoring/esp32-c5-wifi-probe/` (not yet created).
+The firmware lives in the submodule `monitoring/esp32-c5-wifi-probe/` (repo `luiscamaral/esp32-c5-wifi-probe`, branch `main`). Current module layout: its `README.md` (Code layout); reliability, tests and security: its `docs/RELIABILITY.md`, `docs/TESTING.md`, `docs/SECURITY.md`; release history: `docs/CHANGELOG.md`. The component table below is the original v0 plan; the code has more modules since (boot_info, liveness, tls_arena, time_sync, heap_diag, metrics_registry, api_*).
 During development, use `tools/esp32c5/` as scratch space.
 
 ## Component ownership
