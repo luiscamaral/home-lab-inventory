@@ -2589,7 +2589,7 @@
         "x": 0,
         "y": 104
       },
-      "id": 38,
+      "id": 40,
       "panels": [
         {
           "datasource": {
@@ -3146,6 +3146,164 @@
           ],
           "title": "\ud83d\udcf6 Connected state \u2014 band-switch flaps",
           "type": "state-timeline"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "thanos"
+          },
+          "description": "NVS-persisted boot counter (fw >= 0.12.0, survives power loss). Each step is one reboot; read the cause next to it in 'Current boot cause'. 0.11.1 rebooted every ~3.5-4.9 h from the heap watchdog.",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "opacity",
+                "lineInterpolation": "stepAfter",
+                "lineWidth": 1,
+                "pointSize": 6,
+                "showPoints": "never",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              },
+              "decimals": 0,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 16,
+            "x": 0,
+            "y": 128
+          },
+          "id": 38,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom"
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "thanos"
+              },
+              "expr": "max by (room) (wifi_probe_boot_count{job=\"wifi-probe\", room=~\"$room\"})",
+              "instant": false,
+              "legendFormat": "{{room}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udd01 Boot count \u2014 per room (each step = a reboot)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "thanos"
+          },
+          "description": "Why the CURRENT boot happened (fw >= 0.12.0). restart_cause = firmware-recorded cause: heap_wd, stall / no_link / ota_stuck (liveness supervisor), ota_done, ota_reboot_first, api, provisioned; 'unplanned' = crash, hardware watchdog, brownout or power loss (see reset_reason). Series from older boots stay in the collector cache up to 30 min.",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": true
+              },
+              "mappings": []
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 128
+          },
+          "id": 39,
+          "options": {
+            "footer": {
+              "show": false
+            },
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "thanos"
+              },
+              "expr": "max by (room, restart_cause, reset_reason) (last_over_time(wifi_probe_boot_info{job=\"wifi-probe\", room=~\"$room\"}[5m]))",
+              "format": "table",
+              "instant": true,
+              "legendFormat": "",
+              "range": false,
+              "refId": "A"
+            }
+          ],
+          "title": "\ud83d\udd01 Current boot cause",
+          "transformations": [
+            {
+              "id": "merge",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "Value": true,
+                  "__name__": true,
+                  "cluster": true,
+                  "container": true,
+                  "endpoint": true,
+                  "instance": true,
+                  "job": true,
+                  "monitor": true,
+                  "namespace": true,
+                  "pod": true,
+                  "region": true,
+                  "replica": true,
+                  "source": true
+                },
+                "renameByName": {
+                  "reset_reason": "Reset reason",
+                  "restart_cause": "Restart cause",
+                  "room": "Room"
+                }
+              }
+            }
+          ],
+          "type": "table"
         }
       ],
       "title": "\ud83e\ude7a Device Health & Identity",
@@ -3159,7 +3317,7 @@
         "x": 0,
         "y": 105
       },
-      "id": 44,
+      "id": 46,
       "panels": [
         {
           "datasource": {
@@ -3221,7 +3379,7 @@
             "x": 0,
             "y": 106
           },
-          "id": 39,
+          "id": 41,
           "options": {
             "footer": {
               "show": false
@@ -3348,7 +3506,7 @@
             "x": 0,
             "y": 116
           },
-          "id": 40,
+          "id": 42,
           "options": {
             "displayMode": "gradient",
             "minVizHeight": 10,
@@ -3432,7 +3590,7 @@
             "x": 12,
             "y": 116
           },
-          "id": 41,
+          "id": 43,
           "options": {
             "legend": {
               "calcs": [
@@ -3503,7 +3661,7 @@
             "x": 0,
             "y": 124
           },
-          "id": 42,
+          "id": 44,
           "options": {
             "displayMode": "gradient",
             "minVizHeight": 10,
@@ -3565,7 +3723,7 @@
             "x": 12,
             "y": 124
           },
-          "id": 43,
+          "id": 45,
           "options": {
             "colorMode": "value",
             "graphMode": "none",
@@ -3630,7 +3788,7 @@
         "x": 0,
         "y": 106
       },
-      "id": 51,
+      "id": 53,
       "panels": [
         {
           "datasource": {
@@ -3682,7 +3840,7 @@
             "x": 0,
             "y": 107
           },
-          "id": 45,
+          "id": 47,
           "options": {
             "colorMode": "background",
             "graphMode": "none",
@@ -3745,7 +3903,7 @@
             "x": 6,
             "y": 107
           },
-          "id": 46,
+          "id": 48,
           "options": {
             "colorMode": "value",
             "graphMode": "none",
@@ -3812,7 +3970,7 @@
             "x": 12,
             "y": 107
           },
-          "id": 47,
+          "id": 49,
           "options": {
             "colorMode": "background",
             "graphMode": "none",
@@ -3879,7 +4037,7 @@
             "x": 18,
             "y": 107
           },
-          "id": 48,
+          "id": 50,
           "options": {
             "colorMode": "background",
             "graphMode": "none",
@@ -3956,7 +4114,7 @@
             "x": 0,
             "y": 111
           },
-          "id": 49,
+          "id": 51,
           "options": {
             "legend": {
               "calcs": [
@@ -4050,7 +4208,7 @@
             "x": 12,
             "y": 111
           },
-          "id": 50,
+          "id": 52,
           "options": {
             "legend": {
               "displayMode": "list",

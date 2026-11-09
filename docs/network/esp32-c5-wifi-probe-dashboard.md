@@ -52,6 +52,12 @@ the series**; the old `changes(...[10m]) == 0` form resolved on its own about 40
 an outage. When you retire or rename a probe, silence `WifiProbeNoData` for that
 instance for 24h.
 
+Reboots (fw >= 0.12.0): **🔁 Boot count — per room** (Device Health row; each step is
+a reboot) and **🔁 Current boot cause** (`restart_cause`: `heap_wd`, `stall`, `no_link`,
+`ota_stuck`, `ota_done`, `ota_reboot_first`, `api`, `provisioned`, or `unplanned` for a
+crash, hardware watchdog or power loss). Alert `WifiProbeFrequentReboots` fires at 3+
+boots in 6 h.
+
 Known limitation: **Current link detail per room** picks one BSSID per probe/band with
 `topk`. For up to ~30 min after a roam it may show the previous BSSID, because the
 collector re-serves cached series with identical timestamps. A firmware-side association
