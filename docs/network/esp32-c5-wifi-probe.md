@@ -39,9 +39,9 @@ serves `/metrics` on `:9100` for ad-hoc checks.
 
 Dashboard, liveness and alerts: [esp32-c5-wifi-probe-dashboard.md](esp32-c5-wifi-probe-dashboard.md).
 
-## Status (fw 0.14.0, 2026-11-08)
+## Status (fw 0.14.1, 2026-11-09)
 
-All three probes run **0.14.0** (verified-TLS signed OTA with anti-downgrade,
+All three probes run **0.14.1** (ESP-IDF v6.0.3) (verified-TLS signed OTA with anti-downgrade,
 liveness supervisor, restart causes, TLS arena, SNTP via the gateway, Vault-managed
 tokens). Release notes: the submodule's `docs/CHANGELOG.md`.
 
@@ -57,9 +57,12 @@ tokens). Release notes: the submodule's `docs/CHANGELOG.md`.
   `/firmware/` read-only; the probes' pfSense alias `Wifi_Probes` only allows TCP
   80/443, so MinIO's `:9000` is unreachable). Used on 2026-11-08 to recover two
   probes without USB.
-- **Open: heap leak** (~26 B blocks, ~7/min, allocated from the band-scheduler
-  task) still drives a heap-watchdog reboot roughly every 4 h. Under investigation
-  with the diagnostic `/debug/heap_trace` build; fix planned for 0.14.1.
+- **Heap leak fixed in 0.14.1.** Root cause: ESP-IDF v6.0.1's cross-signed
+  certificate-bundle path leaked the CA subject (~120 B in 7 blocks) on every HTTPS
+  handshake to Google (`internet_https`, once per round), which is the ~18–21 KB/h
+  decline behind the ~4-hourly heap-watchdog reboots. Fixed by building with v6.0.3.
+  Canary: free heap and live blocks flat over 1 h while 0.14.0 lost ~15 KB and
+  gained ~500 blocks. Details: the submodule's `docs/RELIABILITY.md#leak`.
 
 ## JTAG note (eco2 board)
 
