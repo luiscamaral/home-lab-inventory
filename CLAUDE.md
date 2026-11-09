@@ -120,6 +120,8 @@ surface → source → apply map. Two layers:
   - `secret/homelab/switch24a` (TL-SG3428X core switch admin login)
   - `secret/homelab/omada-controller` (Omada V6 controller login, VM 100)
   - `secret/homelab/nas-sudo-password` (NAS sudo password, field `password`; use only with user acknowledgment)
+  - `secret/homelab/esp32-fw-signing` (ECDSA-P256 key that signs the WiFi-probe firmware)
+  - `secret/homelab/wifi-probe` (WiFi-probe API / OTA bearer tokens; managed with the submodule's `tools/probe-tokens.py`)
 - Terraform vars are sourced from Vault at runtime, never stored in files.
 
 ## Docker Services Structure

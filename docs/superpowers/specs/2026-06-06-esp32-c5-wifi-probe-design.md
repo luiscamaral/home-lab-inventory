@@ -1,6 +1,10 @@
 # 📡 ESP32-C5 WiFi Probe — Firmware Submodule
 
-**Date:** 2026-06-06 · **Status:** design refined (FSM + cache); HIL toolchain provisioning
+**Date:** 2026-06-06 · **Status:** original v0 design, implemented and extended (fw 0.14.x).
+Later decisions: the submodule's `docs/superpowers/specs/` (incl.
+`2026-11-08-c1-reliability-design.md`) and `docs/CHANGELOG.md`; current behaviour: its
+`README.md`. Superseded here: direct `:9100` scraping (now OTLP push, see
+`docs/architecture/otlp-push-pipeline.md`).
 **Submodule (this repo):** `monitoring/esp32-c5-wifi-probe/`
 **Firmware repo:** `github.com/luiscamaral/esp32-c5-wifi-probe` (private)
 **Toolchain floor:** ESP-IDF **v6.0.1** (stable) · target `esp32c5`
