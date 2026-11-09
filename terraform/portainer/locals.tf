@@ -1450,6 +1450,25 @@ locals {
                 {{ $$labels.room }}/{{ $$labels.band }} for 30m. Catches a
                 frozen probe engine or a band that never reconnects even
                 when probe_success still reads 1 from a stale gauge.
+          - alert: WifiProbeFrequentReboots
+            # fw >= 0.12.0: NVS boot counter (survives power loss, unaffected by
+            # the collector cache). 0.11.1 rebooted ~1.5x per 6 h from the heap
+            # watchdog; 3+ in 6 h means a reboot loop or a regression.
+            expr: >-
+              (max by (room) (wifi_probe_boot_count{job="wifi-probe"})
+              - max by (room) (wifi_probe_boot_count{job="wifi-probe"} offset 6h)) >= 3
+            for: 5m
+            labels:
+              severity: warning
+              category: wifi-probe
+            annotations:
+              summary: "wifi-probe {{ $$labels.room }} rebooted {{ $$value }} times in 6 h"
+              description: |
+                The {{ $$labels.room }} probe booted {{ $$value }} times in the
+                last 6 h. Check the cause of the current boot
+                (wifi_probe_boot_info restart_cause: heap_wd = fragmentation,
+                stall/no_link = liveness supervisor, unplanned = crash or
+                power) on the WiFi Probes dashboard (Device Health).
           - alert: WifiProbeHeapLow
             expr: >-
               wifi_probe_heap_largest_free_block_bytes{job="wifi-probe"} < 32768

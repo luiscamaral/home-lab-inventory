@@ -39,13 +39,21 @@ serves `/metrics` on `:9100` for ad-hoc checks.
 
 Dashboard, liveness and alerts: [esp32-c5-wifi-probe-dashboard.md](esp32-c5-wifi-probe-dashboard.md).
 
-## Known issues (2026-11-08)
+## Reliability (fw 0.12.0, 2026-11-08)
 
-- **Heap fragmentation:** every probe reboots every ~3.5–4.9 h via the firmware's
-  heap watchdog (largest free block < 24 KB for 10 min). Being fixed in the
-  firmware C1 work (dedicated TLS arena, static Wi-Fi buffers, fewer allocations).
-- **Hangs:** a probe can wedge off the network with a healthy heap. Nothing in 0.11.1
-  restarts it (home-office was silent ~21.5 h). Fix: liveness supervisor (C1 / F1).
+- **Restart causes:** every boot reports `wifi_probe_boot_info{reset_reason,restart_cause}`
+  and an NVS boot counter `wifi_probe_boot_count`. Shown on the dashboard (Device
+  Health) and alerted by `WifiProbeFrequentReboots` (3+ boots in 6 h). Details:
+  the submodule's `docs/RELIABILITY.md`.
+- **Hangs:** 0.12.0 adds a liveness supervisor (restart on scheduler stall 600 s,
+  no link 900 s with back-off, OTA overrun 1200 s) and bounded Wi-Fi scans. On
+  0.11.1 a probe could wedge off the network with a healthy heap (home-office was
+  silent ~21.5 h until power-cycled by hand).
+- **Heap fragmentation (open):** probes still reboot every ~3.5–4.9 h via the heap
+  watchdog (`restart_cause="heap_wd"`). Fix in progress (0.13.0: dedicated TLS
+  arena, static Wi-Fi TX buffers, fewer allocations).
+- On the C5, `esp_restart()` reports `reset_reason="sw_reset"` (verified on
+  garage); `power_on` means a real power cycle.
 
 ## JTAG note (eco2 board)
 

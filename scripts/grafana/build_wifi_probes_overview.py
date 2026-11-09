@@ -421,6 +421,20 @@ health = [
      "(excludes the once-per-cycle band-switch flaps, so a healthy probe stays flat at 0). No band label on this "
      "counter.",
      "targets": [T(f'increase(wifi_client_unexpected_disconnect_total{{{JOB}, room=~"$room"}}[$window])', "{{room}} disc/$window")]},
+    {"type": "timeseries", "title": "🔁 Boot count — per room (each step = a reboot)", "unit": "none",
+     "decimals": 0, "interp": "stepAfter", "fill": 0, "points": "never", "calcs": ["lastNotNull", "max"],
+     "desc": "NVS-persisted boot counter (fw >= 0.12.0, survives power loss). Each step is one reboot; read the "
+     "cause next to it in 'Current boot cause'. 0.11.1 rebooted every ~3.5-4.9 h from the heap watchdog.",
+     "targets": [T(f'max by (room) (wifi_probe_boot_count{{{JOB}, room=~"$room"}})', "{{room}}")]},
+    {"type": "table", "title": "🔁 Current boot cause", "unit": "none",
+     "desc": "Why the CURRENT boot happened (fw >= 0.12.0). restart_cause = firmware-recorded cause: heap_wd, "
+     "stall / no_link / ota_stuck (liveness supervisor), ota_done, ota_reboot_first, api, provisioned; "
+     "'unplanned' = crash, hardware watchdog, brownout or power loss (see reset_reason). Series from older "
+     "boots stay in the collector cache up to 30 min.",
+     "targets": [T(f'max by (room, restart_cause, reset_reason) (last_over_time(wifi_probe_boot_info{{{JOB}, room=~"$room"}}[5m]))',
+                   "", instant=True)],
+     "transforms": organize({"room": "Room", "restart_cause": "Restart cause", "reset_reason": "Reset reason"},
+                            extra_exclude=["Value"])},
     {"type": "state-timeline", "title": "📶 Connected state — band-switch flaps", "steps":
      [{"color": "red", "value": None}, {"color": "green", "value": 1}], "mappings": UPDOWN,
      "desc": f"One lane per room. max by(room,instance) suppresses cosmetic single-scrape dips on band switch; "
@@ -680,6 +694,7 @@ LINES = {
         (8, [("🏷️ Probe identity & build — per room", 24)]),
         (8, [("⏱️ Uptime since boot — per room", 8), ("🧠 Free heap — leak watch", 8), ("🔌 Disconnects — increase/$window", 8)]),
         (7, [("📶 Connected state — band-switch flaps", 24)]),
+        (8, [("🔁 Boot count — per room (each step = a reboot)", 16), ("🔁 Current boot cause", 8)]),
     ],
     "link": [
         (8, [("RSSI by room & band", 16), ("Current RSSI per room (band-split)", 8)]),
