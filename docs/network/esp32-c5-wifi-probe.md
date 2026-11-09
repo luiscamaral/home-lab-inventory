@@ -39,21 +39,27 @@ serves `/metrics` on `:9100` for ad-hoc checks.
 
 Dashboard, liveness and alerts: [esp32-c5-wifi-probe-dashboard.md](esp32-c5-wifi-probe-dashboard.md).
 
-## Reliability (fw 0.12.0, 2026-11-08)
+## Status (fw 0.14.0, 2026-11-08)
 
-- **Restart causes:** every boot reports `wifi_probe_boot_info{reset_reason,restart_cause}`
-  and an NVS boot counter `wifi_probe_boot_count`. Shown on the dashboard (Device
-  Health) and alerted by `WifiProbeFrequentReboots` (3+ boots in 6 h). Details:
-  the submodule's `docs/RELIABILITY.md`.
-- **Hangs:** 0.12.0 adds a liveness supervisor (restart on scheduler stall 600 s,
-  no link 900 s with back-off, OTA overrun 1200 s) and bounded Wi-Fi scans. On
-  0.11.1 a probe could wedge off the network with a healthy heap (home-office was
-  silent ~21.5 h until power-cycled by hand).
-- **Heap fragmentation (open):** probes still reboot every ~3.5–4.9 h via the heap
-  watchdog (`restart_cause="heap_wd"`). Fix in progress (0.13.0: dedicated TLS
-  arena, static Wi-Fi TX buffers, fewer allocations).
-- On the C5, `esp_restart()` reports `reset_reason="sw_reset"` (verified on
-  garage); `power_on` means a real power cycle.
+All three probes run **0.14.0** (verified-TLS signed OTA with anti-downgrade,
+liveness supervisor, restart causes, TLS arena, SNTP via the gateway, Vault-managed
+tokens). Release notes: the submodule's `docs/CHANGELOG.md`.
+
+- **Restart causes:** `wifi_probe_boot_info{reset_reason,restart_cause}` + NVS
+  `wifi_probe_boot_count`; dashboard Device Health; alert `WifiProbeFrequentReboots`.
+- **Liveness:** restart on scheduler stall (600 s), no link (900 s, back-off),
+  OTA overrun (1200 s); bounded Wi-Fi scans. On the C5, `esp_restart()` reports
+  `sw_reset`; `power_on` is a real power cycle.
+- **OTA:** `tools/ota-release.sh <ip>` (token from Vault `secret/homelab/wifi-probe`).
+  Result of the last attempt: `/status.ota`, `wifi_probe_ota_last_result{stage,err}`.
+  **Rescue path** when HTTPS OTA cannot complete: set `ota_url` to
+  `http://s3.d.lcamaral.com/firmware/esp32-c5-wifi-probe.bin` (port 80 serves
+  `/firmware/` read-only; the probes' pfSense alias `Wifi_Probes` only allows TCP
+  80/443, so MinIO's `:9000` is unreachable). Used on 2026-11-08 to recover two
+  probes without USB.
+- **Open: heap leak** (~26 B blocks, ~7/min, allocated from the band-scheduler
+  task) still drives a heap-watchdog reboot roughly every 4 h. Under investigation
+  with the diagnostic `/debug/heap_trace` build; fix planned for 0.14.1.
 
 ## JTAG note (eco2 board)
 
