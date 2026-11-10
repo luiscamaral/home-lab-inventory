@@ -33,14 +33,18 @@ resource "keycloak_openid_client" "grafana" {
   enabled     = true
   access_type = "CONFIDENTIAL"
 
-  root_url  = "https://grafana.d.lcamaral.com"
-  admin_url = "https://grafana.d.lcamaral.com"
+  # grafana.cf (Cloudflare tunnel) is the public root_url; grafana.d stays
+  # allowed for the LAN name.
+  root_url  = "https://grafana.cf.lcamaral.com"
+  admin_url = "https://grafana.cf.lcamaral.com"
   base_url  = "/"
 
   valid_redirect_uris = [
+    "https://grafana.cf.lcamaral.com/login/generic_oauth",
     "https://grafana.d.lcamaral.com/login/generic_oauth",
   ]
   web_origins = [
+    "https://grafana.cf.lcamaral.com",
     "https://grafana.d.lcamaral.com",
   ]
 
