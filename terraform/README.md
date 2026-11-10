@@ -145,8 +145,13 @@ newer one wrote (for example portainer `source_id`, or the keycloak client schem
    },
    ```
 
-3. **Nginx vhost** -- create `myservice.cf.lcamaral.com.conf` on dockermaster
-   at `/nfs/dockermaster/docker/nginx-rproxy/config/vhost.d/`
+3. **Nginx vhost** -- add `myservice.cf.lcamaral.com.conf` to the repo at
+   `dockermaster/docker/compose/nginx-rproxy/vhost.d/`, or add the `.cf` name to an
+   existing vhost's `server_name`. Terraform renders that directory into the three
+   rproxy stacks as Compose `configs:`. Never copy vhosts to the host. After
+   `terraform apply`, run `scripts/portainer-redeploy.py` on `reverse-proxy-3`, then
+   `reverse-proxy-2`, then `reverse-proxy`, one at a time. The provider doesn't
+   recreate containers on `configs:`-only changes.
 
 4. **Portainer stack** -- add a `portainer_stack` resource in `portainer/stacks.tf`
    with the compose file in `portainer/stacks/`
@@ -162,7 +167,9 @@ newer one wrote (for example portainer `source_id`, or the keycloak client schem
    }
    ```
 
-6. Apply both directories:
+6. Apply both directories, Cloudflare first. Use `-target` for the resources you
+   changed (see `cloudflare/README.md` for known drift and the token IP-filter
+   gotcha):
 
    ```bash
    cd terraform/cloudflare && terraform apply

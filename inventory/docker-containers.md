@@ -183,6 +183,9 @@
   - Terraform: `portainer_stack.grafana`
   - URLs: `https://grafana.cf.lcamaral.com` (public, Cloudflare tunnel; Grafana `root_url`),
     `https://grafana.d.lcamaral.com` (LAN)
+  - Data: SQLite in volume `grafana_grafana_data`, an NFS bind to
+    `/nfs/dockermaster/docker/grafana/data` (created 2026-04-29). It is sensitive to NAS
+    latency: slow NFS writes cause `SQLITE_BUSY`, 500s and slow logins.
   - Purpose: Monitoring dashboards
 
 - **pihole-exporter-1-pihole-exporter-1** — `ekofr/pihole-exporter:v1.2.0`
