@@ -181,6 +181,8 @@
 - **Grafana** (`grafana-grafana-1`) — `grafana/grafana-oss:13.0.1`
   - Network: `docker-servers-net` (192.168.59.39)
   - Terraform: `portainer_stack.grafana`
+  - URLs: `https://grafana.cf.lcamaral.com` (public, Cloudflare tunnel; Grafana `root_url`),
+    `https://grafana.d.lcamaral.com` (LAN)
   - Purpose: Monitoring dashboards
 
 - **pihole-exporter-1-pihole-exporter-1** — `ekofr/pihole-exporter:v1.2.0`
