@@ -60,6 +60,8 @@
 - GitHub runner service (GitHub-runner-homelab) is a Terraform-managed Portainer stack running on dockermaster for CI/CD.
 - Vault server at <http://vault.d.lcamaral.com> (192.168.59.25) for secret management.
 - Portainer at 192.168.59.2 for container management (Terraform-managed via `terraform/portainer/`).
+- Grafana at <https://grafana.cf.lcamaral.com> (public via Cloudflare tunnel; this is its `root_url`
+  and the Keycloak OIDC callback host). LAN alias: <https://grafana.d.lcamaral.com>.
 - Container registry: **Zot** at <https://zot.d.lcamaral.com> (LAN only; `homelab/*` images +
   pull-through cache for `docker.io`, `ghcr.io`, `quay.io`, `registry.k8s.io`, `gcr.io` under those prefixes).
   Terraform-managed Portainer stack `zot`; see `docs/zot-registry.md`. The old registry:2 at
@@ -92,9 +94,14 @@ surface → source → apply map. Two layers:
 - Wildcard `*.cf.lcamaral.com` on DreamHost CNAMEs to Cloudflare edge for subdomain delegation.
 - Cloudflare tunnel **bologna** routes `*.cf.lcamaral.com` traffic to `nginx-rproxy:443` on dockermaster.
 - Tunnel uses `noTLSVerify` for origin (Nginx certs are for `*.d.lcamaral.com`).
-- Adding a new service: DNS record + tunnel ingress in `terraform/cloudflare/`, Nginx vhost on
-  dockermaster, Portainer stack in `terraform/portainer/`; if the service needs secrets, add a
-  `vault_kv_secret_v2` data source in `terraform/portainer/vault.tf`.
+- Adding a new service: DNS record + tunnel ingress in `terraform/cloudflare/`, Nginx vhost in the
+  repo (`dockermaster/docker/compose/nginx-rproxy/vhost.d/`, rendered by `terraform/portainer`,
+  then `scripts/portainer-redeploy.py` on each rproxy, one at a time), Portainer stack in
+  `terraform/portainer/`; if the service needs secrets, add a `vault_kv_secret_v2` data source in
+  `terraform/portainer/vault.tf`. Full steps: `terraform/cloudflare/README.md`.
+- The Cloudflare API token has a **client IP allow-list**. Error `9109 Cannot use the access token
+  from location` means pfSense WAN1's DHCP address changed. Only the user can fix it (dashboard),
+  so report the IP and stop; see `terraform/cloudflare/README.md` -> Troubleshooting.
 - SSL certs are auto-provisioned by Cloudflare (free, ~90-day rotation).
 
 ## Secret Management
