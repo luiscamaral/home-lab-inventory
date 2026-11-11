@@ -149,6 +149,29 @@ works and nothing is skipped.
 - **Break-glass:** `admin` with `vault kv get -field=admin_password secret/homelab/zot` still works if Keycloak is
   down. Keycloak runs on ds-1/ds-2 and is itself reached through the same rproxies.
 
+### End-to-end test
+
+`scripts/zot-e2e.py` tests SSO, API keys and access control without a browser, against the live registry:
+
+```bash
+export VAULT_ADDR=http://192.168.59.25:8200 VAULT_TOKEN=$(security find-generic-password -w -a lamaral -s vault-root-token)
+uv run --no-project --quiet --with requests python scripts/zot-e2e.py probe   # read-only checks
+uv run --no-project --quiet --with requests python scripts/zot-e2e.py all     # creates and deletes test users
+```
+
+`all` creates two disposable users in realm `homelab` through the Keycloak admin API (`zot-e2e-test`, a member of
+`zot-admins`, and `zot-e2e-user`, a plain user), runs the scripted login (zot, Keycloak form, callback, session cookie),
+creates API keys, pushes, pulls and deletes `homelab/e2e-test` with `docker` on `dockerserver-2` (throw-away
+`DOCKER_CONFIG`), checks that the plain user can read but not push or delete, prints the rproxy lines that show zot's
+token and jwks requests arriving from `192.168.59.5`, then deletes the users and the temporary files. The Keycloak
+and zot writes are real, so run it deliberately.
+
+`keycloak_group_memberships.zot_admins` is authoritative: while the test admin is in `zot-admins`, a plan that includes
+that resource shows drift and an apply of it would remove the test user. The test uses the admin API only (never
+Terraform), is over in a few minutes, and `cleanup` fails if the group members differ from the snapshot taken before.
+Do not apply that resource while it runs. The deleted image leaves its tiny blobs under `homelab/e2e-test` until the
+next garbage collection (`gcDelay` 1 h, `gcInterval` 24 h).
+
 ### Admin access
 
 Add or remove a user in `keycloak_group_memberships.zot_admins` (the Keycloak username, not a display name) and apply
