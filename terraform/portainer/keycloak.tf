@@ -1,9 +1,9 @@
 # ──────────────────────────────────────────────
 # Keycloak — IaC-managed OIDC clients (Gap 4)
 #
-# Scoped management: Terraform only owns the client resources declared
-# here. Realms, users, groups, and any other clients in the homelab
-# realm remain untouched. To add a new client to TF management, declare
+# Scoped management: Terraform owns the two realms (keycloak_realms.tf) and
+# the client resources declared here. Users and any other clients or groups in
+# the homelab realm remain untouched. To add a new client to TF management, declare
 # it here and `terraform import` it into state.
 #
 # Provider config + admin creds live in provider.tf; the password comes
