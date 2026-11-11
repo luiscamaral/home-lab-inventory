@@ -77,6 +77,16 @@ services:
         ipv4_address: 192.168.59.5
     expose:
       - 5000
+    # OIDC issuer host. Keycloak's issuer is https://auth.cf.lcamaral.com/...
+    # (fixed frontend URL), and zot panics at startup if discovery fails, so
+    # keep zot off Cloudflare: resolve it to the 3 rproxy replicas (LE
+    # cert for the cf names, see docs/zot-registry.md). Same name, 3 lines in
+    # /etc/hosts: Go's resolver returns them in this order and the dialer
+    # falls through to the next on connect failure. Browsers are unaffected.
+    extra_hosts:
+      - "auth.cf.lcamaral.com:192.168.59.28"
+      - "auth.cf.lcamaral.com:192.168.59.48"
+      - "auth.cf.lcamaral.com:192.168.59.49"
     volumes:
       - /nfs/dockermaster/docker/zot/data:/var/lib/registry
       - zot-auth:/etc/zot/auth:ro
