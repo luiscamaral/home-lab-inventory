@@ -158,6 +158,9 @@ def zot_login(username: str, password: str) -> requests.Session:
     r = s.get(loc, allow_redirects=False, timeout=30)
     if r.status_code not in (301, 302, 303) or "session" not in s.cookies.keys():
         raise RuntimeError(f"zot callback gave HTTP {r.status_code}, cookies {list(s.cookies.keys())}")
+    # zot honours the session cookie only on requests that carry this header (the UI sends it); without it the
+    # request is treated as anonymous and POST /zot/auth/apikey fails with 500 "user data operations are not allowed".
+    s.headers["X-ZOT-API-CLIENT"] = "zot-ui"
     return s
 
 
@@ -179,7 +182,7 @@ def reg(user: str, key: str | None, method: str, path: str, **kw) -> requests.Re
 # ---------------------------------------------------------------- docker over ssh
 def docker_ssh(host: str, user: str, key: str, body: str) -> subprocess.CompletedProcess:
     script = (
-        "set -u; D=$(mktemp -d); export DOCKER_CONFIG=$D; trap 'rm -rf \"$D\"' EXIT; "
+        "set -u; export LC_ALL=C; D=$(mktemp -d); export DOCKER_CONFIG=$D; trap 'rm -rf \"$D\"' EXIT; "
         f"U={shlex.quote(user)}; REF1=zot.d.lcamaral.com/{REPO}:1; REF2=zot.d.lcamaral.com/{REPO}:2; "
         "read -r KEY; "
         "printf '%s' \"$KEY\" | docker login zot.d.lcamaral.com -u \"$U\" --password-stdin 2>&1 | tail -1; "
@@ -338,25 +341,40 @@ def cmd_run(a) -> int:
 
 
 def evidence(a, t0: str) -> None:
-    """rproxy access log lines from zot (192.168.59.5) and zot's own request log since t0."""
+    """rproxy access log lines from zot (192.168.59.5) and zot's own request log since t0.
+
+    Token and userinfo calls happen on every login, so they must appear after t0. The jwks (certs) request
+    happens only when zot verifies its first ID token after a start (the key set is then cached in the process),
+    so it is looked up since zot's start time instead.
+    """
     print("\n== evidence: rproxy -> Keycloak requests from 192.168.59.5 (LAN path)")
-    cmd = "docker exec rproxy sh -c 'tail -c 60000000 /var/log/nginx/access.log | grep -E \"^192\\.168\\.59\\.5 \"'"
+    cmd = "docker exec rproxy sh -c 'tail -c 80000000 /var/log/nginx/access.log | grep -E \"^192\\.168\\.59\\.5 \"'"
     p = subprocess.run(["ssh", "dockermaster", cmd], capture_output=True, text=True, timeout=120)
+    started = subprocess.run(["ssh", "dockermaster", "docker inspect zot --format '{{.State.StartedAt}}'"],
+                             capture_output=True, text=True, timeout=60).stdout.strip()
+    t_start = datetime.strptime(started[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
     t0d = datetime.strptime(t0, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-    seen = {"token": 0, "certs": 0, "userinfo": 0, "discovery": 0}
+    print(f"  (zot started {started[:19]}Z; this run started {t0})")
+    seen = {"token": 0, "userinfo": 0, "certs_since_start": 0}
     for line in p.stdout.splitlines():
         m = re.search(r"\[(\d+/\w+/\d+:\d+:\d+:\d+) \+0000\] \"(\w+) (\S+)", line)
         if not m:
             continue
         ts = datetime.strptime(m.group(1), "%d/%b/%Y:%H:%M:%S").replace(tzinfo=timezone.utc)
-        if ts < t0d:
+        path = m.group(3)
+        if ts >= t0d and "openid-connect/token" in path:
+            seen["token"] += 1
+        elif ts >= t0d and "openid-connect/userinfo" in path:
+            seen["userinfo"] += 1
+        elif ts >= t_start and "openid-connect/certs" in path:
+            seen["certs_since_start"] += 1
+        else:
             continue
-        for k, pat in (("token", "openid-connect/token"), ("certs", "openid-connect/certs"),
-                       ("userinfo", "openid-connect/userinfo"), ("discovery", ".well-known/openid-configuration")):
-            if pat in m.group(3):
-                seen[k] += 1
-                print("  ", line[:200])
-    check("rproxy saw token + jwks requests from 192.168.59.5", seen["token"] > 0 and seen["certs"] > 0, str(seen))
+        print("  ", line[:200])
+    check("rproxy saw token + userinfo requests from 192.168.59.5 during the run", seen["token"] > 0
+          and seen["userinfo"] > 0, str(seen))
+    check("rproxy saw the jwks request from 192.168.59.5 since zot started (key set is cached afterwards)",
+          seen["certs_since_start"] > 0, str(seen))
     print("\n== evidence: zot request log (registry + auth paths) since T0")
     p = subprocess.run(["ssh", "dockermaster", f"docker logs --since {t0} zot 2>&1"], capture_output=True, text=True,
                        timeout=120)

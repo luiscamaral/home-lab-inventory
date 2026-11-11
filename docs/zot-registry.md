@@ -136,11 +136,12 @@ works and nothing is skipped.
   `https://zot.d.lcamaral.com/zot/auth/login?provider=oidc`.
 - **`docker login` / CLI:** OIDC does not work for command-line clients, so create an **API key** while signed in
   (it carries the same permissions as you; the key is shown once). Use the API keys page of the UI user menu, or the
-  REST call below with the browser session cookie:
+  REST call below with the browser session cookie. zot accepts the cookie only together with the
+  `X-ZOT-API-CLIENT: zot-ui` header (the UI sends it); without it the call counts as anonymous and fails with a 500:
 
   ```bash
   curl -s -X POST https://zot.d.lcamaral.com/zot/auth/apikey -H 'Cookie: session=<cookie>' \
-    -d '{"label":"laptop","expirationDate":"2027-11-08T00:00:00Z"}'
+    -H 'X-ZOT-API-CLIENT: zot-ui' -d '{"label":"laptop","expirationDate":"2027-11-08T00:00:00Z"}'
   docker login zot.d.lcamaral.com -u '<keycloak username>' --password-stdin <<< 'zak_...'
   ```
 
