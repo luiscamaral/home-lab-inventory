@@ -27,7 +27,8 @@ resource "keycloak_realm" "homelab" {
   enabled      = true
   display_name = "Homelab"
 
-  registration_allowed           = true
+  # Admins only: self-registration is off (Phase K1a). Accounts are created by an admin.
+  registration_allowed           = false
   registration_email_as_username = true
   edit_username_allowed          = false
   reset_password_allowed         = true
