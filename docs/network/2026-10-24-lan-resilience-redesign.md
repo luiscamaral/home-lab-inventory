@@ -46,11 +46,13 @@ Fixing that one link is the highest-value change. BGP multipath is a later, opti
 ## 3. P0 — Second physical LAN link: `lagg0` failover (`ix0` + `igc2`)
 
 ### Constraint
+
 switch24a has only **4× SFP+** ports and all are in use (`Te1/0/25` AP, `26` HomeOffice,
 `27` Firewall, `28` main-servers). A 10G LACP pair `ix0`+`ix1` is **not possible** without freeing
 an SFP+ port or replacing the switch.
 
 ### Design
+
 - pfSense: create `lagg0`, **protocol `failover`**, members **`ix0` (primary, 10G)** and
   **`igc2` (secondary, 2.5G NIC → 1G switch port)**. `igc2` is spare today (no carrier).
 - Re-parent the four VLANs `10, 28, 105, 205` from `ix0` to `lagg0`. Interface names change
@@ -62,6 +64,7 @@ an SFP+ port or replacing the switch.
   Keep the FreeBSD default `net.link.lagg.failover_rx_all=0`.
 
 ### Behaviour
+
 | Event | Result |
 |---|---|
 | `ix0` loses carrier (both outages) | Traffic moves to `igc2` within about 1 s. LAN stays up at **1 Gb/s**. No bounce needed. |
@@ -72,10 +75,12 @@ an SFP+ port or replacing the switch.
 igc0 link is 2.5G. Only NAS/inter-VLAN bulk transfers notice.
 
 ### Future upgrade
+
 If an SFP+ port is freed (or a switch with more SFP+ ports is bought), change to
 `lagg0 = LACP(ix0, ix1)` at 20G and keep `igc2` as a third member in a separate failover lagg.
 
 ### IaC (rule 1 — no hand edits)
+
 pfSense interfaces and laggs have **no IaC path today**. Add one before applying:
 `pfsense/interfaces.yml` (lagg + VLAN parents) and `scripts/sync-pfsense-interfaces.py` using
 REST API v2 (check its lagg/VLAN endpoint coverage first; fall back to a reviewed, versioned
@@ -84,6 +89,7 @@ php script if it lacks them). Record the switch port change in `docs/network/swi
 broken (`cleanup_backupcache`) and fix it first.
 
 ### Cut-over (maintenance window, about 2–5 min LAN outage)
+
 1. Watchdog `nobounce` flag set. Take a config backup.
 2. Configure the switch port. Patch `igc2` and confirm link with no VLANs on it yet.
 3. Apply `interfaces.yml`: create lagg0 and move the VLANs. **Run it from ADMIN (`igc3`)**, which
@@ -134,12 +140,14 @@ Proxmox `.61` (`vmbr01`/eno1) and `.62` (`vmbr1`). DHCP pool `.55–.59`.
   `pfsense/host-overrides.yml` and `inventory/`.
 
 ### Asymmetric routing caveat
+
 A host with legs on ADMIN and SVR replies to ADMIN clients through its default route (SVR) unless
 configured otherwise. Give each multi-homed VM **source-based policy routing** (a separate table
 for the ADMIN source address) so ADMIN replies leave by ADMIN. Without this, ADMIN access to
 the VM breaks exactly when SVR is down, which defeats the purpose.
 
 ### IaC
+
 - Proxmox VM NICs: `terraform/` (bpg provider; see LIVE-FACTS for the root-SSH limitation).
 - lab-router: `terraform/lab-network/cloud-init/lab-router.yaml` (FRR + nftables).
 - Pi-hole and Vault publishing: `terraform/portainer`.
