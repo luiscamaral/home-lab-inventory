@@ -29,6 +29,44 @@ Rollback: `pkg-static delete pfSense-pkg-RESTAPI`. History: 2026-11-10 reinstall
 2.10_2 (break-glass, approved by the user; recorded post-hoc in the PR that added this
 section). The `sha256` was verified against the release digest.
 
+## ACME and other slow endpoints (the 504s)
+
+`GET /services/acme/certificates` through `https://pfsense.home.lcamaral.com/api/v2` returns
+**504**, but the API itself works: called directly on the box it answers 200 after about 57 s
+(a single cert read takes about 43 s, `/system/certificates` about 20 s, `/services/haproxy/backends`
+about 9 s, `/system/version` 2 s). The 504 comes from HAProxy: the web front end has
+`timeout server 30000`, so anything slower than 30 s is cut off. The same limit explains the
+`/services/cron/jobs` 504 that `scripts/sync-pfsense-cron-jobs.py` already works around.
+
+The time is spent in the PHP worker, not in the config size (`config.xml` is 490 KB) or the network:
+while an ACME call runs, the worker forks `/sbin/sysctl` thousands of times (`getSchedulers()` in
+`/etc/inc/shaper.inc`, about 1500 loops in 20 s), with almost no CPU use. It is a behaviour of the
+installed package (`pfSense-pkg-RESTAPI-2.10_2` on 26.07), not a fault of the ACME data.
+
+**Use the local port instead of HAProxy.** The sync tools run
+`ssh pfsense 'curl --max-time 170 http://127.0.0.1:56880/api/v2/...'` (the pfSense web server, reachable
+only on the box) and need no pfSense change. `scripts/sync-pfsense-acme-actions.py`,
+`scripts/sync-pfsense-acme-certificates.py` and `scripts/sync-host-overrides.py` do this. Expect about
+a minute per ACME read and plan for the same per write. Raising HAProxy's `timeout server` for the API
+frontend would hide the 504 but isn't needed, so it is not done.
+
+History of the earlier `sync-host-overrides.py` 404: that was the missing package (see
+[Reinstall after pfSense upgrades](#reinstall-after-pfsense-upgrades)), not the slow endpoints.
+It works again since the 2026-11-10 reinstall (a full run takes about 2 min).
+
+## ACME certificate definitions (IaC)
+
+`pfsense/acme-certificates.yml` declares the certificates (name, account, key length, renewal,
+domains and challenge method). `scripts/sync-pfsense-acme-certificates.py` compares it with
+pfSense (dry run by default) and creates or patches one cert at a time (`--cert NAME --apply`).
+Issuing and renewing is a separate explicit step (`--cert NAME --issue`, `--renew`): it contacts
+Let's Encrypt and adds, then removes, a DNS TXT record at DreamHost. Post-renewal commands stay in
+`pfsense/acme-actions.yml` (`scripts/sync-pfsense-acme-actions.py`).
+
+The DreamHost DNS token is a write-only field in the REST API, so it can't be diffed. It lives in
+Vault (`secret/homelab/dreamhost`, field `api_token`) and is sent only when a domain is created.
+Nothing secret is stored in the repo.
+
 ## Connection Details
 
 | Field | Value |

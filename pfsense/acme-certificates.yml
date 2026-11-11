@@ -1,0 +1,56 @@
+# Source of truth for pfSense ACME certificate DEFINITIONS (the entries under
+# Services > ACME Certificates). Reconciled by scripts/sync-pfsense-acme-certificates.py
+# over the REST API. Captured from the live pfSense on 2026-11-11.
+#
+# Scope of the reconciler:
+#   * Managed: per-cert descr, status, acmeaccount, keylength, preferredchain, oscpstaple,
+#     dnssleep, renewafter, and the domain list (name, method, status).
+#   * NOT managed here: post-renewal actions (see pfsense/acme-actions.yml and
+#     scripts/sync-pfsense-acme-actions.py), the ACME account keys and the global settings.
+#   * Certs on pfSense that are not listed here are only reported, never deleted.
+#   * Secrets are never stored in this file. The DNS-challenge API token of a `dns_dreamhost`
+#     domain is write-only in the REST API (never returned), so it can't be diffed; it is read
+#     from Vault (`secret/homelab/dreamhost`, field `api_token`) and only sent when a domain
+#     is created.
+#
+# Issue/renew is a separate, explicit step (it talks to Let's Encrypt and writes DNS TXT
+# records at DreamHost): scripts/sync-pfsense-acme-certificates.py --cert NAME --issue.
+
+certificates:
+  - name: home.lcamaral.com
+    descr: home.lcamaral.com (wildcard)
+    status: active
+    acmeaccount: home.lcamaral.com
+    keylength: "4096"
+    preferredchain: ISRG Root X1
+    oscpstaple: false
+    dnssleep: 300
+    renewafter: 26
+    domains:
+      - {name: home.lcamaral.com, method: dns_dreamhost, status: enable}
+      - {name: "*.home.lcamaral.com", method: dns_dreamhost, status: enable}
+
+  # `pfsense` (*.home.lcamaral.com) is the webgui and DNS-over-TLS certificate.
+  - name: pfsense
+    descr: pfsense
+    status: active
+    acmeaccount: home.lcamaral.com
+    keylength: "4096"
+    preferredchain: ISRG Root X1
+    oscpstaple: false
+    dnssleep: null
+    renewafter: 48
+    domains:
+      - {name: "*.home.lcamaral.com", method: dns_dreamhost, status: enable}
+
+  - name: d.lcamaral.com
+    descr: dev env certificate
+    status: active
+    acmeaccount: home.lcamaral.com
+    keylength: "4096"
+    preferredchain: ISRG Root X1
+    oscpstaple: false
+    dnssleep: 300
+    renewafter: 60
+    domains:
+      - {name: "*.d.lcamaral.com", method: dns_dreamhost, status: enable}
