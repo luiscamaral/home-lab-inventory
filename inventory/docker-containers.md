@@ -157,9 +157,10 @@
   - Purpose: Old private registry (`registry.cf.lcamaral.com`). Kept read-compatible during
     cool-off; nothing pushes to it. Decommission criteria in `docs/zot-registry.md`
 
-- **postfix-relay** — `boky/postfix:latest`
-  - Network: `rproxy` bridge (172.24.0.2)
-  - Purpose: Outbound SMTP relay via DreamHost — single instance
+- **postfix-relay** — `boky/postfix@sha256:aafc7723…` (postfix 3.10.5, pinned by digest)
+  - Networks: `rproxy` bridge (name `postfix-relay`, dm only) and `docker-servers-net` (192.168.59.14,
+    `postfix-relay.d.lcamaral.com`, reachable from ds-1/ds-2)
+  - Purpose: Outbound SMTP relay via DreamHost, single instance. Smarthost for Keycloak (realm SMTP) and Alertmanager
 
 - **portainer** — `portainer/portainer-ce:latest`
   - Network: `docker-servers-net` (192.168.59.2)
@@ -429,6 +430,7 @@
 | .11 | hbbr (RustDesk relay) | ds-2 |
 | .12 | twingate-sepia-hornet | ds-1 |
 | .13 | keycloak | dm |
+| .14 | postfix-relay | dm |
 | .15 | vault-3 | ds-2 |
 | .16 | registry (legacy, cool-off) | dm |
 | .17 | minio-minio-1 | ds-1 |
