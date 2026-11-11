@@ -152,7 +152,7 @@ export PATH="/var/packages/ContainerManager/target/usr/bin:$PATH"
 ### System Information
 
 - `uname -a` - Kernel, hostname, architecture
-- `cat /etc/version` - pfSense Plus version (e.g. `26.03-RELEASE`)
+- `cat /etc/version` - pfSense Plus version (e.g. `26.07-RELEASE`)
 - `cat /etc/version.buildtime` - Build timestamp
 - `sysctl -n hw.model hw.ncpu hw.physmem` - CPU model, core count, RAM bytes
 - `uptime` / `top -b` - Load and processes
@@ -213,7 +213,7 @@ export PATH="/var/packages/ContainerManager/target/usr/bin:$PATH"
 - `nmap -sn 192.168.4.0/20` - Network discovery (nmap package)
 - `ladvd -q` - LLDP/CDP neighbor info (LADVD package)
 
-### REST API (pfSense-pkg-RESTAPI v2.7_6)
+### REST API (pfSense-pkg-RESTAPI v2.10_2)
 
 > 200+ endpoints. Prefer API for structured JSON data. Full reference:
 > `docs/network/pfsense-api.md`
@@ -236,13 +236,16 @@ curl -sk -H "X-API-Key: $TOKEN" "$API/diagnostics/arp_table"     # ARP table
 
 ### Version Information
 
-- **pfSense Plus**: 26.03-RELEASE
+Verified 2026-11-10 (`cat /etc/version`, `pkg info | grep pfSense-pkg-`):
+
+- **pfSense Plus**: 26.07-RELEASE
 - **FreeBSD**: 16.0-CURRENT
-- **REST API pkg**: 2.7_6
+- **REST API pkg**: 2.10_2 (reinstalled 2026-11-10; pfSense upgrades can drop it)
 - **HAProxy pkg**: 0.65.7
-- **pfBlockerNG pkg**: 3.2.16
-- **acme pkg**: 1.1_2
+- **acme pkg**: 1.3.2
+- **frr pkg**: 2.1.3_2
 - **node_exporter pkg**: 0.18.1_8
+- **pfBlockerNG**: not installed
 
 ---
 

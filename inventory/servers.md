@@ -6,8 +6,8 @@
 
 - **Hostname**: `pfsense.admin.lcamaral.com` (short: `pfsense`)
 - **Role**: Main router, firewall, DNS resolver, DHCP, ACME CA, HAProxy edge, dual-WAN gateway
-- **OS**: pfSense Plus **26.03-RELEASE** (build `20260401-1720`)
-- **Kernel**: FreeBSD 16.0-CURRENT (`plus-RELENG_26_03-n256531`)
+- **OS**: pfSense Plus **26.07-RELEASE** (patch applied 2026-09-10; verified 2026-11-10)
+- **Kernel**: FreeBSD 16.0-CURRENT (`plus-RELENG_26_07-n256584`)
 - **Hardware**:
   - **CPU**: Intel Core i3-N305 (8 cores, Alder Lake-N)
   - **RAM**: 16 GB
