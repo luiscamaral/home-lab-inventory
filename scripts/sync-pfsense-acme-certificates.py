@@ -296,35 +296,59 @@ def show_cert_files(name: str) -> None:
         print("   ", line)
 
 
+def ssh_out(cmd: str, timeout_s: int = 60) -> str:
+    r = subprocess.run(["ssh", "-o", "ConnectTimeout=10", "pfsense", cmd],
+                       capture_output=True, text=True, check=False, timeout=timeout_s)
+    return r.stdout
+
+
+def acme_state(name: str) -> tuple[bool, str]:
+    """(running, log tail) of the issuance, read straight from the box (no REST call).
+
+    Polling the REST API during an issuance is avoided on purpose: each ACME call takes
+    about 90 s inside pfSense and runs concurrently with the package's own import step.
+    """
+    out = ssh_out(
+        f"pgrep -f '[a]cme\\.sh|[a]cme_command' >/dev/null && echo RUNNING || echo IDLE; "
+        f"tail -n 40 /tmp/acme/{name}/acme_issuecert.log 2>/dev/null")
+    lines = out.splitlines()
+    running = bool(lines) and lines[0].strip() == "RUNNING"
+    return running, "\n".join(lines[1:])
+
+
 def issue_or_renew(name: str, token: str, renew: bool) -> bool:
     path = P_RENEW if renew else P_ISSUE
+    started = time.time()
     print(f"  POST {path} certificate={name}")
     api("POST", path, token, {"certificate": name})
-    deadline = time.time() + 20 * 60
+    deadline = started + 25 * 60
     last = ""
+    time.sleep(20)
     while time.time() < deadline:
+        running, tail = acme_state(name)
+        status = "running" if running else "finished"
+        if status != last:
+            print(f"  {time.strftime('%H:%M:%S')} acme.sh {status}")
+            last = status
+        if not running and ("Cert success" in tail or "Reload error" in tail or "Error" in tail
+                            or "error" in tail):
+            break
         time.sleep(20)
-        for it in api("GET", P_ISSUANCES, token).get("data", []):
-            if it.get("certificate") != name:
-                continue
-            status = it.get("status")
-            if status != last:
-                print(f"  issuance status: {status}")
-                last = status
-            if status == "completed":
-                log = redact(it.get("result_log") or "")
-                tail = [ln for ln in log.splitlines() if ln.strip()][-12:]
-                print("  result_log (tail):")
-                for ln in tail:
-                    print("    " + ln[:200])
-                ok = bool(re.search(r"cert(ificate)? success|Cert success|Your cert is in", log, re.I)) \
-                    and not re.search(r"\bError\b|fail", log, re.I)
-                print(f"  acme.sh outcome: {'success' if ok else 'NOT clearly successful (check the log above)'}")
-                print(f"  files on pfSense ({ACME_DIR}):")
-                show_cert_files(name)
-                return ok
-    print("  timed out waiting for the issuance to complete (20 min)")
-    return False
+    else:
+        print("  timed out waiting for the issuance (25 min)")
+        return False
+
+    log = redact(tail)
+    print("  acme log (tail):")
+    for ln in [x for x in log.splitlines() if x.strip()][-12:]:
+        print("    " + ln[:200])
+    cert_ok = "Cert success" in tail
+    reload_ok = "Reload error" not in tail
+    print(f"  Let's Encrypt: {'cert issued' if cert_ok else 'NOT issued'}; "
+          f"package import/reload: {'ok' if reload_ok else 'FAILED (Reload error)'}")
+    print(f"  files on pfSense ({ACME_DIR}):")
+    show_cert_files(name)
+    return cert_ok and reload_ok
 
 
 # -------------------------------------------------------------------------------- main
