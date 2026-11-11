@@ -54,3 +54,21 @@ certificates:
     renewafter: 60
     domains:
       - {name: "*.d.lcamaral.com", method: dns_dreamhost, status: enable}
+
+  # `*.cf.lcamaral.com` for the LAN rproxies. The `cf` names stay on Cloudflare for browsers
+  # (Cloudflare terminates TLS there); this cert lets a LAN client that resolves a `*.cf` name
+  # to the rproxies (zot reaching Keycloak at auth.cf.lcamaral.com) see a publicly trusted cert.
+  # Same account, key and challenge as d.lcamaral.com. The wildcard needs no apex name: no vhost
+  # serves `cf.lcamaral.com` itself. The challenge TXT `_acme-challenge.cf.lcamaral.com` is
+  # added on DreamHost (authoritative) and overrides the `*.cf` wildcard CNAME for that name.
+  - name: cf.lcamaral.com
+    descr: cf wildcard (LAN rproxy certificate for *.cf)
+    status: active
+    acmeaccount: home.lcamaral.com
+    keylength: "4096"
+    preferredchain: ISRG Root X1
+    oscpstaple: false
+    dnssleep: 300
+    renewafter: 60
+    domains:
+      - {name: "*.cf.lcamaral.com", method: dns_dreamhost, status: enable}
