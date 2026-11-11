@@ -71,6 +71,32 @@ resource "keycloak_realm" "homelab" {
   client_session_max_lifespan              = "0"
   oauth2_device_code_lifespan              = "10m0s"
   oauth2_device_polling_interval           = 5
+
+  # Brute-force protection (Phase K2): 3 failed logins lock the user, temporarily, for 20 minutes; the
+  # failure counter also resets after 20 minutes; never permanent. The headers are the live values (Keycloak
+  # defaults); the provider sends them together with this block, so they are declared to keep them unchanged.
+  security_defenses {
+    headers {
+      x_frame_options                     = "SAMEORIGIN"
+      content_security_policy             = "frame-src 'self'; frame-ancestors 'self'; object-src 'none';"
+      content_security_policy_report_only = ""
+      x_content_type_options              = "nosniff"
+      x_robots_tag                        = "none"
+      x_xss_protection                    = "1; mode=block"
+      strict_transport_security           = "max-age=31536000; includeSubDomains"
+      referrer_policy                     = "no-referrer"
+    }
+
+    brute_force_detection {
+      permanent_lockout                = false
+      max_login_failures               = 3
+      wait_increment_seconds           = 1200
+      max_failure_wait_seconds         = 1200
+      failure_reset_time_seconds       = 1200
+      quick_login_check_milli_seconds  = 1000
+      minimum_quick_login_wait_seconds = 60
+    }
+  }
   smtp_server {
     host                  = "postfix-relay"
     port                  = "25"
@@ -183,6 +209,32 @@ resource "keycloak_realm" "master" {
   client_session_max_lifespan              = "0"
   oauth2_device_code_lifespan              = "10m0s"
   oauth2_device_polling_interval           = 5
+
+  # Brute-force protection (Phase K2): 3 failed logins lock the user, temporarily, for 20 minutes; the
+  # failure counter also resets after 20 minutes; never permanent. The headers are the live values (Keycloak
+  # defaults); the provider sends them together with this block, so they are declared to keep them unchanged.
+  security_defenses {
+    headers {
+      x_frame_options                     = "SAMEORIGIN"
+      content_security_policy             = "frame-src 'self'; frame-ancestors 'self'; object-src 'none';"
+      content_security_policy_report_only = ""
+      x_content_type_options              = "nosniff"
+      x_robots_tag                        = "none"
+      x_xss_protection                    = ""
+      strict_transport_security           = "max-age=31536000; includeSubDomains"
+      referrer_policy                     = "no-referrer"
+    }
+
+    brute_force_detection {
+      permanent_lockout                = false
+      max_login_failures               = 3
+      wait_increment_seconds           = 1200
+      max_failure_wait_seconds         = 1200
+      failure_reset_time_seconds       = 1200
+      quick_login_check_milli_seconds  = 1000
+      minimum_quick_login_wait_seconds = 60
+    }
+  }
   otp_policy {
     type              = "totp"
     algorithm         = "HmacSHA1"
