@@ -107,3 +107,6 @@ terraform/**/tfplan
 # Tool caches — Serena MCP index and token-save cache, machine-local
 .serena/
 .tokensave/
+
+# pi agent runtime state (Herdr pane mappings) — local only
+.pi/
