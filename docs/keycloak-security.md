@@ -100,3 +100,19 @@ password values; Keycloak masks credentials).
 - `portainer.cf.lcamaral.com` and `minio.cf.lcamaral.com` are in the tunnel ingress, so the Portainer UI and the MinIO
   console are reachable from the internet (behind their own logins).
 - `homelab` has `ssl_required = "none"` (captured as found).
+
+## Mail relay path (K3a)
+
+Keycloak sends mail (password reset) from whichever node serves the request, and the realm's SMTP host is one setting for
+both. `postfix-relay` used to live only on the dm-local `rproxy` bridge, so `keycloak-2` (ds-1) could not resolve or reach
+it, and `postfix-relay.d.lcamaral.com` (the Alertmanager smarthost) did not exist in DNS (`NXDOMAIN`).
+
+Since K3a the relay also sits on `docker-servers-net` with the static address `192.168.59.14`, and
+`pfsense/host-overrides.yml` has `postfix-relay.d.lcamaral.com -> 192.168.59.14` (Pi-hole 1/2/3 and pfSense Unbound).
+Both Keycloak nodes (K3b) and Alertmanager use that name. The image is pinned by digest (it was `latest` with Watchtower).
+
+- The relay trusts `192.168.0.0/16` (`mynetworks`) and only relays sender domains `lcamaral.com`, `d.lcamaral.com` and
+  `cf.lcamaral.com`. Reaching port 25 on a LAN address now works for any host on the LAN, as it already did for containers
+  on the `rproxy` network.
+- Alertmanager critical and warning alerts are configured to email `luiscamaral+homelab@gmail.com`. They could not be
+  delivered before (NXDOMAIN); once the name resolves they will be.
