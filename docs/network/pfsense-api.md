@@ -70,6 +70,16 @@ Let's Encrypt and adds, then removes, a DNS TXT record at DreamHost. Post-renewa
 Certificates that need new names are declared with explicit SANs (see `cf.lcamaral.com`); the script warns when a
 `*.cf` name served by a vhost is missing from that list.
 
+**Issuing through the REST API has a 300 s limit.** `POST /services/acme/certificate/issue` and `/renew` run the
+package through a dispatcher (`dispatch.sh … 300`, i.e. `timeout 300`). A certificate with `dnssleep` of 300 s can't
+finish inside that budget: the dispatcher is killed during validation and the package's own import step then fails
+with `Reload error` (the cert is issued by Let's Encrypt but never imported). 2026-11-11, `cf.lcamaral.com`: first run
+killed at 02:38:48, validation ran at 02:38:54, `Reload error` at 02:39:15; a second run hung for the whole 300 s without
+starting `acme.sh`. Keep `dnssleep` of API-issued certs below about 150 s. pfSense's own nightly renewal
+(`acme_command.sh renewall` from cron) has no such limit, so renewals of the existing certs are not affected.
+`--issue` and `--renew` in `scripts/sync-pfsense-acme-certificates.py` watch the box (`pgrep` and only the new
+bytes of the acme log) instead of polling the API, and report Let's Encrypt and the package import separately.
+
 The DreamHost DNS token is a write-only field in the REST API, so it can't be diffed. It lives in
 Vault (`secret/homelab/dreamhost`, field `api_token`) and is sent only when a domain is created.
 Nothing secret is stored in the repo.
