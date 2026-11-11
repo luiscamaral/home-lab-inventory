@@ -158,6 +158,9 @@ def zot_login(username: str, password: str) -> requests.Session:
     r = s.get(loc, allow_redirects=False, timeout=30)
     if r.status_code not in (301, 302, 303) or "session" not in s.cookies.keys():
         raise RuntimeError(f"zot callback gave HTTP {r.status_code}, cookies {list(s.cookies.keys())}")
+    # zot honours the session cookie only on requests that carry this header (the UI sends it); without it the
+    # request is treated as anonymous and POST /zot/auth/apikey fails with 500 "user data operations are not allowed".
+    s.headers["X-ZOT-API-CLIENT"] = "zot-ui"
     return s
 
 
