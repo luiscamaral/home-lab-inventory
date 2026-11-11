@@ -1,8 +1,33 @@
 # pfSense REST API v2 Reference
 
-pfSense runs `pfSense-pkg-RESTAPI-2.7_6` — a comprehensive REST API with 200+
+pfSense runs `pfSense-pkg-RESTAPI-2.10_2` (pfSense Plus 26.07 build) — a comprehensive REST API with 200+
 endpoints covering firewall, routing, DNS, DHCP, HAProxy, ACME, certs, VPN, and
 system management. Source: [pfrest/pfSense-pkg-RESTAPI](https://github.com/pfrest/pfSense-pkg-RESTAPI).
+
+## Reinstall after pfSense upgrades
+
+The package is third-party, so a pfSense upgrade or patch can drop it silently. Every
+`/api/v2/...` call then returns the GUI's HTML **404** page, and
+`/usr/local/www/api/v2/` holds only an empty `schema/` dir. This happened between
+the 26.07 patch (2026-09-10) and 2026-09-12. The API stayed down until
+2026-11-10, which also broke the `scripts/sync-pfsense-*.py` reconcilers that
+use it.
+
+Reinstall the asset that matches `cat /etc/version`. Settings and API keys come
+back from `/usr/local/share/pfSense-pkg-RESTAPI/backup.json` (`keep_backup` is
+enabled):
+
+```bash
+V=v2.10.2; PF=26.07   # release tag + pfSense version
+gh api repos/pfrest/pfSense-pkg-RESTAPI/releases/tags/$V \
+  -q ".assets[]|select(.name==\"pfSense-$PF-pkg-RESTAPI.pkg\")|.digest"   # expected sha256
+ssh pfsense "cd /tmp && fetch -o restapi.pkg https://github.com/pfrest/pfSense-pkg-RESTAPI/releases/download/$V/pfSense-$PF-pkg-RESTAPI.pkg \
+  && sha256 -q restapi.pkg && pkg-static add restapi.pkg && rm restapi.pkg"   # compare sha256 first
+```
+
+Rollback: `pkg-static delete pfSense-pkg-RESTAPI`. History: 2026-11-10 reinstalled
+2.10_2 (break-glass, approved by the user; recorded post-hoc in the PR that added this
+section). The `sha256` was verified against the release digest.
 
 ## Connection Details
 
