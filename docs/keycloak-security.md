@@ -5,6 +5,24 @@ Its public name is `auth.cf.lcamaral.com` (Cloudflare tunnel `bologna`); the LAN
 `keycloak.d.lcamaral.com`. The hostname is fixed (`KC_HOSTNAME=https://auth.cf.lcamaral.com`), so every token
 carries `iss=https://auth.cf.lcamaral.com/realms/homelab`.
 
+## Tests for the hardening (phase K)
+
+`scripts/keycloak-hardening-test.py` checks the K2, K3 and K4 behaviour against the live realms. Each test creates its own
+disposable users with the admin API on `keycloak.d.lcamaral.com` and deletes them in a `finally` block; it never touches
+`admin` or the real account:
+
+```bash
+T="uv run --no-project --quiet --with requests python scripts/keycloak-hardening-test.py"
+$T probe                                   # read-only
+$T lockout --realm homelab
+$T lockout --realm master
+$T reset --mail-to you@example.com
+$T events --realm homelab
+```
+
+`lockout` needs K2, `reset` needs K3a and K3b (the OTP user's mail goes to `--mail-to`, with a `+tag` added to the
+local part), `events` needs K4.
+
 ## Realms are in Terraform (K0)
 
 `terraform/portainer/keycloak_realms.tf` declares the `homelab` and `master` realms (`keycloak_realm`). They were
