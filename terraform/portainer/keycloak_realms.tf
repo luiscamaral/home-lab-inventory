@@ -130,6 +130,16 @@ resource "keycloak_realm" "master" {
   display_name      = "Keycloak"
   display_name_html = "<div class=\"kc-logo-text\"><span>Keycloak</span></div>"
 
+  # Master-realm frontend URL (Phase K1c): the admin console, its login form and the master realm
+  # tokens are served on the LAN name; the master realm is used by nothing else. Together with
+  # KC_HOSTNAME_ADMIN (console URLs) this lets the public name auth.cf.lcamaral.com refuse
+  # /admin and /realms/master while the console keeps working on keycloak.d. The homelab realm
+  # keeps the server-wide hostname, so its issuer stays https://auth.cf.lcamaral.com/realms/homelab.
+  attributes = {
+    frontendUrl = "https://keycloak.d.lcamaral.com"
+  }
+
+
   registration_allowed           = false
   registration_email_as_username = false
   edit_username_allowed          = false
