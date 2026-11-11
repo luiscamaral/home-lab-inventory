@@ -234,3 +234,46 @@ import {
   to = keycloak_realm.master
   id = "master"
 }
+
+# ──────────────────────────────────────────────
+# Login and admin event history (Phase K4)
+#
+# User events and admin events (with the request representation) are kept for 90 days in both
+# realms, so failed logins, lockouts and password resets can be investigated. `enabled_event_types`
+# is left unset: Keycloak then saves its default type set (LOGIN, LOGIN_ERROR, the lockout events,
+# SEND_RESET_PASSWORD, ...). The `jboss-logging` listener must stay listed, or the provider removes it.
+# Terraform imports the existing (disabled) settings, then updates them.
+# ──────────────────────────────────────────────
+resource "keycloak_realm_events" "homelab" {
+  realm_id = keycloak_realm.homelab.id
+
+  events_enabled    = true
+  events_expiration = 7776000 # 90 days, in seconds
+
+  admin_events_enabled         = true
+  admin_events_details_enabled = true
+
+  events_listeners = ["jboss-logging"]
+}
+
+resource "keycloak_realm_events" "master" {
+  realm_id = keycloak_realm.master.id
+
+  events_enabled    = true
+  events_expiration = 7776000
+
+  admin_events_enabled         = true
+  admin_events_details_enabled = true
+
+  events_listeners = ["jboss-logging"]
+}
+
+import {
+  to = keycloak_realm_events.homelab
+  id = "homelab"
+}
+
+import {
+  to = keycloak_realm_events.master
+  id = "master"
+}
