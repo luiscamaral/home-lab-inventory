@@ -209,7 +209,8 @@ def domain_body(d: dict) -> dict:
 
 
 def cert_body(want: dict) -> dict:
-    body = {f: want[f] for f in CERT_FIELDS if f in want and not (f == "dnssleep" and want[f] is None)}
+    body = {"name": want["name"]}
+    body.update({f: want[f] for f in CERT_FIELDS if f in want and not (f == "dnssleep" and want[f] is None)})
     body["keylength"] = str(body["keylength"])
     return body
 
