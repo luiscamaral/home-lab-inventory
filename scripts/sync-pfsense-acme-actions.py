@@ -11,6 +11,7 @@ ALONE — this is a "claim what we own" reconciler, not a wipe-and-replace.
 Usage:
     scripts/sync-pfsense-acme-actions.py            # dry run, show diff
     scripts/sync-pfsense-acme-actions.py --apply    # POST/PATCH changes
+    scripts/sync-pfsense-acme-actions.py --cert pfsense --apply   # one cert only (like -target)
 
 Auth: pfSense API token from macOS Keychain (`pfsense-api-token`).
 The pfSense API is reached via `ssh pfsense 'curl 127.0.0.1:56880'`
@@ -137,6 +138,12 @@ def reconcile_cert(cert: dict, desired: list[Action], token: str, apply: bool) -
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--apply", action="store_true", help="POST/PATCH changes (default: dry-run)")
+    parser.add_argument(
+        "--cert",
+        action="append",
+        metavar="NAME",
+        help="Only reconcile this ACME cert (repeatable); like terraform -target. Default: all certs in the YAML.",
+    )
     args = parser.parse_args()
 
     if not YAML_PATH.exists():
@@ -152,6 +159,8 @@ def main() -> int:
     total = 0
     for entry in desired_all:
         cert_name = entry["cert"]
+        if args.cert and cert_name not in args.cert:
+            continue
         match = next((c for c in certs if c["name"] == cert_name), None)
         if match is None:
             print(f"  WARN: cert '{cert_name}' in YAML not found on pfSense — skipping")
