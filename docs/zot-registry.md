@@ -160,8 +160,9 @@ uv run --no-project --quiet --with requests python scripts/zot-e2e.py all     # 
 ```
 
 `all` creates two disposable users in realm `homelab` through the Keycloak admin API (`zot-e2e-test`, a member of
-`zot-admins`, and `zot-e2e-user`, a plain user), runs the scripted login (zot, Keycloak form, callback, session cookie),
-creates API keys, pushes, pulls and deletes `homelab/e2e-test` with `docker` on `dockerserver-2` (throw-away
+`zot-admins`, and `zot-e2e-user`, a plain user; the realm uses the email as the username, so they log in as
+`zot-e2e-test@lcamaral.com` and `zot-e2e-user@lcamaral.com`), runs the scripted login (zot, Keycloak form, callback,
+session cookie), creates API keys, pushes, pulls and deletes `homelab/e2e-test` with `docker` on `dockerserver-2` (throw-away
 `DOCKER_CONFIG`), checks that the plain user can read but not push or delete, prints the rproxy lines that show zot's
 token and jwks requests arriving from `192.168.59.5`, then deletes the users and the temporary files. The Keycloak
 and zot writes are real, so run it deliberately.

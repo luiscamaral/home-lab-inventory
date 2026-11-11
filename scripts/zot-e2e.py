@@ -110,12 +110,14 @@ class Keycloak:
         r.raise_for_status()
         return sorted(u["username"] for u in r.json())
 
-    def user_id(self, username: str) -> str | None:
-        r = self.call("GET", "/users", params={"username": username, "exact": "true"})
+    def user_exists(self, name: str) -> bool:
+        """True if any user's username, email or name contains `name` (the realm uses the email as username)."""
+        r = self.call("GET", "/users", params={"search": name})
         r.raise_for_status()
-        return r.json()[0]["id"] if r.json() else None
+        return bool(r.json())
 
-    def create_user(self, username: str, password: str) -> str:
+    def create_user(self, username: str, password: str) -> tuple[str, str]:
+        """Create the user; return (id, login name). With "email as username" Keycloak stores the email as username."""
         body = {
             "username": username,
             "email": f"{username}@lcamaral.com",
@@ -129,7 +131,10 @@ class Keycloak:
         r = self.call("POST", "/users", json=body)
         if r.status_code != 201:
             raise SystemExit(f"create {username}: {r.status_code} {r.text[:200]}")
-        return r.headers["Location"].rsplit("/", 1)[1]
+        uid = r.headers["Location"].rsplit("/", 1)[1]
+        got = self.call("GET", f"/users/{uid}")
+        got.raise_for_status()
+        return uid, got.json()["username"]
 
 
 # ---------------------------------------------------------------- zot OIDC flow
@@ -207,7 +212,7 @@ def cmd_probe(_a) -> int:
     check(f"group {GROUP} found", True, gid)
     print("  members:", kc.members(gid))
     for u in (ADMIN_USER, PLAIN_USER):
-        check(f"test user {u} absent", kc.user_id(u) is None)
+        check(f"test user {u} absent", not kc.user_exists(u))
     s = requests.Session()
     s.headers["User-Agent"] = UA
     r = s.get(f"{ZOT}/zot/auth/login", params={"provider": "oidc"}, allow_redirects=False, timeout=30)
@@ -222,7 +227,7 @@ def setup() -> Path:
     gid = kc.group_id()
     snapshot = kc.members(gid)
     for u in (ADMIN_USER, PLAIN_USER):
-        if kc.user_id(u):
+        if kc.user_exists(u):
             raise SystemExit(f"{u} already exists; refusing to reuse it (run cleanup or delete it by hand)")
     d = Path(tempfile.mkdtemp(prefix="zot-e2e-"))
     d.chmod(0o700)
@@ -230,13 +235,14 @@ def setup() -> Path:
     save(d, st)
     for u in (ADMIN_USER, PLAIN_USER):
         pw = secrets.token_urlsafe(24)
-        uid = kc.create_user(u, pw)
-        st["users"][u] = {"id": uid, "password": pw}
+        uid, login = kc.create_user(u, pw)
+        st["users"][u] = {"id": uid, "password": pw, "login": login}
         save(d, st)
     r = kc.call("PUT", f"/users/{st['users'][ADMIN_USER]['id']}/groups/{gid}")
     check(f"{ADMIN_USER} added to {GROUP}", r.status_code == 204, f"HTTP {r.status_code}")
+    admin_login = st["users"][ADMIN_USER]["login"]
     check("group members = snapshot + test admin",
-          kc.members(gid) == sorted(snapshot + [ADMIN_USER]), str(kc.members(gid)))
+          kc.members(gid) == sorted(snapshot + [admin_login]), str(kc.members(gid)))
     return d
 
 
@@ -252,14 +258,15 @@ def cmd_run(a) -> int:
     t0 = now()
     st["t0"] = t0
     save(d, st)
-    adm, pla = ADMIN_USER, PLAIN_USER
+    adm, pla = st["users"][ADMIN_USER]["login"], st["users"][PLAIN_USER]["login"]
+    print(f"login names: {adm}, {pla}")
     print(f"T0={t0}")
 
     # --- admin: login, API key
-    s_adm = zot_login(adm, st["users"][adm]["password"])
+    s_adm = zot_login(adm, st["users"][ADMIN_USER]["password"])
     check("admin: OIDC login produces a zot session", True)
     key_adm, uuid_adm = create_apikey(s_adm, "e2e-admin")
-    st["users"][adm]["apikey_uuid"] = uuid_adm
+    st["users"][ADMIN_USER]["apikey_uuid"] = uuid_adm
     save(d, st)
     check("admin: API key created (zak_...)", key_adm.startswith("zak_"))
     r = reg(adm, key_adm, "GET", "/v2/_catalog")
@@ -284,10 +291,10 @@ def cmd_run(a) -> int:
     save(d, st)
 
     # --- plain user: allowed to read, denied to write
-    s_pla = zot_login(pla, st["users"][pla]["password"])
+    s_pla = zot_login(pla, st["users"][PLAIN_USER]["password"])
     check("plain: OIDC login produces a zot session", True)
     key_pla, uuid_pla = create_apikey(s_pla, "e2e-user")
-    st["users"][pla]["apikey_uuid"] = uuid_pla
+    st["users"][PLAIN_USER]["apikey_uuid"] = uuid_pla
     save(d, st)
     r = reg(pla, key_pla, "GET", f"/v2/{REPO}/manifests/1", headers={"Accept": MANIFEST_ACCEPT})
     check("plain: can read (pull) homelab/e2e-test", r.status_code == 200, f"HTTP {r.status_code}")
@@ -314,7 +321,7 @@ def cmd_run(a) -> int:
     check("admin: delete the test image by digest", r.status_code == 202, f"HTTP {r.status_code}")
     r = reg(adm, key_adm, "HEAD", f"/v2/{REPO}/manifests/1", headers={"Accept": MANIFEST_ACCEPT})
     check("admin: manifest gone", r.status_code == 404, f"HTTP {r.status_code}")
-    for s, uuid, u in ((s_adm, uuid_adm, adm), (s_pla, uuid_pla, pla)):
+    for s, uuid, u in ((s_adm, uuid_adm, ADMIN_USER), (s_pla, uuid_pla, PLAIN_USER)):
         r = s.delete(f"{ZOT}/zot/auth/apikey", params={"id": uuid}, timeout=30)
         check(f"{u}: API key revoked", r.status_code == 200, f"HTTP {r.status_code}")
         st["users"][u].pop("apikey_uuid", None)
@@ -372,16 +379,16 @@ def cmd_cleanup(a) -> int:
     for u, info in st["users"].items():
         if info.get("apikey_uuid"):
             try:
-                sess = zot_login(u, info["password"])
+                sess = zot_login(info["login"], info["password"])
                 sess.delete(f"{ZOT}/zot/auth/apikey", params={"id": info["apikey_uuid"]}, timeout=30)
             except Exception as e:  # noqa: BLE001
                 print(f"  could not revoke the key of {u}: {e}")
                 ok = False
     if st.get("digest"):
         try:
-            s = zot_login(ADMIN_USER, st["users"][ADMIN_USER]["password"])
+            s = zot_login(st["users"][ADMIN_USER]["login"], st["users"][ADMIN_USER]["password"])
             key, uuid = create_apikey(s, "e2e-cleanup")
-            r = reg(ADMIN_USER, key, "DELETE", f"/v2/{REPO}/manifests/{st['digest']}")
+            r = reg(st["users"][ADMIN_USER]["login"], key, "DELETE", f"/v2/{REPO}/manifests/{st['digest']}")
             print(f"  cleanup delete of the image: HTTP {r.status_code} (404 = already gone)")
             s.delete(f"{ZOT}/zot/auth/apikey", params={"id": uuid}, timeout=30)
         except Exception as e:  # noqa: BLE001
@@ -392,7 +399,7 @@ def cmd_cleanup(a) -> int:
     members = kc.members(st["gid"])
     check(f"{GROUP} members back to the snapshot", members == st["snapshot"], f"{members} vs {st['snapshot']}")
     for u in (ADMIN_USER, PLAIN_USER):
-        check(f"{u} gone from Keycloak", kc.user_id(u) is None)
+        check(f"{u} gone from Keycloak", not kc.user_exists(u))
     shutil.rmtree(d, ignore_errors=True)
     check("state dir (passwords) removed", not d.exists())
     return 0 if ok and all(o for _, o, _ in results) else 1
