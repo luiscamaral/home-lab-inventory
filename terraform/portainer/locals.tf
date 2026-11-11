@@ -1006,6 +1006,7 @@ locals {
   #   icmp             — raw-socket ping (requires NET_RAW on container)
   #   tcp_connect      — TCP handshake only
   #   ssl_expiry       — TCP+TLS handshake; emits probe_ssl_earliest_cert_expiry
+  #   ssl_expiry_auth_cf — same, with SNI auth.cf.lcamaral.com (probed against the rproxy IPs)
   #   dns_lcamaral     — DNS A query for vault.d.lcamaral.com (resolver health)
   # ──────────────────────────────────────────────
   blackbox_config = <<-EOT
@@ -1070,6 +1071,17 @@ locals {
           tls: true
           tls_config:
             insecure_skip_verify: true
+      # Same probe, but it sends the SNI of the cf certificate: used against the rproxy IPs
+      # (blackbox-ssl targets 192.168.59.28/.48/.49 with __param_module) to watch the cert
+      # that zot sees when it reaches Keycloak at auth.cf.lcamaral.com over the LAN.
+      ssl_expiry_auth_cf:
+        prober: tcp
+        timeout: 10s
+        tcp:
+          tls: true
+          tls_config:
+            insecure_skip_verify: true
+            server_name: auth.cf.lcamaral.com
       dns_lcamaral:
         prober: dns
         timeout: 5s
@@ -1220,6 +1232,15 @@ locals {
         # the wildcard *.d.lcamaral.com cert probed via
         # vault.d / keycloak.d above (same ACME issuer).
       ]
+    },
+    # The cf.lcamaral.com certificate (SAN auth.cf.lcamaral.com, ...) that the three
+    # rproxies present for the *.cf names. zot reaches Keycloak at auth.cf.lcamaral.com over
+    # the LAN (extra_hosts -> these IPs) and panics at startup if that handshake fails, so
+    # each replica's cert is probed directly by IP with the auth.cf SNI. The CertExpiringSoon /
+    # CertExpired / CertProbeFailed rules cover these targets like any other blackbox-ssl one.
+    {
+      targets = ["192.168.59.28:443", "192.168.59.48:443", "192.168.59.49:443"]
+      labels  = { __param_module = "ssl_expiry_auth_cf", sni = "auth.cf.lcamaral.com" }
     }
   ])
 
