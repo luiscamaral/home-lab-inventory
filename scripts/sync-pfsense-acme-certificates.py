@@ -18,6 +18,12 @@ Usage:
     scripts/sync-pfsense-acme-certificates.py --cert X --renew      # force a renewal and wait
 
 --apply and --issue/--renew need --cert (one cert at a time, like terraform -target).
+NOTE: the REST API starts an issuance through a dispatcher that is killed after 300 s
+(`dispatch.sh ... 300`). A cert with `dnssleep` >= ~250 s therefore can't complete through
+--issue/--renew (the DNS sleep alone uses the budget, and the package's import step then fails
+with "Reload error"). Keep `dnssleep` of API-issued certs below about 150 s; pfSense's own
+nightly renewal (`acme_command.sh renewall`) has no such limit.
+
 --issue/--renew talk to Let's Encrypt and write/remove a DNS TXT record at DreamHost, so
 they are always an explicit separate step. After the run, the script prints the issued
 certificate's subject/SAN/dates as pfSense sees them (/cf/conf/acme/<name>.crt).
@@ -302,45 +308,65 @@ def ssh_out(cmd: str, timeout_s: int = 60) -> str:
     return r.stdout
 
 
-def acme_state(name: str) -> tuple[bool, str]:
-    """(running, log tail) of the issuance, read straight from the box (no REST call).
+def log_size(name: str) -> int:
+    out = ssh_out(f"stat -f %z /tmp/acme/{name}/acme_issuecert.log 2>/dev/null || echo 0").strip()
+    return int(out) if out.isdigit() else 0
 
-    Polling the REST API during an issuance is avoided on purpose: each ACME call takes
-    about 90 s inside pfSense and runs concurrently with the package's own import step.
+
+def acme_state(name: str, offset: int) -> tuple[bool, bool, str]:
+    """(acme.sh running, REST dispatcher running, new log text since `offset`), read from the box.
+
+    Only log bytes written after the POST count: the log file keeps earlier runs, and a stale
+    "Reload error" or "Cert success" from a previous run must not decide this one. The REST API
+    isn't polled during an issuance: each ACME call takes about 90 s inside pfSense.
     """
     out = ssh_out(
-        f"pgrep -f '[a]cme\\.sh|[a]cme_command' >/dev/null && echo RUNNING || echo IDLE; "
-        f"tail -n 40 /tmp/acme/{name}/acme_issuecert.log 2>/dev/null")
+        f"pgrep -f '[a]cme\\.sh|[a]cme_command' >/dev/null && echo ACME_RUNNING || echo ACME_IDLE; "
+        f"pgrep -f '[A]CMECertificateIssueDispatcher|[A]CMECertificateRenewDispatcher' >/dev/null "
+        f"&& echo DISP_RUNNING || echo DISP_IDLE; "
+        f"f=/tmp/acme/{name}/acme_issuecert.log; "
+        f"if [ -f $f ]; then s=$(stat -f %z $f); [ $s -lt {offset} ] && o=0 || o={offset}; "
+        f"tail -c +$((o+1)) $f | tail -n 60; fi")
     lines = out.splitlines()
-    running = bool(lines) and lines[0].strip() == "RUNNING"
-    return running, "\n".join(lines[1:])
+    acme = bool(lines) and lines[0].strip() == "ACME_RUNNING"
+    disp = len(lines) > 1 and lines[1].strip() == "DISP_RUNNING"
+    return acme, disp, "\n".join(lines[2:])
 
 
 def issue_or_renew(name: str, token: str, renew: bool) -> bool:
     path = P_RENEW if renew else P_ISSUE
+    offset = log_size(name)
     started = time.time()
     print(f"  POST {path} certificate={name}")
     api("POST", path, token, {"certificate": name})
+    print(f"  {time.strftime('%H:%M:%S')} request accepted; watching the box (new acme log bytes after offset {offset})")
     deadline = started + 25 * 60
     last = ""
-    time.sleep(20)
+    idle_since = None
+    tail = ""
     while time.time() < deadline:
-        running, tail = acme_state(name)
-        status = "running" if running else "finished"
-        if status != last:
-            print(f"  {time.strftime('%H:%M:%S')} acme.sh {status}")
-            last = status
-        if not running and ("Cert success" in tail or "Reload error" in tail or "Error" in tail
-                            or "error" in tail):
-            break
         time.sleep(20)
+        acme, disp, tail = acme_state(name, offset)
+        status = f"acme.sh {'running' if acme else 'idle'}, dispatcher {'running' if disp else 'gone'}"
+        if status != last:
+            print(f"  {time.strftime('%H:%M:%S')} {status}; {len(tail.splitlines())} new log line(s)")
+            last = status
+        done_markers = ("Cert success" in tail or "Reload error" in tail or "Error" in tail)
+        if not acme and tail.strip() and done_markers:
+            break
+        if not acme and not disp:
+            idle_since = idle_since or time.time()
+            if time.time() - idle_since > 120:
+                print("  the dispatcher exited and acme.sh never produced new log output: the issuance did not run")
+                return False
+        else:
+            idle_since = None
     else:
         print("  timed out waiting for the issuance (25 min)")
         return False
 
-    log = redact(tail)
-    print("  acme log (tail):")
-    for ln in [x for x in log.splitlines() if x.strip()][-12:]:
+    print("  acme log (new content, tail):")
+    for ln in [x for x in redact(tail).splitlines() if x.strip()][-12:]:
         print("    " + ln[:200])
     cert_ok = "Cert success" in tail
     reload_ok = "Reload error" not in tail
