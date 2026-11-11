@@ -62,6 +62,9 @@ P_ISSUE = "/services/acme/certificate/issue"
 P_RENEW = "/services/acme/certificate/renew"
 P_ISSUANCES = "/services/acme/certificate/issuances"
 ACME_DIR = "/cf/conf/acme"
+VHOST_DIR = REPO_ROOT / "dockermaster" / "docker" / "compose" / "nginx-rproxy" / "vhost.d"
+CF_CERT = "cf.lcamaral.com"
+CF_SUFFIX = ".cf.lcamaral.com"
 
 CERT_FIELDS = ("descr", "status", "acmeaccount", "keylength", "preferredchain", "oscpstaple",
                "dnssleep", "renewafter")
@@ -159,6 +162,27 @@ def load_desired() -> list[dict]:
         for d in c.get("domains", []):
             d.setdefault("status", "enable")
     return certs
+
+
+def vhost_cf_names() -> set[str]:
+    """Every `*.cf.lcamaral.com` name used in a `server_name` of the rproxy vhosts."""
+    names: set[str] = set()
+    for f in VHOST_DIR.glob("*.conf"):
+        for m in re.finditer(r"^\s*server_name\s+([^;]+);", f.read_text(), re.M):
+            names.update(n for n in m.group(1).split() if n.endswith(CF_SUFFIX))
+    return names
+
+
+def cf_coverage_problems(desired: list[dict]) -> list[str]:
+    """`*.cf` vhost names that the cf cert definition does not list."""
+    cert = next((c for c in desired if c["name"] == CF_CERT), None)
+    if cert is None:
+        return []
+    listed = {d["name"] for d in cert.get("domains", [])}
+    if "*" + CF_SUFFIX in listed:
+        return []
+    return [f"vhost name {n} is not in the {CF_CERT} cert (add it to pfsense/acme-certificates.yml)"
+            for n in sorted(vhost_cf_names() - listed)]
 
 
 def desired_actions(cert_name: str) -> list[dict]:
@@ -312,7 +336,8 @@ def main() -> int:
     ap.add_argument("--apply", action="store_true", help="create/patch (needs --cert)")
     ap.add_argument("--issue", action="store_true", help="issue the cert and wait (needs --cert)")
     ap.add_argument("--renew", action="store_true", help="force a renewal and wait (needs --cert)")
-    ap.add_argument("--check", action="store_true", help="dry run; exit 1 if anything differs")
+    ap.add_argument("--check", action="store_true",
+                    help="dry run; exit 1 if anything differs or a *.cf vhost name is not in the cf cert")
     args = ap.parse_args()
 
     if (args.apply or args.issue or args.renew) and not args.cert:
@@ -356,6 +381,11 @@ def main() -> int:
                 print(f"  {'+' if d == 'CREATE' else '~'} {d}")
             if args.apply:
                 apply_cert(want, lv, token)
+
+        problems = cf_coverage_problems(desired)
+        for p in problems:
+            print(f"\nWARNING: {p}")
+            any_diff = True
 
         unmanaged = sorted(set(live_by) - {c["name"] for c in desired})
         if unmanaged:

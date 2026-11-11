@@ -55,14 +55,22 @@ certificates:
     domains:
       - {name: "*.d.lcamaral.com", method: dns_dreamhost, status: enable}
 
-  # `*.cf.lcamaral.com` for the LAN rproxies. The `cf` names stay on Cloudflare for browsers
-  # (Cloudflare terminates TLS there); this cert lets a LAN client that resolves a `*.cf` name
-  # to the rproxies (zot reaching Keycloak at auth.cf.lcamaral.com) see a publicly trusted cert.
-  # Same account, key and challenge as d.lcamaral.com. The wildcard needs no apex name: no vhost
-  # serves `cf.lcamaral.com` itself. The challenge TXT `_acme-challenge.cf.lcamaral.com` is
-  # added on DreamHost (authoritative) and overrides the `*.cf` wildcard CNAME for that name.
+  # Certificate for the `*.cf.lcamaral.com` names that the LAN rproxies serve. The `cf` names stay on
+  # Cloudflare for browsers (Cloudflare terminates TLS there); this cert lets a LAN client that
+  # resolves a `*.cf` name to the rproxies (zot reaching Keycloak at auth.cf.lcamaral.com) see a
+  # publicly trusted cert.
+  #
+  # Explicit names instead of `*.cf.lcamaral.com`: the pfSense REST API validates a domain `name` as a
+  # plain FQDN and rejects a wildcard (HOSTNAME_VALIDATOR_FAILED, also on pfSense-pkg-RESTAPI 2.11.0),
+  # while the existing wildcard certs were created in the GUI. So every `*.cf` name that a vhost in
+  # dockermaster/docker/compose/nginx-rproxy/vhost.d/ serves is listed here, and
+  # scripts/sync-pfsense-acme-certificates.py warns (--check fails) when a vhost name is missing.
+  # Adding a new `*.cf` vhost = add the name here, `--apply`, then `--renew` (reissues with the new SAN).
+  # Same account, key and challenge as d.lcamaral.com. The challenge TXT records
+  # `_acme-challenge.<name>.cf.lcamaral.com` are added on DreamHost (authoritative) and override the
+  # `*.cf` wildcard CNAME for those names.
   - name: cf.lcamaral.com
-    descr: cf wildcard (LAN rproxy certificate for *.cf)
+    descr: cf names (LAN rproxy certificate for the *.cf vhosts)
     status: active
     acmeaccount: home.lcamaral.com
     keylength: "4096"
@@ -71,4 +79,10 @@ certificates:
     dnssleep: 300
     renewafter: 60
     domains:
-      - {name: "*.cf.lcamaral.com", method: dns_dreamhost, status: enable}
+      - {name: auth.cf.lcamaral.com, method: dns_dreamhost, status: enable}
+      - {name: grafana.cf.lcamaral.com, method: dns_dreamhost, status: enable}
+      - {name: login.cf.lcamaral.com, method: dns_dreamhost, status: enable}
+      - {name: minio.cf.lcamaral.com, method: dns_dreamhost, status: enable}
+      - {name: portainer.cf.lcamaral.com, method: dns_dreamhost, status: enable}
+      - {name: registry.cf.lcamaral.com, method: dns_dreamhost, status: enable}
+      - {name: s3.cf.lcamaral.com, method: dns_dreamhost, status: enable}
