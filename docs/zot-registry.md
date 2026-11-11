@@ -102,12 +102,33 @@ zot signs users in through the Keycloak `homelab` realm (OIDC, authorization-cod
 **Why that issuer.** The realm has a fixed frontend URL, so the discovery document and every token carry
 `https://auth.cf.lcamaral.com/realms/homelab`, even when the request came in on `keycloak.d.lcamaral.com`
 (checked: both return the same `issuer`). zot discovers the provider from `issuer` and rejects a token whose `iss`
-differs, so the configured value must be that one. The browser and zot's token request therefore go through
-Cloudflare to the `bologna` tunnel, the same path as `homelab-portal` (`KEYCLOAK_PUBLIC_URL`).
+differs, so the configured value must be that one. Browsers reach it through Cloudflare (the `bologna` tunnel), like
+`homelab-portal` (`KEYCLOAK_PUBLIC_URL`). zot itself does **not**: see [Startup dependencies](#startup-dependencies).
 
 `zot-auth-init` writes `oidc-credentials.json` (`clientid`, `clientsecret`) and `session-keys.json` (`hashKey`,
 `encryptKey`) next to the htpasswd, from the same Vault read, on every deploy. Fixed session keys keep logins valid
 across restarts. Sessions are stored under the zot data directory.
+
+### Startup dependencies
+
+zot fetches the OIDC discovery document from the issuer at startup and **panics if that fails** (zot 2.1.22,
+`pkg/api/authn.go`: `failed to initialize new relying party oidc`), so a restart needs Keycloak reachable. To keep
+that off the internet and Cloudflare, the stack maps `auth.cf.lcamaral.com` to the three rproxy replicas with
+`extra_hosts` (`192.168.59.28`, `.48`, `.49`), which write three `auth.cf.lcamaral.com` lines into the container's
+`/etc/hosts`. The rproxies present a publicly trusted Let's Encrypt certificate for the `*.cf` names (a SAN
+certificate whose first name is `auth.cf.lcamaral.com`, managed by the pfSense ACME job), so TLS verification still
+works and nothing is skipped.
+
+- Startup now depends only on the LAN: the rproxies (any of 3) and Keycloak (2 replicas behind them). No DNS, internet
+  or Cloudflare is needed.
+- Resolver: the zot binary is static (`CGO_ENABLED=0`), so Go's own resolver is used. It reads `/etc/hosts` before DNS
+  (the image's `nsswitch.conf` says `hosts: files dns`) and returns the three addresses in file order. The dialer tries
+  them in that order and moves on when a connection fails or times out, so one dead rproxy is tolerated. It always
+  starts with `.28` (no round-robin), and it does not retry a reachable proxy that answers with an HTTP error.
+- If that `cf` certificate expires or the rproxy vhost for `auth.cf.lcamaral.com` goes away, zot fails to start.
+  Renewal is the ACME job on pfSense (`pfsense/acme-actions.yml`); check the certificate before a planned zot restart.
+- Fallback: remove `extra_hosts` and apply `portainer_stack.zot`. zot then resolves `auth.cf.lcamaral.com` through DNS and
+  Cloudflare again (needs internet).
 
 ### Logging in
 
