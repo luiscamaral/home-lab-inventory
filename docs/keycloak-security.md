@@ -15,6 +15,32 @@ Both have `prevent_destroy`. The file header lists what is intentionally not cap
 To change a realm setting, edit the resource and apply with the provider (never in the admin console: the next plan
 would show the drift). `homelab` still has `ssl_required = "none"` (captured as found); tightening it is a separate change.
 
+## Brute-force lockout (K2)
+
+Both realms (`homelab`, `master`) have `security_defenses.brute_force_detection` in `keycloak_realms.tf`:
+
+| Setting | Value | Meaning |
+|---|---|---|
+| `max_login_failures` | 3 | the third failed login triggers the lockout |
+| `wait_increment_seconds` | 1200 | a locked user waits 20 minutes |
+| `max_failure_wait_seconds` | 1200 | the wait never exceeds 20 minutes |
+| `failure_reset_time_seconds` | 1200 | the failure counter resets after 20 minutes without failures |
+| `permanent_lockout` | false | never permanent; the user unlocks by itself |
+| `quick_login_check_milli_seconds` / `minimum_quick_login_wait_seconds` | 1000 / 60 | unchanged defaults: failures less than 1 s apart add a 60 s wait |
+
+The `headers` block next to it repeats the live values (Keycloak defaults) because the provider sends both blocks
+together; it changes nothing.
+
+- A locked user sees the normal "Invalid username or password" page (Keycloak does not reveal the lockout), also with the
+  correct password, until the wait ends. The `USER_DISABLED_BY_TEMPORARY_LOCKOUT` event (K4) records it.
+- Status and manual unlock (admin API, LAN name): `GET /admin/realms/<realm>/attack-detection/brute-force/users/<id>`
+  returns `numFailures` and `disabled`; `DELETE` on the same path clears the failures and unlocks the user.
+- The temporary lockout lets anyone who can reach the login page keep a known username locked (a denial of service for
+  that user, not an access risk). Admin console logins are LAN-only (K1), so the `master` admin cannot be locked from the
+  internet. If it happens to the real user, wait 20 minutes or unlock with the call above.
+- Test: `scripts/keycloak-hardening-test.py lockout` uses disposable users in both realms. Never test against `admin`
+  or the real account.
+
 ## Exposure rules (K1)
 
 - Self-registration is off in `homelab` (`registration_allowed = false`); accounts are created by an admin.
