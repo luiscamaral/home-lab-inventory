@@ -80,6 +80,22 @@ starting `acme.sh`. Keep `dnssleep` of API-issued certs below about 150 s. pfSen
 `--issue` and `--renew` in `scripts/sync-pfsense-acme-certificates.py` watch the box (`pgrep` and only the new
 bytes of the acme log) instead of polling the API, and report Let's Encrypt and the package import separately.
 
+**Break-glass record (post-hoc, 2026-11-11, user-approved):** the first issuance of `cf.lcamaral.com` ended with
+Let's Encrypt success but a failed package import (the dispatcher timeout above). The user approved one SSH run of the
+package's own import command on the already-issued files (the key never left the box):
+
+```bash
+ssh pfsense '/usr/local/pkg/acme/acme_command.sh importcert "cf.lcamaral.com" "auth.cf.lcamaral.com" \
+  <dir>/auth.cf.lcamaral.com.key <dir>/auth.cf.lcamaral.com.cer <dir>/ca.cer <dir>/fullchain.cer'
+# dir = /tmp/acme/cf.lcamaral.com/auth.cf.lcamaral.com
+# output: "IMPORT CERT cf.lcamaral.com, ..." / "update cert!", exit code 0
+```
+
+Result: pfSense logged `Storing signed certificate: cf.lcamaral.com` and ran the cert's action
+(`sync-certs-to-rproxy.sh`: `reloaded rproxy`, `rproxy-2`, `rproxy-3`); `/cf/conf/acme/cf.lcamaral.com.*` and the NFS cert
+dir got the files. It is the package's normal code path (the one the nightly cron uses), run once by hand; no
+`config.xml` editing. Nothing else on pfSense was written outside the REST API.
+
 The DreamHost DNS token is a write-only field in the REST API, so it can't be diffed. It lives in
 Vault (`secret/homelab/dreamhost`, field `api_token`) and is sent only when a domain is created.
 Nothing secret is stored in the repo.
