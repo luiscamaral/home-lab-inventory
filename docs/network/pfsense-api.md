@@ -63,6 +63,13 @@ Issuing and renewing is a separate explicit step (`--cert NAME --issue`, `--rene
 Let's Encrypt and adds, then removes, a DNS TXT record at DreamHost. Post-renewal commands stay in
 `pfsense/acme-actions.yml` (`scripts/sync-pfsense-acme-actions.py`).
 
+**Wildcard names can't be created through the REST API.** The ACME domain `name` is validated as a plain FQDN
+(`HostnameValidator(allow_fqdn: true)`), so `POST /services/acme/certificate` with `*.cf.lcamaral.com` fails with
+`HOSTNAME_VALIDATOR_FAILED` (still true on pfSense-pkg-RESTAPI 2.11.0 and on its main branch). The wildcard certs
+`d.lcamaral.com`, `home.lcamaral.com` and `pfsense` were created in the GUI and are only _captured_ by the YAML.
+Certificates that need new names are declared with explicit SANs (see `cf.lcamaral.com`); the script warns when a
+`*.cf` name served by a vhost is missing from that list.
+
 The DreamHost DNS token is a write-only field in the REST API, so it can't be diffed. It lives in
 Vault (`secret/homelab/dreamhost`, field `api_token`) and is sent only when a domain is created.
 Nothing secret is stored in the repo.
