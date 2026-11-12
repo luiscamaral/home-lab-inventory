@@ -1,8 +1,104 @@
 # pfSense REST API v2 Reference
 
-pfSense runs `pfSense-pkg-RESTAPI-2.7_6` — a comprehensive REST API with 200+
+pfSense runs `pfSense-pkg-RESTAPI-2.10_2` (pfSense Plus 26.07 build) — a comprehensive REST API with 200+
 endpoints covering firewall, routing, DNS, DHCP, HAProxy, ACME, certs, VPN, and
 system management. Source: [pfrest/pfSense-pkg-RESTAPI](https://github.com/pfrest/pfSense-pkg-RESTAPI).
+
+## Reinstall after pfSense upgrades
+
+The package is third-party, so a pfSense upgrade or patch can drop it silently. Every
+`/api/v2/...` call then returns the GUI's HTML **404** page, and
+`/usr/local/www/api/v2/` holds only an empty `schema/` dir. This happened between
+the 26.07 patch (2026-09-10) and 2026-09-12. The API stayed down until
+2026-11-10, which also broke the `scripts/sync-pfsense-*.py` reconcilers that
+use it.
+
+Reinstall the asset that matches `cat /etc/version`. Settings and API keys come
+back from `/usr/local/share/pfSense-pkg-RESTAPI/backup.json` (`keep_backup` is
+enabled):
+
+```bash
+V=v2.10.2; PF=26.07   # release tag + pfSense version
+gh api repos/pfrest/pfSense-pkg-RESTAPI/releases/tags/$V \
+  -q ".assets[]|select(.name==\"pfSense-$PF-pkg-RESTAPI.pkg\")|.digest"   # expected sha256
+ssh pfsense "cd /tmp && fetch -o restapi.pkg https://github.com/pfrest/pfSense-pkg-RESTAPI/releases/download/$V/pfSense-$PF-pkg-RESTAPI.pkg \
+  && sha256 -q restapi.pkg && pkg-static add restapi.pkg && rm restapi.pkg"   # compare sha256 first
+```
+
+Rollback: `pkg-static delete pfSense-pkg-RESTAPI`. History: 2026-11-10 reinstalled
+2.10_2 (break-glass, approved by the user; recorded post-hoc in the PR that added this
+section). The `sha256` was verified against the release digest.
+
+## ACME and other slow endpoints (the 504s)
+
+`GET /services/acme/certificates` through `https://pfsense.home.lcamaral.com/api/v2` returns
+**504**, but the API itself works: called directly on the box it answers 200 after about 57 s
+(a single cert read takes about 43 s, `/system/certificates` about 20 s, `/services/haproxy/backends`
+about 9 s, `/system/version` 2 s). The 504 comes from HAProxy: the web front end has
+`timeout server 30000`, so anything slower than 30 s is cut off. The same limit explains the
+`/services/cron/jobs` 504 that `scripts/sync-pfsense-cron-jobs.py` already works around.
+
+The time is spent in the PHP worker, not in the config size (`config.xml` is 490 KB) or the network:
+while an ACME call runs, the worker forks `/sbin/sysctl` thousands of times (`getSchedulers()` in
+`/etc/inc/shaper.inc`, about 1500 loops in 20 s), with almost no CPU use. It is a behaviour of the
+installed package (`pfSense-pkg-RESTAPI-2.10_2` on 26.07), not a fault of the ACME data.
+
+**Use the local port instead of HAProxy.** The sync tools run
+`ssh pfsense 'curl --max-time 170 http://127.0.0.1:56880/api/v2/...'` (the pfSense web server, reachable
+only on the box) and need no pfSense change. `scripts/sync-pfsense-acme-actions.py`,
+`scripts/sync-pfsense-acme-certificates.py` and `scripts/sync-host-overrides.py` do this. Expect about
+a minute per ACME read and plan for the same per write. Raising HAProxy's `timeout server` for the API
+frontend would hide the 504 but isn't needed, so it is not done.
+
+History of the earlier `sync-host-overrides.py` 404: that was the missing package (see
+[Reinstall after pfSense upgrades](#reinstall-after-pfsense-upgrades)), not the slow endpoints.
+It works again since the 2026-11-10 reinstall (a full run takes about 2 min).
+
+## ACME certificate definitions (IaC)
+
+`pfsense/acme-certificates.yml` declares the certificates (name, account, key length, renewal,
+domains and challenge method). `scripts/sync-pfsense-acme-certificates.py` compares it with
+pfSense (dry run by default) and creates or patches one cert at a time (`--cert NAME --apply`).
+Issuing and renewing is a separate explicit step (`--cert NAME --issue`, `--renew`): it contacts
+Let's Encrypt and adds, then removes, a DNS TXT record at DreamHost. Post-renewal commands stay in
+`pfsense/acme-actions.yml` (`scripts/sync-pfsense-acme-actions.py`).
+
+**Wildcard names can't be created through the REST API.** The ACME domain `name` is validated as a plain FQDN
+(`HostnameValidator(allow_fqdn: true)`), so `POST /services/acme/certificate` with `*.cf.lcamaral.com` fails with
+`HOSTNAME_VALIDATOR_FAILED` (still true on pfSense-pkg-RESTAPI 2.11.0 and on its main branch). The wildcard certs
+`d.lcamaral.com`, `home.lcamaral.com` and `pfsense` were created in the GUI and are only _captured_ by the YAML.
+Certificates that need new names are declared with explicit SANs (see `cf.lcamaral.com`); the script warns when a
+`*.cf` name served by a vhost is missing from that list.
+
+**Issuing through the REST API has a 300 s limit.** `POST /services/acme/certificate/issue` and `/renew` run the
+package through a dispatcher (`dispatch.sh … 300`, i.e. `timeout 300`). A certificate with `dnssleep` of 300 s can't
+finish inside that budget: the dispatcher is killed during validation and the package's own import step then fails
+with `Reload error` (the cert is issued by Let's Encrypt but never imported). 2026-11-11, `cf.lcamaral.com`: first run
+killed at 02:38:48, validation ran at 02:38:54, `Reload error` at 02:39:15; a second run hung for the whole 300 s without
+starting `acme.sh`. Keep `dnssleep` of API-issued certs below about 150 s. pfSense's own nightly renewal
+(`acme_command.sh renewall` from cron) has no such limit, so renewals of the existing certs are not affected.
+`--issue` and `--renew` in `scripts/sync-pfsense-acme-certificates.py` watch the box (`pgrep` and only the new
+bytes of the acme log) instead of polling the API, and report Let's Encrypt and the package import separately.
+
+**Break-glass record (post-hoc, 2026-11-11, user-approved):** the first issuance of `cf.lcamaral.com` ended with
+Let's Encrypt success but a failed package import (the dispatcher timeout above). The user approved one SSH run of the
+package's own import command on the already-issued files (the key never left the box):
+
+```bash
+ssh pfsense '/usr/local/pkg/acme/acme_command.sh importcert "cf.lcamaral.com" "auth.cf.lcamaral.com" \
+  <dir>/auth.cf.lcamaral.com.key <dir>/auth.cf.lcamaral.com.cer <dir>/ca.cer <dir>/fullchain.cer'
+# dir = /tmp/acme/cf.lcamaral.com/auth.cf.lcamaral.com
+# output: "IMPORT CERT cf.lcamaral.com, ..." / "update cert!", exit code 0
+```
+
+Result: pfSense logged `Storing signed certificate: cf.lcamaral.com` and ran the cert's action
+(`sync-certs-to-rproxy.sh`: `reloaded rproxy`, `rproxy-2`, `rproxy-3`); `/cf/conf/acme/cf.lcamaral.com.*` and the NFS cert
+dir got the files. It is the package's normal code path (the one the nightly cron uses), run once by hand; no
+`config.xml` editing. Nothing else on pfSense was written outside the REST API.
+
+The DreamHost DNS token is a write-only field in the REST API, so it can't be diffed. It lives in
+Vault (`secret/homelab/dreamhost`, field `api_token`) and is sent only when a domain is created.
+Nothing secret is stored in the repo.
 
 ## Connection Details
 

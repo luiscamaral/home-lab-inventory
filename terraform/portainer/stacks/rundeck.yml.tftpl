@@ -24,7 +24,7 @@ configs:
 
 services:
   rundeck:
-    image: registry.cf.lcamaral.com/la-rundeck:latest
+    image: zot.d.lcamaral.com/homelab/la-rundeck:latest
     pull_policy: if_not_present
     container_name: rundeck
     hostname: rundeck-local
@@ -70,7 +70,9 @@ services:
       portainer.autodeploy: "false"
 
   postgres:
-    image: postgres:17
+    # Pinned to the exact running build (17.9-1.pgdg13+1) by digest: the 17.9 tag
+    # was rebuilt on Docker Hub since, and a different build must not touch PGDATA.
+    image: postgres:17.9@sha256:7ad98329d513dd497293b951c195ca354274a77f12ddbbbbf85e68a811823d72
     container_name: postgres-rundeck
     hostname: postgres-rundeck
     networks:
@@ -84,7 +86,12 @@ services:
       POSTGRES_USER: rundeck
       POSTGRES_PASSWORD: $${RUNDECK_DB_PASSWORD}
     volumes:
-      - /nfs/dockermaster/docker/rundeck/dbdata:/var/lib/postgresql/data
+      # PGDATA on a LOCAL volume (not NFS). The soft NFS mount returned EIO
+      # during the 2026-06-14 ix0/NFS stall -> postgres PANIC (pg_control
+      # I/O error, exit 139). Local storage is NFS-independent. Seeded by
+      # salvaging the intact NFS copy (pg_controldata verified) into
+      # /opt/rundeck/dbdata. Rundeck app dirs below stay on NFS for now.
+      - /opt/rundeck/dbdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "rundeck"]
       interval: 10s

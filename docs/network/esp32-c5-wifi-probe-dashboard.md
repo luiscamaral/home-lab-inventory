@@ -18,6 +18,55 @@ scales automatically — no dashboard edits. The firmware also self-reports a
 `location` label on `wifi_probe_build_info`; the identity table shows it beside the
 scrape `room` so you can confirm a probe is physically where its target says.
 
+## Is a probe online? (liveness)
+
+Probes **push** OTLP to the otel-collector (`192.168.59.46:4318`), which serves each
+probe's **last** push for 30 min; Prometheus scrapes the collector, not the probes.
+So a dead probe keeps showing frozen values (uptime, heap, `connected=1`, RSSI) for up
+to 30 min. The only proof of life is the uptime counter still advancing:
+
+```promql
+changes(wifi_probe_uptime_seconds{job="wifi-probe"}[6m]) > 0   # 6m > one band cycle
+```
+
+Where to look on the dashboard:
+
+| Panel | Shows |
+|---|---|
+| **🟢 Probe status — per room** (top strip) | ONLINE / OFFLINE per room; an OFFLINE room stays listed for 24h after its last push |
+| **📡 Probes Reporting** | fraction of known rooms (24h) that are ONLINE, fixed 6m window (independent of `$window`) |
+| **🟢 Per-room push freshness** (OTLP row) | the same signal over time — when did a room stop pushing |
+
+Panels that show raw values (Weakest RSSI, Min Heap, Connected state, identity table)
+are freshness-gated: a stale probe is ignored or forced DOWN, so cached values can't read
+healthy. The probe-success matrices (🏘️ room × probe, 🎯 probe × band) and the SLA
+table's **Up** column use three states: **OK** / **FAIL** for a live probe and grey
+**STALE** while it isn't pushing. Without that, a dead probe's cached OK showed green for
+30 min and its lanes then went blank. The "Probe not reporting" annotation marks the
+outage window on every time panel.
+
+The state alerts (`WifiProbeInternetDown`, `WifiProbeProbeFailing`, `WifiProbeHeapLow`)
+are gated the same way (10m), so a dead probe only raises `WifiProbeNoData`. That alert
+covers every probe seen in the last 24h, so it **keeps firing after the collector expires
+the series**; the old `changes(...[10m]) == 0` form resolved on its own about 40 min into
+an outage. When you retire or rename a probe, silence `WifiProbeNoData` for that
+instance for 24h.
+
+Reboots (fw >= 0.12.0): **🔁 Boot count — per room** (Device Health row; each step is
+a reboot) and **🔁 Current boot cause** (`restart_cause`: `heap_wd`, `stall`, `no_link`,
+`ota_stuck`, `ota_done`, `ota_reboot_first`, `api`, `provisioned`, or `unplanned` for a
+crash, hardware watchdog or power loss). Alert `WifiProbeFrequentReboots` fires at 3+
+boots in 6 h.
+
+Known limitation: **Current link detail per room** picks one BSSID per probe/band with
+`topk`. For up to ~30 min after a roam it may show the previous BSSID, because the
+collector re-serves cached series with identical timestamps. A firmware-side association
+time would fix this.
+
+Layout: top strip (status + fleet verdicts) → **🏘️ Room comparison** (rooms side by side) →
+**🎯 Probe Results — ${room}** (row repeated once per selected room) → link quality →
+collapsed health / AP survey / OTLP pipeline rows.
+
 ## Deploy a probe in a new room
 
 ### 1. Flash and set the room on the device
@@ -77,7 +126,10 @@ label_values(up{job="wifi-probe"}, room)   # populates the dashboard's Room pick
 
 ## Regenerating the dashboard
 
-The JSON is generated — never hand-edit it. Change panels in the generator and re-run:
+The JSON is generated — never hand-edit it, in the repo **or in the Grafana UI**. The
+`homelab` dashboard provider has `allowUiUpdates: false`, so Grafana refuses UI saves
+(use "Save as" for an experimental copy, then port the change into the generator).
+Change panels in the generator and re-run:
 
 ```bash
 python3 scripts/grafana/build_wifi_probes_overview.py

@@ -273,6 +273,14 @@ locals {
           - targets: [192.168.59.16:5001]
             labels: { instance: registry-1 }
 
+      # Zot registry (successor to registry:2). /metrics is on the main
+      # listener; anonymous read is allowed for metrics in zot-config.json.
+      - job_name: zot
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.5:5000]
+            labels: { instance: zot-1 }
+
       # ── Phase 3a: Watchtower (HTTP API on :8080) ────────────────────
       # WATCHTOWER_HTTP_API_METRICS=true (already set) exposes /v1/metrics
       # behind the same bearer token as the update-trigger API. Two
@@ -704,6 +712,13 @@ locals {
           - targets: [192.168.59.16:5001]
             labels: { instance: registry-1 }
 
+      # Zot registry — see replica-A comment.
+      - job_name: zot
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.5:5000]
+            labels: { instance: zot-1 }
+
       # ── Phase 3a: Watchtower (HTTP API on :8080) ────────────────────
       # TODO: bearer token wiring — see replica-A comment.
       - job_name: watchtower
@@ -991,6 +1006,7 @@ locals {
   #   icmp             — raw-socket ping (requires NET_RAW on container)
   #   tcp_connect      — TCP handshake only
   #   ssl_expiry       — TCP+TLS handshake; emits probe_ssl_earliest_cert_expiry
+  #   ssl_expiry_auth_cf — same, with SNI auth.cf.lcamaral.com (probed against the rproxy IPs)
   #   dns_lcamaral     — DNS A query for vault.d.lcamaral.com (resolver health)
   # ──────────────────────────────────────────────
   blackbox_config = <<-EOT
@@ -1024,6 +1040,22 @@ locals {
             insecure_skip_verify: true
           fail_if_ssl: false
           fail_if_not_ssl: true
+      # Registry-mirror vhosts (hub.d -> zot): "/" is a 404 and "/v2/" is a
+      # static Nginx 200, so neither proves the upstream answers. Probe a
+      # repo that never exists: only zot's registry API returns 404 with a
+      # NAME_UNKNOWN body (tags/list never triggers an upstream sync). zot
+      # down => Nginx 502 HTML => no body match => probe fails.
+      http_registry_api:
+        prober: http
+        timeout: 10s
+        http:
+          preferred_ip_protocol: ip4
+          valid_status_codes: [404]
+          fail_if_body_not_matches_regexp: ['"code":"NAME_UNKNOWN"']
+          tls_config:
+            insecure_skip_verify: true
+          fail_if_ssl: false
+          fail_if_not_ssl: true
       icmp:
         prober: icmp
         timeout: 5s
@@ -1039,6 +1071,17 @@ locals {
           tls: true
           tls_config:
             insecure_skip_verify: true
+      # Same probe, but it sends the SNI of the cf certificate: used against the rproxy IPs
+      # (blackbox-ssl targets 192.168.59.28/.48/.49 with __param_module) to watch the cert
+      # that zot sees when it reaches Keycloak at auth.cf.lcamaral.com over the LAN.
+      ssl_expiry_auth_cf:
+        prober: tcp
+        timeout: 10s
+        tcp:
+          tls: true
+          tls_config:
+            insecure_skip_verify: true
+            server_name: auth.cf.lcamaral.com
       dns_lcamaral:
         prober: dns
         timeout: 5s
@@ -1114,11 +1157,30 @@ locals {
     if !can(regex("\\.cf\\.lcamaral\\.com$", trimsuffix(f, ".conf")))
   ]
 
-  blackbox_rproxy_targets = jsonencode([
-    {
-      targets = [for h in local.rproxy_probe_hosts : "https://${h}"]
+  # Per-vhost probe overrides for hosts whose "/" is not a meaningful health
+  # check. The per-target __param_module label overrides the job's default
+  # module (http_rproxy_alive), so these stay in job="blackbox-rproxy" and
+  # are covered by the same RProxyEndpointDown/Slow alerts.
+  rproxy_probe_overrides = {
+    "hub.d.lcamaral.com" = {
+      path   = "/v2/library/zz-blackbox-canary/tags/list"
+      module = "http_registry_api"
     }
-  ])
+  }
+  blackbox_rproxy_targets = jsonencode(concat(
+    [{
+      targets = [
+        for h in local.rproxy_probe_hosts : "https://${h}"
+        if !contains(keys(local.rproxy_probe_overrides), h)
+      ]
+    }],
+    [
+      for h, o in local.rproxy_probe_overrides : {
+        targets = ["https://${h}${o.path}"]
+        labels  = { __param_module = o.module }
+      } if contains(local.rproxy_probe_hosts, h)
+    ]
+  ))
 
   blackbox_http_targets = jsonencode([
     {
@@ -1170,6 +1232,15 @@ locals {
         # the wildcard *.d.lcamaral.com cert probed via
         # vault.d / keycloak.d above (same ACME issuer).
       ]
+    },
+    # The cf.lcamaral.com certificate (SAN auth.cf.lcamaral.com, ...) that the three
+    # rproxies present for the *.cf names. zot reaches Keycloak at auth.cf.lcamaral.com over
+    # the LAN (extra_hosts -> these IPs) and panics at startup if that handshake fails, so
+    # each replica's cert is probed directly by IP with the auth.cf SNI. The CertExpiringSoon /
+    # CertExpired / CertProbeFailed rules cover these targets like any other blackbox-ssl one.
+    {
+      targets = ["192.168.59.28:443", "192.168.59.48:443", "192.168.59.49:443"]
+      labels  = { __param_module = "ssl_expiry_auth_cf", sni = "auth.cf.lcamaral.com" }
     }
   ])
 
@@ -1314,6 +1385,10 @@ locals {
       # rendered as near-zero latency on dashboards and status-code froze
       # at 204. blackbox-exporter also emits probe_success, so every rule
       # here MUST filter job="wifi-probe".
+      # 2026-11-08: the collector serves a dead probe's LAST push for 30m, so
+      # state alerts (InternetDown / ProbeFailing / HeapLow) are gated on
+      # the probe still pushing (uptime advanced within 10m). A dead probe
+      # then raises only WifiProbeNoData, not stale-value noise.
       - name: wifi-probes
         interval: 1m
         rules:
@@ -1331,7 +1406,14 @@ locals {
                 push to it; Prometheus scrapes its :8889 cache). Check the
                 otel-collector Portainer stack on dockermaster.
           - alert: WifiProbeNoData
-            expr: changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) == 0
+            # Every probe seen in 24h whose uptime hasn't advanced in 10m. The
+            # old `changes(...[10m]) == 0` needs the series to exist, so it
+            # silently RESOLVED ~10m after the collector expired a dead probe
+            # (30m) — garage 2026-11-08: firing 12:11, resolved 12:30, still
+            # dead until 12:40. Retiring/renaming a probe => silence for 24h.
+            expr: >-
+              max by (room, instance) (last_over_time(wifi_probe_uptime_seconds{job="wifi-probe"}[24h]))
+              unless on (instance) changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) > 0
             for: 10m
             labels:
               severity: critical
@@ -1340,13 +1422,15 @@ locals {
               summary: "wifi-probe {{ $$labels.room }} stopped pushing"
               description: |
                 No fresh OTLP push from {{ $$labels.instance }}
-                ({{ $$labels.room }}) for 10m — uptime stopped advancing. The
-                collector serves the last value for 30m, so this fires before
-                the series expires. Device crashed, lost WiFi, can't reach the
+                ({{ $$labels.room }}) for 10m — uptime stopped advancing. Keeps
+                firing after the collector expires the series (30m), for up to
+                24h of silence. Device crashed, lost WiFi, can't reach the
                 collector :4318, or its push is wedged. Try
                 http://{{ $$labels.instance }}/status then POST /reboot (token).
           - alert: WifiProbeInternetDown
-            expr: max by (room) (probe_success{job="wifi-probe", probe="internet_https"}) == 0
+            expr: >-
+              max by (room) (probe_success{job="wifi-probe", probe="internet_https"}
+              and on (instance) changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) > 0) == 0
             for: 10m
             labels:
               severity: critical
@@ -1360,7 +1444,9 @@ locals {
                 issue, not WiFi. Check probe_last_error_stage to see the
                 failing stage (1=dns 2=tcp 3=tls 4=http 5=timeout).
           - alert: WifiProbeProbeFailing
-            expr: probe_success{job="wifi-probe"} == 0
+            expr: >-
+              probe_success{job="wifi-probe"} == 0
+              and on (instance) changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) > 0
             for: 20m
             labels:
               severity: warning
@@ -1385,8 +1471,29 @@ locals {
                 {{ $$labels.room }}/{{ $$labels.band }} for 30m. Catches a
                 frozen probe engine or a band that never reconnects even
                 when probe_success still reads 1 from a stale gauge.
+          - alert: WifiProbeFrequentReboots
+            # fw >= 0.12.0: NVS boot counter (survives power loss, unaffected by
+            # the collector cache). 0.11.1 rebooted ~1.5x per 6 h from the heap
+            # watchdog; 3+ in 6 h means a reboot loop or a regression.
+            expr: >-
+              (max by (room) (wifi_probe_boot_count{job="wifi-probe"})
+              - max by (room) (wifi_probe_boot_count{job="wifi-probe"} offset 6h)) >= 3
+            for: 5m
+            labels:
+              severity: warning
+              category: wifi-probe
+            annotations:
+              summary: "wifi-probe {{ $$labels.room }} rebooted {{ $$value }} times in 6 h"
+              description: |
+                The {{ $$labels.room }} probe booted {{ $$value }} times in the
+                last 6 h. Check the cause of the current boot
+                (wifi_probe_boot_info restart_cause: heap_wd = fragmentation,
+                stall/no_link = liveness supervisor, unplanned = crash or
+                power) on the WiFi Probes dashboard (Device Health).
           - alert: WifiProbeHeapLow
-            expr: wifi_probe_heap_largest_free_block_bytes{job="wifi-probe"} < 32768
+            expr: >-
+              wifi_probe_heap_largest_free_block_bytes{job="wifi-probe"} < 32768
+              and on (instance) changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) > 0
             for: 15m
             labels:
               severity: critical

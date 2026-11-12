@@ -98,6 +98,11 @@ data "vault_kv_secret_v2" "registry" {
   name  = "homelab/registry"
 }
 
+data "vault_kv_secret_v2" "zot" {
+  mount = "secret"
+  name  = "homelab/zot"
+}
+
 data "vault_kv_secret_v2" "smtp" {
   mount = "secret"
   name  = "homelab/smtp"

@@ -1,0 +1,210 @@
+{
+  "distSpecVersion": "1.1.1",
+  "extensions": {
+    "metrics": {
+      "enable": true,
+      "prometheus": {
+        "path": "/metrics"
+      }
+    },
+    "scrub": {
+      "enable": true,
+      "interval": "24h"
+    },
+    "search": {
+      "enable": true
+    },
+    "sync": {
+      "enable": true,
+      "registries": [
+        {
+          "content": [
+            {
+              "destination": "/docker.io",
+              "prefix": "**"
+            }
+          ],
+          "maxRetries": 3,
+          "onDemand": true,
+          "retryDelay": "10s",
+          "syncTimeout": "15m",
+          "tlsVerify": true,
+          "urls": [
+            "https://index.docker.io"
+          ]
+        },
+        {
+          "content": [
+            {
+              "destination": "/ghcr.io",
+              "prefix": "**"
+            }
+          ],
+          "maxRetries": 3,
+          "onDemand": true,
+          "retryDelay": "10s",
+          "syncTimeout": "15m",
+          "tlsVerify": true,
+          "urls": [
+            "https://ghcr.io"
+          ]
+        },
+        {
+          "content": [
+            {
+              "destination": "/quay.io",
+              "prefix": "**"
+            }
+          ],
+          "maxRetries": 3,
+          "onDemand": true,
+          "retryDelay": "10s",
+          "syncTimeout": "15m",
+          "tlsVerify": true,
+          "urls": [
+            "https://quay.io"
+          ]
+        },
+        {
+          "content": [
+            {
+              "destination": "/registry.k8s.io",
+              "prefix": "**"
+            }
+          ],
+          "maxRetries": 3,
+          "onDemand": true,
+          "retryDelay": "10s",
+          "syncTimeout": "15m",
+          "tlsVerify": true,
+          "urls": [
+            "https://registry.k8s.io"
+          ]
+        },
+        {
+          "content": [
+            {
+              "destination": "/gcr.io",
+              "prefix": "**"
+            }
+          ],
+          "maxRetries": 3,
+          "onDemand": true,
+          "retryDelay": "10s",
+          "syncTimeout": "15m",
+          "tlsVerify": true,
+          "urls": [
+            "https://gcr.io"
+          ]
+        }
+      ]
+    },
+    "ui": {
+      "enable": true
+    }
+  },
+  "http": {
+    "accessControl": {
+      "adminPolicy": {
+        "actions": [
+          "read",
+          "create",
+          "update",
+          "delete"
+        ],
+        "groups": [
+          "zot-admins"
+        ],
+        "users": [
+          "admin"
+        ]
+      },
+      "metrics": {
+        "anonymousPolicy": [
+          "read"
+        ]
+      },
+      "repositories": {
+        "**": {
+          "anonymousPolicy": [
+            "read"
+          ],
+          "defaultPolicy": [
+            "read"
+          ]
+        },
+        "homelab/**": {
+          "anonymousPolicy": [],
+          "defaultPolicy": [
+            "read"
+          ]
+        }
+      }
+    },
+    "address": "0.0.0.0",
+    "auth": {
+      "apikey": true,
+      "failDelay": 5,
+      "htpasswd": {
+        "path": "/etc/zot/auth/htpasswd"
+      },
+      "openid": {
+        "providers": {
+          "oidc": {
+            "claimMapping": {
+              "groups": "groups",
+              "username": "preferred_username"
+            },
+            "credentialsFile": "/etc/zot/auth/oidc-credentials.json",
+            "issuer": "https://auth.cf.lcamaral.com/realms/homelab",
+            "name": "Keycloak",
+            "scopes": [
+              "openid",
+              "profile",
+              "email"
+            ]
+          }
+        }
+      },
+      "secureSession": true,
+      "sessionKeysFile": "/etc/zot/auth/session-keys.json"
+    },
+    "compat": [
+      "docker2s2"
+    ],
+    "externalUrl": "https://zot.d.lcamaral.com",
+    "port": "5000",
+    "realm": "zot"
+  },
+  "log": {
+    "level": "info"
+  },
+  "storage": {
+    "dedupe": false,
+    "gc": true,
+    "gcDelay": "1h",
+    "gcInterval": "24h",
+    "retention": {
+      "delay": "24h",
+      "policies": [
+        {
+          "deleteReferrers": true,
+          "deleteUntagged": true,
+          "keepTags": [
+            {
+              "pulledWithin": "2160h"
+            }
+          ],
+          "repositories": [
+            "docker.io/**",
+            "ghcr.io/**",
+            "quay.io/**",
+            "registry.k8s.io/**",
+            "gcr.io/**"
+          ]
+        }
+      ]
+    },
+    "rootDirectory": "/var/lib/registry"
+  }
+}

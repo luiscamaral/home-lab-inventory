@@ -2,6 +2,13 @@
 
 **Before ANY infrastructure change, read [`.claude/operating-rules.md`](.claude/operating-rules.md).** In short:
 
+- **RULE #1 — PR → merge → apply from `main`.** Mandatory for every AI agent and every session.
+  Branch from `origin/main` → commit → PR → all required CI checks green → squash-merge →
+  apply **only from a clean checkout of merged `main`**, applying only this PR's diff
+  (`-target`; report any other drift) → verify and post evidence on the PR. Never apply from
+  a feature branch and never change live infra before merge. Docs-only changes still need
+  a PR. Break-glass only with explicit user approval, followed by a `post-hoc` PR in the
+  same session.
 - **IaC only — and IaC is NOT only Terraform.** Portainer/Cloudflare/Vault → `terraform/`;
   **pfSense + hosts → `pfsense/*.yml` + `pfsense/scripts/` applied via `scripts/sync-*.py`**;
   Rundeck → `rundeck/jobs/` **(NOT IMPLEMENTED — verified 2026-08-18: Rundeck runs on ds-1 but no
@@ -53,7 +60,12 @@
 - GitHub runner service (GitHub-runner-homelab) is a Terraform-managed Portainer stack running on dockermaster for CI/CD.
 - Vault server at <http://vault.d.lcamaral.com> (192.168.59.25) for secret management.
 - Portainer at 192.168.59.2 for container management (Terraform-managed via `terraform/portainer/`).
-- Docker registry at <https://registry.cf.lcamaral.com> (Terraform-managed Portainer stack).
+- Grafana at <https://grafana.cf.lcamaral.com> (public via Cloudflare tunnel; this is its `root_url`
+  and the Keycloak OIDC callback host). LAN alias: <https://grafana.d.lcamaral.com>.
+- Container registry: **Zot** at <https://zot.d.lcamaral.com> (LAN only; `homelab/*` images +
+  pull-through cache for `docker.io`, `ghcr.io`, `quay.io`, `registry.k8s.io`, `gcr.io` under those prefixes).
+  Terraform-managed Portainer stack `zot`; see `docs/zot-registry.md`. The old registry:2 at
+  <https://registry.cf.lcamaral.com> is legacy (cool-off, no new pushes).
 
 ## Infrastructure as Code
 
@@ -83,9 +95,14 @@ surface → source → apply map. Two layers:
 - Wildcard `*.cf.lcamaral.com` on DreamHost CNAMEs to Cloudflare edge for subdomain delegation.
 - Cloudflare tunnel **bologna** routes `*.cf.lcamaral.com` traffic to `nginx-rproxy:443` on dockermaster.
 - Tunnel uses `noTLSVerify` for origin (Nginx certs are for `*.d.lcamaral.com`).
-- Adding a new service: DNS record + tunnel ingress in `terraform/cloudflare/`, Nginx vhost on
-  dockermaster, Portainer stack in `terraform/portainer/`; if the service needs secrets, add a
-  `vault_kv_secret_v2` data source in `terraform/portainer/vault.tf`.
+- Adding a new service: DNS record + tunnel ingress in `terraform/cloudflare/`, Nginx vhost in the
+  repo (`dockermaster/docker/compose/nginx-rproxy/vhost.d/`, rendered by `terraform/portainer`,
+  then `scripts/portainer-redeploy.py` on each rproxy, one at a time), Portainer stack in
+  `terraform/portainer/`; if the service needs secrets, add a `vault_kv_secret_v2` data source in
+  `terraform/portainer/vault.tf`. Full steps: `terraform/cloudflare/README.md`.
+- The Cloudflare API token has a **client IP allow-list**. Error `9109 Cannot use the access token
+  from location` means pfSense WAN1's DHCP address changed. Only the user can fix it (dashboard),
+  so report the IP and stop; see `terraform/cloudflare/README.md` -> Troubleshooting.
 - SSL certs are auto-provisioned by Cloudflare (free, ~90-day rotation).
 
 ## Secret Management
@@ -104,11 +121,15 @@ surface → source → apply map. Two layers:
   - `secret/homelab/bind9/dnssec` (DNSSEC keys backup)
   - `secret/homelab/rundeck` (DB + storage converter passwords)
   - `secret/homelab/watchtower` (HTTP API token)
+  - `secret/homelab/zot` (Zot registry admin user, password, htpasswd)
+  - `secret/homelab/registry` (legacy registry:2 admin + htpasswd)
   - `secret/homelab/minio` (root user + password)
   - `secret/homelab/freeswitch` (ESL, SIP extension, calling card credentials)
   - `secret/homelab/switch24a` (TL-SG3428X core switch admin login)
   - `secret/homelab/omada-controller` (Omada V6 controller login, VM 100)
   - `secret/homelab/nas-sudo-password` (NAS sudo password, field `password`; use only with user acknowledgment)
+  - `secret/homelab/esp32-fw-signing` (ECDSA-P256 key that signs the WiFi-probe firmware)
+  - `secret/homelab/wifi-probe` (WiFi-probe API / OTA bearer tokens; managed with the submodule's `tools/probe-tokens.py`)
 - Terraform vars are sourced from Vault at runtime, never stored in files.
 
 ## Docker Services Structure

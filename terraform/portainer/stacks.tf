@@ -17,6 +17,28 @@ resource "portainer_stack" "docker_registry" {
 }
 
 # ──────────────────────────────────────────────
+# Zot registry — successor to docker-registry (kept for cool-off).
+# Hosts homelab/* images + on-demand pull-through cache for docker.io,
+# ghcr.io, quay.io, registry.k8s.io, gcr.io. LAN-only via
+# zot.d.lcamaral.com (rproxy vhost). See docs/zot-registry.md.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "zot" {
+  name            = "zot"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/zot.yml.tftpl", {
+    zot_config          = file("${path.module}/stacks/zot-config.json")
+    htpasswd            = data.vault_kv_secret_v2.zot.data["htpasswd"]
+    oidc_client_id      = keycloak_openid_client.zot.client_id
+    oidc_client_secret  = data.vault_kv_secret_v2.zot.data["oidc_client_secret"]
+    session_hash_key    = data.vault_kv_secret_v2.zot.data["session_hash_key"]
+    session_encrypt_key = data.vault_kv_secret_v2.zot.data["session_encrypt_key"]
+  })
+}
+
+# ──────────────────────────────────────────────
 # Cloudflare Tunnel (replica 1 on dockermaster)
 # Connects homelab to Cloudflare edge via tunnel "bologna"
 # Token injected from Vault at apply time
@@ -373,13 +395,17 @@ resource "portainer_stack" "rustdesk" {
 # ──────────────────────────────────────────────
 # Rundeck + PostgreSQL → dockerserver-1
 # Automation server — DB and storage passwords from Vault
-# Image pushed to registry as registry.cf.lcamaral.com/la-rundeck:latest
+# Image: zot.d.lcamaral.com/homelab/la-rundeck:latest (copied from the ds-1 local image on
+# 2026-11-06; registry:2 never received it). The stack switched to the zot ref on 2026-11-08
+# (docs/zot-registry.md, cool-off). postgres is pinned by digest to the running build.
 # ──────────────────────────────────────────────
 resource "portainer_stack" "rundeck" {
   name            = "la-rundeck"
   endpoint_id     = var.ds1_endpoint_id
   deployment_type = "standalone"
   method          = "string"
+  # postgres is cached on ds-1 (digest-pinned); la-rundeck is pulled from zot by `compose up` when missing
+  pull_image = false
 
   stack_file_content = templatefile("${path.module}/stacks/rundeck.yml.tftpl", {
     # admin user line for realm.properties: MD5-hashed password from
@@ -1412,20 +1438,6 @@ resource "portainer_stack" "otel_collector" {
 # poller) was removed when we discovered (a) no upstream image exists
 # and (b) the connector itself exposes /metrics in v1.80+.
 
-# ──────────────────────────────────────────────
-# Ollama embedding service (ds-1)
-# Spec: docs/superpowers/specs/2026-05-21-ollama-deployment-design.md
-# Single container on docker-servers-net @ 192.168.59.53.
-# Pulled post-deploy: qwen3-embedding:8b-q8_0 (4096-dim).
-# Honcho's deriver consumes this for message/document embeddings.
-# Originally planned for ds-2 — pivoted to ds-1 because ds-2's root FS
-# is full (/var/lib/minio-data at 74G, separate cleanup work tracked).
-# ──────────────────────────────────────────────
-resource "portainer_stack" "ollama" {
-  name            = "ollama"
-  endpoint_id     = var.ds1_endpoint_id
-  deployment_type = "standalone"
-  method          = "string"
-
-  stack_file_content = file("${path.module}/../../dockermaster/docker/compose/ollama/docker-compose.yml.tftpl")
-}
+# Ollama embedding service (ds-1, 192.168.59.53) was removed — container had
+# been stopped for months and its only planned consumer (Honcho) was never
+# deployed. Spec kept for history: docs/superpowers/specs/2026-05-21-ollama-deployment-design.md

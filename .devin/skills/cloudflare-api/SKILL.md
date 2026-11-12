@@ -58,6 +58,19 @@ curl -s "https://api.cloudflare.com/client/v4/<endpoint>" \
 | Token ID | `b40dbcd0bd08566a212e2c5f9659b446` |
 | Type | Account-scoped API Token (not a Global API Key) |
 | Status | Active |
+| Client IP filter | **Yes.** Only allow-listed source IPs work; see below |
+
+> **`9109 Cannot use the access token from location: <ip>`** means the request
+> came from an IP that isn't on the token's allow-list. `tokens/verify` still
+> says "active". All LAN hosts egress via pfSense WAN1 (DHCP), so the allow-list
+> breaks whenever the ISP changes that address (2026-10-17:
+> `136.36.139.5` -> `136.38.130.122`). Only the user can fix it, in the
+> dashboard: Manage Account -> Account API Tokens -> `b40dbcd0…` -> Client IP
+> Address Filtering. The token cannot edit itself, and there is no other
+> Cloudflare credential in Vault or Keychain. Report the current WAN IP
+> (`curl -s https://api.ipify.org`) and stop. Repeated failures trigger
+> `10502 Too many authentication failures`. Details:
+> `terraform/cloudflare/README.md` -> Troubleshooting.
 
 **Token permissions** (verified by probing):
 
@@ -98,12 +111,12 @@ curl -s "https://api.cloudflare.com/client/v4/<endpoint>" \
 | DNSSEC | Disabled |
 | Activated | 2021-11-26 |
 
-**DNS Records:**
+**DNS Records** (source of truth: `terraform/cloudflare/main.tf`; full table with
+vhost mapping in `terraform/cloudflare/README.md`):
 
 | Type | Name | Content | Proxied |
 |------|------|---------|---------|
-| CNAME | `bologna.cf.lcamaral.com` | `<tunnel-id>.cfargotunnel.com` | Yes |
-| CNAME | `registry.cf.lcamaral.com` | `<tunnel-id>.cfargotunnel.com` | Yes |
+| CNAME | `bologna.cf`, `auth.cf`, `login.cf`, `portainer.cf`, `s3.cf`, `minio.cf`, `registry.cf`, `grafana.cf` (`.lcamaral.com`) | `<tunnel-id>.cfargotunnel.com` | Yes |
 | CNAME | `bologna.lcamaral.com` | `<tunnel-id>.cfargotunnel.com` | Yes |
 | CNAME | `lcamaral.com` | `resolve-to.www.lcamaral.com` | Yes |
 | CNAME | `www.lcamaral.com` | `resolve-to.www.lcamaral.com` | Yes |
@@ -125,7 +138,7 @@ curl -s "https://api.cloudflare.com/client/v4/<endpoint>" \
 | Tunnel type | `cfd_tunnel` |
 | Status | Healthy |
 | Config source | Cloudflare (remote-managed) |
-| Origin IP | `136.36.139.5` |
+| Origin IP | pfSense WAN1 (DHCP; `136.38.130.122` since 2026-10-17) |
 | Cloudflared version | `2026.3.0` |
 | Edge colos | lax07, slc01, lax10 |
 
@@ -133,9 +146,7 @@ curl -s "https://api.cloudflare.com/client/v4/<endpoint>" \
 
 | Hostname | Service |
 |----------|---------|
-| `bologna.cf.lcamaral.com` | `https://nginx-rproxy:443` |
-| `registry.cf.lcamaral.com` | `https://nginx-rproxy:443` |
-| `bologna.lcamaral.com` | `https://nginx-rproxy:443` |
+| Every CNAME above that points at the tunnel (all `*.cf` names + `bologna.lcamaral.com`) | `https://nginx-rproxy:443` |
 | Catch-all | `http_status:404` |
 
 **Tunnel is Terraform-managed:** `terraform/cloudflare/main.tf`

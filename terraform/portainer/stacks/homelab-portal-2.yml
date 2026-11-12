@@ -11,7 +11,7 @@ networks:
 
 services:
   portal:
-    image: registry.cf.lcamaral.com/homelab-portal:latest
+    image: zot.d.lcamaral.com/homelab/homelab-portal:latest
     container_name: homelab-portal-2
     hostname: homelab-portal-2
     networks:

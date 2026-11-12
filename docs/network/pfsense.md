@@ -13,10 +13,10 @@ serves.
 | Short name | `pfsense` |
 | Role | Main router, firewall, DNS, DHCP, ACME, HAProxy edge |
 | Access | `ssh pfsense` (key-based, no password / username needed, port **3220**) |
-| Version | pfSense Plus **26.03-RELEASE** (build `20260401-1720`) |
-| Kernel | FreeBSD 16.0-CURRENT (`plus-RELENG_26_03-n256531`) |
+| Version | pfSense Plus **26.07-RELEASE** (kernel built 2026-08-07; patch applied 2026-09-10) |
+| Kernel | FreeBSD 16.0-CURRENT (`plus-RELENG_26_07-n256584`) |
 | Architecture | amd64 |
-| Web GUI | `https://pfsense.home.lcamaral.com` (HAProxy TLS on 443) |
+| Web GUI | `https://pfsense.home.lcamaral.com` (HAProxy TLS on 443 → GUI over **plain HTTP** on `127.0.0.1:56880`). Break-glass (bypasses HAProxy): `http://192.168.4.1:56880` |
 | REST API | `https://pfsense.home.lcamaral.com/api/v2` — see `docs/network/pfsense-api.md` |
 
 ## Hardware
@@ -98,6 +98,13 @@ serves.
   | `192.168.128.1` (GUEST) | yes | yes | — |
   | `192.168.16.1` (IoT) | yes | yes | — |
 
+- **DoT certificate**: ACME `pfsense` (`*.home.lcamaral.com`, Let's Encrypt), set
+  2026-11-10 (Services → DNS Resolver → SSL/TLS Certificate). It was the
+  self-signed "GUI default" before, which expired on 2026-10-07. Clients must use
+  a `*.home.lcamaral.com` name (e.g. `pfsense.home.lcamaral.com`) as the TLS
+  server name. Unbound reads the cert only at start, so the ACME `pfsense` cert
+  restarts it after every renewal (`pfsense/acme-actions.yml`, PR #89).
+
 - **DHCP → DNS integration**: `dhcpleases` daemon writes leases into
   `/var/unbound/dhcpleases_entries.conf` so DHCP clients are resolvable by
   hostname immediately.
@@ -127,9 +134,32 @@ homelab wildcard certs. Certs live under `/conf/acme/`:
 
 | Cert name | Subject (CN) | Expires | Files | Used by |
 | --- | --- | --- | --- | --- |
-| `d.lcamaral.com` | `*.d.lcamaral.com` | **2026-07-01** | `.crt` `.key` `.fullchain` `.ca` `.all.pem` | Nginx-rproxy on dockermaster (`terraform/portainer/stacks.tf:48`) |
-| `home.lcamaral.com` | `home.lcamaral.com` | **2026-07-04** | same set | HAProxy shared-frontend, LAN services |
-| `pfsense` | `*.home.lcamaral.com` | **2026-06-13** | same set | Web GUI, HAProxy — this is a **wildcard** for the LAN domain, not a self-signed cert |
+| `d.lcamaral.com` | `*.d.lcamaral.com` | **2027-01-26** | `.crt` `.key` `.fullchain` `.ca` `.all.pem` | Nginx-rproxy on all 3 Docker hosts (pushed by `/root/sync-certs-to-rproxy.sh`) |
+| `home.lcamaral.com` | `home.lcamaral.com`, `*.home.lcamaral.com` | **2027-01-09** | same set | HAProxy shared-frontend (first crt-list entry), rproxies |
+| `pfsense` (refid `6647fa1969bcc`) | `*.home.lcamaral.com` | **2027-01-05** | same set | HAProxy shared-frontend, **Unbound DoT**, webgui `ssl-certref` (unused while the GUI is HTTP), pfnet-controller |
+
+Expiry dates as of 2026-11-10. ACME renews them automatically, so treat the
+dates as a snapshot.
+
+**Renewal hooks** (ACME actions):
+
+- `home.lcamaral.com`: `rc.restart_webgui`, `haproxy.sh restart`,
+  `sync-certs-to-rproxy.sh home.lcamaral.com`
+- `pfsense`: `rc.restart_webgui`, `haproxy.sh restart`, `pfSsh.php playback svc
+  restart unbound`
+- `d.lcamaral.com`: `sync-certs-to-rproxy.sh d.lcamaral.com`
+
+The repo-claimed hooks are in `pfsense/acme-actions.yml`. Sync them with
+`scripts/sync-pfsense-acme-actions.py [--cert NAME]`.
+
+**Non-ACME certificate entries** (cleanup candidates):
+
+- `GUI default` (refid `6647cf496e621`): self-signed, **expired 2026-10-07**.
+  It was re-saved twice in the GUI on 2026-11-10 and is still expired. Its only
+  remaining reference is HAProxy frontend `http-to-https` `ssloffloadcert`
+  (port 80, no TLS, cosmetic). Repoint that field to `pfsense`, then delete it.
+- `hubitat` (refid `6647fdb48c692`): a lone private key, no certificate, not
+  referenced anywhere. Safe to delete.
 
 > **Integration note**: `terraform/portainer/stacks.tf` says _"All services
 > route through Nginx — certs managed by pfSense"_. This is the box it's
@@ -152,21 +182,36 @@ Installed as a pfSense package. Config at `/var/etc/haproxy/haproxy.cfg`.
 **Backends**: `pfsense.local_ipvANY` (WebGUI passthrough via ACL
 `pfsense1acl`), others TBD
 
+**WebGUI backend contract**: `server pfsense-local 127.0.0.1:56880 check`, with
+**no `ssl`**. HAProxy terminates TLS and health-checks the GUI over plain HTTP,
+so **System → Advanced → Admin Access must stay protocol HTTP, port 56880**.
+On 2026-11-10 (22:41→22:47) it was set to HTTPS. The health check got 400
+(`127.0.0.1 "GET / HTTP/1.0" 400` every 5 s in `/var/log/nginx.log`), the backend
+went DOWN, and 443 and the REST API returned 503. Restarting the GUI does not
+fix this; saving the protocol back to HTTP does. Check the backend with
+`echo "show stat" | socat stdio /tmp/haproxy.socket | grep pfsense-local`. For
+end-to-end TLS, enable SSL on the backend server in the same change.
+
 ## pfBlockerNG
 
-Installed and active. Feeds deployed under `/var/db/pfblockerng/`:
-
-- `deny/`, `match/`, `permit/` — IPv4 block/match/permit lists
-- `dnsbl/`, `dnsblalias/`, `dnsblorig/` — DNS-level blocklists
-- `top-1m.csv`, `pfbalexawhitelist.txt` — allowlist inputs
-
-Default deny rule is **active** (counting hits in `pfctl -s labels`).
+**Not installed** (verified 2026-11-10): no package, no `installedpackages/pfblockerng`
+config, no `/var/db/pfblockerng/`, no pfB rule labels. When and why it was removed
+is not recorded.
 
 ## Installed Packages
 
-`Avahi`, `Cron`, `LADVD` (LLDP/CDP), `Nexus` (Netgate), `RESTAPI` (v2.7_6),
-`Service_Watchdog`, `Shellcmd`, `acme`, `bandwidthd`, `haproxy`, `iperf`,
-`nmap`, `node_exporter`, `pfBlockerNG`, `sudo`
+As of 2026-11-10 (`pkg info | grep pfSense-pkg-`): `Avahi` 2.2_10, `Cron` 0.3.8_8,
+`LADVD` 1.2.2_7 (LLDP/CDP), `Nexus` 26.07_3 (Netgate), `RESTAPI` **2.10_2**,
+`Service_Watchdog` 1.8.7_7, `Shellcmd` 1.0.7, `acme` 1.3.2, `bandwidthd` 0.7.11,
+`frr` 2.1.3_2, `haproxy` 0.65.7, `iperf` 3.0.6, `nmap` 1.4.4_12, `node_exporter`
+0.18.1_8, `sudo` 0.3.4.
+
+`RESTAPI` is third-party and pfSense upgrades can drop it silently. It was missing
+from 2026-09-12 to 2026-11-10. After any upgrade, check `pkg info -x RESTAPI`; the
+reinstall runbook is in `docs/network/pfsense-api.md`. Installing it also adds two
+hourly cron jobs (`manage.php refreshcache RESTAPIVersionReleasesCache` /
+`AvailablePackageCache`). `pfsense/cron-jobs.yml` intentionally leaves those
+package-managed jobs alone.
 
 ## Exposed Services (from `sockstat -4l`)
 
@@ -198,7 +243,7 @@ Default deny rule is **active** (counting hits in `pfctl -s labels`).
 
 ## REST API
 
-pfSense runs `pfSense-pkg-RESTAPI-2.7_6` — 200+ endpoints for full CRUD on
+pfSense runs `pfSense-pkg-RESTAPI-2.10_2` — 200+ endpoints for full CRUD on
 firewall, routing, DNS, DHCP, HAProxy, ACME, certs, and system config.
 
 - **Base URL**: `https://pfsense.home.lcamaral.com/api/v2`
@@ -225,6 +270,17 @@ curl -sk -H "X-API-Key: $TOKEN" https://pfsense.home.lcamaral.com/api/v2/status/
 - **`Shellcmd`** package runs `service node_exporter onestart` at boot — this is
   how node_exporter gets started (it's not a standard pfSense service).
 
+## Change log
+
+- **2026-11-10**:
+  - Admin Access was briefly set to HTTPS (22:41), causing a 503 on 443, and
+    reverted to HTTP (22:47). The webgui `ssl-certref` stays on ACME `pfsense`.
+  - The "GUI default" cert was re-saved twice; it is still expired.
+  - DNS Resolver DoT cert switched to ACME `pfsense` (22:59).
+  - RESTAPI 2.10_2 reinstalled (23:01; this added 2 package cron jobs).
+  - ACME `pfsense` gained an `unbound` restart hook (23:10, PR #89).
+  - All of the above came from pfSense's config history (`/conf/backup/`).
+
 ## Known Gaps / Things To Verify
 
 1. **Hardware model** — confirm Netgate 8200 vs. 6100 Max vs. custom build.
@@ -236,3 +292,12 @@ curl -sk -H "X-API-Key: $TOKEN" https://pfsense.home.lcamaral.com/api/v2/status/
 5. **Config.XML snapshot** — not stored in this repo. Decide whether to push
    periodic redacted exports into `backups/` or into Vault.
 6. **IPv6** — only IoT VLAN has ULA. No public IPv6 delegation from either WAN.
+7. **ix0 watchdog runs unmerged code** (found 2026-11-10): the live
+   `/usr/local/sbin/ix0-watchdog.sh` matches branch `fix/ix0-watchdog-safety`,
+   not `main`. `sync-pfsense-scripts.py --apply` from `main` would roll it back.
+   The cron dry-run also differs: the live `ix0_link_metrics.sh` cron `minute`
+   field doesn't match the YAML, and the `ix0-watchdog.sh start` cron declared on
+   `main` is not live. Reconcile by merging that branch, not by syncing `main`.
+8. **`WAN1GW` gateway name**: two WAN filter rules use gateway `WAN1GW`, but the
+   gateway is named `WAN1_DHCP`. Filter reloads log "The gateway: WAN1GW is
+   invalid or unknown" and ignore the gateway on those rules.

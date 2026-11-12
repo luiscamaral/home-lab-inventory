@@ -1,0 +1,117 @@
+name: zot
+
+# Zot OCI registry: hosts homelab images (homelab/*) and acts as an
+# on-demand pull-through cache for docker.io, ghcr.io, quay.io,
+# registry.k8s.io and gcr.io (each under its own path prefix, e.g.
+# zot.d.lcamaral.com/docker.io/library/nginx:1.27). Config lives in
+# stacks/zot-config.json and is rendered via Compose `configs:`.
+#
+# Replaces the registry:2 `docker-registry` stack, which stays running
+# during the cool-off period (see docs/zot-registry.md).
+#
+# htpasswd: the zot image is distroless (no shell), so the registry:2
+# entrypoint shim can't be reused. A one-shot busybox init container
+# writes the Vault-sourced htpasswd (passed via env, the path that
+# survives Compose `$` interpolation for bcrypt hashes) into the
+# `zot-auth` volume, then zot starts. The file is regenerated on every
+# deploy, so the volume holds no persistent data.
+#
+# SSO: the same init container also writes the OIDC credentialsFile and the
+# session cookie keys (all from Vault, passed via env; hex values, no `$`).
+# zot signs users in through the Keycloak `zot` client (terraform/portainer/
+# keycloak.tf); members of the Keycloak group `zot-admins` are zot admins.
+# `admin` (htpasswd) stays as break-glass. See docs/zot-registry.md.
+
+networks:
+  rproxy:
+    name: rproxy
+    external: true
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+volumes:
+  zot-auth:
+
+configs:
+  zot_config:
+    content: |
+      ${indent(6, replace(zot_config, "$", "$$"))}
+
+services:
+  zot-auth-init:
+    image: busybox:1.37.0
+    container_name: zot-auth-init
+    network_mode: none
+    environment:
+      HTPASSWD_CONTENT: "${replace(htpasswd, "$", "$$")}"
+      OIDC_CLIENT_ID: "${oidc_client_id}"
+      OIDC_CLIENT_SECRET: "${replace(oidc_client_secret, "$", "$$")}"
+      SESSION_HASH_KEY: "${replace(session_hash_key, "$", "$$")}"
+      SESSION_ENCRYPT_KEY: "${replace(session_encrypt_key, "$", "$$")}"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        umask 077 && \
+        printf '%s\n' "$$HTPASSWD_CONTENT" > /auth/htpasswd && \
+        printf '{"clientid":"%s","clientsecret":"%s"}\n' "$$OIDC_CLIENT_ID" "$$OIDC_CLIENT_SECRET" > /auth/oidc-credentials.json && \
+        printf '{"hashKey":"%s","encryptKey":"%s"}\n' "$$SESSION_HASH_KEY" "$$SESSION_ENCRYPT_KEY" > /auth/session-keys.json && \
+        chmod 0600 /auth/htpasswd /auth/oidc-credentials.json /auth/session-keys.json
+    volumes:
+      - zot-auth:/auth
+    restart: "no"
+    labels:
+      com.docker.stack: "zot"
+
+  zot:
+    image: ghcr.io/project-zot/zot:v2.1.22
+    container_name: zot
+    hostname: zot
+    depends_on:
+      zot-auth-init:
+        condition: service_completed_successfully
+    networks:
+      rproxy:
+      servers-net:
+        ipv4_address: 192.168.59.5
+    expose:
+      - 5000
+    # OIDC issuer host. Keycloak's issuer is https://auth.cf.lcamaral.com/...
+    # (fixed frontend URL), and zot panics at startup if discovery fails, so
+    # keep zot off Cloudflare: resolve it to the 3 rproxy replicas (LE
+    # cert for the cf names, see docs/zot-registry.md). Same name, 3 lines in
+    # /etc/hosts: Go's resolver returns them in this order and the dialer
+    # falls through to the next on connect failure. Browsers are unaffected.
+    extra_hosts:
+      - "auth.cf.lcamaral.com:192.168.59.28"
+      - "auth.cf.lcamaral.com:192.168.59.48"
+      - "auth.cf.lcamaral.com:192.168.59.49"
+    volumes:
+      - /nfs/dockermaster/docker/zot/data:/var/lib/registry
+      - zot-auth:/etc/zot/auth:ro
+    configs:
+      - source: zot_config
+        target: /etc/zot/config.json
+        mode: 0444
+    restart: unless-stopped
+    # Distroless image ships no HEALTHCHECK; the binary has a built-in
+    # probe (GET /readyz on the configured listener, exit 0 on 2xx).
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/zot-linux-amd64", "healthcheck", "/etc/zot/config.json"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    labels:
+      com.docker.stack: "zot"
+      com.docker.service: "zot"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 128M
