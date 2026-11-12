@@ -200,11 +200,11 @@ def enroll_totp(a: Admin, realm: str, uid: str, username: str, password: str) ->
     action, _ = form_of(page, "kc-form-login")
     r = s.post(action, data={"username": username, "password": password, "credentialId": ""},
                allow_redirects=True, timeout=30)
-    secret = re.search(r'id="kc-totp-secret-key"[^>]*>([^<]+)<', r.text)
-    if not secret:
-        raise RuntimeError(f"no TOTP setup page after login (HTTP {r.status_code})")
-    secret_b32 = html.unescape(secret.group(1)).replace(" ", "").strip()
     action, hidden = form_of(r.text, "kc-totp-settings-form")
+    if "totpSecret" not in hidden:
+        raise RuntimeError(f"no TOTP setup page after login (HTTP {r.status_code})")
+    # The hidden field holds the raw secret; authenticator apps use its base32 form (what the page shows to users).
+    secret_b32 = base64.b32encode(hidden["totpSecret"].encode()).decode()
     hidden.update({"totp": totp(secret_b32), "userLabel": "hardening-test"})
     r = s.post(action, data=hidden, allow_redirects=False, timeout=30)
     if r.status_code != 302:
