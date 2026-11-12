@@ -281,6 +281,13 @@ locals {
           - targets: [192.168.59.5:5000]
             labels: { instance: zot-1 }
 
+      # zot-meta-backup sidecar (shares zot's network namespace): last backup time, size, txid.
+      - job_name: zot-meta-backup
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.5:9199]
+            labels: { instance: zot-1 }
+
       # ── Phase 3a: Watchtower (HTTP API on :8080) ────────────────────
       # WATCHTOWER_HTTP_API_METRICS=true (already set) exposes /v1/metrics
       # behind the same bearer token as the update-trigger API. Two
@@ -717,6 +724,13 @@ locals {
         metrics_path: /metrics
         static_configs:
           - targets: [192.168.59.5:5000]
+            labels: { instance: zot-1 }
+
+      # zot-meta-backup sidecar (shares zot's network namespace): last backup time, size, txid.
+      - job_name: zot-meta-backup
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.5:9199]
             labels: { instance: zot-1 }
 
       # ── Phase 3a: Watchtower (HTTP API on :8080) ────────────────────
@@ -1425,6 +1439,32 @@ locals {
                 zot's /metrics endpoint is not answering. If the blackbox probe of
                 https://zot.d.lcamaral.com is also failing, zot is down; if not, only
                 the metrics listener or the macvlan path (192.168.59.5:5000) is broken.
+          - alert: ZotMetaBackupStale
+            expr: time() - zot_meta_backup_last_success_timestamp_seconds{job="zot-meta-backup"} > 129600
+            for: 30m
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "zot meta.db has no successful backup for more than 36 hours"
+              description: |
+                The zot-meta-backup sidecar (dockermaster) copies meta.db to
+                /nfs/dockermaster/docker/zot/backup every night and keeps 7 days. Check
+                `docker logs zot-meta-backup` (a busy zot can reject copies for a few attempts; it
+                logs ERROR when a whole run fails) and that the NAS mount is writable. A value of 0
+                means no backup has succeeded since the sidecar was created.
+          - alert: ZotMetaBackupDown
+            expr: up{job="zot-meta-backup"} == 0
+            for: 15m
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "Prometheus cannot scrape the zot-meta-backup sidecar for 15 minutes"
+              description: |
+                The sidecar shares zot's network namespace, so this also fires when zot is
+                recreated and the sidecar did not follow. `docker ps` on dockermaster should show
+                zot-meta-backup healthy; redeploy the zot stack if it is not.
 
       # 2026-06-10: ESP32-C5 wifi-probe fleet health. Motivated by the
       # internet_https outage (05:53-08:33) that no rule caught: failures

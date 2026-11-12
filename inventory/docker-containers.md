@@ -143,7 +143,9 @@
   - **HA:** Raft node 1 of 3 (voter)
   - Purpose: Secret management (`vault.d.lcamaral.com`, `vault.cf.lcamaral.com`)
 
-- **zot** — `ghcr.io/project-zot/zot:v2.1.22` (+ one-shot `zot-auth-init`, `busybox:1.37.0`)
+- **zot** — `ghcr.io/project-zot/zot:v2.1.22` (+ one-shot `zot-auth-init`, `busybox:1.37.0`, and the nightly
+  `zot-meta-backup` sidecar, `python:3.13.18-alpine3.24`, sharing zot's network namespace: `meta.db` copies on
+  `/nfs/dockermaster/docker/zot/backup`, metrics on `192.168.59.5:9199`)
   - Networks: `docker-servers-net` (192.168.59.5) + `rproxy` bridge
   - Volumes: images on the NAS `/nfs/dockermaster/docker/zot/stores/<prefix>` (`homelab`, the Docker Hub, GHCR, Quay,
     registry.k8s.io and GCR caches), `zot-meta` (local disk: `meta.db` and sessions),

@@ -79,12 +79,53 @@ A substore stores a repo at `<root>/<full repo name>`, so `docker.io/library/alp
 `stores/docker.io/docker.io/library/alpine`. The route prefix is the first path segment of the repository name.
 Each substore has its own GC settings (same as before) and the cache substores carry the 90-day retention policy for
 their own prefix; `homelab` has none. The local volume is **persistent and not recreated by Terraform**: it is backed up
-(see below) and must not be deleted.
+(see [Backup of meta.db](#backup-of-metadb)) and must not be deleted.
+
+**Warning: `zot_zot-meta` is a Docker named volume.** Anything that removes the stack's volumes deletes `meta.db`, the
+API keys and the user profiles with it: `docker compose down -v`, `docker volume rm zot_zot-meta`, `docker volume prune`
+while zot is stopped, or deleting the `zot` stack in Portainer with "Remove associated volumes" ticked. Treat any
+deletion of the `zot` stack (also through Terraform) as dangerous for the same reason. The images on the NAS are not
+affected (they can be re-pulled), but the metadata is only restorable from the backup below.
 
 **Guard:** an image pushed to a repository outside these prefixes (for example `foo/bar`) is stored in the default
 root, i.e. on the local disk (checked in a throwaway test). Writes outside `homelab/**` are not expected; policy:
 only `homelab/**` is pushed to, and the root volume size is watched. A hard ACL guard (no `create` outside `homelab/**`)
 is a separate change.
+
+### Backup of meta.db
+
+The `zot-meta-backup` service in the zot stack (`python:3.13.18-alpine3.24`, `scripts/zot-meta-backup.py`) copies
+`meta.db` to the NAS and **never stops or pauses zot**. BoltDB is single-writer and zot holds its lock, so no other
+process can open the file, and a plain `cp` during a commit can be torn. BoltDB does not overwrite a committed page in
+place (copy-on-write, then it flips one of two meta pages), so a copy of a file that did not change while it was read is
+a valid database. The sidecar therefore copies only when the file's size and mtime are the same before and after the
+copy, and the copy passes a check of both meta pages (magic, version, checksum, file length). Otherwise it retries (a
+pull rewrites `meta.db` for its pull time) up to 12 times, 5 s apart; if no clean copy comes out it logs `ERROR` and
+tries again the next day.
+
+| Item | Value |
+|---|---|
+| Schedule | first run 2 minutes after the sidecar starts, then every 24 h |
+| Destination | `/nfs/dockermaster/docker/zot/backup/` (NAS): `meta.db.YYYYMMDD` (one per UTC day, 7 kept) and `latest.json` (time, file, size, sha256, BoltDB txid) |
+| Source | the `zot-meta` volume, mounted read-only |
+| Metrics | `zot_meta_backup_*` on `192.168.59.5:9199/metrics` (the sidecar shares zot's network namespace), Prometheus job `zot-meta-backup` |
+| Alerts | `ZotMetaBackupStale` (no success for 36 h, or none yet), `ZotMetaBackupDown` (sidecar not scraped for 15 min) |
+
+Restore (zot stopped, so it holds no lock): pick a generation, compare its sha256 with `latest.json` for the newest one,
+and copy it over the live file.
+
+```bash
+ssh dockermaster
+docker stop zot zot-meta-backup
+V=$(docker volume inspect zot_zot-meta --format '{{.Mountpoint}}')
+sudo cp -p "$V/meta.db" "$V/meta.db.before-restore"
+sudo cp /nfs/dockermaster/docker/zot/backup/meta.db.YYYYMMDD "$V/meta.db"
+docker start zot zot-meta-backup
+```
+
+A restored database loses profile and API-key changes made after that backup (and zot rebuilds the repo metadata
+from the stores on the NAS at startup). The `_sessions` directory in the volume only holds login sessions, which are
+disposable.
 
 ## Retention and garbage collection
 
@@ -175,6 +216,13 @@ works and nothing is skipped.
   `DELETE /zot/auth/apikey?id=<uuid>`. Store keys in Vault or a password manager, not in dotfiles.
 - **Break-glass:** `admin` with `vault kv get -field=admin_password secret/homelab/zot` still works if Keycloak is
   down. Keycloak runs on ds-1/ds-2 and is itself reached through the same rproxies.
+
+- **The login has a 2 minute window.** zot keeps the OIDC `state` in a cookie that lives 120 s
+  (`relyingPartyCookieMaxAge`). Finish the Keycloak page within 2 minutes after zot redirects you. If you wait longer,
+  or reload the callback tab (`/zot/auth/callback/oidc?...`), the callback answers **401 `named cookie not present`**
+  (the `state` cookie is gone). Do not retry that tab: start again from `https://zot.d.lcamaral.com/` (or
+  `/zot/auth/login?provider=oidc`). Several rapid 401s on the callback are usually a reloaded or duplicated tab, not an
+  outage.
 
 ### End-to-end test
 
@@ -352,7 +400,9 @@ the `registry.cf.lcamaral.com.conf` vhost, the Cloudflare DNS record and tunnel 
 `data/<prefix>` (same NFS filesystem, instant), and re-apply the previous revision of the `zot` stack (bind
 `/nfs/dockermaster/docker/zot/data` as `/var/lib/registry`, no `subPaths`). The old `data/meta.db` was copied, not moved
 (renamed to `meta.db.migrated-<date>` once the migration was verified; rename it back). Pulls, pushes and sessions made
-after the migration live in the local volume and are not carried back.
+after the migration live in the local volume and are not carried back. The one-time seeding of `meta.db` from the old
+NFS root (an `/old-data` mount in `zot-auth-init`) was removed once the migration was verified; to roll back, restore
+`meta.db` from the NAS backup or the `.migrated-<date>` file instead.
 
 zot is purely additive. To roll back the consumer switch, revert the image lines in
 `stacks/homelab-portal*.yml` and apply those two stacks; the old registry still serves
