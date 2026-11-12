@@ -161,7 +161,7 @@ services:
       - source: meta_backup_script
         target: /app/zot-meta-backup.py
         mode: 0444
-    read_only: true
+    # not read_only: Compose copies the script config into the container and refuses that on a read-only root
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:9199/metrics', timeout=3)"]
