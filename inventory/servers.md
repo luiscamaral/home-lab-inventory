@@ -193,5 +193,5 @@
   - **Edge tier (HA 3/3):** rproxy-3 (`.49`), cloudflare-tunnel-3 (local rproxy bridge)
   - **HA backing:** vault-3 (`.15`, raft 3/3), minio-2 (`.37`, site replication 2/2, local disk)
   - **Workloads:** twingate-golden-mussel (`.24`), freeswitch (`.40`), rustdesk hbbs (`.10`), rustdesk hbbr (`.11`)
-  - **Ancillary:** portainer-agent (`.46`)
+  - **Ancillary:** portainer-agent (`.59`)
 - **Access**: SSH via `ssh dockerserver-2`

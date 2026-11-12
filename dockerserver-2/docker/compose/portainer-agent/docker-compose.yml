@@ -3,7 +3,8 @@
 # Declarative source for the agent container. It was previously started with
 # `docker run` (no compose project). Applied with `docker compose` on ds-2.
 # Version must match the Portainer server (2.45.3); the server reaches the agent
-# at tcp://192.168.59.42:9001.
+# at tcp://192.168.59.59:9001. Moved off .42 on 2026-11-05: pihole-exporter-2 (ds-1) is pinned to .42 too, and
+# Portainer's ARP cache picked the exporter ("connection refused").
 #
 # Rollback: image portainer/agent:2.39.1 (kept locally) with the same settings.
 
@@ -21,7 +22,7 @@ services:
     restart: unless-stopped
     networks:
       servers-net:
-        ipv4_address: 192.168.59.42
+        ipv4_address: 192.168.59.59
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/volumes:/var/lib/docker/volumes
