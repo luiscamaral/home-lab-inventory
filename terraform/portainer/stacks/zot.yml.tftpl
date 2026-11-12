@@ -67,6 +67,7 @@ services:
         if [ ! -e /meta/meta.db ] && [ -f /old-data/meta.db ]; then \
           echo "first start on the local volume: seeding meta.db from the old NFS root" && \
           cp -p /old-data/meta.db /meta/meta.db && \
+          echo "seeded meta.db, sha256 $(sha256sum /meta/meta.db | cut -c1-16) (source $(sha256sum /old-data/meta.db | cut -c1-16))" && \
           { [ ! -d /old-data/_sessions ] || cp -pR /old-data/_sessions /meta/_sessions; } && \
           { [ ! -f /old-data/_restore_complete ] || cp -p /old-data/_restore_complete /meta/_restore_complete; }; \
         fi
