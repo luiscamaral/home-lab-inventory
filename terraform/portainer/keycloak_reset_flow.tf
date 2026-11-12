@@ -19,7 +19,9 @@
 #
 # The realm id comes from the data source (keycloak.tf), not from keycloak_realm.homelab, because the
 # realm resource references this flow's alias for its binding (a cycle otherwise).
-# Executions are ordered by creation, so each one depends on the previous one.
+# Order: explicit `priority` values (lower runs first). Without them Keycloak stores priority 0 for every
+# execution and the order is undefined (a first deploy listed `no-otp` before `Choose User`, which denies everyone).
+# The depends_on chain only makes the creation order match.
 # ──────────────────────────────────────────────
 resource "keycloak_authentication_flow" "reset_credentials_otp" {
   realm_id    = data.keycloak_realm.homelab.id
@@ -32,6 +34,7 @@ resource "keycloak_authentication_execution" "reset_choose_user" {
   parent_flow_alias = keycloak_authentication_flow.reset_credentials_otp.alias
   authenticator     = "reset-credentials-choose-user"
   requirement       = "REQUIRED"
+  priority          = 10
 }
 
 # --- has-otp: users with a configured OTP must enter a code
@@ -41,6 +44,7 @@ resource "keycloak_authentication_subflow" "reset_has_otp" {
   alias             = "reset - has otp"
   provider_id       = "basic-flow"
   requirement       = "CONDITIONAL"
+  priority          = 20
 
   depends_on = [keycloak_authentication_execution.reset_choose_user]
 }
@@ -50,6 +54,7 @@ resource "keycloak_authentication_execution" "reset_has_otp_condition" {
   parent_flow_alias = keycloak_authentication_subflow.reset_has_otp.alias
   authenticator     = "conditional-user-configured"
   requirement       = "REQUIRED"
+  priority          = 10
 }
 
 resource "keycloak_authentication_execution" "reset_has_otp_form" {
@@ -57,6 +62,7 @@ resource "keycloak_authentication_execution" "reset_has_otp_form" {
   parent_flow_alias = keycloak_authentication_subflow.reset_has_otp.alias
   authenticator     = "auth-otp-form"
   requirement       = "REQUIRED"
+  priority          = 20
 
   depends_on = [keycloak_authentication_execution.reset_has_otp_condition]
 }
@@ -68,6 +74,7 @@ resource "keycloak_authentication_subflow" "reset_no_otp" {
   alias             = "reset - no otp"
   provider_id       = "basic-flow"
   requirement       = "CONDITIONAL"
+  priority          = 30
 
   depends_on = [keycloak_authentication_execution.reset_has_otp_form]
 }
@@ -77,6 +84,7 @@ resource "keycloak_authentication_execution" "reset_no_otp_condition" {
   parent_flow_alias = keycloak_authentication_subflow.reset_no_otp.alias
   authenticator     = "conditional-sub-flow-executed"
   requirement       = "REQUIRED"
+  priority          = 10
 }
 
 resource "keycloak_authentication_execution_config" "reset_no_otp_condition" {
@@ -94,6 +102,7 @@ resource "keycloak_authentication_execution" "reset_no_otp_deny" {
   parent_flow_alias = keycloak_authentication_subflow.reset_no_otp.alias
   authenticator     = "deny-access-authenticator"
   requirement       = "REQUIRED"
+  priority          = 20
 
   depends_on = [keycloak_authentication_execution_config.reset_no_otp_condition]
 }
@@ -113,6 +122,7 @@ resource "keycloak_authentication_execution" "reset_send_email" {
   parent_flow_alias = keycloak_authentication_flow.reset_credentials_otp.alias
   authenticator     = "reset-credential-email"
   requirement       = "REQUIRED"
+  priority          = 40
 
   depends_on = [keycloak_authentication_execution_config.reset_no_otp_deny]
 }
@@ -122,6 +132,7 @@ resource "keycloak_authentication_execution" "reset_password" {
   parent_flow_alias = keycloak_authentication_flow.reset_credentials_otp.alias
   authenticator     = "reset-password"
   requirement       = "REQUIRED"
+  priority          = 50
 
   depends_on = [keycloak_authentication_execution.reset_send_email]
 }
