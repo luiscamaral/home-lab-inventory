@@ -116,3 +116,32 @@ Both Keycloak nodes (K3b) and Alertmanager use that name. The image is pinned by
   on the `rproxy` network.
 - Alertmanager critical and warning alerts are configured to email `luiscamaral+homelab@gmail.com`. They could not be
   delivered before (NXDOMAIN); once the name resolves they will be.
+
+## Forgot password only with OTP (K3b)
+
+The `homelab` realm uses the custom flow `reset credentials otp` (`keycloak_reset_flow.tf`) instead of the built-in
+`reset credentials`:
+
+```text
+Choose User                                REQUIRED
+has-otp (CONDITIONAL)
+    Condition - user configured            REQUIRED   true when the user has an OTP credential
+    OTP Form                               REQUIRED   a valid TOTP code is needed
+no-otp (CONDITIONAL)
+    Condition - sub-flow executed          REQUIRED   check_result = not-executed, flow_to_check = "reset - has otp"
+    Deny access                            REQUIRED   error page; nothing is sent
+Send Reset Email                           REQUIRED
+Reset Password                             REQUIRED
+```
+
+- A user **with** TOTP gets the OTP form first; only a valid code leads to the reset email. A user **without** OTP, and
+  an unknown user name, are denied with an error page and no email is sent. An administrator resets the password of a
+  user without OTP (admin console on `keycloak.d`, or the admin API).
+- A reset OTP code counts as a failed login for the lockout (K2) when it is wrong.
+- The realm is bound to the flow only after its last execution exists (`depends_on` on `keycloak_realm.homelab`). The built-in
+  flow stays in the realm, so the rollback is to point `reset_credentials_flow` back at `reset credentials` and apply.
+- The realm SMTP host is `postfix-relay.d.lcamaral.com:25` (K3a: reachable from both Keycloak nodes), sender
+  `webmaster@lcamaral.com`.
+- The reset email links use the public name (`auth.cf.lcamaral.com`), like every other homelab realm link.
+- Account enumeration: unknown users and users without OTP get the same denial, but the OTP form is shown only to users
+  that exist and have OTP, so it reveals them. The realm is used by one person, so this is accepted.

@@ -41,10 +41,11 @@ resource "keycloak_realm" "homelab" {
   organizations_enabled          = false
   admin_permissions_enabled      = false
 
+  # reset_credentials_flow: forgot password needs OTP (Phase K3), custom flow in keycloak_reset_flow.tf
   browser_flow               = "browser"
   registration_flow          = "registration"
   direct_grant_flow          = "direct grant"
-  reset_credentials_flow     = "reset credentials"
+  reset_credentials_flow     = keycloak_authentication_flow.reset_credentials_otp.alias
   client_authentication_flow = "clients"
   docker_authentication_flow = "docker auth"
   first_broker_login_flow    = "first broker login"
@@ -98,7 +99,7 @@ resource "keycloak_realm" "homelab" {
     }
   }
   smtp_server {
-    host                  = "postfix-relay"
+    host                  = "postfix-relay.d.lcamaral.com"
     port                  = "25"
     from                  = "webmaster@lcamaral.com"
     from_display_name     = "Homelab"
@@ -143,6 +144,9 @@ resource "keycloak_realm" "homelab" {
     avoid_same_authenticator_register = false
     acceptable_aaguids                = []
   }
+
+  # Bind the custom reset flow only once it is complete (its last execution exists).
+  depends_on = [keycloak_authentication_execution.reset_password]
 
   lifecycle {
     prevent_destroy = true
