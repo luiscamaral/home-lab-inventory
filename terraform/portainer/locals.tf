@@ -1380,6 +1380,52 @@ locals {
                 5 minutes. Upstream is responding but slowly — could be DB
                 load, NFS contention, or downstream service degradation.
 
+      # 2026-11-12: zot error visibility. On 2026-11-11 22:41 MST an NFS stall left zot's
+      # meta.db returning EIO: the OIDC callback answered 500 and nothing alerted, because pulls
+      # and the blackbox probe of zot.d kept working. zot exports
+      # zot_http_requests_total{code}; a 5xx series only appears after the first error, so the
+      # rule compares the sum with its value 15m ago (`or vector(0)` covers the new series).
+      # It stays firing for ~15m after an error, which is also what email/Telegram dedup wants.
+      - name: zot
+        interval: 1m
+        rules:
+          - alert: ZotServerErrors
+            expr: sum(zot_http_requests_total{job="zot",code=~"5.."}) - (sum(zot_http_requests_total{job="zot",code=~"5.."} offset 15m) or vector(0)) > 0
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "zot answered HTTP 5xx in the last 15 minutes"
+              description: |
+                zot returned a 5xx. On the registry this is mostly a storage or
+                metadata error (e.g. `input/output error` on meta.db after an NFS
+                stall, or a failed on-demand sync). Check
+                `docker logs zot | grep '"level":"error"'` on dockermaster. Since
+                the metadata DB moved to the local `zot-meta` volume, an EIO there
+                means a local-disk problem. `docker restart zot` clears a wedged DB handle.
+          - alert: ZotGCErrors
+            expr: sum(zot_gc_runs_total{job="zot",error="true"}) - (sum(zot_gc_runs_total{job="zot",error="true"} offset 1h) or vector(0)) > 0
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "zot garbage collection failed in the last hour"
+              description: |
+                A zot GC run finished with error="true". Check the zot log
+                (`docker logs zot | grep -i gc`) for the store it failed on.
+          - alert: ZotMetricsDown
+            expr: up{job="zot"} == 0
+            for: 5m
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "Prometheus cannot scrape zot (/metrics) for 5 minutes"
+              description: |
+                zot's /metrics endpoint is not answering. If the blackbox probe of
+                https://zot.d.lcamaral.com is also failing, zot is down; if not, only
+                the metrics listener or the macvlan path (192.168.59.5:5000) is broken.
+
       # 2026-06-10: ESP32-C5 wifi-probe fleet health. Motivated by the
       # internet_https outage (05:53-08:33) that no rule caught: failures
       # rendered as near-zero latency on dashboards and status-code froze
