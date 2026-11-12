@@ -15,6 +15,10 @@ high-water page). Otherwise it retries (a pull rewrites meta.db for the pull tim
 `ATTEMPTS` x `RETRY_SECONDS`; if it never gets a clean copy it logs ERROR and tries again the next day.
 It does not stop or pause zot.
 
+Metrics: a tiny HTTP server (`METRICS_PORT`, default 9199, 0 = off) serves `/metrics` for Prometheus
+(`zot_meta_backup_*`: last success and attempt timestamps, last attempt result, size, txid, generations). The sidecar
+shares zot's network namespace, so Prometheus scrapes it at zot's address; the `ZotMetaBackupStale` alert reads it.
+
 One file per UTC day (`meta.db.YYYYMMDD`, replaced if run again the same day), newest `KEEP` kept,
 plus `latest.json` (time, file, size, sha256, txid). The first run is `FIRST_DELAY` seconds after the
 sidecar starts, then every `INTERVAL_HOURS`.
@@ -23,6 +27,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import os
 import re
 import shutil
@@ -39,6 +45,8 @@ ATTEMPTS = int(os.environ.get("ATTEMPTS", "12"))
 RETRY_SECONDS = float(os.environ.get("RETRY_SECONDS", "5"))
 INTERVAL_HOURS = float(os.environ.get("INTERVAL_HOURS", "24"))
 FIRST_DELAY = float(os.environ.get("FIRST_DELAY", "120"))
+METRICS_PORT = int(os.environ.get("METRICS_PORT", "9199"))
+STATE = {"attempt_ts": 0.0, "attempt_ok": 0}
 
 MAGIC = 0xED0CDAED
 VERSION = 2
@@ -122,7 +130,65 @@ def rotate() -> list[str]:
     return removed
 
 
+def metrics_text() -> str:
+    """Prometheus text format. Last success comes from latest.json so it survives a restart of the sidecar."""
+    last_ts, size, txid = 0.0, 0, 0
+    try:
+        info = json.loads((DEST / "latest.json").read_text())
+        last_ts = datetime.fromisoformat(info["time"]).timestamp()
+        size, txid = int(info["size"]), int(info["txid"])
+    except (OSError, ValueError, KeyError):
+        pass
+    gens = len([p for p in DEST.iterdir() if DAY_RE.match(p.name)]) if DEST.is_dir() else 0
+    rows = [
+        ("last_success_timestamp_seconds", "Unix time of the last consistent backup (0 = none yet)", last_ts),
+        ("last_attempt_timestamp_seconds", "Unix time of the last backup attempt in this process (0 = none yet)",
+         STATE["attempt_ts"]),
+        ("last_attempt_success", "1 if the last attempt in this process succeeded, else 0", STATE["attempt_ok"]),
+        ("size_bytes", "Size of the latest backup", size),
+        ("txid", "BoltDB transaction id of the latest backup", txid),
+        ("generations", "Number of daily generations kept", gens),
+    ]
+    out = []
+    for name, helptext, value in rows:
+        out += [f"# HELP zot_meta_backup_{name} {helptext}", f"# TYPE zot_meta_backup_{name} gauge",
+                f"zot_meta_backup_{name} {value:g}"]
+    return "\n".join(out) + "\n"
+
+
+class MetricsHandler(BaseHTTPRequestHandler):
+    def do_GET(self) -> None:  # noqa: N802
+        if self.path.split("?")[0] != "/metrics":
+            self.send_response(404)
+            self.end_headers()
+            return
+        body = metrics_text().encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain; version=0.0.4")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args) -> None:  # keep the log for backup lines
+        pass
+
+
+def serve_metrics() -> None:
+    if METRICS_PORT:
+        srv = HTTPServer(("0.0.0.0", METRICS_PORT), MetricsHandler)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        log("INFO", f"metrics on :{METRICS_PORT}/metrics")
+
+
 def run_once() -> bool:
+    STATE["attempt_ts"] = time.time()
+    STATE["attempt_ok"] = 0
+    ok = _run_once()
+    STATE["attempt_ok"] = int(ok)
+    return ok
+
+
+def _run_once() -> bool:
     if not SRC.is_file():
         log("ERROR", f"{SRC} not found")
         return False
@@ -150,6 +216,7 @@ def run_once() -> bool:
 def main() -> int:
     if "--once" in sys.argv:
         return 0 if run_once() else 1
+    serve_metrics()
     log("INFO", f"zot-meta-backup: first run in {FIRST_DELAY:.0f}s, then every {INTERVAL_HOURS:g} h; keep {KEEP}")
     time.sleep(FIRST_DELAY)
     while True:

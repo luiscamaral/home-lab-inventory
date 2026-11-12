@@ -36,13 +36,18 @@ volumes:
   # (meta.db), the login sessions and no images. BoltDB is mmap'd and single-writer and does
   # not tolerate an NFS stall (2026-11-11: EIO on a write after `nfs: server not responding`
   # broke the OIDC login until a restart). Images stay on the NAS (stores below). Persistent:
-  # back it up (docs/zot-registry.md), do not delete it.
+  # NEVER delete it (`docker compose down -v`, or deleting this stack in Portainer with "Remove
+  # volumes" would drop meta.db, the API keys and the user profiles). The zot-meta-backup sidecar
+  # below copies it to the NAS every night (7 generations).
   zot-meta:
 
 configs:
   zot_config:
     content: |
       ${indent(6, replace(zot_config, "$", "$$"))}
+  meta_backup_script:
+    content: |
+      ${indent(6, replace(meta_backup_script, "$", "$$"))}
 
 services:
   zot-auth-init:
@@ -63,22 +68,9 @@ services:
         printf '%s\n' "$$HTPASSWD_CONTENT" > /auth/htpasswd && \
         printf '{"clientid":"%s","clientsecret":"%s"}\n' "$$OIDC_CLIENT_ID" "$$OIDC_CLIENT_SECRET" > /auth/oidc-credentials.json && \
         printf '{"hashKey":"%s","encryptKey":"%s"}\n' "$$SESSION_HASH_KEY" "$$SESSION_ENCRYPT_KEY" > /auth/session-keys.json && \
-        chmod 0600 /auth/htpasswd /auth/oidc-credentials.json /auth/session-keys.json && \
-        if [ ! -e /meta/meta.db ] && [ -f /old-data/meta.db ]; then \
-          echo "first start on the local volume: seeding meta.db from the old NFS root" && \
-          cp -p /old-data/meta.db /meta/meta.db && \
-          echo "seeded meta.db, sha256 $(sha256sum /meta/meta.db | cut -c1-16) (source $(sha256sum /old-data/meta.db | cut -c1-16))" && \
-          { [ ! -d /old-data/_sessions ] || cp -pR /old-data/_sessions /meta/_sessions; } && \
-          { [ ! -f /old-data/_restore_complete ] || cp -p /old-data/_restore_complete /meta/_restore_complete; }; \
-        fi
+        chmod 0600 /auth/htpasswd /auth/oidc-credentials.json /auth/session-keys.json
     volumes:
       - zot-auth:/auth
-      # One-time migration of the metadata DB (docs/zot-registry.md, "Storage layout"): copies
-      # meta.db and the sessions from the old NFS root to the local volume ONLY when the local
-      # volume has no meta.db yet. The old root is read-only here and keeps its copy; remove this
-      # mount and the seeding step once the migration is verified and the old copy is archived.
-      - zot-meta:/meta
-      - /nfs/dockermaster/docker/zot/data:/old-data:ro
     restart: "no"
     labels:
       com.docker.stack: "zot"
@@ -143,3 +135,47 @@ services:
         reservations:
           cpus: '0.25'
           memory: 128M
+
+  # Nightly consistent copy of meta.db to the NAS (scripts/zot-meta-backup.py). It never stops or pauses
+  # zot: the file is copied only when it was quiet during the copy and passes a BoltDB meta-page check.
+  # It shares zot's network namespace so Prometheus reaches its /metrics (9199) at zot's address
+  # (192.168.59.5:9199); the ZotMetaBackupStale alert reads those. Backups: /nfs/dockermaster/docker/zot/backup
+  # (meta.db.YYYYMMDD x7 + latest.json). Restore: docs/zot-registry.md.
+  zot-meta-backup:
+    image: python:3.13.18-alpine3.24
+    container_name: zot-meta-backup
+    network_mode: "service:zot"
+    depends_on:
+      zot:
+        condition: service_started
+    command: ["python", "/app/zot-meta-backup.py"]
+    environment:
+      SRC: /meta/meta.db
+      DEST: /backup
+      KEEP: "7"
+      METRICS_PORT: "9199"
+    volumes:
+      - zot-meta:/meta:ro
+      - /nfs/dockermaster/docker/zot/backup:/backup
+    configs:
+      - source: meta_backup_script
+        target: /app/zot-meta-backup.py
+        mode: 0444
+    read_only: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:9199/metrics', timeout=3)"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      com.docker.stack: "zot"
+      com.docker.service: "zot-meta-backup"
+      com.centurylinklabs.watchtower.enable: "false"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 64M

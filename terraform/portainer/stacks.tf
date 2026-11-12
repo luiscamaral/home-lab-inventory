@@ -35,6 +35,7 @@ resource "portainer_stack" "zot" {
     oidc_client_secret  = data.vault_kv_secret_v2.zot.data["oidc_client_secret"]
     session_hash_key    = data.vault_kv_secret_v2.zot.data["session_hash_key"]
     session_encrypt_key = data.vault_kv_secret_v2.zot.data["session_encrypt_key"]
+    meta_backup_script  = file("${path.module}/../../scripts/zot-meta-backup.py")
   })
 }
 
