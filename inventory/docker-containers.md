@@ -143,9 +143,13 @@
   - **HA:** Raft node 1 of 3 (voter)
   - Purpose: Secret management (`vault.d.lcamaral.com`, `vault.cf.lcamaral.com`)
 
-- **zot** — `ghcr.io/project-zot/zot:v2.1.22` (+ one-shot `zot-auth-init`, `busybox:1.37.0`)
+- **zot** — `ghcr.io/project-zot/zot:v2.1.22` (+ one-shot `zot-auth-init`, `busybox:1.37.0`, and the nightly
+  `zot-meta-backup` sidecar, `python:3.13.18-alpine3.24`, sharing zot's network namespace: `meta.db` copies on
+  `/nfs/dockermaster/docker/zot/backup`, metrics on `192.168.59.5:9199`)
   - Networks: `docker-servers-net` (192.168.59.5) + `rproxy` bridge
-  - Volumes: `/nfs/dockermaster/docker/zot/data` (NAS), `zot-auth` (regenerated htpasswd, OIDC credentials, session keys)
+  - Volumes: images on the NAS `/nfs/dockermaster/docker/zot/stores/<prefix>` (`homelab`, the Docker Hub, GHCR, Quay,
+    registry.k8s.io and GCR caches), `zot-meta` (local disk: `meta.db` and sessions),
+    `zot-auth` (regenerated htpasswd, OIDC credentials, session keys)
   - Purpose: OCI registry for `homelab/*` images + on-demand pull-through cache for
     `docker.io`, `ghcr.io`, `quay.io`, `registry.k8s.io`, `gcr.io` (`zot.d.lcamaral.com`, LAN only).
     Single instance. Keycloak SSO (client `zot`, admin group `zot-admins`). See `docs/zot-registry.md`
@@ -157,9 +161,10 @@
   - Purpose: Old private registry (`registry.cf.lcamaral.com`). Kept read-compatible during
     cool-off; nothing pushes to it. Decommission criteria in `docs/zot-registry.md`
 
-- **postfix-relay** — `boky/postfix:latest`
-  - Network: `rproxy` bridge (172.24.0.2)
-  - Purpose: Outbound SMTP relay via DreamHost — single instance
+- **postfix-relay** — `boky/postfix@sha256:aafc7723…` (postfix 3.10.5, pinned by digest)
+  - Networks: `rproxy` bridge (name `postfix-relay`, dm only) and `docker-servers-net` (192.168.59.14,
+    `postfix-relay.d.lcamaral.com`, reachable from ds-1/ds-2)
+  - Purpose: Outbound SMTP relay via DreamHost, single instance. Smarthost for Keycloak (realm SMTP) and Alertmanager
 
 - **portainer** — `portainer/portainer-ce:latest`
   - Network: `docker-servers-net` (192.168.59.2)
@@ -408,7 +413,8 @@
 #### Ancillary
 
 - **portainer-agent** — `portainer/agent:2.39.1`
-  - Network: `docker-servers-net` (192.168.59.42, was .46 — otel-collector collision, moved 2026-06-28)
+  - Network: `docker-servers-net` (192.168.59.59; .46 collided with otel-collector, then .42 with
+    pihole-exporter-2; moved 2026-11-05)
   - Purpose: Portainer agent for managing ds-2 from the central Portainer
 
 ---
@@ -429,6 +435,7 @@
 | .11 | hbbr (RustDesk relay) | ds-2 |
 | .12 | twingate-sepia-hornet | ds-1 |
 | .13 | keycloak | dm |
+| .14 | postfix-relay | dm |
 | .15 | vault-3 | ds-2 |
 | .16 | registry (legacy, cool-off) | dm |
 | .17 | minio-minio-1 | ds-1 |

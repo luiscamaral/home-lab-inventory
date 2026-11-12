@@ -31,7 +31,8 @@ Terraform configurations for managing the homelab infrastructure.
 
 ```text
 terraform/
-  cloudflare/              # Cloudflare zone, DNS, tunnels + DreamHost delegation
+  cloudflare/              # Cloudflare zone, DNS, tunnels + DreamHost *.cf.lcamaral.com delegation
+  circunflexo/             # circunflexo.com DNS on DreamHost (independent domain, Google Workspace mail)
   portainer/               # Portainer stacks, settings, registries
     stacks/                # Compose files referenced by Portainer stack resources
   vault/                   # Vault secret engines, policies, auth methods
@@ -53,7 +54,8 @@ changes in another.
 
 | Directory | Providers | What it manages |
 |-----------|-----------|-----------------|
-| `cloudflare/` | Cloudflare, DreamHost | Zone, DNS, tunnel, ingress, wildcard CNAME |
+| `cloudflare/` | Cloudflare, DreamHost | Zone, DNS, tunnel, ingress, `*.cf.lcamaral.com` wildcard CNAME |
+| `circunflexo/` | DreamHost | circunflexo.com SPF + DKIM (no Cloudflare dependency) |
 | `portainer/` | Portainer, Vault | Docker stacks, settings, users |
 | `vault/` | HashiCorp Vault | Secret engines, policies |
 | `lab-network/` | _none — script-managed_ | FRR-on-Debian lab router (NOT a Terraform root) |

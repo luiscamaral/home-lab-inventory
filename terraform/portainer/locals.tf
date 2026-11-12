@@ -281,6 +281,13 @@ locals {
           - targets: [192.168.59.5:5000]
             labels: { instance: zot-1 }
 
+      # zot-meta-backup sidecar (shares zot's network namespace): last backup time, size, txid.
+      - job_name: zot-meta-backup
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.5:9199]
+            labels: { instance: zot-1 }
+
       # ── Phase 3a: Watchtower (HTTP API on :8080) ────────────────────
       # WATCHTOWER_HTTP_API_METRICS=true (already set) exposes /v1/metrics
       # behind the same bearer token as the update-trigger API. Two
@@ -719,6 +726,13 @@ locals {
           - targets: [192.168.59.5:5000]
             labels: { instance: zot-1 }
 
+      # zot-meta-backup sidecar (shares zot's network namespace): last backup time, size, txid.
+      - job_name: zot-meta-backup
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.5:9199]
+            labels: { instance: zot-1 }
+
       # ── Phase 3a: Watchtower (HTTP API on :8080) ────────────────────
       # TODO: bearer token wiring — see replica-A comment.
       - job_name: watchtower
@@ -1006,6 +1020,7 @@ locals {
   #   icmp             — raw-socket ping (requires NET_RAW on container)
   #   tcp_connect      — TCP handshake only
   #   ssl_expiry       — TCP+TLS handshake; emits probe_ssl_earliest_cert_expiry
+  #   ssl_expiry_auth_cf — same, with SNI auth.cf.lcamaral.com (probed against the rproxy IPs)
   #   dns_lcamaral     — DNS A query for vault.d.lcamaral.com (resolver health)
   # ──────────────────────────────────────────────
   blackbox_config = <<-EOT
@@ -1070,6 +1085,17 @@ locals {
           tls: true
           tls_config:
             insecure_skip_verify: true
+      # Same probe, but it sends the SNI of the cf certificate: used against the rproxy IPs
+      # (blackbox-ssl targets 192.168.59.28/.48/.49 with __param_module) to watch the cert
+      # that zot sees when it reaches Keycloak at auth.cf.lcamaral.com over the LAN.
+      ssl_expiry_auth_cf:
+        prober: tcp
+        timeout: 10s
+        tcp:
+          tls: true
+          tls_config:
+            insecure_skip_verify: true
+            server_name: auth.cf.lcamaral.com
       dns_lcamaral:
         prober: dns
         timeout: 5s
@@ -1220,6 +1246,15 @@ locals {
         # the wildcard *.d.lcamaral.com cert probed via
         # vault.d / keycloak.d above (same ACME issuer).
       ]
+    },
+    # The cf.lcamaral.com certificate (SAN auth.cf.lcamaral.com, ...) that the three
+    # rproxies present for the *.cf names. zot reaches Keycloak at auth.cf.lcamaral.com over
+    # the LAN (extra_hosts -> these IPs) and panics at startup if that handshake fails, so
+    # each replica's cert is probed directly by IP with the auth.cf SNI. The CertExpiringSoon /
+    # CertExpired / CertProbeFailed rules cover these targets like any other blackbox-ssl one.
+    {
+      targets = ["192.168.59.28:443", "192.168.59.48:443", "192.168.59.49:443"]
+      labels  = { __param_module = "ssl_expiry_auth_cf", sni = "auth.cf.lcamaral.com" }
     }
   ])
 
@@ -1358,6 +1393,78 @@ locals {
                 Probe to {{ $$labels.instance }} has been taking over 5s for
                 5 minutes. Upstream is responding but slowly — could be DB
                 load, NFS contention, or downstream service degradation.
+
+      # 2026-11-12: zot error visibility. On 2026-11-11 22:41 MST an NFS stall left zot's
+      # meta.db returning EIO: the OIDC callback answered 500 and nothing alerted, because pulls
+      # and the blackbox probe of zot.d kept working. zot exports
+      # zot_http_requests_total{code}; a 5xx series only appears after the first error, so the
+      # rule compares the sum with its value 15m ago (`or vector(0)` covers the new series).
+      # It stays firing for ~15m after an error, which is also what email/Telegram dedup wants.
+      - name: zot
+        interval: 1m
+        rules:
+          - alert: ZotServerErrors
+            expr: sum(zot_http_requests_total{job="zot",code=~"5.."}) - (sum(zot_http_requests_total{job="zot",code=~"5.."} offset 15m) or vector(0)) > 0
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "zot answered HTTP 5xx in the last 15 minutes"
+              description: |
+                zot returned a 5xx. On the registry this is mostly a storage or
+                metadata error (e.g. `input/output error` on meta.db after an NFS
+                stall, or a failed on-demand sync). Check
+                `docker logs zot | grep '"level":"error"'` on dockermaster. Since
+                the metadata DB moved to the local `zot-meta` volume, an EIO there
+                means a local-disk problem. `docker restart zot` clears a wedged DB handle.
+          - alert: ZotGCErrors
+            expr: sum(zot_gc_runs_total{job="zot",error="true"}) - (sum(zot_gc_runs_total{job="zot",error="true"} offset 1h) or vector(0)) > 0
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "zot garbage collection failed in the last hour"
+              description: |
+                A zot GC run finished with error="true". Check the zot log
+                (`docker logs zot | grep -i gc`) for the store it failed on.
+          - alert: ZotMetricsDown
+            expr: up{job="zot"} == 0
+            for: 5m
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "Prometheus cannot scrape zot (/metrics) for 5 minutes"
+              description: |
+                zot's /metrics endpoint is not answering. If the blackbox probe of
+                https://zot.d.lcamaral.com is also failing, zot is down; if not, only
+                the metrics listener or the macvlan path (192.168.59.5:5000) is broken.
+          - alert: ZotMetaBackupStale
+            expr: time() - zot_meta_backup_last_success_timestamp_seconds{job="zot-meta-backup"} > 129600
+            for: 30m
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "zot meta.db has no successful backup for more than 36 hours"
+              description: |
+                The zot-meta-backup sidecar (dockermaster) copies meta.db to
+                /nfs/dockermaster/docker/zot/backup every night and keeps 7 days. Check
+                `docker logs zot-meta-backup` (a busy zot can reject copies for a few attempts; it
+                logs ERROR when a whole run fails) and that the NAS mount is writable. A value of 0
+                means no backup has succeeded since the sidecar was created.
+          - alert: ZotMetaBackupDown
+            expr: up{job="zot-meta-backup"} == 0
+            for: 15m
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "Prometheus cannot scrape the zot-meta-backup sidecar for 15 minutes"
+              description: |
+                The sidecar shares zot's network namespace, so this also fires when zot is
+                recreated and the sidecar did not follow. `docker ps` on dockermaster should show
+                zot-meta-backup healthy; redeploy the zot stack if it is not.
 
       # 2026-06-10: ESP32-C5 wifi-probe fleet health. Motivated by the
       # internet_https outage (05:53-08:33) that no rule caught: failures

@@ -11,7 +11,7 @@ keeps running for a cool-off period. See [Cool-off and decommission](#cool-off-a
 | Host | dockermaster, Portainer stack `zot` (Terraform: `portainer_stack.zot`) |
 | Address | `https://zot.d.lcamaral.com` (LAN only, via the 3 rproxy replicas) |
 | Container IP | `192.168.59.5:5000` on `docker-servers-net` (+ `rproxy` bridge) |
-| Storage | `/nfs/dockermaster/docker/zot/data` (NAS, hard NFS mount) |
+| Storage | images on the NAS (`/nfs/dockermaster/docker/zot/stores/<prefix>`, hard NFS mount), metadata and sessions on the local `zot-meta` volume (see [Storage layout](#storage-layout)) |
 | Config | `terraform/portainer/stacks/zot-config.json`, rendered via Compose `configs:` |
 | Credentials | Vault `secret/homelab/zot` (`admin_user`, `admin_password`, `htpasswd`, plus the SSO fields `oidc_client_secret`, `session_hash_key`, `session_encrypt_key`) |
 | SSO | Keycloak realm `homelab`, client `zot`; admins = group `zot-admins` (see [Single sign-on](#single-sign-on-keycloak)) |
@@ -61,10 +61,77 @@ In Compose stacks, reference `zot.d.lcamaral.com/homelab/<name>:<tag>`. Portaine
 with the "Zot Registry" credentials. `scripts/check-image-pins.sh` allows `:latest` only for
 `zot.d.lcamaral.com/homelab/*`, the same contract as the old registry.
 
+## Storage layout
+
+zot v2.1.22 keeps its BoltDB metadata (`meta.db`: repo metadata, user profiles, API keys, pull times) and the login
+sessions (`_sessions`) in the **default** storage root. BoltDB is mmap'd and single-writer and does not tolerate an NFS
+stall. On 2026-11-11 22:41 MST an NFS stall (`nfs: server tnas not responding`) was followed by EIO on the next
+`meta.db` write (`failed to update the user profile: input/output error`), which made the OIDC callback return 500 until
+`docker restart zot`. So the layout is split (zot `storage.subPaths`):
+
+| Route prefix | Root in the container | Host path | Holds |
+|---|---|---|---|
+| (default) | `/var/lib/registry` | named volume `zot_zot-meta` (dockermaster local disk) | `meta.db`, `_sessions`, no images |
+| `/homelab` | `/var/lib/zot-stores/homelab` | `/nfs/dockermaster/docker/zot/stores/homelab` | `homelab/*` images |
+| `/docker.io`, `/ghcr.io`, `/quay.io`, `/registry.k8s.io`, `/gcr.io` | `/var/lib/zot-stores/<prefix>` | `/nfs/dockermaster/docker/zot/stores/<prefix>` | the pull-through caches |
+
+A substore stores a repo at `<root>/<full repo name>`, so `docker.io/library/alpine` is at
+`stores/docker.io/docker.io/library/alpine`. The route prefix is the first path segment of the repository name.
+Each substore has its own GC settings (same as before) and the cache substores carry the 90-day retention policy for
+their own prefix; `homelab` has none. The local volume is **persistent and not recreated by Terraform**: it is backed up
+(see [Backup of meta.db](#backup-of-metadb)) and must not be deleted.
+
+**Warning: `zot_zot-meta` is a Docker named volume.** Anything that removes the stack's volumes deletes `meta.db`, the
+API keys and the user profiles with it: `docker compose down -v`, `docker volume rm zot_zot-meta`, `docker volume prune`
+while zot is stopped, or deleting the `zot` stack in Portainer with "Remove associated volumes" ticked. Treat any
+deletion of the `zot` stack (also through Terraform) as dangerous for the same reason. The images on the NAS are not
+affected (they can be re-pulled), but the metadata is only restorable from the backup below.
+
+**Guard:** an image pushed to a repository outside these prefixes (for example `foo/bar`) is stored in the default
+root, i.e. on the local disk (checked in a throwaway test). Writes outside `homelab/**` are not expected; policy:
+only `homelab/**` is pushed to, and the root volume size is watched. A hard ACL guard (no `create` outside `homelab/**`)
+is a separate change.
+
+### Backup of meta.db
+
+The `zot-meta-backup` service in the zot stack (`python:3.13.18-alpine3.24`, `scripts/zot-meta-backup.py`) copies
+`meta.db` to the NAS and **never stops or pauses zot**. BoltDB is single-writer and zot holds its lock, so no other
+process can open the file, and a plain `cp` during a commit can be torn. BoltDB does not overwrite a committed page in
+place (copy-on-write, then it flips one of two meta pages), so a copy of a file that did not change while it was read is
+a valid database. The sidecar therefore copies only when the file's size and mtime are the same before and after the
+copy, and the copy passes a check of both meta pages (magic, version, checksum, file length). Otherwise it retries (a
+pull rewrites `meta.db` for its pull time) up to 12 times, 5 s apart; if no clean copy comes out it logs `ERROR` and
+tries again the next day.
+
+| Item | Value |
+|---|---|
+| Schedule | first run 2 minutes after the sidecar starts, then every 24 h |
+| Destination | `/nfs/dockermaster/docker/zot/backup/` (NAS): `meta.db.YYYYMMDD` (one per UTC day, 7 kept) and `latest.json` (time, file, size, sha256, BoltDB txid) |
+| Source | the `zot-meta` volume, mounted read-only |
+| Metrics | `zot_meta_backup_*` on `192.168.59.5:9199/metrics` (the sidecar shares zot's network namespace), Prometheus job `zot-meta-backup` |
+| Alerts | `ZotMetaBackupStale` (no success for 36 h, or none yet), `ZotMetaBackupDown` (sidecar not scraped for 15 min) |
+
+Restore (zot stopped, so it holds no lock): pick a generation, compare its sha256 with `latest.json` for the newest one,
+and copy it over the live file.
+
+```bash
+ssh dockermaster
+docker stop zot zot-meta-backup
+V=$(docker volume inspect zot_zot-meta --format '{{.Mountpoint}}')
+sudo cp -p "$V/meta.db" "$V/meta.db.before-restore"
+sudo cp /nfs/dockermaster/docker/zot/backup/meta.db.YYYYMMDD "$V/meta.db"
+docker start zot zot-meta-backup
+```
+
+A restored database loses profile and API-key changes made after that backup (and zot rebuilds the repo metadata
+from the stores on the NAS at startup). The `_sessions` directory in the volume only holds login sessions, which are
+disposable.
+
 ## Retention and garbage collection
 
 - Cache namespaces: tags not pulled for 90 days (`2160h`) are removed after a 24h delay, then
   GC frees the blobs (`gcInterval` 24h). A removed image is simply fetched again on the next pull.
+  The policy is configured per cache substore (each for its own prefix).
 - `homelab/*`: no retention policy, so nothing is deleted automatically.
 - `scrub` checks blob integrity every 24h.
 - `dedupe` is off. Deduplication keeps a BoltDB cache and hard links, and the data sits on NFS.
@@ -102,12 +169,33 @@ zot signs users in through the Keycloak `homelab` realm (OIDC, authorization-cod
 **Why that issuer.** The realm has a fixed frontend URL, so the discovery document and every token carry
 `https://auth.cf.lcamaral.com/realms/homelab`, even when the request came in on `keycloak.d.lcamaral.com`
 (checked: both return the same `issuer`). zot discovers the provider from `issuer` and rejects a token whose `iss`
-differs, so the configured value must be that one. The browser and zot's token request therefore go through
-Cloudflare to the `bologna` tunnel, the same path as `homelab-portal` (`KEYCLOAK_PUBLIC_URL`).
+differs, so the configured value must be that one. Browsers reach it through Cloudflare (the `bologna` tunnel), like
+`homelab-portal` (`KEYCLOAK_PUBLIC_URL`). zot itself does **not**: see [Startup dependencies](#startup-dependencies).
 
 `zot-auth-init` writes `oidc-credentials.json` (`clientid`, `clientsecret`) and `session-keys.json` (`hashKey`,
 `encryptKey`) next to the htpasswd, from the same Vault read, on every deploy. Fixed session keys keep logins valid
 across restarts. Sessions are stored under the zot data directory.
+
+### Startup dependencies
+
+zot fetches the OIDC discovery document from the issuer at startup and **panics if that fails** (zot 2.1.22,
+`pkg/api/authn.go`: `failed to initialize new relying party oidc`), so a restart needs Keycloak reachable. To keep
+that off the internet and Cloudflare, the stack maps `auth.cf.lcamaral.com` to the three rproxy replicas with
+`extra_hosts` (`192.168.59.28`, `.48`, `.49`), which write three `auth.cf.lcamaral.com` lines into the container's
+`/etc/hosts`. The rproxies present a publicly trusted Let's Encrypt certificate for the `*.cf` names (a SAN
+certificate whose first name is `auth.cf.lcamaral.com`, managed by the pfSense ACME job), so TLS verification still
+works and nothing is skipped.
+
+- Startup now depends only on the LAN: the rproxies (any of 3) and Keycloak (2 replicas behind them). No DNS, internet
+  or Cloudflare is needed.
+- Resolver: the zot binary is static (`CGO_ENABLED=0`), so Go's own resolver is used. It reads `/etc/hosts` before DNS
+  (the image's `nsswitch.conf` says `hosts: files dns`) and returns the three addresses in file order. The dialer tries
+  them in that order and moves on when a connection fails or times out, so one dead rproxy is tolerated. It always
+  starts with `.28` (no round-robin), and it does not retry a reachable proxy that answers with an HTTP error.
+- If that `cf` certificate expires or the rproxy vhost for `auth.cf.lcamaral.com` goes away, zot fails to start.
+  Renewal is the ACME job on pfSense (`pfsense/acme-actions.yml`); check the certificate before a planned zot restart.
+- Fallback: remove `extra_hosts` and apply `portainer_stack.zot`. zot then resolves `auth.cf.lcamaral.com` through DNS and
+  Cloudflare again (needs internet).
 
 ### Logging in
 
@@ -115,11 +203,12 @@ across restarts. Sessions are stored under the zot data directory.
   `https://zot.d.lcamaral.com/zot/auth/login?provider=oidc`.
 - **`docker login` / CLI:** OIDC does not work for command-line clients, so create an **API key** while signed in
   (it carries the same permissions as you; the key is shown once). Use the API keys page of the UI user menu, or the
-  REST call below with the browser session cookie:
+  REST call below with the browser session cookie. zot accepts the cookie only together with the
+  `X-ZOT-API-CLIENT: zot-ui` header (the UI sends it); without it the call counts as anonymous and fails with a 500:
 
   ```bash
   curl -s -X POST https://zot.d.lcamaral.com/zot/auth/apikey -H 'Cookie: session=<cookie>' \
-    -d '{"label":"laptop","expirationDate":"2027-11-08T00:00:00Z"}'
+    -H 'X-ZOT-API-CLIENT: zot-ui' -d '{"label":"laptop","expirationDate":"2027-11-08T00:00:00Z"}'
   docker login zot.d.lcamaral.com -u '<keycloak username>' --password-stdin <<< 'zak_...'
   ```
 
@@ -127,6 +216,37 @@ across restarts. Sessions are stored under the zot data directory.
   `DELETE /zot/auth/apikey?id=<uuid>`. Store keys in Vault or a password manager, not in dotfiles.
 - **Break-glass:** `admin` with `vault kv get -field=admin_password secret/homelab/zot` still works if Keycloak is
   down. Keycloak runs on ds-1/ds-2 and is itself reached through the same rproxies.
+
+- **The login has a 2 minute window.** zot keeps the OIDC `state` in a cookie that lives 120 s
+  (`relyingPartyCookieMaxAge`). Finish the Keycloak page within 2 minutes after zot redirects you. If you wait longer,
+  or reload the callback tab (`/zot/auth/callback/oidc?...`), the callback answers **401 `named cookie not present`**
+  (the `state` cookie is gone). Do not retry that tab: start again from `https://zot.d.lcamaral.com/` (or
+  `/zot/auth/login?provider=oidc`). Several rapid 401s on the callback are usually a reloaded or duplicated tab, not an
+  outage.
+
+### End-to-end test
+
+`scripts/zot-e2e.py` tests SSO, API keys and access control without a browser, against the live registry:
+
+```bash
+export VAULT_ADDR=http://192.168.59.25:8200 VAULT_TOKEN=$(security find-generic-password -w -a lamaral -s vault-root-token)
+uv run --no-project --quiet --with requests python scripts/zot-e2e.py probe   # read-only checks
+uv run --no-project --quiet --with requests python scripts/zot-e2e.py all     # creates and deletes test users
+```
+
+`all` creates two disposable users in realm `homelab` through the Keycloak admin API (`zot-e2e-test`, a member of
+`zot-admins`, and `zot-e2e-user`, a plain user; the realm uses the email as the username, so they log in as
+`zot-e2e-test@lcamaral.com` and `zot-e2e-user@lcamaral.com`), runs the scripted login (zot, Keycloak form, callback,
+session cookie), creates API keys, pushes, pulls and deletes `homelab/e2e-test` with `docker` on `dockerserver-2` (throw-away
+`DOCKER_CONFIG`), checks that the plain user can read but not push or delete, prints the rproxy lines that show zot's
+token and jwks requests arriving from `192.168.59.5`, then deletes the users and the temporary files. The Keycloak
+and zot writes are real, so run it deliberately.
+
+`keycloak_group_memberships.zot_admins` is authoritative: while the test admin is in `zot-admins`, a plan that includes
+that resource shows drift and an apply of it would remove the test user. The test uses the admin API only (never
+Terraform), is over in a few minutes, and `cleanup` fails if the group members differ from the snapshot taken before.
+Do not apply that resource while it runs. The deleted image leaves its tiny blobs under `homelab/e2e-test` until the
+next garbage collection (`gcDelay` 1 h, `gcInterval` 24 h).
 
 ### Admin access
 
@@ -275,6 +395,14 @@ the `registry.cf.lcamaral.com.conf` vhost, the Cloudflare DNS record and tunnel 
 (203 MB) for another 30 days, then delete it.
 
 ## Rollback
+
+**Storage migration (2026-11, local metadata):** stop zot, rename each `stores/<prefix>/<prefix>` back to
+`data/<prefix>` (same NFS filesystem, instant), and re-apply the previous revision of the `zot` stack (bind
+`/nfs/dockermaster/docker/zot/data` as `/var/lib/registry`, no `subPaths`). The old `data/meta.db` was copied, not moved
+(renamed to `meta.db.migrated-<date>` once the migration was verified; rename it back). Pulls, pushes and sessions made
+after the migration live in the local volume and are not carried back. The one-time seeding of `meta.db` from the old
+NFS root (an `/old-data` mount in `zot-auth-init`) was removed once the migration was verified; to roll back, restore
+`meta.db` from the NAS backup or the `.migrated-<date>` file instead.
 
 zot is purely additive. To roll back the consumer switch, revert the image lines in
 `stacks/homelab-portal*.yml` and apply those two stacks; the old registry still serves

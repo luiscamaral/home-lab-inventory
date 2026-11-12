@@ -6,8 +6,8 @@
 
 - **Hostname**: `pfsense.admin.lcamaral.com` (short: `pfsense`)
 - **Role**: Main router, firewall, DNS resolver, DHCP, ACME CA, HAProxy edge, dual-WAN gateway
-- **OS**: pfSense Plus **26.03-RELEASE** (build `20260401-1720`)
-- **Kernel**: FreeBSD 16.0-CURRENT (`plus-RELENG_26_03-n256531`)
+- **OS**: pfSense Plus **26.07-RELEASE** (patch applied 2026-09-10; verified 2026-11-10)
+- **Kernel**: FreeBSD 16.0-CURRENT (`plus-RELENG_26_07-n256584`)
 - **Hardware**:
   - **CPU**: Intel Core i3-N305 (8 cores, Alder Lake-N)
   - **RAM**: 16 GB
@@ -193,5 +193,5 @@
   - **Edge tier (HA 3/3):** rproxy-3 (`.49`), cloudflare-tunnel-3 (local rproxy bridge)
   - **HA backing:** vault-3 (`.15`, raft 3/3), minio-2 (`.37`, site replication 2/2, local disk)
   - **Workloads:** twingate-golden-mussel (`.24`), freeswitch (`.40`), rustdesk hbbs (`.10`), rustdesk hbbr (`.11`)
-  - **Ancillary:** portainer-agent (`.46`)
+  - **Ancillary:** portainer-agent (`.59`)
 - **Access**: SSH via `ssh dockerserver-2`

@@ -17,7 +17,8 @@ Auth: pfSense API token from macOS Keychain (`pfsense-api-token`).
 The pfSense API is reached via `ssh pfsense 'curl 127.0.0.1:56880'`
 because it's bound to localhost.
 
-Note: pfSense's ACME API can take 30+ seconds per call — be patient.
+Note: pfSense's ACME API is slow (about 90 s for the cert list with 4 certs, and it grows
+with the number of certs and domains) — be patient; the timeout is 240 s.
 """
 
 from __future__ import annotations
@@ -62,7 +63,7 @@ def get_token() -> str:
         sys.exit(f"error: pfSense API token not in Keychain: {e}")
 
 
-def api_call(method: str, path: str, token: str, body: dict | None = None, timeout_s: int = 90) -> dict:
+def api_call(method: str, path: str, token: str, body: dict | None = None, timeout_s: int = 240) -> dict:
     parts = ["curl", "-s", "--max-time", str(timeout_s), "-X", method,
              "-H", f"'X-API-Key: {token}'",
              "-H", "'Content-Type: application/json'"]

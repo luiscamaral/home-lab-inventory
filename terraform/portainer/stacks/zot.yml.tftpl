@@ -32,11 +32,22 @@ networks:
 
 volumes:
   zot-auth:
+  # Default storage root on the dockermaster LOCAL disk: it holds zot's BoltDB metadata
+  # (meta.db), the login sessions and no images. BoltDB is mmap'd and single-writer and does
+  # not tolerate an NFS stall (2026-11-11: EIO on a write after `nfs: server not responding`
+  # broke the OIDC login until a restart). Images stay on the NAS (stores below). Persistent:
+  # NEVER delete it (`docker compose down -v`, or deleting this stack in Portainer with "Remove
+  # volumes" would drop meta.db, the API keys and the user profiles). The zot-meta-backup sidecar
+  # below copies it to the NAS every night (7 generations).
+  zot-meta:
 
 configs:
   zot_config:
     content: |
       ${indent(6, replace(zot_config, "$", "$$"))}
+  meta_backup_script:
+    content: |
+      ${indent(6, replace(meta_backup_script, "$", "$$"))}
 
 services:
   zot-auth-init:
@@ -77,8 +88,27 @@ services:
         ipv4_address: 192.168.59.5
     expose:
       - 5000
+    # OIDC issuer host. Keycloak's issuer is https://auth.cf.lcamaral.com/...
+    # (fixed frontend URL), and zot panics at startup if discovery fails, so
+    # keep zot off Cloudflare: resolve it to the 3 rproxy replicas (LE
+    # cert for the cf names, see docs/zot-registry.md). Same name, 3 lines in
+    # /etc/hosts: Go's resolver returns them in this order and the dialer
+    # falls through to the next on connect failure. Browsers are unaffected.
+    extra_hosts:
+      - "auth.cf.lcamaral.com:192.168.59.28"
+      - "auth.cf.lcamaral.com:192.168.59.48"
+      - "auth.cf.lcamaral.com:192.168.59.49"
     volumes:
-      - /nfs/dockermaster/docker/zot/data:/var/lib/registry
+      # default root: local disk (meta.db, _sessions), no images
+      - zot-meta:/var/lib/registry
+      # images: one NFS root per route prefix (zot `storage.subPaths`); a substore stores a repo at
+      # <root>/<full repo name>, e.g. stores/docker.io/docker.io/library/alpine
+      - /nfs/dockermaster/docker/zot/stores/homelab:/var/lib/zot-stores/homelab
+      - /nfs/dockermaster/docker/zot/stores/docker.io:/var/lib/zot-stores/docker.io
+      - /nfs/dockermaster/docker/zot/stores/ghcr.io:/var/lib/zot-stores/ghcr.io
+      - /nfs/dockermaster/docker/zot/stores/quay.io:/var/lib/zot-stores/quay.io
+      - /nfs/dockermaster/docker/zot/stores/registry.k8s.io:/var/lib/zot-stores/registry.k8s.io
+      - /nfs/dockermaster/docker/zot/stores/gcr.io:/var/lib/zot-stores/gcr.io
       - zot-auth:/etc/zot/auth:ro
     configs:
       - source: zot_config
@@ -105,3 +135,47 @@ services:
         reservations:
           cpus: '0.25'
           memory: 128M
+
+  # Nightly consistent copy of meta.db to the NAS (scripts/zot-meta-backup.py). It never stops or pauses
+  # zot: the file is copied only when it was quiet during the copy and passes a BoltDB meta-page check.
+  # It shares zot's network namespace so Prometheus reaches its /metrics (9199) at zot's address
+  # (192.168.59.5:9199); the ZotMetaBackupStale alert reads those. Backups: /nfs/dockermaster/docker/zot/backup
+  # (meta.db.YYYYMMDD x7 + latest.json). Restore: docs/zot-registry.md.
+  zot-meta-backup:
+    image: python:3.13.18-alpine3.24
+    container_name: zot-meta-backup
+    network_mode: "service:zot"
+    depends_on:
+      zot:
+        condition: service_started
+    command: ["python", "/app/zot-meta-backup.py"]
+    environment:
+      SRC: /meta/meta.db
+      DEST: /backup
+      KEEP: "7"
+      METRICS_PORT: "9199"
+    volumes:
+      - zot-meta:/meta:ro
+      - /nfs/dockermaster/docker/zot/backup:/backup
+    configs:
+      - source: meta_backup_script
+        target: /app/zot-meta-backup.py
+        mode: 0444
+    # not read_only: Compose copies the script config into the container and refuses that on a read-only root
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:9199/metrics', timeout=3)"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      com.docker.stack: "zot"
+      com.docker.service: "zot-meta-backup"
+      com.centurylinklabs.watchtower.enable: "false"
+      portainer.autodeploy: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 64M

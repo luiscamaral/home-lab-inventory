@@ -74,6 +74,7 @@ surface → source → apply map. Two layers:
 
 - **Terraform** (Portainer stacks, Cloudflare, Vault config) under `terraform/`, independent state per domain:
   - `terraform/cloudflare/` -- Zone, DNS, tunnel, DreamHost wildcard (Cloudflare + DreamHost providers)
+  - `terraform/circunflexo/` -- circunflexo.com DNS on DreamHost (DreamHost provider only; independent domain)
   - `terraform/portainer/` -- Portainer stacks, settings (Portainer provider)
   - `terraform/vault/` -- Secret engines, policies (Vault provider)
   - `terraform/modules/cf-service/` -- Reusable module for `*.cf.lcamaral.com` services

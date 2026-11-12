@@ -15,6 +15,12 @@
       method: shellcommand
       status: active
 
+- cert: cf.lcamaral.com
+  actions:
+    - command: /root/sync-certs-to-rproxy.sh cf.lcamaral.com
+      method: shellcommand
+      status: active
+
 - cert: home.lcamaral.com
   actions:
     - command: /root/sync-certs-to-rproxy.sh home.lcamaral.com

@@ -19,17 +19,19 @@ resource "portainer_environment" "ds1" {
 
 # ──────────────────────────────────────────────
 # dockerserver-2 — App Plane B (VM 124)
-# Portainer agent at 192.168.59.42:9001 (macvlan IP)
+# Portainer agent at 192.168.59.59:9001 (macvlan IP)
 # Moved .46 → .42 on 2026-06-28: .46 collided with the otel-collector
-# stack (dm), so the ds-2 agent could never claim it and fell back to the
-# default bridge — Portainer 502'd this endpoint. .42 is free in the pool.
+# stack (dm). .42 was not free either: pihole-exporter-2 (ds-1) is pinned
+# there, and Portainer's ARP cache picked the exporter ("connection
+# refused"). Moved .42 → .59 on 2026-11-05 after a repo grep, a live
+# container scan of all hosts and arping showed .59 unused.
 # ──────────────────────────────────────────────
 resource "portainer_environment" "ds2" {
   name                = "dockerserver-2"
-  environment_address = "tcp://192.168.59.42:9001"
+  environment_address = "tcp://192.168.59.59:9001"
   type                = 2 # Docker agent (EndpointCreationType=2)
   tls_skip_verify     = true
-  public_ip           = "tcp://192.168.59.42:9001"
+  public_ip           = "tcp://192.168.59.59:9001"
 }
 
 # ──────────────────────────────────────────────
