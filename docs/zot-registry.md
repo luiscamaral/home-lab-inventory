@@ -11,7 +11,7 @@ keeps running for a cool-off period. See [Cool-off and decommission](#cool-off-a
 | Host | dockermaster, Portainer stack `zot` (Terraform: `portainer_stack.zot`) |
 | Address | `https://zot.d.lcamaral.com` (LAN only, via the 3 rproxy replicas) |
 | Container IP | `192.168.59.5:5000` on `docker-servers-net` (+ `rproxy` bridge) |
-| Storage | `/nfs/dockermaster/docker/zot/data` (NAS, hard NFS mount) |
+| Storage | images on the NAS (`/nfs/dockermaster/docker/zot/stores/<prefix>`, hard NFS mount), metadata and sessions on the local `zot-meta` volume (see [Storage layout](#storage-layout)) |
 | Config | `terraform/portainer/stacks/zot-config.json`, rendered via Compose `configs:` |
 | Credentials | Vault `secret/homelab/zot` (`admin_user`, `admin_password`, `htpasswd`, plus the SSO fields `oidc_client_secret`, `session_hash_key`, `session_encrypt_key`) |
 | SSO | Keycloak realm `homelab`, client `zot`; admins = group `zot-admins` (see [Single sign-on](#single-sign-on-keycloak)) |
@@ -61,10 +61,36 @@ In Compose stacks, reference `zot.d.lcamaral.com/homelab/<name>:<tag>`. Portaine
 with the "Zot Registry" credentials. `scripts/check-image-pins.sh` allows `:latest` only for
 `zot.d.lcamaral.com/homelab/*`, the same contract as the old registry.
 
+## Storage layout
+
+zot v2.1.22 keeps its BoltDB metadata (`meta.db`: repo metadata, user profiles, API keys, pull times) and the login
+sessions (`_sessions`) in the **default** storage root. BoltDB is mmap'd and single-writer and does not tolerate an NFS
+stall. On 2026-11-11 22:41 MST an NFS stall (`nfs: server tnas not responding`) was followed by EIO on the next
+`meta.db` write (`failed to update the user profile: input/output error`), which made the OIDC callback return 500 until
+`docker restart zot`. So the layout is split (zot `storage.subPaths`):
+
+| Route prefix | Root in the container | Host path | Holds |
+|---|---|---|---|
+| (default) | `/var/lib/registry` | named volume `zot_zot-meta` (dockermaster local disk) | `meta.db`, `_sessions`, no images |
+| `/homelab` | `/var/lib/zot-stores/homelab` | `/nfs/dockermaster/docker/zot/stores/homelab` | `homelab/*` images |
+| `/docker.io`, `/ghcr.io`, `/quay.io`, `/registry.k8s.io`, `/gcr.io` | `/var/lib/zot-stores/<prefix>` | `/nfs/dockermaster/docker/zot/stores/<prefix>` | the pull-through caches |
+
+A substore stores a repo at `<root>/<full repo name>`, so `docker.io/library/alpine` is at
+`stores/docker.io/docker.io/library/alpine`. The route prefix is the first path segment of the repository name.
+Each substore has its own GC settings (same as before) and the cache substores carry the 90-day retention policy for
+their own prefix; `homelab` has none. The local volume is **persistent and not recreated by Terraform**: it is backed up
+(see below) and must not be deleted.
+
+**Guard:** an image pushed to a repository outside these prefixes (for example `foo/bar`) is stored in the default
+root, i.e. on the local disk (checked in a throwaway test). Writes outside `homelab/**` are not expected; policy:
+only `homelab/**` is pushed to, and the root volume size is watched. A hard ACL guard (no `create` outside `homelab/**`)
+is a separate change.
+
 ## Retention and garbage collection
 
 - Cache namespaces: tags not pulled for 90 days (`2160h`) are removed after a 24h delay, then
   GC frees the blobs (`gcInterval` 24h). A removed image is simply fetched again on the next pull.
+  The policy is configured per cache substore (each for its own prefix).
 - `homelab/*`: no retention policy, so nothing is deleted automatically.
 - `scrub` checks blob integrity every 24h.
 - `dedupe` is off. Deduplication keeps a BoltDB cache and hard links, and the data sits on NFS.
@@ -321,6 +347,12 @@ the `registry.cf.lcamaral.com.conf` vhost, the Cloudflare DNS record and tunnel 
 (203 MB) for another 30 days, then delete it.
 
 ## Rollback
+
+**Storage migration (2026-11, local metadata):** stop zot, rename each `stores/<prefix>/<prefix>` back to
+`data/<prefix>` (same NFS filesystem, instant), and re-apply the previous revision of the `zot` stack (bind
+`/nfs/dockermaster/docker/zot/data` as `/var/lib/registry`, no `subPaths`). The old `data/meta.db` was copied, not moved
+(renamed to `meta.db.migrated-<date>` once the migration was verified; rename it back). Pulls, pushes and sessions made
+after the migration live in the local volume and are not carried back.
 
 zot is purely additive. To roll back the consumer switch, revert the image lines in
 `stacks/homelab-portal*.yml` and apply those two stacks; the old registry still serves

@@ -184,27 +184,135 @@
     "gc": true,
     "gcDelay": "1h",
     "gcInterval": "24h",
-    "retention": {
-      "delay": "24h",
-      "policies": [
-        {
-          "deleteReferrers": true,
-          "deleteUntagged": true,
-          "keepTags": [
+    "rootDirectory": "/var/lib/registry",
+    "subPaths": {
+      "/docker.io": {
+        "dedupe": false,
+        "gc": true,
+        "gcDelay": "1h",
+        "gcInterval": "24h",
+        "retention": {
+          "delay": "24h",
+          "policies": [
             {
-              "pulledWithin": "2160h"
+              "deleteReferrers": true,
+              "deleteUntagged": true,
+              "keepTags": [
+                {
+                  "pulledWithin": "2160h"
+                }
+              ],
+              "repositories": [
+                "docker.io/**"
+              ]
             }
-          ],
-          "repositories": [
-            "docker.io/**",
-            "ghcr.io/**",
-            "quay.io/**",
-            "registry.k8s.io/**",
-            "gcr.io/**"
           ]
-        }
-      ]
-    },
-    "rootDirectory": "/var/lib/registry"
+        },
+        "rootDirectory": "/var/lib/zot-stores/docker.io"
+      },
+      "/gcr.io": {
+        "dedupe": false,
+        "gc": true,
+        "gcDelay": "1h",
+        "gcInterval": "24h",
+        "retention": {
+          "delay": "24h",
+          "policies": [
+            {
+              "deleteReferrers": true,
+              "deleteUntagged": true,
+              "keepTags": [
+                {
+                  "pulledWithin": "2160h"
+                }
+              ],
+              "repositories": [
+                "gcr.io/**"
+              ]
+            }
+          ]
+        },
+        "rootDirectory": "/var/lib/zot-stores/gcr.io"
+      },
+      "/ghcr.io": {
+        "dedupe": false,
+        "gc": true,
+        "gcDelay": "1h",
+        "gcInterval": "24h",
+        "retention": {
+          "delay": "24h",
+          "policies": [
+            {
+              "deleteReferrers": true,
+              "deleteUntagged": true,
+              "keepTags": [
+                {
+                  "pulledWithin": "2160h"
+                }
+              ],
+              "repositories": [
+                "ghcr.io/**"
+              ]
+            }
+          ]
+        },
+        "rootDirectory": "/var/lib/zot-stores/ghcr.io"
+      },
+      "/homelab": {
+        "dedupe": false,
+        "gc": true,
+        "gcDelay": "1h",
+        "gcInterval": "24h",
+        "rootDirectory": "/var/lib/zot-stores/homelab"
+      },
+      "/quay.io": {
+        "dedupe": false,
+        "gc": true,
+        "gcDelay": "1h",
+        "gcInterval": "24h",
+        "retention": {
+          "delay": "24h",
+          "policies": [
+            {
+              "deleteReferrers": true,
+              "deleteUntagged": true,
+              "keepTags": [
+                {
+                  "pulledWithin": "2160h"
+                }
+              ],
+              "repositories": [
+                "quay.io/**"
+              ]
+            }
+          ]
+        },
+        "rootDirectory": "/var/lib/zot-stores/quay.io"
+      },
+      "/registry.k8s.io": {
+        "dedupe": false,
+        "gc": true,
+        "gcDelay": "1h",
+        "gcInterval": "24h",
+        "retention": {
+          "delay": "24h",
+          "policies": [
+            {
+              "deleteReferrers": true,
+              "deleteUntagged": true,
+              "keepTags": [
+                {
+                  "pulledWithin": "2160h"
+                }
+              ],
+              "repositories": [
+                "registry.k8s.io/**"
+              ]
+            }
+          ]
+        },
+        "rootDirectory": "/var/lib/zot-stores/registry.k8s.io"
+      }
+    }
   }
 }
