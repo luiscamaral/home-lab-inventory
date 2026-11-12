@@ -145,7 +145,9 @@
 
 - **zot** — `ghcr.io/project-zot/zot:v2.1.22` (+ one-shot `zot-auth-init`, `busybox:1.37.0`)
   - Networks: `docker-servers-net` (192.168.59.5) + `rproxy` bridge
-  - Volumes: `/nfs/dockermaster/docker/zot/data` (NAS), `zot-auth` (regenerated htpasswd, OIDC credentials, session keys)
+  - Volumes: images on the NAS `/nfs/dockermaster/docker/zot/stores/<prefix>` (`homelab`, the Docker Hub, GHCR, Quay,
+    registry.k8s.io and GCR caches), `zot-meta` (local disk: `meta.db` and sessions),
+    `zot-auth` (regenerated htpasswd, OIDC credentials, session keys)
   - Purpose: OCI registry for `homelab/*` images + on-demand pull-through cache for
     `docker.io`, `ghcr.io`, `quay.io`, `registry.k8s.io`, `gcr.io` (`zot.d.lcamaral.com`, LAN only).
     Single instance. Keycloak SSO (client `zot`, admin group `zot-admins`). See `docs/zot-registry.md`

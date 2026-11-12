@@ -32,6 +32,12 @@ networks:
 
 volumes:
   zot-auth:
+  # Default storage root on the dockermaster LOCAL disk: it holds zot's BoltDB metadata
+  # (meta.db), the login sessions and no images. BoltDB is mmap'd and single-writer and does
+  # not tolerate an NFS stall (2026-11-11: EIO on a write after `nfs: server not responding`
+  # broke the OIDC login until a restart). Images stay on the NAS (stores below). Persistent:
+  # back it up (docs/zot-registry.md), do not delete it.
+  zot-meta:
 
 configs:
   zot_config:
@@ -57,9 +63,21 @@ services:
         printf '%s\n' "$$HTPASSWD_CONTENT" > /auth/htpasswd && \
         printf '{"clientid":"%s","clientsecret":"%s"}\n' "$$OIDC_CLIENT_ID" "$$OIDC_CLIENT_SECRET" > /auth/oidc-credentials.json && \
         printf '{"hashKey":"%s","encryptKey":"%s"}\n' "$$SESSION_HASH_KEY" "$$SESSION_ENCRYPT_KEY" > /auth/session-keys.json && \
-        chmod 0600 /auth/htpasswd /auth/oidc-credentials.json /auth/session-keys.json
+        chmod 0600 /auth/htpasswd /auth/oidc-credentials.json /auth/session-keys.json && \
+        if [ ! -e /meta/meta.db ] && [ -f /old-data/meta.db ]; then \
+          echo "first start on the local volume: seeding meta.db from the old NFS root" && \
+          cp -p /old-data/meta.db /meta/meta.db && \
+          { [ ! -d /old-data/_sessions ] || cp -pR /old-data/_sessions /meta/_sessions; } && \
+          { [ ! -f /old-data/_restore_complete ] || cp -p /old-data/_restore_complete /meta/_restore_complete; }; \
+        fi
     volumes:
       - zot-auth:/auth
+      # One-time migration of the metadata DB (docs/zot-registry.md, "Storage layout"): copies
+      # meta.db and the sessions from the old NFS root to the local volume ONLY when the local
+      # volume has no meta.db yet. The old root is read-only here and keeps its copy; remove this
+      # mount and the seeding step once the migration is verified and the old copy is archived.
+      - zot-meta:/meta
+      - /nfs/dockermaster/docker/zot/data:/old-data:ro
     restart: "no"
     labels:
       com.docker.stack: "zot"
@@ -88,7 +106,16 @@ services:
       - "auth.cf.lcamaral.com:192.168.59.48"
       - "auth.cf.lcamaral.com:192.168.59.49"
     volumes:
-      - /nfs/dockermaster/docker/zot/data:/var/lib/registry
+      # default root: local disk (meta.db, _sessions), no images
+      - zot-meta:/var/lib/registry
+      # images: one NFS root per route prefix (zot `storage.subPaths`); a substore stores a repo at
+      # <root>/<full repo name>, e.g. stores/docker.io/docker.io/library/alpine
+      - /nfs/dockermaster/docker/zot/stores/homelab:/var/lib/zot-stores/homelab
+      - /nfs/dockermaster/docker/zot/stores/docker.io:/var/lib/zot-stores/docker.io
+      - /nfs/dockermaster/docker/zot/stores/ghcr.io:/var/lib/zot-stores/ghcr.io
+      - /nfs/dockermaster/docker/zot/stores/quay.io:/var/lib/zot-stores/quay.io
+      - /nfs/dockermaster/docker/zot/stores/registry.k8s.io:/var/lib/zot-stores/registry.k8s.io
+      - /nfs/dockermaster/docker/zot/stores/gcr.io:/var/lib/zot-stores/gcr.io
       - zot-auth:/etc/zot/auth:ro
     configs:
       - source: zot_config
