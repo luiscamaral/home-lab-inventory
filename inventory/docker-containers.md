@@ -412,16 +412,26 @@
 
 - **nomad** (`nomad_admin`, `nomad_mysql`, `nomad_redis`, `nomad_disk_collector`,
   `nomad_embed_ollama`, `nomad_cli_proxy_api`, `nomad_litellm`, `nomad_remote_ai_init`, plus
-  DooD-spawned `nomad_qdrant`)
-  - Network: `docker-servers-net` (192.168.59.60 for `nomad_admin`) + `project-nomad_default` bridge
+  `nomad_dozzle`, `nomad_docker_readonly`, and DooD-spawned `nomad_qdrant`)
+  - Network: `docker-servers-net` (`.60` for `nomad_admin`, `.61` for `nomad_dozzle`),
+    `project-nomad_default` bridge, and private internal `logs` bridge
   - Compose: `dockermaster/docker/compose/nomad/docker-compose.yml.tftpl`
   - Terraform: `portainer_stack.nomad` in `terraform/portainer/stacks.tf`
   - Storage: `/nfs/dockermaster/nomad/storage` (bulk ZIMs/KB/Qdrant),
     `/opt/project-nomad/{mysql,redis,ollama,cli-proxy-api}` (local SSD)
   - URL (internal): <https://nomad.d.lcamaral.com>
+  - Logs/metrics: <https://nomad.d.lcamaral.com/logs/>; built-in HTTP `:9999` link redirects here
   - Purpose: Offline-first knowledge/education server (Project NOMAD) with local Ollama embeddings
     (`nomic-embed-text:v1.5`) + LiteLLM routing chat through CLIProxyAPI (Google/Antigravity subscription OAuth)
   - Spec: `docs/superpowers/specs/2026-11-13-project-nomad-deployment-design.md`
+
+- **nomad-embedding-eval** (`nomad_eval_ollama`, `nomad_embedding_eval`)
+  - Terraform: `portainer_stack.nomad_embedding_eval`
+  - Network: separate Compose bridge, no published ports or production connections
+  - Storage: separate local named volumes `models` and `results`
+  - Limits: Ollama 4 CPUs / 6 GiB; runner 0.5 CPU / 128 MiB
+  - Purpose: one-shot Nomic-vs-BGE-M3 smoke benchmark; no production model/index changes
+  - Guide: `docs/nomad-observability-and-embedding-eval.md`
 
 #### Ancillary
 
@@ -473,6 +483,7 @@
 | .50 | pihole-2 | ds-1 |
 | .54 | keycloak-db-1 | ds-1 |
 | .60 | nomad_admin | ds-2 |
+| .61 | nomad_dozzle | ds-2 |
 
 ## Removed services (since last refresh)
 
@@ -507,6 +518,7 @@ Authoritative list in `terraform/portainer/stacks.tf`:
 | `github-runner` | ds-1 |
 | `rust-server` | ds-2 |
 | `nomad` | ds-2 |
+| `nomad-embedding-eval` | ds-2 |
 | `la-rundeck` | ds-1 |
 | `prometheus` | ds-1 |
 | `watchtower`, `watchtower_dm` | ds-1, dm |

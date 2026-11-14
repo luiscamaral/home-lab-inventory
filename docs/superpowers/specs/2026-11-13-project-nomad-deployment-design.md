@@ -57,8 +57,8 @@ design pairs Project NOMAD with two lightweight co-located services inside the s
 - Running `nomad_updater` sidecar — upstream's updater mutates `/opt/project-nomad/compose.yml` on
   disk, which conflicts with Terraform + Portainer management. Container images are version-pinned
   and updated via IaC PRs.
-- Running `nomad_dozzle` — logs are already shipped to Loki via Promtail (`loki.logging=true`) and
-  viewable in Grafana / Portainer.
+- Replacing centralized Loki/Grafana monitoring. A scoped Dozzle instance complements it and
+  backs NOMAD's built-in **Service Logs & Metrics** launcher (see the operations guide below).
 
 ## 4. Architecture
 
@@ -100,7 +100,7 @@ design pairs Project NOMAD with two lightweight co-located services inside the s
                                                            │
                                                            ▼
                                             External / Subscription AI
-                                            (OpenRouter via Vault key)
+                                             (Google/Antigravity subscription OAuth)
 ```
 
 ## 5. Components
@@ -113,6 +113,11 @@ design pairs Project NOMAD with two lightweight co-located services inside the s
 | `disk-collector` (`nomad_disk_collector`) | `ghcr.io/crosstalk-solutions/project-nomad-disk-collector:v1.31.1` | `default` (`project-nomad_default`) | Reads host/NFS storage stats (`ro,rslave`) for Command Center UI. |
 | `ollama` (`nomad_embed_ollama`) | `ollama/ollama:0.40.16` | `default` (`project-nomad_default`) | Embeddings-only Ollama (`nomic-embed-text:v1.5`), capped at 4 CPUs / 3G RAM. |
 | `litellm` (`nomad_litellm`) | `ghcr.io/berriai/litellm:v1.108.8` | `default` (`project-nomad_default`) | OpenAI-compatible AI router on `:4000` bridging NOMAD to `ollama` embeddings + external chat models. |
+| `dozzle` (`nomad_dozzle`) | `amir20/dozzle:v10.0` | `servers-net` (`.61`), private `logs` | NOMAD-only container logs and live metrics at HTTPS `/logs/`; actions and shell disabled. |
+| `docker-readonly` (`nomad_docker_readonly`) | `tecnativa/docker-socket-proxy:v0.5.0` | private `logs` only | Read-only Docker API for Dozzle; no published ports. |
+
+Operations and the isolated Nomic/BGE-M3 evaluation are documented in
+[`../../nomad-observability-and-embedding-eval.md`](../../nomad-observability-and-embedding-eval.md).
 
 Standard labels on all containers:
 

@@ -16,6 +16,87 @@ configs:
       ${indent(6, cli_proxy_config)}
 
 services:
+  # The built-in Settings link opens http://<hostname>:9999. The reverse
+  # proxies redirect that legacy port to HTTPS /logs/ (Dozzle's base path).
+  dozzle:
+    image: amir20/dozzle:v10.0
+    container_name: nomad_dozzle
+    restart: unless-stopped
+    environment:
+      - DOZZLE_BASE=/logs
+      - DOZZLE_REMOTE_HOST=tcp://docker-readonly:2375|dockerserver-2
+      - DOZZLE_FILTER=name=^/nomad_
+      - DOZZLE_ENABLE_ACTIONS=false
+      - DOZZLE_ENABLE_SHELL=false
+      - DOZZLE_NO_ANALYTICS=true
+    depends_on:
+      docker-readonly:
+        condition: service_started
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.61
+      logs:
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - dozzle-data:/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 256M
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-dozzle"
+      portainer.autodeploy: "false"
+
+  # No published ports and no connection to application networks. Dozzle
+  # cannot mutate Docker: POST/DELETE/PUT and exec remain disabled.
+  docker-readonly:
+    image: tecnativa/docker-socket-proxy:v0.5.0
+    container_name: nomad_docker_readonly
+    restart: unless-stopped
+    environment:
+      - CONTAINERS=1
+      - INFO=1
+      - EVENTS=1
+      - PING=1
+      - VERSION=1
+      - POST=0
+      - EXEC=0
+      - LOG_LEVEL=warning
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - logs
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 64M
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-docker-readonly"
+      portainer.autodeploy: "false"
+
   admin:
     image: ghcr.io/crosstalk-solutions/project-nomad:v1.35.1
     container_name: nomad_admin
@@ -263,9 +344,14 @@ services:
       portainer.autodeploy: "false"
 
 networks:
+  logs:
+    internal: true
   servers-net:
     external: true
     name: docker-servers-net
   default:
     name: project-nomad_default
     driver: bridge
+
+volumes:
+  dozzle-data:
