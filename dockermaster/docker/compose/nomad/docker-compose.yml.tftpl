@@ -230,6 +230,38 @@ services:
       com.docker.service: "nomad-litellm"
       portainer.autodeploy: "false"
 
+  # Idempotent IaC bootstrap: persists ai.remoteOllamaUrl=http://litellm:4000,
+  # marks nomad_ollama installed so Settings -> AI Assistant appears in the UI,
+  # and triggers nomad_qdrant installation for Knowledge Base RAG.
+  remote-ai-init:
+    image: curlimages/curl:8.23.0
+    container_name: nomad_remote_ai_init
+    restart: "no"
+    depends_on:
+      admin:
+        condition: service_healthy
+      litellm:
+        condition: service_healthy
+    networks:
+      - default
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        if curl -sf "http://admin:8080/api/system/settings?key=ai.remoteOllamaUrl" | grep -q "http://litellm:4000" && curl -sf "http://admin:8080/api/ollama/remote-status" | grep -q '"connected":true'; then
+          echo "Remote AI already configured -> http://litellm:4000"
+          exit 0
+        fi
+        curl -fsS -X POST "http://admin:8080/api/ollama/configure-remote" \
+          -H "Content-Type: application/json" \
+          -d '{"remoteUrl":"http://litellm:4000"}'
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-remote-ai-init"
+      portainer.autodeploy: "false"
+
 networks:
   servers-net:
     external: true

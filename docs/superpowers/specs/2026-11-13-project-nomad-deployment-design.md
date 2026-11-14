@@ -327,9 +327,9 @@ inventory/
 2. Redeploy `reverse-proxy`, `reverse-proxy-2`, `reverse-proxy-3`, `pihole-2`, `pihole-3` via
    `scripts/portainer-redeploy.py` so the updated inline `configs:` mount into running containers.
 3. Sync `04-d-lcamaral-com.conf` to `pihole-1` LXC via `scripts/sync-host-overrides.py --apply`.
-4. Open `https://nomad.d.lcamaral.com` → **Settings → AI Assistant → Remote Connection** and set
-   **Remote Ollama / OpenAI API URL** to `http://litellm:4000`.
-5. Install the **AI Assistant** (Qdrant) in NOMAD's UI (or verify Qdrant runs alongside `litellm`).
+4. `remote-ai-init` automatically persists `ai.remoteOllamaUrl = http://litellm:4000` via
+   `POST /api/ollama/configure-remote`, making **Settings → AI Assistant** (`/settings/models`)
+   visible in the UI and installing `nomad_qdrant` for Knowledge Base RAG.
 
 ## 14. Verification / Acceptance
 
