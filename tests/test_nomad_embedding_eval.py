@@ -46,7 +46,7 @@ class FakeOllama(eval_module.Ollama):
             return {"status": "success"}
         if path == "/api/tags":
             return {"models": [{"name": m, "digest": "sha256:" + m}
-                               for m in ("nomic-embed-text:v1.5", "bge-m3:latest")]}
+                               for m in ("nomic-embed-text:v1.5", "bge-m3:latest", "qwen3-embedding:8b")]}
         if path == "/api/ps":
             return {"models": self.resident.copy()}
         if path == "/api/embed":
@@ -55,7 +55,12 @@ class FakeOllama(eval_module.Ollama):
                 return {"embeddings": []}
             model = payload["model"]
             self.resident = [{"name": eval_module.canonical_model(model), "size": 1234, "size_vram": 0}]
-            dimensions = 768 if model.startswith("nomic") else 1024
+            if model.startswith("nomic"):
+                dimensions = 768
+            elif model.startswith("qwen3"):
+                dimensions = 4096
+            else:
+                dimensions = 1024
             vectors = []
             for text in payload["input"]:
                 vector = [0.0] * dimensions
@@ -190,9 +195,13 @@ class HarnessTests(unittest.TestCase):
                     eval_module.load_fixture(path)
 
     def test_model_measurement_prefixes_timing_metadata_and_unload(self):
-        for model, dimensions, nomic in (("nomic-embed-text:v1.5", 768, True), ("bge-m3", 1024, False)):
+        for model, dimensions, style in (
+            ("nomic-embed-text:v1.5", 768, "nomic"),
+            ("bge-m3", 1024, "raw"),
+            ("qwen3-embedding:8b", 4096, "qwen3"),
+        ):
             client = FakeOllama("http://evaluation")
-            result = eval_module.measure_model(client, tiny_fixture(), (model, dimensions, nomic), 2, 1)
+            result = eval_module.measure_model(client, tiny_fixture(), (model, dimensions, style), 2, 1)
             self.assertEqual(result["verified_dimensions"], dimensions)
             self.assertEqual(result["metrics"]["overall"]["mrr"], 1)
             self.assertEqual(result["warm_query_latency"]["samples"], 4)
@@ -201,17 +210,41 @@ class HarnessTests(unittest.TestCase):
             self.assertIn("NOT measured", result["ollama_ps_note"])
             texts = [text for path, payload in client.calls if path == "/api/embed"
                      for text in payload["input"]]
-            self.assertIn("search_document: alpha" if nomic else "alpha", texts)
-            self.assertIn("search_query: beta?" if nomic else "beta?", texts)
-            if not nomic:
+            if style == "nomic":
+                self.assertIn("search_document: alpha", texts)
+                self.assertIn("search_query: beta?", texts)
+            elif style == "qwen3":
+                self.assertTrue(any("Instruct:" in text and "Query: beta?" in text for text in texts))
+                self.assertIn("alpha", texts)  # qwen3 documents stay raw
+            else:
+                self.assertIn("alpha", texts)
+                self.assertIn("beta?", texts)
                 self.assertFalse(any(text.startswith("search_") for text in texts))
             self.assertEqual(client.resident, [])
+            self.assertNotIn("reranked_metrics", result)  # no reranker in this test
+
+    def test_reranker_reorders_dense_window(self):
+        class FakeReranker(eval_module.Reranker):
+            def __init__(self):
+                super().__init__("http://reranker")
+
+            def rerank(self, query, texts):
+                # Promote the candidate whose text contains the query's token to rank 1.
+                return [1.0 if query.strip().rstrip("?") in text else 0.0 for text in texts]
+
+        client = FakeOllama("http://evaluation")
+        reranker = FakeReranker()
+        result = eval_module.measure_model(client, tiny_fixture(), ("nomic-embed-text:v1.5", 768, "nomic"),
+                                           2, 1, reranker, rerank_top_n=2)
+        self.assertIn("reranked_metrics", result)
+        self.assertEqual(result["reranked_metrics"]["overall"]["mrr"], 1)
+        self.assertEqual(result["rerank"]["top_n"], 2)
 
     def test_unloads_even_on_invalid_dimensions(self):
         client = FakeOllama("http://evaluation")
         client.bad_vectors = True
         with self.assertRaisesRegex(eval_module.EvalError, "dimension 768"):
-            eval_module.measure_model(client, tiny_fixture(), ("nomic-embed-text:v1.5", 768, True), 1, 16)
+            eval_module.measure_model(client, tiny_fixture(), ("nomic-embed-text:v1.5", 768, "nomic"), 1, 16)
         self.assertEqual(client.resident, [])
 
     def test_default_bge_digest_accepts_ollama_latest_alias(self):
@@ -260,12 +293,13 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual(result["schema_version"], 1)
             self.assertTrue(result["synthetic_smoke_corpus"])
             self.assertIn("NOT proof", result["disclaimer"])
-            self.assertEqual([m["verified_dimensions"] for m in result["models"]], [768, 1024])
-            self.assertEqual([len(m["queries"]) for m in result["models"]], [2, 2])
-            self.assertEqual([m["document_count"] for m in result["models"]], [2, 2])
+            self.assertEqual([m["verified_dimensions"] for m in result["models"]], [768, 1024, 4096])
+            self.assertEqual([len(m["queries"]) for m in result["models"]], [2, 2, 2])
+            self.assertEqual([m["document_count"] for m in result["models"]], [2, 2, 2])
             self.assertIn("indexed 2 chunks x 768 dimensions", logs.getvalue())
+            self.assertIn("indexed 2 chunks x 4096 dimensions", logs.getvalue())
             self.assertIn("evaluated 2 queries (2 warm samples)", logs.getvalue())
-            self.assertIn("Completed 2 models, 2 documents and 2 queries", logs.getvalue())
+            self.assertIn("Completed 3 models, 2 documents and 2 queries", logs.getvalue())
             self.assertIn("no splitting", result["method"]["preprocessing"])
             self.assertGreaterEqual(len(result["method"]["limitations"]), 5)
             calls = clients[0].calls
@@ -289,7 +323,8 @@ class HarnessTests(unittest.TestCase):
         client = FakeOllama("http://evaluation")
         client.resident = [{"name": "production-model"}]
         args = argparse.Namespace(fixture=FIXTURE, url="http://evaluation", timeout=1,
-                                  nomic_model="nomic-embed-text:v1.5", bge_model="bge-m3")
+                                  nomic_model="nomic-embed-text:v1.5", bge_model="bge-m3",
+                                  qwen_model="qwen3-embedding:8b", rerank_url=None, rerank_top_n=20)
         with (patch.object(eval_module, "Ollama", return_value=client),
               self.assertRaisesRegex(eval_module.EvalError, "dedicated instance")):
             eval_module.run(args)

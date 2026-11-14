@@ -50,16 +50,21 @@ class NomadObservabilityTests(unittest.TestCase):
 
     def test_experiment_cannot_reach_production_data(self):
         services = self.experiment["services"]
-        self.assertEqual(set(services), {"ollama", "evaluate"})
+        self.assertEqual(set(services), {"ollama", "reranker", "evaluate"})
         for service in services.values():
             self.assertEqual(service["networks"], ["default"])
             self.assertNotIn("ports", service)
             for mount in service.get("volumes", []):
                 self.assertFalse(mount.startswith("/"), mount)
-        self.assertEqual(services["ollama"]["deploy"]["resources"]["limits"]["memory"], "6G")
+        self.assertEqual(services["ollama"]["deploy"]["resources"]["limits"]["memory"], "24G")
         self.assertFalse(services["evaluate"].get("read_only", False))
         self.assertEqual(len(services["evaluate"]["configs"]), 2)
-        self.assertEqual(set(self.experiment["volumes"]), {"models", "results"})
+        command = " ".join(services["evaluate"]["command"])
+        self.assertIn("--rerank-url", command)
+        self.assertIn("http://reranker:80", command)
+        self.assertEqual(set(self.experiment["volumes"]), {"models", "results", "reranker-models"})
+        self.assertIn("text-embeddings-inference", services["reranker"]["image"])
+        self.assertEqual(services["reranker"]["deploy"]["resources"]["limits"]["memory"], "8G")
         production = self.stack["services"]["ollama"]
         self.assertEqual(production["container_name"], "nomad_embed_ollama")
         self.assertEqual(production["deploy"]["resources"]["limits"]["memory"], "3G")
