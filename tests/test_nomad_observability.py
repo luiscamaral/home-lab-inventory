@@ -57,6 +57,8 @@ class NomadObservabilityTests(unittest.TestCase):
             for mount in service.get("volumes", []):
                 self.assertFalse(mount.startswith("/"), mount)
         self.assertEqual(services["ollama"]["deploy"]["resources"]["limits"]["memory"], "6G")
+        self.assertFalse(services["evaluate"].get("read_only", False))
+        self.assertEqual(len(services["evaluate"]["configs"]), 2)
         self.assertEqual(set(self.experiment["volumes"]), {"models", "results"})
         production = self.stack["services"]["ollama"]
         self.assertEqual(production["container_name"], "nomad_embed_ollama")
