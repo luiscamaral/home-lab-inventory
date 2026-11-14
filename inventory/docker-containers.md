@@ -411,7 +411,8 @@
   - Purpose: RustDesk relay server
 
 - **nomad** (`nomad_admin`, `nomad_mysql`, `nomad_redis`, `nomad_disk_collector`,
-  `nomad_embed_ollama`, `nomad_cli_proxy_api`, `nomad_litellm`)
+  `nomad_embed_ollama`, `nomad_cli_proxy_api`, `nomad_litellm`, `nomad_remote_ai_init`, plus
+  DooD-spawned `nomad_qdrant`)
   - Network: `docker-servers-net` (192.168.59.60 for `nomad_admin`) + `project-nomad_default` bridge
   - Compose: `dockermaster/docker/compose/nomad/docker-compose.yml.tftpl`
   - Terraform: `portainer_stack.nomad` in `terraform/portainer/stacks.tf`
