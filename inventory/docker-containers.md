@@ -410,6 +410,17 @@
   - Network: `docker-servers-net` (192.168.59.11)
   - Purpose: RustDesk relay server
 
+- **nomad** (`nomad_admin`, `nomad_mysql`, `nomad_redis`, `nomad_disk_collector`,
+  `nomad_embed_ollama`, `nomad_litellm`)
+  - Network: `docker-servers-net` (192.168.59.60 for `nomad_admin`) + `project-nomad_default` bridge
+  - Compose: `dockermaster/docker/compose/nomad/docker-compose.yml.tftpl`
+  - Terraform: `portainer_stack.nomad` in `terraform/portainer/stacks.tf`
+  - Storage: `/nfs/dockermaster/nomad/storage` (bulk ZIMs/KB/Qdrant), `/opt/project-nomad/{mysql,redis,ollama}` (local SSD)
+  - URL (internal): <https://nomad.d.lcamaral.com>
+  - Purpose: Offline-first knowledge/education server (Project NOMAD) with local Ollama embeddings
+    (`nomic-embed-text:v1.5`) + LiteLLM external chat router
+  - Spec: `docs/superpowers/specs/2026-11-13-project-nomad-deployment-design.md`
+
 #### Ancillary
 
 - **portainer-agent** — `portainer/agent:2.39.1`
@@ -459,6 +470,7 @@
 | .49 | rproxy-3 (edge 3/3) | ds-2 |
 | .50 | pihole-2 | ds-1 |
 | .54 | keycloak-db-1 | ds-1 |
+| .60 | nomad_admin | ds-2 |
 
 ## Removed services (since last refresh)
 
@@ -492,6 +504,7 @@ Authoritative list in `terraform/portainer/stacks.tf`:
 | `calibre` | ds-1 |
 | `github-runner` | ds-1 |
 | `rust-server` | ds-2 |
+| `nomad` | ds-2 |
 | `la-rundeck` | ds-1 |
 | `prometheus` | ds-1 |
 | `watchtower`, `watchtower_dm` | ds-1, dm |

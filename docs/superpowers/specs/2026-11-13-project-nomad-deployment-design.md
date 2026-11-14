@@ -1,7 +1,7 @@
 # Project NOMAD — Deployment Design
 
 **Date:** 2026-11-13
-**Status:** Draft (pending user approval)
+**Status:** Ready for PR & Apply
 **Owner:** lamaral
 **Service:** [Project NOMAD](https://github.com/Crosstalk-Solutions/project-nomad) — offline-first
 knowledge, education, and RAG AI server
@@ -10,7 +10,7 @@ knowledge, education, and RAG AI server
 
 ## 1. Overview
 
-Deploy a self-hosted Project NOMAD instance on `dockerserver-2` (ds-2, VMID 124, Portainer
+Deploy a self-hosted Project NOMAD instance on `dockerserver-2` (`ds-2`, VMID 124, Portainer
 endpoint id 13) reachable internally at `https://nomad.d.lcamaral.com`.
 
 Project NOMAD ("Command Center") is a Node.js/AdonisJS + React management server backed by MySQL 8.0
@@ -19,38 +19,40 @@ ProtoMaps offline maps, FlatNotes, CyberChef) and an integrated RAG AI Assistant
 database + LLM/embeddings).
 
 Instead of running heavy LLM chat inference on Proxmox CPUs (which have no discrete GPU), this
-design includes a co-located **LiteLLM Proxy** sidecar inside the stack that:
+design pairs Project NOMAD with two lightweight co-located services inside the same stack:
 
-- Routes **RAG embeddings** (`nomic-embed-text:v1.5`, 768-dim) to our existing **local Ollama**
-  instance on `dockerserver-1` (`http://ollama.d.lcamaral.com:11434` / `192.168.59.53:11434`) so
-  ZIM/PDF/EPUB indexing stays 100% local, private, and free.
-- Routes **AI Chat** (`/v1/chat/completions` and `/v1/models`) to curated **external / subscription
-  AI providers** (OpenRouter, OpenAI, Anthropic, or subscription OAuth bridges) using API keys
-  injected from Vault.
+- **`ollama` (`nomad_embed_ollama`)**: An embeddings-only CPU Ollama container (`ollama/ollama:0.40.16`)
+  serving `nomic-embed-text:v1.5` (768-dim, ~275 MB) so ZIM/PDF/EPUB Knowledge Base indexing stays
+  100% local, private, and free. (The former standalone `ollama` stack on `ds-1` was removed in
+  `7f6c3ba`.)
+- **`litellm` (`nomad_litellm`)**: A LiteLLM Proxy (`ghcr.io/berriai/litellm:v1.108.8`) exposing an
+  OpenAI-compatible endpoint (`http://litellm:4000`) that routes `nomic-embed-text:v1.5` to
+  `http://ollama:11434` and routes chat completions (`/v1/chat/completions`, `/v1/models`) to
+  curated external/subscription AI providers (OpenRouter, etc.) using API keys injected from Vault.
 
 ## 2. Goals
 
 - Run Project NOMAD on `dockerserver-2`, reachable on LAN and Twingate as
   `https://nomad.d.lcamaral.com`.
-- Follow the repository's strict IaC-first rule: Compose template in repo, deployed via
-  Terraform-managed Portainer stack, secrets sourced from Vault at apply time, DNS + Nginx vhost in
-  repo.
-- Hybrid AI routing via a co-located `litellm` service (`http://litellm:4000` on the stack network):
-  - Local embeddings on `ds-1` Ollama (`nomic-embed-text:v1.5`).
+- Follow the repository's strict IaC-first rule (`AGENTS.md` Rule #1): Compose template in repo,
+  deployed via Terraform-managed Portainer stack, secrets sourced from Vault at apply time, DNS +
+  Nginx vhost in repo, PR → merge → targeted apply from `main`.
+- Hybrid AI routing via co-located `litellm` (`http://litellm:4000` on `project-nomad_default`):
+  - Local embeddings on `nomad_embed_ollama` (`nomic-embed-text:v1.5`).
   - Curated external/subscription chat models via LiteLLM Proxy.
 - Store bulk offline content (ZIM files, maps, books, uploaded docs) on NAS-backed NFS
-  (`/nfs/dockermaster/nomad/storage`) while keeping latency/lock-sensitive MySQL and Redis state on
-  `ds-2` local ext4 SSD (`/opt/project-nomad/{mysql,redis}`).
+  (`/nfs/dockermaster/nomad/storage`) while keeping latency/lock-sensitive MySQL, Redis, and Ollama
+  model cache on `ds-2` local ext4 SSD (`/opt/project-nomad/{mysql,redis,ollama}`).
 
 ## 3. Non-goals
 
 - Public internet exposure via Cloudflare tunnel (`*.cf.lcamaral.com`) — Project NOMAD has **no
   built-in authentication** by design. Access is restricted to LAN + Twingate (`nomad.d.lcamaral.com`).
-- Running `nomad_ollama` on `ds-2` — we reuse the existing `ollama` stack on `ds-1`
-  (`192.168.59.53:11434`) and external AI providers for chat.
+- Running `nomad_ollama` for large local chat LLMs on `ds-2` CPU — chat is offloaded through
+  LiteLLM to external providers.
 - Running `nomad_updater` sidecar — upstream's updater mutates `/opt/project-nomad/compose.yml` on
-  disk, which conflicts with Terraform + Portainer management. Container updates are handled by
-  Watchtower + Terraform.
+  disk, which conflicts with Terraform + Portainer management. Container images are version-pinned
+  and updated via IaC PRs.
 - Running `nomad_dozzle` — logs are already shipped to Loki via Promtail (`loki.logging=true`) and
   viewable in Grafana / Portainer.
 
@@ -69,51 +71,49 @@ design includes a co-located **LiteLLM Proxy** sidecar inside the stack that:
                               proxy_pass http://192.168.59.60:8080
                                        │
                                        ▼
-          ┌────────────────────────────────────────────────────────┐
-          │               stack: nomad (dockerserver-2)            │
-          │         network: project-nomad_default (bridge)        │
-          │                                                        │
-          │  ┌──────────────┐     ┌─────────────────────────────┐  │
-          │  │ nomad_admin  │────►│ litellm (:4000)             │  │
-          │  │ (:8080)      │     │ (OpenAI-compat AI router)   │  │
-          │  │ .59.60       │     └──────┬───────────────┬──────┘  │
-          │  └──┬────────┬──┘            │               │         │
-          │     │        │               │               │         │
-          │  ┌──▼───┐ ┌──▼───────────┐   │               │         │
-          │  │mysql │ │redis         │   │               │         │
-          │  │8.0   │ │7-alpine      │   │               │         │
-          │  └──────┘ └──────────────┘   │               │         │
-          │  ┌───────────────────────┐   │               │         │
-          │  │nomad_disk_collector   │   │               │         │
-          │  └───────────────────────┘   │               │         │
-          │  ┌───────────────────────┐   │               │         │
-          │  │nomad_qdrant / kiwix.. │   │               │         │
-          │  │(spawned via DooD)     │   │               │         │
-          │  └───────────────────────┘   │               │         │
-          └──────────────────────────────┼───────────────┼─────────┘
-                                         │               │
-                 POST /v1/embeddings     │               │ POST /v1/chat/completions
-                 (nomic-embed-text:v1.5) │               │ (Bearer key from Vault)
-                                         ▼               ▼
-                           http://192.168.59.53:11434   External / Subscription AI
-                             (ollama on ds-1, LAN)      (OpenRouter / OpenAI / Anthropic)
+          ┌──────────────────────────────────────────────────────────┐
+          │               stack: nomad (dockerserver-2)              │
+          │         network: project-nomad_default (bridge)          │
+          │                                                          │
+          │  ┌──────────────┐     ┌───────────────────────────────┐  │
+          │  │ nomad_admin  │────►│ litellm (:4000)               │  │
+          │  │ (:8080)      │     │ (OpenAI-compat AI router)     │  │
+          │  │ .59.60       │     └──────┬─────────────────┬──────┘  │
+          │  └──┬────────┬──┘            │                 │         │
+          │     │        │               ▼                 │         │
+          │  ┌──▼───┐ ┌──▼──────────┐ ┌──────────────────┐ │         │
+          │  │mysql │ │redis        │ │nomad_embed_ollama│ │         │
+          │  │8.0   │ │7-alpine     │ │(nomic-embed-text)│ │         │
+          │  └──────┘ └─────────────┘ └──────────────────┘ │         │
+          │  ┌───────────────────────┐                     │         │
+          │  │nomad_disk_collector   │                     │         │
+          │  └───────────────────────┘                     │         │
+          │  ┌───────────────────────┐                     │         │
+          │  │nomad_qdrant / kiwix.. │                     │         │
+          │  │(spawned via DooD)     │                     │         │
+          │  └───────────────────────┘                     │         │
+          └────────────────────────────────────────────────┼─────────┘
+                                                           │
+                                                           ▼
+                                            External / Subscription AI
+                                            (OpenRouter via Vault key)
 ```
 
 ## 5. Components
 
-| Service | Image | Networks | Role |
-|---------|-------|----------|------|
-| `admin` (`nomad_admin`) | `ghcr.io/crosstalk-solutions/project-nomad:latest` | `servers-net` (`.60`), `rproxy`, `default` (`project-nomad_default`) | Command Center UI & API on `:8080`. Health: `GET /api/health`. |
+| Service | Image (pinned) | Networks | Role |
+|---------|----------------|----------|------|
+| `admin` (`nomad_admin`) | `ghcr.io/crosstalk-solutions/project-nomad:v1.35.1` | `servers-net` (`.60`), `default` (`project-nomad_default`) | Command Center UI & API on `:8080`. Health: `GET /api/health`. |
 | `mysql` (`nomad_mysql`) | `mysql:8.0` | `default` (`project-nomad_default`) | Command Center relational DB (`nomad`). |
 | `redis` (`nomad_redis`) | `redis:7-alpine` | `default` (`project-nomad_default`) | BullMQ job queue (downloads, ZIM/RAG ingestion) + cache. |
-| `disk-collector` (`nomad_disk_collector`) | `ghcr.io/crosstalk-solutions/project-nomad-disk-collector:latest` | `default` (`project-nomad_default`) | Reads host/NFS storage stats (`ro,rslave`) for Command Center UI. |
-| `litellm` (`nomad_litellm`) | `ghcr.io/berriai/litellm:main-stable` | `default` (`project-nomad_default`) | OpenAI-compatible AI router on `:4000` bridging NOMAD to local Ollama embeddings + external chat models. |
+| `disk-collector` (`nomad_disk_collector`) | `ghcr.io/crosstalk-solutions/project-nomad-disk-collector:v1.31.1` | `default` (`project-nomad_default`) | Reads host/NFS storage stats (`ro,rslave`) for Command Center UI. |
+| `ollama` (`nomad_embed_ollama`) | `ollama/ollama:0.40.16` | `default` (`project-nomad_default`) | Embeddings-only Ollama (`nomic-embed-text:v1.5`), capped at 4 CPUs / 3G RAM. |
+| `litellm` (`nomad_litellm`) | `ghcr.io/berriai/litellm:v1.108.8` | `default` (`project-nomad_default`) | OpenAI-compatible AI router on `:4000` bridging NOMAD to `ollama` embeddings + external chat models. |
 
 Standard labels on all containers:
 
 - `loki.logging=true` — Promtail ships container logs to Loki.
-- `com.centurylinklabs.watchtower.enable=true` for `admin`, `disk-collector`, and `litellm`;
-  `false` for `mysql` and `redis` (stateful pinned tags).
+- `com.centurylinklabs.watchtower.enable=false` — all images are version-pinned and updated via IaC PRs.
 - `com.docker.stack=nomad`, `com.docker.service=<name>`.
 - `portainer.autodeploy=false` (Terraform-managed).
 
@@ -133,7 +133,11 @@ hardcoded invariants that the Compose file **must** satisfy:
    When `nomad_admin` spawns child containers in production (`NODE_ENV=production`), it attaches
    them to `DockerService.NOMAD_NETWORK = 'project-nomad_default'` and connects to them by container
    name (e.g., `http://nomad_qdrant:6333`). Therefore, the Compose stack sets `name: project-nomad`
-   and uses the default bridge network (`project-nomad_default`) for internal communication.
+   and uses `project-nomad_default` for internal communication.
+3. **Avoid colliding with `nomad_ollama`:**
+   The stack's embedding Ollama container is named `nomad_embed_ollama` (Compose service `ollama`)
+   so NOMAD's built-in AI Assistant installer will never mistake it for a NOMAD-managed
+   `nomad_ollama` container.
 
 ## 6. Hybrid AI & RAG Routing Design
 
@@ -141,8 +145,8 @@ hardcoded invariants that the Compose file **must** satisfy:
 
 From `admin/app/services/ollama_service.ts` and `admin/app/services/rag_service.ts`:
 
-1. NOMAD reads the `ai.remoteOllamaUrl` setting from its `KVStore` table (configurable in the UI
-   under **Settings → AI Assistant → Remote Ollama/OpenAI API URL**).
+1. NOMAD reads `ai.remoteOllamaUrl` from its `KVStore` table (configured in the UI under
+   **Settings → AI Assistant → Remote Ollama/OpenAI API URL**).
 2. When `ai.remoteOllamaUrl` points to `http://litellm:4000`:
    - NOMAD probes `GET http://litellm:4000/api/tags`, gets a `404`, and automatically switches to
      its **OpenAI-compatible client** (`baseURL: 'http://litellm:4000/v1'`, `apiKey: 'nomad'`).
@@ -150,12 +154,11 @@ From `admin/app/services/ollama_service.ts` and `admin/app/services/rag_service.
    - `RagService` hardcodes `EMBEDDING_MODEL_NAME = 'nomic-embed-text:v1.5'` and
      `EMBEDDING_DIMENSION = 768`.
    - Before embedding or searching Qdrant, `RagService` calls `ollamaService.getModels(true)`
-     (`GET /v1/models`) and verifies that `nomic-embed-text:v1.5` is present in the returned model
-     list.
+     (`GET /v1/models`) and verifies that `nomic-embed-text:v1.5` is present in the returned list.
    - It then calls `POST /v1/embeddings` with `model: "nomic-embed-text:v1.5"`.
 4. For **Chat (`OllamaService.getModels(false)`)**:
    - NOMAD calls `GET /v1/models`, filters out any model containing `embed` in its name, and
-     populates the UI model selector with the remaining models.
+     populates the UI model selector with the remaining curated models.
 
 ### 6.2 LiteLLM Proxy Configuration (`litellm-config.yaml`)
 
@@ -163,14 +166,11 @@ Injected into the `litellm` container via Docker Compose inline `configs:` (rend
 
 ```yaml
 model_list:
-  # 1. Local RAG Embedding model — routed to existing Ollama on ds-1 (.59.53)
-  # Must be named exactly "nomic-embed-text:v1.5" so NOMAD's RagService verification passes.
   - model_name: nomic-embed-text:v1.5
     litellm_params:
       model: ollama/nomic-embed-text:v1.5
-      api_base: http://192.168.59.53:11434
+      api_base: http://ollama:11434
 
-  # 2. External / Subscription Chat Models (via OpenRouter or direct provider APIs)
   - model_name: deepseek-v4-flash
     litellm_params:
       model: openrouter/deepseek/deepseek-v4-flash:free
@@ -186,37 +186,22 @@ model_list:
       model: openrouter/openai/gpt-4o-mini
       api_key: os.environ/OPENROUTER_API_KEY
 
-  # 3. Optional Local Fallback Chat Model on ds-1 Ollama (for true internet-down offline mode)
-  - model_name: llama3.2:3b-offline
-    litellm_params:
-      model: ollama/llama3.2:3b
-      api_base: http://192.168.59.53:11434
+litellm_settings:
+  drop_params: true
+  telemetry: false
 ```
-
-> **Note:** Additional providers (direct `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or a subscription
-> OAuth bridge container) can be added to `litellm-config.yaml` at any time without changing
-> Project NOMAD's settings.
 
 ## 7. Networking
 
 | Network | Driver | Scope | Purpose |
 |---------|--------|-------|---------|
 | `docker-servers-net` | macvlan (external) | host | LAN reachability for `nomad_admin` at **`192.168.59.60`**. |
-| `rproxy` | bridge (external) | host | Local `rproxy-3` → `nomad_admin` bridge communication. |
-| `default` (`project-nomad_default`) | bridge (stack) | stack | Internal stack network for `admin` ↔ `mysql`, `redis`, `litellm`, and DooD-spawned `nomad_*` containers (`nomad_qdrant`, `nomad_kiwix`, etc.). |
+| `default` (`project-nomad_default`) | bridge (stack) | stack | Internal stack network for `admin` ↔ `mysql`, `redis`, `ollama`, `litellm`, and DooD-spawned `nomad_*` containers (`nomad_qdrant`, `nomad_kiwix`, etc.). |
 
 ### 7.1 IP Allocation
 
 `nomad_admin` is assigned **`192.168.59.60`** from the `192.168.59.0/26` pool (verified unused in
-`terraform/portainer/stacks/` and `locals.tf`; `.59` is `portainer-agent` on `ds-2`, `.62` is
-`server-net-shim` on `ds-2`).
-
-Pre-apply verification:
-
-```bash
-ssh dockerserver-2 'sudo arping -I server-net-shim -c 3 192.168.59.60'
-# Expect: 0 replies
-```
+`terraform/`, `pihole/`, `dockermaster/docker/`, and `arping` from `ds-2` returned 0 replies).
 
 ## 8. Storage
 
@@ -228,6 +213,7 @@ Hybrid storage layout to avoid database locking issues on `soft,local_lock=none`
 | `/nfs/dockermaster/nomad/storage` | `/app/storage` (`admin`), `/storage` (`disk-collector`) | Synology NAS NFS (`/volume2/servers`) | ZIM files, offline maps, books, Qdrant vectors, KB uploads |
 | `/opt/project-nomad/mysql` | `/var/lib/mysql` (`mysql`) | `ds-2` local ext4 SSD | MySQL 8.0 InnoDB tables |
 | `/opt/project-nomad/redis` | `/data` (`redis`) | `ds-2` local ext4 SSD | Redis AOF/RDB queue state |
+| `/opt/project-nomad/ollama` | `/root/.ollama` (`nomad_embed_ollama`) | `ds-2` local ext4 SSD | `nomic-embed-text:v1.5` weights (~275 MB) |
 
 ## 9. DNS
 
@@ -245,32 +231,9 @@ address=/nomad.d.lcamaral.com/192.168.59.49
 
 New file: `dockermaster/docker/compose/nginx-rproxy/vhost.d/nomad.d.lcamaral.com.conf` (auto-bundled
 into all three `nginx-rproxy` stacks via `locals.rproxy_vhosts` `fileset()` in
-`terraform/portainer/stacks.tf`):
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name nomad.d.lcamaral.com;
-
-    ssl_certificate     /etc/nginx/certs/d.lcamaral.com.crt;
-    ssl_certificate_key /etc/nginx/certs/d.lcamaral.com.key;
-
-    client_max_body_size 500m;  # Allow large PDF/EPUB/ZIM uploads to Knowledge Base
-
-    location / {
-        proxy_pass         http://192.168.59.60:8080;
-        proxy_http_version 1.1;
-        proxy_set_header   Upgrade           $http_upgrade;
-        proxy_set_header   Connection        "upgrade";
-        proxy_set_header   Host              $host;
-        proxy_set_header   X-Real-IP         $remote_addr;
-        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header   X-Forwarded-Proto $scheme;
-        proxy_buffering    off;              # Required for AdonisJS Transmit SSE + AI chat streaming
-        proxy_read_timeout 300s;
-    }
-}
-```
+`terraform/portainer/stacks.tf`), matching the repository's standard Nginx vhost pattern
+(`/etc/nginx/cert/d.lcamaral.com.{fullchain,key,crt}`, `http2 on`, `otel_trace_context propagate`,
+`$connection_upgrade`, `proxy_buffering off`, `client_max_body_size 500m`).
 
 ## 11. Secrets (Vault)
 
@@ -278,10 +241,10 @@ New Vault KV-v2 path: `secret/homelab/nomad`
 
 | Key | Description | Consumed by |
 |-----|-------------|-------------|
-| `app_key` | 32-char random hex/alphanumeric string (`APP_KEY` >= 16 chars required by AdonisJS) | `nomad_admin` |
+| `app_key` | 32-char random hex string (`APP_KEY` >= 16 chars required by AdonisJS) | `nomad_admin` |
 | `db_password` | MySQL `nomad_user` password | `nomad_admin`, `nomad_mysql` |
 | `mysql_root_password` | MySQL root password | `nomad_mysql` |
-| `openrouter_api_key` | OpenRouter API key (can reuse key from `secret/homelab/honcho` or dedicated key) | `nomad_litellm` |
+| `openrouter_api_key` | OpenRouter API key (reused from `secret/homelab/honcho`) | `nomad_litellm` |
 
 Terraform data source in `terraform/portainer/vault.tf`:
 
@@ -303,56 +266,37 @@ inventory/
 │   └── nomad.d.lcamaral.com.conf             # Nginx HTTPS vhost (auto-picked by fileset())
 ├── pihole/dnsmasq.d/
 │   └── 04-d-lcamaral-com.conf                # +3 multi-A lines for nomad.d.lcamaral.com
+├── inventory/
+│   └── docker-containers.md                  # Document nomad stack & .59.60 IP
 └── terraform/portainer/
     ├── vault.tf                              # +1 data source: nomad
     └── stacks.tf                             # +1 portainer_stack: nomad (on ds2_endpoint_id)
 ```
 
-## 13. Post-Deploy UI Configuration (One-Time)
+## 13. Post-Deploy Steps (After Merge & Apply from `main`)
 
-Once `https://nomad.d.lcamaral.com` is up:
-
-1. In Project NOMAD Command Center, go to **Settings → AI Assistant** (or run the Easy Setup
-   Wizard).
-2. Under **Remote Connection → Remote Ollama / OpenAI API URL**, enter:
-   `http://litellm:4000`
-3. Install the **AI Assistant** service in NOMAD (this spins up `nomad_qdrant` on `ds-2` for the
-   Knowledge Base; if it also starts a local `nomad_ollama` container on `ds-2`, stop/disable
-   `nomad_ollama` since `ai.remoteOllamaUrl` overrides it).
+1. Pull `nomic-embed-text:v1.5` inside `nomad_embed_ollama`:
+   `ssh dockerserver-2 'docker exec nomad_embed_ollama ollama pull nomic-embed-text:v1.5'`
+2. Redeploy `reverse-proxy`, `reverse-proxy-2`, `reverse-proxy-3`, `pihole-2`, `pihole-3` via
+   `scripts/portainer-redeploy.py` so the updated inline `configs:` mount into running containers.
+3. Sync `04-d-lcamaral-com.conf` to `pihole-1` LXC via `scripts/sync-host-overrides.py --apply`.
+4. Open `https://nomad.d.lcamaral.com` → **Settings → AI Assistant → Remote Connection** and set
+   **Remote Ollama / OpenAI API URL** to `http://litellm:4000`.
+5. Install the **AI Assistant** (Qdrant) in NOMAD's UI (or verify Qdrant runs alongside `litellm`).
 
 ## 14. Verification / Acceptance
 
-1. **All stack containers healthy on `ds-2`:**
-
-   ```bash
-   ssh dockerserver-2 'docker ps --filter "label=com.docker.stack=nomad" --format "table {{.Names}}\t{{.Status}}"'
-   ```
-
-2. **Pull `nomic-embed-text:v1.5` on `ds-1` Ollama and verify via LiteLLM:**
-
-   ```bash
-   ssh dockerserver-1 'docker exec ollama ollama pull nomic-embed-text:v1.5'
-   ssh dockerserver-2 'docker exec nomad_admin curl -sf http://litellm:4000/v1/models'
-   ```
-
-   Expected: JSON listing `nomic-embed-text:v1.5` and the configured chat models.
-
-3. **Command Center health endpoint responds via macvlan IP and via Nginx HTTPS:**
-
-   ```bash
-   curl -sf http://192.168.59.60:8080/api/health
-   curl -sf https://nomad.d.lcamaral.com/api/health
-   ```
-
-4. **End-to-end RAG + Chat verification:**
-   - Upload a test markdown/PDF file in NOMAD Knowledge Base → verify chunks embed into Qdrant
-     via `ds-1` Ollama (`nomic-embed-text:v1.5`).
-   - Send a chat prompt in NOMAD AI Assistant → verify streaming response returns via LiteLLM.
+1. All 6 containers in stack `nomad` healthy on `ds-2` (`docker ps --filter "label=com.docker.stack=nomad"`).
+2. `docker exec nomad_admin curl -sf http://litellm:4000/v1/models` lists `nomic-embed-text:v1.5` +
+   chat models.
+3. Embedding round-trip via `http://litellm:4000/v1/embeddings` returns a 768-dim vector.
+4. Chat completion test via `http://litellm:4000/v1/chat/completions` returns an OpenRouter response.
+5. `curl -sf https://nomad.d.lcamaral.com/api/health` returns HTTP 200.
 
 ## 15. Known Risks / Mitigations
 
 | Risk | Mitigation |
 |------|------------|
-| `ds-2` local disk space (`/var/lib/minio-data` growth) | Verify `df -h /` on `ds-2` in pre-flight; heavy NOMAD content (`storage/`) is placed on `/nfs/dockermaster/nomad/storage`, so `ds-2` root disk only holds small MySQL/Redis metadata (~500 MB) and container images. |
-| Child apps (`nomad_kiwix`, `nomad_kolibri`) bind ports `8090+` on `ds-2` | `ds-2` only runs `rproxy-3`, `vault-3`, `minio-2`, `freeswitch`, and `rustdesk` (mostly on macvlan IPs); ports `8090–8099` on `ds-2` (`192.168.48.46`) are free. Can also add optional Nginx vhosts later if desired. |
-| NOMAD AI Assistant installer starts `nomad_ollama` container by default | Configure `Remote Ollama/OpenAI API URL = http://litellm:4000` in Settings and stop `nomad_ollama` if created (tracked upstream in Crosstalk-Solutions/project-nomad#662). |
+| `ds-2` local disk space | Heavy NOMAD content (`storage/`) lives on `/nfs/dockermaster/nomad/storage`; `ds-2` local SSD (`61 GB` free) only holds MySQL/Redis (~200 MB), `nomic-embed-text:v1.5` (~275 MB), and images. |
+| Child apps (`nomad_kiwix`, `nomad_kolibri`) bind ports `8090+` on `ds-2` | `ds-2` has those host ports free. |
+| NOMAD AI Assistant installer starts `nomad_ollama` container by default | Configure `Remote Ollama/OpenAI API URL = http://litellm:4000` in Settings and stop `nomad_ollama` if created (upstream issue #662). |
