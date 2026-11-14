@@ -176,7 +176,7 @@
 - **OS**: Ubuntu 24.04 LTS
 - **Hardware**:
   - **CPU**: 8 cores
-  - **RAM**: 24 GB
+  - **RAM**: 48 GB
   - **Storage**: 120 GB SSD (local for MinIO site replication)
 - **Network**:
   - **LAN IP**: 192.168.48.46/20

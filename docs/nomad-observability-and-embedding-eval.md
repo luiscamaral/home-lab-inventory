@@ -31,14 +31,15 @@ does not exist in this remote-chat deployment. View the actual `nomad_embed_olla
 `nomad_litellm`, and `nomad_cli_proxy_api` components through Dozzle instead. Renaming the
 embedding container would allow NOMAD's native installer to manage it, violating IaC ownership.
 
-## Independent Nomic versus BGE-M3 experiment
+## Independent embedding + reranker experiment
 
 `portainer_stack.nomad_embedding_eval` deploys a separate, one-shot Compose stack on ds-2.
-No VM resize or new VM is required for this initial bounded test.
+This is a bounded evaluation on a resized ds-2 (48 GiB, 2026-11-14).
 
 | Component | Limit / isolation |
 | --- | --- |
-| `nomad_eval_ollama` | 4 CPUs, 6 GiB, one loaded model and one parallel request |
+| `nomad_eval_ollama` | 4 CPUs, 24 GiB ceiling, one loaded model and one parallel request |
+| `nomad_eval_reranker` | 4 CPUs, 8 GiB; TEI serving Qwen3-Reranker-0.6B (`/rerank`) |
 | `nomad_embedding_eval` | 0.5 CPU, 128 MiB, standard-library Python runner |
 | Models/results | Separate local named volumes, never production `/opt/project-nomad/ollama` |
 | Network | Separate bridge; no published ports, production networks, or Docker socket |
@@ -48,10 +49,17 @@ The runner's root filesystem must remain writable: Portainer materializes inline
 there and rejects this configuration on a read-only service. It still has no capabilities,
 privilege escalation, Docker socket, production mounts, or production network membership.
 
-The runner pulls `nomic-embed-text:v1.5` and `bge-m3`, then evaluates them sequentially.
-It applies Nomic's query/document prefixes and uses raw text for BGE-M3. Each model is unloaded
-after its measurements. Model digests, returned dimensions, corpus identity, retrieval metrics,
-and latency observations are saved in `/results/embedding-eval.json` and summarized in logs.
+The runner pulls `nomic-embed-text:v1.5`, `bge-m3`, and `qwen3-embedding:8b` (4096-dim), then
+evaluates them sequentially. It applies Nomic's `search_*` prefixes, Qwen3's retrieval instruction
+(`Instruct: ...\nQuery:` on the query only, raw documents), and raw text for BGE-M3. When the
+reranker is reachable, each model's dense top-N candidates are re-scored by the cross-encoder to
+produce a two-stage (`reranked_metrics`) view alongside the dense-only `metrics`. Each model is
+unloaded after its measurements. Digests, returned dimensions, corpus identity, retrieval metrics,
+reranked metrics, and latency observations are saved in `/results/embedding-eval.json`.
+
+The TEI reranker is pulled from Hugging Face on first start. TEI's CPU image targets AVX2; on an
+older CPU (this host is an Ivy Bridge Xeon without AVX2) the reranker container may fail to start
+with SIGILL — if so the embedding-only results still stand and the reranker is reported as blocked.
 
 The fixture is **synthetic smoke-test data**, with English technical/reference passages and
 English/Portuguese questions. It tests plumbing and provides a small controlled comparison,

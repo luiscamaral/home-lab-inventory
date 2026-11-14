@@ -32,7 +32,35 @@ services:
       resources:
         limits:
           cpus: "4"
-          memory: 6G
+          memory: 24G
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      portainer.autodeploy: "false"
+
+  # Cross-encoder reranker (Qwen3-Reranker-0.6B) via Text Embeddings Inference.
+  # Rerankers are not in the Ollama library; TEI serves the /rerank endpoint the
+  # evaluator calls. Model is pulled from Hugging Face on first start.
+  reranker:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.7.2
+    container_name: nomad_eval_reranker
+    restart: "no"
+    command: ["--model-id", "Qwen/Qwen3-Reranker-0.6B"]
+    volumes:
+      - reranker-models:/data
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:80/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 300s
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 8G
     labels:
       loki.logging: "true"
       com.centurylinklabs.watchtower.enable: "false"
@@ -44,6 +72,8 @@ services:
     restart: "no"
     depends_on:
       ollama:
+        condition: service_healthy
+      reranker:
         condition: service_healthy
     configs:
       - source: evaluator
@@ -61,6 +91,10 @@ services:
       - --output
       - /results/embedding-eval.json
       - --allow-model-changes
+      - --rerank-url
+      - http://reranker:80
+      - --rerank-top-n
+      - "20"
     volumes:
       - results:/results
     networks:
@@ -84,3 +118,4 @@ services:
 volumes:
   models:
   results:
+  reranker-models:

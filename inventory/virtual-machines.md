@@ -70,7 +70,7 @@
 
 - **Status**: ✅ Running
 - **CPU**: 10 cores (host), pinned to socket 1 (CPUs 10-19,30-39)
-- **RAM**: 24 GB
+- **RAM**: 48 GB
 - **Storage**: 120 GB SSD (thin-pool)
 - **Network**: vmbr28
 - **IP**: 192.168.48.46
