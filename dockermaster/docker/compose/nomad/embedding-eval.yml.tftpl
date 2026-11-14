@@ -1,0 +1,85 @@
+# Isolated, one-shot experiment. No production volumes, networks or Qdrant.
+name: nomad-embedding-eval
+
+configs:
+  evaluator:
+    content: |
+      ${indent(6, evaluator)}
+  corpus:
+    content: |
+      ${indent(6, corpus)}
+
+services:
+  ollama:
+    image: ollama/ollama:0.40.16
+    container_name: nomad_eval_ollama
+    restart: "no"
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_KEEP_ALIVE=5m
+      - OLLAMA_NUM_PARALLEL=1
+    volumes:
+      - models:/root/.ollama
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 6G
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      portainer.autodeploy: "false"
+
+  evaluate:
+    image: python:3.13.18-alpine3.24
+    container_name: nomad_embedding_eval
+    restart: "no"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    configs:
+      - source: evaluator
+        target: /eval/evaluate.py
+      - source: corpus
+        target: /eval/corpus.json
+    command:
+      - python
+      - -u
+      - /eval/evaluate.py
+      - --url
+      - http://ollama:11434
+      - --fixture
+      - /eval/corpus.json
+      - --output
+      - /results/embedding-eval.json
+      - --allow-model-changes
+    volumes:
+      - results:/results
+    networks:
+      - default
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      portainer.autodeploy: "false"
+
+volumes:
+  models:
+  results:

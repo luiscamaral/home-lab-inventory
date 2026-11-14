@@ -1484,3 +1484,16 @@ resource "portainer_stack" "nomad" {
     value = data.vault_kv_secret_v2.nomad.data["antigravity_auth_json"]
   }
 }
+
+# Independent Nomic/BGE-M3 smoke evaluation; never routes production requests.
+resource "portainer_stack" "nomad_embedding_eval" {
+  name            = "nomad-embedding-eval"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/../../dockermaster/docker/compose/nomad/embedding-eval.yml.tftpl", {
+    evaluator = file("${path.module}/../../scripts/nomad-embedding-eval.py")
+    corpus    = file("${path.module}/../../tests/fixtures/nomad-embedding-eval.json")
+  })
+}

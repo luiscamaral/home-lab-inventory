@@ -91,6 +91,14 @@ repos:
   # Docker Compose validation
   - repo: local
     hooks:
+      - id: nomad-regression-tests
+        name: NOMAD observability and embedding evaluation tests
+        entry: python -m unittest discover -s tests -p 'test_nomad*.py'
+        language: python
+        additional_dependencies: [PyYAML==6.0.3]
+        pass_filenames: false
+        files: '^(scripts/nomad-embedding-eval\.py|tests/test_nomad.*\.py|tests/fixtures/nomad-embedding-eval\.json|dockermaster/docker/compose/nomad/|dockermaster/docker/compose/nginx-rproxy/vhost\.d/nomad\.d\.lcamaral\.com\.conf)'
+
       - id: docker-compose-check
         name: Docker Compose Check
         entry: bash -c 'for file in "$@"; do docker compose -f "$file" config --quiet || exit 1; done'
