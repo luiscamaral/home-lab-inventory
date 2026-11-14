@@ -1442,3 +1442,38 @@ resource "portainer_stack" "otel_collector" {
 # Ollama embedding service (ds-1, 192.168.59.53) was removed — container had
 # been stopped for months and its only planned consumer (Honcho) was never
 # deployed. Spec kept for history: docs/superpowers/specs/2026-05-21-ollama-deployment-design.md
+
+# ──────────────────────────────────────────────
+# Project NOMAD (ds-2) — offline knowledge/RAG server
+# Spec: docs/superpowers/specs/2026-11-13-project-nomad-deployment-design.md
+# nomad_admin on docker-servers-net @ 192.168.59.60; ollama (embeddings only,
+# nomic-embed-text:v1.5) and litellm (OpenAI-compatible router) stay on the
+# project-nomad_default bridge. Chat goes to OpenRouter via the Vault key.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "nomad" {
+  name            = "nomad"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/../../dockermaster/docker/compose/nomad/docker-compose.yml.tftpl", {
+    litellm_config = file("${path.module}/../../dockermaster/docker/compose/nomad/litellm-config.yaml")
+  })
+
+  env {
+    name  = "NOMAD_APP_KEY"
+    value = data.vault_kv_secret_v2.nomad.data["app_key"]
+  }
+  env {
+    name  = "NOMAD_DB_PASSWORD"
+    value = data.vault_kv_secret_v2.nomad.data["db_password"]
+  }
+  env {
+    name  = "NOMAD_MYSQL_ROOT_PASSWORD"
+    value = data.vault_kv_secret_v2.nomad.data["mysql_root_password"]
+  }
+  env {
+    name  = "OPENROUTER_API_KEY"
+    value = data.vault_kv_secret_v2.nomad.data["openrouter_api_key"]
+  }
+}
