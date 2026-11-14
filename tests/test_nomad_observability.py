@@ -28,6 +28,7 @@ class NomadObservabilityTests(unittest.TestCase):
     def test_socket_proxy_is_private_and_read_only(self):
         service = self.stack["services"]["docker-readonly"]
         env = dict(item.split("=", 1) for item in service["environment"])
+        self.assertEqual(env["DISABLE_IPV6"], "1")
         self.assertEqual(env["POST"], "0")
         self.assertEqual(env["EXEC"], "0")
         self.assertEqual(env["CONTAINERS"], "1")

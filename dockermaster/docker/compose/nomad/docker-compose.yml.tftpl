@@ -69,6 +69,8 @@ services:
     container_name: nomad_docker_readonly
     restart: unless-stopped
     environment:
+      # ds-2 has IPv6 disabled; HAProxy otherwise binds [::]:2375 and exits.
+      - DISABLE_IPV6=1
       - CONTAINERS=1
       - INFO=1
       - EVENTS=1
