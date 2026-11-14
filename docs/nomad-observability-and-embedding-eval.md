@@ -15,6 +15,8 @@ The declarative fix consists of:
 - HTTPS `/logs/` proxying, with buffering disabled for live log/metric streams.
 - `nomad_docker_readonly`: a private socket proxy allowing Docker reads but denying mutations.
   It has no published ports and is reachable only on the internal `logs` network.
+  `DISABLE_IPV6=1` selects an IPv4 listener because ds-2 disables IPv6; the image's default
+  `[::]:2375` listener otherwise prevents HAProxy (and therefore Dozzle) from starting.
 - Dozzle's `name=^/nomad_` filter, with actions, shell, and analytics disabled. Dozzle itself
   has no Docker socket mount. This remains LAN/Twingate-only, like NOMAD; do not add a public
   Cloudflare route without authentication. Logs can contain sensitive application data.
