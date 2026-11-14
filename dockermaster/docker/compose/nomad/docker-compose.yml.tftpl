@@ -1,4 +1,4 @@
-# Project NOMAD + embeddings Ollama + LiteLLM router — dockerserver-2
+# Project NOMAD + embeddings Ollama + CLIProxyAPI (subscription OAuth) + LiteLLM router — ds-2
 # Spec: docs/superpowers/specs/2026-11-13-project-nomad-deployment-design.md
 # Managed by Terraform (terraform/portainer/stacks.tf -> portainer_stack.nomad).
 #
@@ -11,6 +11,9 @@ configs:
   litellm_config:
     content: |
       ${indent(6, litellm_config)}
+  cli_proxy_config:
+    content: |
+      ${indent(6, cli_proxy_config)}
 
 services:
   admin:
@@ -124,7 +127,7 @@ services:
       portainer.autodeploy: "false"
 
   # Embeddings only. NOMAD hardcodes nomic-embed-text:v1.5 (768-dim) for its
-  # Qdrant knowledge base; chat goes to external providers via litellm.
+  # Qdrant knowledge base; chat goes through cli-proxy-api via litellm.
   # Deliberately NOT named nomad_ollama so NOMAD's own AI installer never
   # mistakes it for the service it manages.
   ollama:
@@ -157,6 +160,45 @@ services:
       com.docker.service: "nomad-embed-ollama"
       portainer.autodeploy: "false"
 
+  # Google / Antigravity subscription OAuth gateway (no pay-per-token API key).
+  # Seeds auth JSON from Vault on first boot so refreshed tokens persist in
+  # /opt/project-nomad/cli-proxy-api/auths across container restarts.
+  cli-proxy-api:
+    image: eceasy/cli-proxy-api:v8.0.71
+    container_name: nomad_cli_proxy_api
+    restart: unless-stopped
+    configs:
+      - source: cli_proxy_config
+        target: /CLIProxyAPI/config.yaml
+    volumes:
+      - /opt/project-nomad/cli-proxy-api/auths:/root/.cli-proxy-api
+    environment:
+      - ANTIGRAVITY_AUTH_JSON=$${ANTIGRAVITY_AUTH_JSON}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /root/.cli-proxy-api
+        if [ ! -s /root/.cli-proxy-api/antigravity-auth.json ]; then
+          printf '%s' "$$ANTIGRAVITY_AUTH_JSON" > /root/.cli-proxy-api/antigravity-auth.json
+          chmod 600 /root/.cli-proxy-api/antigravity-auth.json
+        fi
+        exec ./CLIProxyAPI
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8317"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-cli-proxy-api"
+      portainer.autodeploy: "false"
+
   litellm:
     image: ghcr.io/berriai/litellm:v1.108.8
     container_name: nomad_litellm
@@ -166,10 +208,12 @@ services:
       - source: litellm_config
         target: /etc/litellm/config.yaml
     environment:
-      - OPENROUTER_API_KEY=$${OPENROUTER_API_KEY}
+      - CLI_PROXY_API_KEY=$${CLI_PROXY_API_KEY}
       - LITELLM_LOG=INFO
     depends_on:
       ollama:
+        condition: service_healthy
+      cli-proxy-api:
         condition: service_healthy
     networks:
       - default

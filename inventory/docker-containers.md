@@ -411,14 +411,15 @@
   - Purpose: RustDesk relay server
 
 - **nomad** (`nomad_admin`, `nomad_mysql`, `nomad_redis`, `nomad_disk_collector`,
-  `nomad_embed_ollama`, `nomad_litellm`)
+  `nomad_embed_ollama`, `nomad_cli_proxy_api`, `nomad_litellm`)
   - Network: `docker-servers-net` (192.168.59.60 for `nomad_admin`) + `project-nomad_default` bridge
   - Compose: `dockermaster/docker/compose/nomad/docker-compose.yml.tftpl`
   - Terraform: `portainer_stack.nomad` in `terraform/portainer/stacks.tf`
-  - Storage: `/nfs/dockermaster/nomad/storage` (bulk ZIMs/KB/Qdrant), `/opt/project-nomad/{mysql,redis,ollama}` (local SSD)
+  - Storage: `/nfs/dockermaster/nomad/storage` (bulk ZIMs/KB/Qdrant),
+    `/opt/project-nomad/{mysql,redis,ollama,cli-proxy-api}` (local SSD)
   - URL (internal): <https://nomad.d.lcamaral.com>
   - Purpose: Offline-first knowledge/education server (Project NOMAD) with local Ollama embeddings
-    (`nomic-embed-text:v1.5`) + LiteLLM external chat router
+    (`nomic-embed-text:v1.5`) + LiteLLM routing chat through CLIProxyAPI (Google/Antigravity subscription OAuth)
   - Spec: `docs/superpowers/specs/2026-11-13-project-nomad-deployment-design.md`
 
 #### Ancillary

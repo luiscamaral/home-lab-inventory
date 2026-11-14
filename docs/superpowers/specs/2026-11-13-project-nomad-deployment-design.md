@@ -25,10 +25,14 @@ design pairs Project NOMAD with two lightweight co-located services inside the s
   serving `nomic-embed-text:v1.5` (768-dim, ~275 MB) so ZIM/PDF/EPUB Knowledge Base indexing stays
   100% local, private, and free. (The former standalone `ollama` stack on `ds-1` was removed in
   `7f6c3ba`.)
+- **`cli-proxy-api` (`nomad_cli_proxy_api`)**: A CLIProxyAPI gateway (`eceasy/cli-proxy-api:v8.0.71`)
+  that authenticates with Google/Antigravity subscription OAuth credentials (seeded from Vault)
+  and exposes an OpenAI-compatible endpoint (`http://cli-proxy-api:8317/v1`) on the internal
+  `project-nomad_default` network.
 - **`litellm` (`nomad_litellm`)**: A LiteLLM Proxy (`ghcr.io/berriai/litellm:v1.108.8`) exposing an
   OpenAI-compatible endpoint (`http://litellm:4000`) that routes `nomic-embed-text:v1.5` to
   `http://ollama:11434` and routes chat completions (`/v1/chat/completions`, `/v1/models`) to
-  curated external/subscription AI providers (OpenRouter, etc.) using API keys injected from Vault.
+  `http://cli-proxy-api:8317/v1` (Gemini / Claude subscription models, zero pay-per-token API key).
 
 ## 2. Goals
 
