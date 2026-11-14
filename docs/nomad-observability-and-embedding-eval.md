@@ -44,6 +44,10 @@ No VM resize or new VM is required for this initial bounded test.
 | Network | Separate bridge; no published ports, production networks, or Docker socket |
 | Vector index | Exact in-memory cosine search; never production Qdrant |
 
+The runner's root filesystem must remain writable: Portainer materializes inline `configs.content`
+there and rejects this configuration on a read-only service. It still has no capabilities,
+privilege escalation, Docker socket, production mounts, or production network membership.
+
 The runner pulls `nomic-embed-text:v1.5` and `bge-m3`, then evaluates them sequentially.
 It applies Nomic's query/document prefixes and uses raw text for BGE-M3. Each model is unloaded
 after its measurements. Model digests, returned dimensions, corpus identity, retrieval metrics,

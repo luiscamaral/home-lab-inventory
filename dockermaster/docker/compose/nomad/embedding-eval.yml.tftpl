@@ -65,7 +65,8 @@ services:
       - results:/results
     networks:
       - default
-    read_only: true
+    # Portainer materializes inline configs into the container filesystem;
+    # it rejects configs with content: when the service root is read-only.
     security_opt:
       - no-new-privileges:true
     cap_drop:
