@@ -175,24 +175,67 @@ model_list:
       model: ollama/nomic-embed-text:v1.5
       api_base: http://ollama:11434
 
-  - model_name: deepseek-v4-flash
+  # Google / Antigravity subscription models via CLIProxyAPI
+  - model_name: gemini-4-hydrogen
     litellm_params:
-      model: openrouter/deepseek/deepseek-v4-flash:free
-      api_key: os.environ/OPENROUTER_API_KEY
+      model: openai/gemini-4-hydrogen-xhigh
+      api_base: http://cli-proxy-api:8317/v1
+      api_key: os.environ/CLI_PROXY_API_KEY
 
-  - model_name: claude-sonnet-4
+  - model_name: gemini-4-argon
     litellm_params:
-      model: openrouter/anthropic/claude-sonnet-4
-      api_key: os.environ/OPENROUTER_API_KEY
+      model: openai/gemini-4-argon-high
+      api_base: http://cli-proxy-api:8317/v1
+      api_key: os.environ/CLI_PROXY_API_KEY
 
-  - model_name: gpt-4o-mini
+  - model_name: gemini-3.8-flash
     litellm_params:
-      model: openrouter/openai/gpt-4o-mini
-      api_key: os.environ/OPENROUTER_API_KEY
+      model: openai/gemini-3.8-flash-high
+      api_base: http://cli-proxy-api:8317/v1
+      api_key: os.environ/CLI_PROXY_API_KEY
+
+  - model_name: gemini-3-flash
+    litellm_params:
+      model: openai/gemini-3-flash
+      api_base: http://cli-proxy-api:8317/v1
+      api_key: os.environ/CLI_PROXY_API_KEY
+
+  - model_name: gemini-3.5-flash-lite
+    litellm_params:
+      model: openai/gemini-3.5-flash-lite
+      api_base: http://cli-proxy-api:8317/v1
+      api_key: os.environ/CLI_PROXY_API_KEY
+
+  - model_name: gemini-3.1-flash-lite
+    litellm_params:
+      model: openai/gemini-3.1-flash-lite
+      api_base: http://cli-proxy-api:8317/v1
+      api_key: os.environ/CLI_PROXY_API_KEY
+
+  - model_name: claude-sonnet-5-5
+    litellm_params:
+      model: openai/claude-sonnet-5-5-high
+      api_base: http://cli-proxy-api:8317/v1
+      api_key: os.environ/CLI_PROXY_API_KEY
+
+  - model_name: claude-opus-5-5
+    litellm_params:
+      model: openai/claude-opus-5-5-high
+      api_base: http://cli-proxy-api:8317/v1
+      api_key: os.environ/CLI_PROXY_API_KEY
+
+  - model_name: gpt-oss-120b
+    litellm_params:
+      model: openai/gpt-oss-120b-medium
+      api_base: http://cli-proxy-api:8317/v1
+      api_key: os.environ/CLI_PROXY_API_KEY
 
 litellm_settings:
   drop_params: true
   telemetry: false
+
+general_settings:
+  dangerously_permit_weak_or_unset_master_key: true
 ```
 
 ## 7. Networking
