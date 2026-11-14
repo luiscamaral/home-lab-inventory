@@ -81,10 +81,20 @@ class Ollama:
         return models
 
     def unload(self, model: str) -> None:
+        def resident():
+            return any(canonical_model(m.get("name") or m.get("model") or "") == canonical_model(model)
+                       for m in self.loaded())
+
+        if not resident():
+            return
         self.request("/api/embed", {"model": model, "input": [], "keep_alive": 0})
-        if any(canonical_model(m.get("name") or m.get("model") or "") == canonical_model(model)
-               for m in self.loaded()):
-            raise EvalError(f"Model still loaded after unload: {model}")
+        # Ollama schedules unloading asynchronously after the HTTP response.
+        deadline = time.monotonic() + min(self.timeout, 30.0)
+        while resident():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise EvalError(f"Model still loaded after unload deadline: {model}")
+            time.sleep(min(0.1, remaining))
 
     def digest(self, model: str) -> str:
         models = self.request("/api/tags").get("models")

@@ -220,9 +220,24 @@ class HarnessTests(unittest.TestCase):
 
     def test_unload_detects_still_resident_latest_alias(self):
         client = FakeOllama("http://evaluation")
+        client.timeout = 0.001
         with (patch.object(client, "loaded", return_value=[{"name": "bge-m3:latest"}]),
               self.assertRaisesRegex(eval_module.EvalError, "still loaded")):
             client.unload("bge-m3")
+
+    def test_unload_waits_for_asynchronous_completion(self):
+        client = FakeOllama("http://evaluation")
+        resident = [{"name": "bge-m3:latest"}]
+        with (patch.object(client, "loaded", side_effect=[resident, resident, []]) as loaded,
+              patch.object(eval_module.time, "sleep")):
+            client.unload("bge-m3")
+        self.assertEqual(loaded.call_count, 3)
+        self.assertIn(("/api/embed", {"model": "bge-m3", "input": [], "keep_alive": 0}), client.calls)
+
+    def test_unload_absent_model_does_not_schedule_a_load(self):
+        client = FakeOllama("http://evaluation")
+        client.unload("bge-m3")
+        self.assertEqual(client.calls, [("/api/ps", None)])
 
     def test_cli_result_json_and_sequential_model_order(self):
         clients = []
