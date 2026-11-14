@@ -193,7 +193,7 @@ data "vault_kv_secret_v2" "minio_metrics_jwt" {
 }
 
 # Project NOMAD (ds-2). Fields: app_key, db_password, mysql_root_password,
-# openrouter_api_key (LiteLLM chat routing).
+# cli_proxy_api_key, antigravity_auth_json (subscription OAuth via CLIProxyAPI).
 data "vault_kv_secret_v2" "nomad" {
   mount = "secret"
   name  = "homelab/nomad"

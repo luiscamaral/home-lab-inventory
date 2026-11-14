@@ -1447,8 +1447,8 @@ resource "portainer_stack" "otel_collector" {
 # Project NOMAD (ds-2) — offline knowledge/RAG server
 # Spec: docs/superpowers/specs/2026-11-13-project-nomad-deployment-design.md
 # nomad_admin on docker-servers-net @ 192.168.59.60; ollama (embeddings only,
-# nomic-embed-text:v1.5) and litellm (OpenAI-compatible router) stay on the
-# project-nomad_default bridge. Chat goes to OpenRouter via the Vault key.
+# nomic-embed-text:v1.5), cli-proxy-api (Google/Antigravity subscription OAuth),
+# and litellm (OpenAI-compatible router) stay on the project-nomad_default bridge.
 # ──────────────────────────────────────────────
 resource "portainer_stack" "nomad" {
   name            = "nomad"
@@ -1458,6 +1458,9 @@ resource "portainer_stack" "nomad" {
 
   stack_file_content = templatefile("${path.module}/../../dockermaster/docker/compose/nomad/docker-compose.yml.tftpl", {
     litellm_config = file("${path.module}/../../dockermaster/docker/compose/nomad/litellm-config.yaml")
+    cli_proxy_config = templatefile("${path.module}/../../dockermaster/docker/compose/nomad/cli-proxy-config.yaml.tftpl", {
+      cli_proxy_api_key = data.vault_kv_secret_v2.nomad.data["cli_proxy_api_key"]
+    })
   })
 
   env {
@@ -1473,7 +1476,11 @@ resource "portainer_stack" "nomad" {
     value = data.vault_kv_secret_v2.nomad.data["mysql_root_password"]
   }
   env {
-    name  = "OPENROUTER_API_KEY"
-    value = data.vault_kv_secret_v2.nomad.data["openrouter_api_key"]
+    name  = "CLI_PROXY_API_KEY"
+    value = data.vault_kv_secret_v2.nomad.data["cli_proxy_api_key"]
+  }
+  env {
+    name  = "ANTIGRAVITY_AUTH_JSON"
+    value = data.vault_kv_secret_v2.nomad.data["antigravity_auth_json"]
   }
 }
