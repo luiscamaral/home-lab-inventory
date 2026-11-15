@@ -46,7 +46,8 @@ class FakeOllama(eval_module.Ollama):
             return {"status": "success"}
         if path == "/api/tags":
             return {"models": [{"name": m, "digest": "sha256:" + m}
-                               for m in ("nomic-embed-text:v1.5", "bge-m3:latest", "qwen3-embedding:8b")]}
+                               for m in ("nomic-embed-text:v1.5", "bge-m3:latest",
+                                         "qwen3-embedding:8b", "embeddinggemma-2:270m")]}
         if path == "/api/ps":
             return {"models": self.resident.copy()}
         if path == "/api/embed":
@@ -55,7 +56,7 @@ class FakeOllama(eval_module.Ollama):
                 return {"embeddings": []}
             model = payload["model"]
             self.resident = [{"name": eval_module.canonical_model(model), "size": 1234, "size_vram": 0}]
-            if model.startswith("nomic"):
+            if model.startswith(("nomic", "embeddinggemma")):
                 dimensions = 768
             elif model.startswith("qwen3"):
                 dimensions = 4096
@@ -199,6 +200,7 @@ class HarnessTests(unittest.TestCase):
             ("nomic-embed-text:v1.5", 768, "nomic"),
             ("bge-m3", 1024, "raw"),
             ("qwen3-embedding:8b", 4096, "qwen3"),
+            ("embeddinggemma-2:270m", 768, "gemma"),
         ):
             client = FakeOllama("http://evaluation")
             result = eval_module.measure_model(client, tiny_fixture(), (model, dimensions, style), 2, 1)
@@ -216,6 +218,9 @@ class HarnessTests(unittest.TestCase):
             elif style == "qwen3":
                 self.assertTrue(any("Instruct:" in text and "Query: beta?" in text for text in texts))
                 self.assertIn("alpha", texts)  # qwen3 documents stay raw
+            elif style == "gemma":
+                self.assertIn("task: search result | query: beta?", texts)
+                self.assertIn("title: none | text: alpha", texts)
             else:
                 self.assertIn("alpha", texts)
                 self.assertIn("beta?", texts)
@@ -308,13 +313,13 @@ class HarnessTests(unittest.TestCase):
             self.assertEqual(result["schema_version"], 1)
             self.assertTrue(result["synthetic_smoke_corpus"])
             self.assertIn("NOT proof", result["disclaimer"])
-            self.assertEqual([m["verified_dimensions"] for m in result["models"]], [768, 1024, 4096])
-            self.assertEqual([len(m["queries"]) for m in result["models"]], [2, 2, 2])
-            self.assertEqual([m["document_count"] for m in result["models"]], [2, 2, 2])
+            self.assertEqual([m["verified_dimensions"] for m in result["models"]], [768, 1024, 4096, 768])
+            self.assertEqual([len(m["queries"]) for m in result["models"]], [2, 2, 2, 2])
+            self.assertEqual([m["document_count"] for m in result["models"]], [2, 2, 2, 2])
             self.assertIn("indexed 2 chunks x 768 dimensions", logs.getvalue())
             self.assertIn("indexed 2 chunks x 4096 dimensions", logs.getvalue())
             self.assertIn("evaluated 2 queries (2 warm samples)", logs.getvalue())
-            self.assertIn("Completed 3 models, 2 documents and 2 queries", logs.getvalue())
+            self.assertIn("Completed 4 models, 2 documents and 2 queries", logs.getvalue())
             self.assertIn("no splitting", result["method"]["preprocessing"])
             self.assertGreaterEqual(len(result["method"]["limitations"]), 5)
             calls = clients[0].calls
@@ -340,6 +345,7 @@ class HarnessTests(unittest.TestCase):
         args = argparse.Namespace(fixture=FIXTURE, url="http://evaluation", timeout=1,
                                   nomic_model="nomic-embed-text:v1.5", bge_model="bge-m3",
                                   qwen_model="qwen3-embedding:8b", qwen_dims=4096,
+                                  gemma_model="embeddinggemma-2:270m",
                                   rerank_url=None, rerank_top_n=20)
         with (patch.object(eval_module, "Ollama", return_value=client),
               self.assertRaisesRegex(eval_module.EvalError, "dedicated instance")):
