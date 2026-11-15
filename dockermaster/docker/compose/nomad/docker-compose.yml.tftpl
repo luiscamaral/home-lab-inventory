@@ -100,7 +100,7 @@ services:
       portainer.autodeploy: "false"
 
   admin:
-    image: ghcr.io/crosstalk-solutions/project-nomad:v1.35.1
+    image: ghcr.io/luiscamaral/project-nomad:v1.35.1-custom
     container_name: nomad_admin
     restart: unless-stopped
     extra_hosts:
@@ -126,6 +126,12 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - DISABLE_COMPRESSION=false
+      # Custom embedding configuration (see third_party/project-nomad, the fork
+      # that makes the model + task prefixes env-configurable). Prefixes carry no
+      # trailing space — the fork appends it.
+      - EMBEDDING_MODEL_NAME=embeddinggemma-2:270m
+      - "SEARCH_DOCUMENT_PREFIX=title: none | text:"
+      - "SEARCH_QUERY_PREFIX=task: search result | query:"
     depends_on:
       mysql:
         condition: service_healthy
