@@ -50,9 +50,10 @@ class NomadObservabilityTests(unittest.TestCase):
 
     def test_admin_uses_custom_embedding_config(self):
         admin = self.stack["services"]["admin"]
-        self.assertEqual(admin["image"], "ghcr.io/luiscamaral/project-nomad:v1.35.1-custom")
+        self.assertEqual(admin["image"], "ghcr.io/luiscamaral/project-nomad:v1.35.1-custom-qdrant-timeout")
         env = dict(item.split("=", 1) for item in admin["environment"])
         self.assertEqual(env["EMBEDDING_MODEL_NAME"], "embeddinggemma-2:270m")
+        self.assertEqual(env["QDRANT_TIMEOUT_MS"], "1800000")
         self.assertEqual(env["SEARCH_DOCUMENT_PREFIX"], "title: none | text:")
         self.assertEqual(env["SEARCH_QUERY_PREFIX"], "task: search result | query:")
 

@@ -100,7 +100,7 @@ services:
       portainer.autodeploy: "false"
 
   admin:
-    image: ghcr.io/luiscamaral/project-nomad:v1.35.1-custom
+    image: ghcr.io/luiscamaral/project-nomad:v1.35.1-custom-qdrant-timeout
     container_name: nomad_admin
     restart: unless-stopped
     extra_hosts:
@@ -130,6 +130,7 @@ services:
       # that makes the model + task prefixes env-configurable). Prefixes carry no
       # trailing space — the fork appends it.
       - EMBEDDING_MODEL_NAME=embeddinggemma-2:270m
+      - QDRANT_TIMEOUT_MS=1800000
       - "SEARCH_DOCUMENT_PREFIX=title: none | text:"
       - "SEARCH_QUERY_PREFIX=task: search result | query:"
     depends_on:
