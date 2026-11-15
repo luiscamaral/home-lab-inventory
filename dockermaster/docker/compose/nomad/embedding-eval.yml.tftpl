@@ -38,14 +38,15 @@ services:
       com.centurylinklabs.watchtower.enable: "false"
       portainer.autodeploy: "false"
 
-  # Cross-encoder reranker (Qwen3-Reranker-0.6B) via Text Embeddings Inference.
-  # Rerankers are not in the Ollama library; TEI serves the /rerank endpoint the
-  # evaluator calls. Model is pulled from Hugging Face on first start.
+  # Cross-encoder reranker via Text Embeddings Inference. Rerankers are not in the
+  # Ollama library; TEI serves the /rerank endpoint the evaluator calls. Model is
+  # pulled from Hugging Face on first start. bge-reranker-v2-m3 (XLM-RoBERTa) is
+  # chosen because TEI does not yet support the LLM-style Qwen3-Reranker models.
   reranker:
     image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.7.2
     container_name: nomad_eval_reranker
     restart: "no"
-    command: ["--model-id", "Qwen/Qwen3-Reranker-0.6B"]
+    command: ["--model-id", "BAAI/bge-reranker-v2-m3"]
     volumes:
       - reranker-models:/data
     networks:
