@@ -50,27 +50,30 @@ class NomadObservabilityTests(unittest.TestCase):
 
     def test_admin_uses_custom_embedding_config(self):
         admin = self.stack["services"]["admin"]
-        self.assertEqual(admin["image"], "ghcr.io/luiscamaral/project-nomad:v1.35.1-custom-private-ports-2")
+        self.assertEqual(admin["image"], "ghcr.io/luiscamaral/project-nomad:v1.35.1-custom-macvlan")
         env = dict(item.split("=", 1) for item in admin["environment"])
         self.assertEqual(env["EMBEDDING_MODEL_NAME"], "embeddinggemma-2:270m")
         self.assertEqual(env["QDRANT_TIMEOUT_MS"], "1800000")
         self.assertEqual(env["NOMAD_PRIVATE_MANAGED_PORTS"], "true")
         self.assertEqual(env["NOMAD_KOLIBRI_ZIP_ORIGIN"], "https://kolibri.d.lcamaral.com:8311")
+        self.assertEqual(
+            env["NOMAD_MANAGED_MACVLAN_IPS"],
+            '{"nomad_kiwix_server":"192.168.59.8","nomad_kolibri_2":"192.168.59.3"}',
+        )
         self.assertEqual(env["SEARCH_DOCUMENT_PREFIX"], "title: none | text:")
         self.assertEqual(env["SEARCH_QUERY_PREFIX"], "task: search result | query:")
 
-    def test_managed_children_use_proxy_without_host_ports(self):
+    def test_managed_children_reach_proxies_directly_without_host_ports(self):
         services = self.stack["services"]
-        edge = services["edge"]
-        self.assertEqual(edge["network_mode"], "service:admin")
-        self.assertNotIn("ports", edge)
+        self.assertNotIn("edge", services)
         self.assertNotIn("ports", services["admin"])
         for service in services.values():
             self.assertNotIn("ports", service)
-        config = (COMPOSE / "edge.conf").read_text()
-        for port in (8090, 8310, 8311):
-            self.assertIn(f"listen {port};", config)
-        self.assertIn("deny all;", config)
+        kiwix = (VHOST.parent / "kiwix.d.lcamaral.com.conf").read_text()
+        kolibri = (VHOST.parent / "kolibri.d.lcamaral.com.conf").read_text()
+        self.assertIn("proxy_pass http://192.168.59.8:8080;", kiwix)
+        self.assertIn("proxy_pass http://192.168.59.3:8080;", kolibri)
+        self.assertIn("proxy_pass http://192.168.59.3:8311;", kolibri)
 
     def test_experiment_cannot_reach_production_data(self):
         services = self.experiment["services"]

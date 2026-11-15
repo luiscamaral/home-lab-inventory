@@ -14,9 +14,6 @@ configs:
   cli_proxy_config:
     content: |
       ${indent(6, cli_proxy_config)}
-  edge_config:
-    content: |
-      ${indent(6, edge_config)}
 
 services:
   # The built-in Settings link opens http://<hostname>:9999. The reverse
@@ -103,7 +100,7 @@ services:
       portainer.autodeploy: "false"
 
   admin:
-    image: ghcr.io/luiscamaral/project-nomad:v1.35.1-custom-private-ports-2
+    image: ghcr.io/luiscamaral/project-nomad:v1.35.1-custom-macvlan
     container_name: nomad_admin
     restart: unless-stopped
     extra_hosts:
@@ -136,6 +133,7 @@ services:
       - QDRANT_TIMEOUT_MS=1800000
       - NOMAD_PRIVATE_MANAGED_PORTS=true
       - NOMAD_KOLIBRI_ZIP_ORIGIN=https://kolibri.d.lcamaral.com:8311
+      - NOMAD_MANAGED_MACVLAN_IPS={"nomad_kiwix_server":"192.168.59.8","nomad_kolibri_2":"192.168.59.3"}
       - "SEARCH_DOCUMENT_PREFIX=title: none | text:"
       - "SEARCH_QUERY_PREFIX=task: search result | query:"
     depends_on:
@@ -158,31 +156,6 @@ services:
       com.centurylinklabs.watchtower.enable: "false"
       com.docker.stack: "nomad"
       com.docker.service: "nomad-admin"
-      portainer.autodeploy: "false"
-
-  # Shares only admin's network namespace: proxy fleet reaches .59.60, while
-  # Docker-managed child containers retain their private project bridge IPs.
-  edge:
-    image: nginx:1.27-alpine
-    container_name: nomad_edge
-    restart: unless-stopped
-    network_mode: service:admin
-    depends_on:
-      admin:
-        condition: service_healthy
-        restart: true
-    configs:
-      - source: edge_config
-        target: /etc/nginx/conf.d/default.conf
-    read_only: true
-    tmpfs:
-      - /var/cache/nginx
-      - /var/run
-    security_opt:
-      - no-new-privileges:true
-    labels:
-      com.docker.stack: "nomad"
-      com.docker.service: "nomad-edge"
       portainer.autodeploy: "false"
 
   mysql:
