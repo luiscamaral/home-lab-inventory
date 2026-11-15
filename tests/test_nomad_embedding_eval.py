@@ -240,6 +240,21 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual(result["reranked_metrics"]["overall"]["mrr"], 1)
         self.assertEqual(result["rerank"]["top_n"], 2)
 
+    def test_reranker_failure_is_graceful(self):
+        class FailingReranker(eval_module.Reranker):
+            def __init__(self):
+                super().__init__("http://reranker")
+
+            def rerank(self, query, texts):
+                raise eval_module.EvalError("connection refused")
+
+        client = FakeOllama("http://evaluation")
+        result = eval_module.measure_model(client, tiny_fixture(), ("nomic-embed-text:v1.5", 768, "nomic"),
+                                           1, 1, FailingReranker(), rerank_top_n=2)
+        self.assertEqual(result["metrics"]["overall"]["mrr"], 1)
+        self.assertNotIn("reranked_metrics", result)
+        self.assertEqual(result["rerank"]["status"], "skipped: connection refused")
+
     def test_unloads_even_on_invalid_dimensions(self):
         client = FakeOllama("http://evaluation")
         client.bad_vectors = True
