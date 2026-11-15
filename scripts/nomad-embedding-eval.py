@@ -377,7 +377,7 @@ def run(args: argparse.Namespace) -> dict:
     models = [
         (args.nomic_model, 768, "nomic"),
         (args.bge_model, 1024, "raw"),
-        (args.qwen_model, 4096, "qwen3"),
+        (args.qwen_model, args.qwen_dims, "qwen3"),
     ]
     names = [model[0] for model in models]
     if len(set(names)) != len(names):
@@ -439,6 +439,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--nomic-model", default="nomic-embed-text:v1.5")
     parser.add_argument("--bge-model", default="bge-m3")
     parser.add_argument("--qwen-model", default="qwen3-embedding:8b")
+    parser.add_argument("--qwen-dims", type=positive_int, default=4096,
+                        help="Expected embedding dimension for the qwen model (8b=4096, 4b=2560, 0.6b=1024)")
     parser.add_argument("--rerank-url", default=None,
                         help="Optional TEI cross-encoder endpoint (e.g. http://reranker:80); "
                              "when set, dense top-N candidates are re-scored by the reranker")

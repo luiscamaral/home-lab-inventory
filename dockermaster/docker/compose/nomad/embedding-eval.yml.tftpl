@@ -90,6 +90,10 @@ services:
       - --output
       - /results/embedding-eval.json
       - --allow-model-changes
+      - --qwen-model
+      - qwen3-embedding:4b
+      - --qwen-dims
+      - "2560"
       - --rerank-url
       - http://reranker:80
       - --rerank-top-n
