@@ -39,7 +39,7 @@ This is a bounded evaluation on a resized ds-2 (48 GiB, 2026-11-14).
 | Component | Limit / isolation |
 | --- | --- |
 | `nomad_eval_ollama` | 4 CPUs, 24 GiB ceiling, one loaded model and one parallel request |
-| `nomad_eval_reranker` | 4 CPUs, 8 GiB; TEI serving Qwen3-Reranker-0.6B (`/rerank`) |
+| `nomad_eval_reranker` | 4 CPUs, 8 GiB; TEI serving `bge-reranker-v2-m3` (`/rerank`) |
 | `nomad_embedding_eval` | 0.5 CPU, 128 MiB, standard-library Python runner |
 | Models/results | Separate local named volumes, never production `/opt/project-nomad/ollama` |
 | Network | Separate bridge; no published ports, production networks, or Docker socket |
@@ -60,6 +60,9 @@ reranked metrics, and latency observations are saved in `/results/embedding-eval
 The TEI reranker is pulled from Hugging Face on first start. TEI's CPU image targets AVX2; on an
 older CPU (this host is an Ivy Bridge Xeon without AVX2) the reranker container may fail to start
 with SIGILL — if so the embedding-only results still stand and the reranker is reported as blocked.
+TEI does not yet ship Qwen3-Reranker support (the upstream PRs are still open), so the reranker uses
+`bge-reranker-v2-m3` (XLM-RoBERTa cross-encoder, MIT) — a model-agnostic two-stage re-score that is
+comparable in intent but not the Qwen3 reranker originally requested.
 
 The fixture is **synthetic smoke-test data**, with English technical/reference passages and
 English/Portuguese questions. It tests plumbing and provides a small controlled comparison,

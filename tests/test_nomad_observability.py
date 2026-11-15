@@ -64,6 +64,7 @@ class NomadObservabilityTests(unittest.TestCase):
         self.assertIn("http://reranker:80", command)
         self.assertEqual(set(self.experiment["volumes"]), {"models", "results", "reranker-models"})
         self.assertIn("text-embeddings-inference", services["reranker"]["image"])
+        self.assertEqual(services["reranker"]["command"], ["--model-id", "BAAI/bge-reranker-v2-m3"])
         self.assertEqual(services["reranker"]["deploy"]["resources"]["limits"]["memory"], "8G")
         production = self.stack["services"]["ollama"]
         self.assertEqual(production["container_name"], "nomad_embed_ollama")
