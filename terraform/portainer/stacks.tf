@@ -1458,6 +1458,7 @@ resource "portainer_stack" "nomad" {
 
   stack_file_content = templatefile("${path.module}/../../dockermaster/docker/compose/nomad/docker-compose.yml.tftpl", {
     litellm_config = file("${path.module}/../../dockermaster/docker/compose/nomad/litellm-config.yaml")
+    edge_config = file("${path.module}/../../dockermaster/docker/compose/nomad/edge.conf")
     cli_proxy_config = templatefile("${path.module}/../../dockermaster/docker/compose/nomad/cli-proxy-config.yaml.tftpl", {
       cli_proxy_api_key = data.vault_kv_secret_v2.nomad.data["cli_proxy_api_key"]
     })

@@ -14,6 +14,9 @@ configs:
   cli_proxy_config:
     content: |
       ${indent(6, cli_proxy_config)}
+  edge_config:
+    content: |
+      ${indent(6, edge_config)}
 
 services:
   # The built-in Settings link opens http://<hostname>:9999. The reverse
@@ -100,7 +103,7 @@ services:
       portainer.autodeploy: "false"
 
   admin:
-    image: ghcr.io/luiscamaral/project-nomad:v1.35.1-custom-qdrant-timeout
+    image: ghcr.io/luiscamaral/project-nomad:v1.35.1-custom-private-ports-2
     container_name: nomad_admin
     restart: unless-stopped
     extra_hosts:
@@ -131,6 +134,8 @@ services:
       # trailing space — the fork appends it.
       - EMBEDDING_MODEL_NAME=embeddinggemma-2:270m
       - QDRANT_TIMEOUT_MS=1800000
+      - NOMAD_PRIVATE_MANAGED_PORTS=true
+      - NOMAD_KOLIBRI_ZIP_ORIGIN=https://kolibri.d.lcamaral.com:8311
       - "SEARCH_DOCUMENT_PREFIX=title: none | text:"
       - "SEARCH_QUERY_PREFIX=task: search result | query:"
     depends_on:
@@ -153,6 +158,31 @@ services:
       com.centurylinklabs.watchtower.enable: "false"
       com.docker.stack: "nomad"
       com.docker.service: "nomad-admin"
+      portainer.autodeploy: "false"
+
+  # Shares only admin's network namespace: proxy fleet reaches .59.60, while
+  # Docker-managed child containers retain their private project bridge IPs.
+  edge:
+    image: nginx:1.27-alpine
+    container_name: nomad_edge
+    restart: unless-stopped
+    network_mode: service:admin
+    depends_on:
+      admin:
+        condition: service_healthy
+        restart: true
+    configs:
+      - source: edge_config
+        target: /etc/nginx/conf.d/default.conf
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-edge"
       portainer.autodeploy: "false"
 
   mysql:
@@ -350,6 +380,30 @@ services:
       com.centurylinklabs.watchtower.enable: "false"
       com.docker.stack: "nomad"
       com.docker.service: "nomad-remote-ai-init"
+      portainer.autodeploy: "false"
+
+  app-urls-init:
+    image: curlimages/curl:8.23.0
+    container_name: nomad_app_urls_init
+    restart: "no"
+    depends_on:
+      admin:
+        condition: service_healthy
+    networks:
+      - default
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        curl -fsS -X PUT http://admin:8080/api/system/services/custom-url \
+          -H 'Content-Type: application/json' \
+          -d '{"service_name":"nomad_kiwix_server","custom_url":"https://kiwix.d.lcamaral.com"}'
+        curl -fsS -X PUT http://admin:8080/api/system/services/custom-url \
+          -H 'Content-Type: application/json' \
+          -d '{"service_name":"nomad_kolibri_2","custom_url":"https://kolibri.d.lcamaral.com"}'
+    labels:
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-app-urls-init"
       portainer.autodeploy: "false"
 
 networks:
