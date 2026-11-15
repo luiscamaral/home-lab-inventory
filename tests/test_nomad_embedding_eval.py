@@ -339,7 +339,8 @@ class HarnessTests(unittest.TestCase):
         client.resident = [{"name": "production-model"}]
         args = argparse.Namespace(fixture=FIXTURE, url="http://evaluation", timeout=1,
                                   nomic_model="nomic-embed-text:v1.5", bge_model="bge-m3",
-                                  qwen_model="qwen3-embedding:8b", rerank_url=None, rerank_top_n=20)
+                                  qwen_model="qwen3-embedding:8b", qwen_dims=4096,
+                                  rerank_url=None, rerank_top_n=20)
         with (patch.object(eval_module, "Ollama", return_value=client),
               self.assertRaisesRegex(eval_module.EvalError, "dedicated instance")):
             eval_module.run(args)

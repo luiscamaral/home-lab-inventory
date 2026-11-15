@@ -63,6 +63,7 @@ class NomadObservabilityTests(unittest.TestCase):
         command = " ".join(services["evaluate"]["command"])
         self.assertIn("--rerank-url", command)
         self.assertIn("http://reranker:80", command)
+        self.assertIn("--qwen-model qwen3-embedding:4b --qwen-dims 2560", command)
         self.assertEqual(set(self.experiment["volumes"]), {"models", "results", "reranker-models"})
         self.assertIn("text-embeddings-inference", services["reranker"]["image"])
         self.assertEqual(services["reranker"]["command"], ["--model-id", "BAAI/bge-reranker-v2-m3"])
