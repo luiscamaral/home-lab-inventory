@@ -50,12 +50,27 @@ class NomadObservabilityTests(unittest.TestCase):
 
     def test_admin_uses_custom_embedding_config(self):
         admin = self.stack["services"]["admin"]
-        self.assertEqual(admin["image"], "ghcr.io/luiscamaral/project-nomad:v1.35.1-custom-qdrant-timeout")
+        self.assertEqual(admin["image"], "ghcr.io/luiscamaral/project-nomad:v1.35.1-custom-private-ports-2")
         env = dict(item.split("=", 1) for item in admin["environment"])
         self.assertEqual(env["EMBEDDING_MODEL_NAME"], "embeddinggemma-2:270m")
         self.assertEqual(env["QDRANT_TIMEOUT_MS"], "1800000")
+        self.assertEqual(env["NOMAD_PRIVATE_MANAGED_PORTS"], "true")
+        self.assertEqual(env["NOMAD_KOLIBRI_ZIP_ORIGIN"], "https://kolibri.d.lcamaral.com:8311")
         self.assertEqual(env["SEARCH_DOCUMENT_PREFIX"], "title: none | text:")
         self.assertEqual(env["SEARCH_QUERY_PREFIX"], "task: search result | query:")
+
+    def test_managed_children_use_proxy_without_host_ports(self):
+        services = self.stack["services"]
+        edge = services["edge"]
+        self.assertEqual(edge["network_mode"], "service:admin")
+        self.assertNotIn("ports", edge)
+        self.assertNotIn("ports", services["admin"])
+        for service in services.values():
+            self.assertNotIn("ports", service)
+        config = (COMPOSE / "edge.conf").read_text()
+        for port in (8090, 8310, 8311):
+            self.assertIn(f"listen {port};", config)
+        self.assertIn("deny all;", config)
 
     def test_experiment_cannot_reach_production_data(self):
         services = self.experiment["services"]
