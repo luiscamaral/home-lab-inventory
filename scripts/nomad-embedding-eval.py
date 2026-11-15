@@ -312,16 +312,22 @@ def measure_model(client: Ollama, fixture: dict, spec: tuple, repeats: int, batc
                 "metrics": retrieval_metrics(ranking, query["relevant"]),
                 "warm_embedding_ms": samples,
             })
+        rerank_status = None
         if reranker is not None:
-            text_by_id = {doc["id"]: doc["text"] for doc in documents}
-            for row in rows:
-                window = row["ranking"][:rerank_top_n]
-                candidates = [text_by_id[item["id"]] for item in window]
-                scores = reranker.rerank(row["query_text"], candidates)
-                order = sorted(range(len(candidates)), key=lambda i: (-scores[i], window[i]["id"]))
-                reranked = [{"id": window[i]["id"]} for i in order] + \
-                           [{"id": item["id"]} for item in row["ranking"][rerank_top_n:]]
-                row["reranked_metrics"] = retrieval_metrics(reranked, row["relevant"])
+            try:
+                text_by_id = {doc["id"]: doc["text"] for doc in documents}
+                for row in rows:
+                    window = row["ranking"][:rerank_top_n]
+                    candidates = [text_by_id[item["id"]] for item in window]
+                    scores = reranker.rerank(row["query_text"], candidates)
+                    order = sorted(range(len(candidates)), key=lambda i: (-scores[i], window[i]["id"]))
+                    reranked = [{"id": window[i]["id"]} for i in order] + \
+                               [{"id": item["id"]} for item in row["ranking"][rerank_top_n:]]
+                    row["reranked_metrics"] = retrieval_metrics(reranked, row["relevant"])
+                rerank_status = "ok"
+            except EvalError as exc:
+                print(f"[{model}] reranker unavailable; skipping two-stage rerank: {exc}", flush=True)
+                rerank_status = f"skipped: {exc}"
         loaded = client.loaded()
         metrics = summarize_metrics(rows)
         latency = latency_summary([ms for row in rows for ms in row["warm_embedding_ms"]])
@@ -347,7 +353,7 @@ def measure_model(client: Ollama, fixture: dict, spec: tuple, repeats: int, batc
             "ollama_ps_metadata": loaded,
             "ollama_ps_note": "API-reported metadata only; size/size_vram are NOT measured process RAM",
         }
-        if reranker is not None:
+        if rerank_status == "ok":
             result["reranked_metrics"] = summarize_metrics([
                 {"language": row["language"], "metrics": row["reranked_metrics"]} for row in rows
             ])
@@ -356,6 +362,8 @@ def measure_model(client: Ollama, fixture: dict, spec: tuple, repeats: int, batc
                         "reranked_metrics are comparable to metrics but reflect the two-stage pipeline.",
                 "top_n": rerank_top_n,
             }
+        elif reranker is not None:
+            result["rerank"] = {"status": rerank_status}
         return result
     finally:
         # Do not silently continue with overlapping resident benchmark models.

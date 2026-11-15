@@ -74,8 +74,6 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
-      reranker:
-        condition: service_healthy
     configs:
       - source: evaluator
         target: /eval/evaluate.py

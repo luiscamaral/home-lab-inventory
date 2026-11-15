@@ -59,6 +59,7 @@ class NomadObservabilityTests(unittest.TestCase):
         self.assertEqual(services["ollama"]["deploy"]["resources"]["limits"]["memory"], "24G")
         self.assertFalse(services["evaluate"].get("read_only", False))
         self.assertEqual(len(services["evaluate"]["configs"]), 2)
+        self.assertEqual(list(services["evaluate"]["depends_on"]), ["ollama"])
         command = " ".join(services["evaluate"]["command"])
         self.assertIn("--rerank-url", command)
         self.assertIn("http://reranker:80", command)
