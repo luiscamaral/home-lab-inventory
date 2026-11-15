@@ -5,3 +5,6 @@
 	# constantly show as "untracked content" in the parent. Only report real
 	# committed-state drift of the pinned SHA, not the working directory.
 	ignore = untracked
+[submodule "third_party/project-nomad"]
+	path = third_party/project-nomad
+	url = https://github.com/luiscamaral/project-nomad.git

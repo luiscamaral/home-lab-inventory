@@ -48,6 +48,14 @@ class NomadObservabilityTests(unittest.TestCase):
         self.assertIn("proxy_buffering off;", location)
         self.assertIn("proxy_http_version 1.1;", location)
 
+    def test_admin_uses_custom_embedding_config(self):
+        admin = self.stack["services"]["admin"]
+        self.assertEqual(admin["image"], "ghcr.io/luiscamaral/project-nomad:v1.35.1-custom")
+        env = dict(item.split("=", 1) for item in admin["environment"])
+        self.assertEqual(env["EMBEDDING_MODEL_NAME"], "embeddinggemma-2:270m")
+        self.assertEqual(env["SEARCH_DOCUMENT_PREFIX"], "title: none | text:")
+        self.assertEqual(env["SEARCH_QUERY_PREFIX"], "task: search result | query:")
+
     def test_experiment_cannot_reach_production_data(self):
         services = self.experiment["services"]
         self.assertEqual(set(services), {"ollama", "reranker", "evaluate"})

@@ -4,6 +4,11 @@ model_list:
       model: ollama/nomic-embed-text:v1.5
       api_base: http://ollama:11434
 
+  - model_name: embeddinggemma-2:270m
+    litellm_params:
+      model: ollama/embeddinggemma-2:270m
+      api_base: http://ollama:11434
+
   # Google / Antigravity subscription models routed through local CLIProxyAPI
   - model_name: gemini-4-hydrogen
     litellm_params:
