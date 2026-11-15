@@ -82,3 +82,10 @@ this file** before continuing. Long sessions dilute these rules — re-anchor de
 ## 6. Secrets: Vault only
 `vault.d.lcamaral.com` round-robins across rproxy IPs and flaps if one is dead — use the
 direct address `http://192.168.59.25:8200` when it times out. Never hardcode secrets.
+
+## 7. NFS is the storage architecture — never propose moving off it
+NFS (`/nfs/dockermaster` → Synology NAS) is the deliberate, fixed storage backend for this
+homelab. Do **not** suggest, offer, or recommend moving any service's data off NFS (to local
+disk or anywhere else) unless the user explicitly instructs it. When something is I/O-slow,
+treat NFS latency/saturation as a given and solve *within* that constraint — concurrency,
+batching, indexing, or scheduling — never by relocating storage.
