@@ -82,6 +82,9 @@ this file** before continuing. Long sessions dilute these rules — re-anchor de
 ## 6. Secrets: Vault only
 `vault.d.lcamaral.com` round-robins across rproxy IPs and flaps if one is dead — use the
 direct address `http://192.168.59.25:8200` when it times out. Never hardcode secrets.
+If Vault is unreachable because of a network outage, use the Keychain **backup** items for
+the Omada controller and switch24a. They are listed in `CLAUDE.md` and
+`docs/network/keychain-credential-backup.md`. Vault stays the source of truth.
 
 ## 7. NFS is the storage architecture — never propose moving off it
 NFS (`/nfs/dockermaster` → Synology NAS) is the deliberate, fixed storage backend for this

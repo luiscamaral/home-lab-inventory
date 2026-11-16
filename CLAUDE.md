@@ -107,8 +107,18 @@ surface → source → apply map. Two layers:
 
 ## Secret Management
 
-- All secrets are centralized in Vault. macOS Keychain holds only the Vault root token (`vault-root-token`) and
+- All secrets are centralized in Vault. macOS Keychain holds the Vault root token (`vault-root-token`) and
   the NAS sudo password (`nas-sudo-password`, also in Vault).
+- **Keychain backup copies (outage fallback only).** Vault runs on the server VLAN. If `ix0` or that
+  VLAN is down, Vault is unreachable and so are the credentials needed to repair the network.
+  Vault stays the source of truth. Use these Keychain items only when Vault does not answer:
+  - `omada-controller-backup` (account `lamaral`): Omada controller login.
+  - `switch24a-backup` (account `admin`): switch24a login.
+  - `switch24a-snmp-backup` (account `snmp_community`): switch24a SNMP community.
+
+  Read one with `security find-generic-password -s <item> -a <account> -w`. Never print it into
+  logs, evidence files or chat. After a password rotation in Vault, refresh the copy. See
+  `docs/network/keychain-credential-backup.md`.
 - Vault paths:
   - `secret/homelab/cloudflare` (API token + tunnel token)
   - `secret/homelab/dreamhost` (DreamHost API key)

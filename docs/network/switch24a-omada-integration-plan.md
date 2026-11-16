@@ -131,6 +131,7 @@ full LAN outage (HOME/SVR/IoT + Vault unreachable).
   Chromium cert block.
 
 Creds: Vault `secret/homelab/omada-controller` (`lamaral`); switch login `secret/homelab/switch24a`.
+If Vault is down, use the Keychain backup items in `docs/network/keychain-credential-backup.md`.
 
 ### Post-restore gap review + Tier-1 hardening (2026-06-19)
 
