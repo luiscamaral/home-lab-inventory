@@ -60,7 +60,7 @@ def api(method: str, path: str, token: str, body: dict | None = None,
         timeout: int = 60, retries: int = 3) -> dict:
     import ssl  # noqa: PLC0415
     import time  # noqa: PLC0415
-    # pfSense API is fronted by HAProxy with a Let's Encrypt cert
+    # HAProxy fronts the pfSense API with a Let's Encrypt cert
     # (*.home.lcamaral.com), so default TLS verification works.
     ctx = ssl.create_default_context()
     last_err: Exception | None = None
@@ -97,11 +97,9 @@ def fetch_live() -> dict[tuple[str, str], dict]:
         ["ssh", "pfsense", "awk '/<dhcpd>/,/<\\/dhcpd>/' /cf/conf/config.xml"],
         capture_output=True, text=True, check=True,
     )
-    # stdlib ElementTree, matching sync-pfsense-outbound-nat.py and
-    # sync-pfsense-cron-jobs.py. The input is our own /cf/conf/config.xml pulled
-    # over authenticated SSH, not untrusted input, and ElementTree does not
-    # resolve external entities -- so defusedxml would add a dependency without
-    # closing a reachable hole here.
+    # Use stdlib ElementTree, like the outbound NAT and cron sync scripts.
+    # The input is /cf/conf/config.xml over authenticated SSH. ElementTree does
+    # not resolve external entities, so defusedxml adds no protection here.
     import xml.etree.ElementTree as ET  # noqa: PLC0415
     tree = ET.fromstring("<root>" + out.stdout + "</root>")
     dhcpd = tree.find("dhcpd")
@@ -128,6 +126,8 @@ def main() -> int:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--apply", action="store_true",
                         help="Create/update mappings (default: dry-run)")
+    parser.add_argument("--only", nargs=2, metavar=("INTERFACE", "MAC"),
+                        help="Reconcile only the specified interface and MAC")
     args = parser.parse_args()
 
     if not MANIFEST.is_file():
@@ -135,6 +135,12 @@ def main() -> int:
     with MANIFEST.open() as f:
         data = yaml.safe_load(f) or {}
     declared = data.get("mappings", [])
+    if args.only:
+        iface, mac = args.only
+        declared = [d for d in declared
+                    if d["interface"] == iface and str(d["mac"]).lower() == mac.lower()]
+        if len(declared) != 1:
+            sys.exit(f"error: expected one mapping for {iface} {mac}, found {len(declared)}")
     if not declared:
         print("no static mappings declared in manifest")
         return 0

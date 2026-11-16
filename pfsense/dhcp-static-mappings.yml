@@ -15,8 +15,8 @@
 # ("claim what we own") -- the HOME scope holds many hand-made entries that
 # predate this manifest, and this tool must never delete them.
 #
-# MAC is the identity. Changing `ipaddr` for a listed MAC is a real change and
-# the sync script will report it as drift; it will not silently repoint a host.
+# MAC is the identity. Changing `ipaddr` for a listed MAC is a real change.
+# The sync script reports it as drift and does not silently repoint a host.
 #
 # Interface keys map to VLANs as follows (see docs/network/pfsense.md):
 #   lan  = ADMIN 192.168.32.32/27   opt2 = HOME  192.168.0.0/20 (ix0.10)
@@ -29,14 +29,20 @@
 # Apply: scripts/sync-pfsense-dhcp-static-mappings.py --apply
 
 mappings:
+  # Omada controller VM 100 on the ADMIN network.
+  - interface: lan
+    mac: "12:32:f0:cc:79:e5"
+    ipaddr: 192.168.32.40
+    hostname: omada-controller
+    descr: Omada Controller TP-Link
   # Network printers. Both are reachable only by IP: neither advertises
   # _ipp/_ipps over Bonjour, so macOS CUPS queues must use ipps://<ip>:631/ipp/print
-  # instead of a dnssd:// URI. A drifting lease would silently break printing,
-  # which is why these two are pinned here first.
+  # instead of a dnssd:// URI. A drifting lease can silently break printing.
+  # These two are pinned here first.
   # Epson XP-830. CUPS queue: ipps://192.168.0.33:631/ipp/print
   # descr carries a literal "&apos;" because pfSense stored the apostrophe
-  # double-escaped inside CDATA. Reproduced verbatim so this manifest reports
-  # zero drift -- do not "fix" it here unless you also PATCH the router.
+  # double-escaped inside CDATA. This manifest reproduces it to report zero drift.
+  # Do not "fix" it here unless you also PATCH the router.
   - interface: opt2
     mac: "9c:ae:d3:81:fa:9e"
     ipaddr: 192.168.0.33
