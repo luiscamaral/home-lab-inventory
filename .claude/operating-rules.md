@@ -63,8 +63,11 @@ Every change goes through a declarative source in the repo, then a tool applies 
 | Grafana dashboards | `terraform/portainer/stacks/grafana-dashboards/*.json` | terraform + `scripts/portainer-redeploy.py` |
 | NAS kernel tuning (sysctl) | `nas/tuning/sysctl.yml` | `scripts/sync-nas-tuning.py` |
 | Docker daemon config | `hosts/<host>/etc/docker/daemon.json` | `scripts/sync-docker-daemon.py` |
+| pfSense DHCP reservations | `pfsense/dhcp-static-mappings.yml` | `scripts/sync-pfsense-dhcp-static-mappings.py` (PHP writer; see rule 9) |
+| VM guest network (netplan) | `hosts/<vm>/etc/netplan/*.yaml` | `scripts/sync-guest-netplan.py --guest <vm> --apply` |
 
-**Never** SSH in and edit `config.xml`, run `write_config`, hand-place a cron/script,
+**Never** SSH in and edit `config.xml`, run `write_config` by hand (the repo's DHCP writer in rule 9 is the one
+exception), hand-place a cron/script,
 or scp config to a host. If a surface has no IaC path yet, **add one** (declarative
 source + sync) — do not make the change manually.
 
@@ -92,3 +95,38 @@ homelab. Do **not** suggest, offer, or recommend moving any service's data off N
 disk or anywhere else) unless the user explicitly instructs it. When something is I/O-slow,
 treat NFS latency/saturation as a given and solve *within* that constraint — concurrency,
 batching, indexing, or scheduling — never by relocating storage.
+
+## 8. Deliver the whole request. Do not wait for a side effect.
+Finish every deliverable the user named, in the order they gave. If they asked for a
+setting to be applied, apply it through the IaC path and verify it. Do not leave it to
+a passive mechanism, such as a DHCP renewal, a timer, or the next reboot.
+If something blocks a step, say so and ask. Do not stop at a partial result and report
+that the rest "will happen later".
+
+Example, 2026-11-16: the user asked for two steps. First, reserve `192.168.32.40` for the
+Omada VM in pfSense DHCP. Second, set the VM's own configuration to the static address through
+IaC. The agent did step one and then waited for the VM's lease to renew. The user had to
+correct this. The second step needed its own IaC path (`hosts/<vm>/etc/netplan` and
+`scripts/sync-guest-netplan.py`).
+
+## 9. Lessons from the 2026-11-16 network outage
+- **Never resend a write after a timeout.** A timeout does not prove the write failed.
+  Read the live state first. The old DHCP sync resent a POST three times.
+- **pfSense REST `static_mapping` is too slow here.** A write ran 180 s and a read ran 56 s,
+  because the API loads all 258 HOME reservations. HAProxy also cuts requests at 30 s. Use
+  `scripts/sync-pfsense-dhcp-static-mappings.py`. It runs PHP on pfSense with the same calls
+  as the GUI (`config_set_path`, `write_config`). It validates first, writes once, and reads
+  the result back. `--activate` reloads only dhcpd. Re-run the dry run after a pfSense upgrade.
+  REST is still fine for small models, such as host overrides.
+- **Use the ADMIN path for pfSense during network work.** `192.168.32.33` (igc3) stays up when the
+  `ix0` trunk is down. The stored host key is under `[192.168.4.1]:3220`, so pass
+  `-o HostName=192.168.32.33 -o HostKeyAlias='[192.168.4.1]:3220'`.
+- **Vault sits behind `ix0`.** If the trunk is down, Vault is unreachable. Use the Keychain
+  backup items in `docs/network/keychain-credential-backup.md`.
+- **Do not trust a success line from your own probe.** A pfSense rule redirects HOME traffic
+  for public DNS servers, such as `1.1.1.1`, to its own HAProxy. HTTP 503 from `1.1.1.1` is not
+  internet access. Test with a real site.
+- **Say who changed what.** Check `/cf/conf/config.xml` revision notes before blaming an
+  apply. A web UI change by the user can look like your change.
+- **Network repairs need a revert guard.** For a change that can cut your own path, arm a timed
+  revert first, apply detached, verify, and only then cancel the revert.

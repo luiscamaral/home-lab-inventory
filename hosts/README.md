@@ -107,3 +107,18 @@ script immediately after the clone (with the new hostname set) so the
 network override files get the correct IPs for the new host. Otherwise the
 new VM will show up on the LAN with the source VM's IP and cause an ARP
 collision. Today's incident was the canonical example.
+
+## Guest netplan (VMs on the Proxmox guest agent)
+
+`hosts/<vm>/etc/netplan/*.yaml` is the source for `/etc/netplan/` inside a VM that has no
+sync path of its own. Apply it with `scripts/sync-guest-netplan.py`. It works through the Proxmox
+guest agent and arms a timed revert before it changes the network.
+
+```bash
+scripts/sync-guest-netplan.py                                       # dry run, diff only
+scripts/sync-guest-netplan.py --guest omada-controller --apply      # push, apply, verify
+```
+
+Today it manages `omada-controller` (VM 100): static `192.168.32.40/27` on `ens18`. The address
+matches the DHCP reservation in `pfsense/dhcp-static-mappings.yml` and the DNS record in
+`pfsense/host-overrides.yml`.
