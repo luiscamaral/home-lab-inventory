@@ -3,7 +3,7 @@
 Sync repo-managed netplan files to a Proxmox VM guest.
 
 Source of truth: hosts/<guest>/etc/netplan/<file>
-Destination:     /etc/netplan/<file> inside the guest (root:root, 0644)
+Destination:     /etc/netplan/<file> inside the guest (root:root, 0600)
 
 The script reaches the guest through the Proxmox guest agent
 (`ssh proxmox` -> `sudo -A qm guest exec`). The agent runs as root and keeps
@@ -102,7 +102,7 @@ systemctl stop {GUARD_UNIT}.timer 2>/dev/null || true
 systemctl reset-failed {GUARD_UNIT}.service 2>/dev/null || true
 cp -p {f} {bak}
 printf %s {b64} | base64 -d > {f}.new
-chmod 644 {f}.new
+chmod 600 {f}.new
 mv {f}.new {f}
 if ! netplan generate; then cp -p {bak} {f}; echo GENERATE_FAILED; exit 1; fi
 systemd-run --quiet --unit={GUARD_UNIT} --on-active={GUARD_SECS} /bin/sh -c 'cp -p {bak} {f} && netplan apply'
