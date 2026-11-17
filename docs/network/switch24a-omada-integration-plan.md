@@ -7,12 +7,12 @@ See [Outcome](#outcome-executed-2026-06-19) for what was actually done and the V
 ## Goal
 
 Bring **switch24a** (TP-Link **TL-SG3428X**, currently **standalone**) under management of the
-**Omada Software Controller** on **VM #100** (`omada-controller`, `192.168.32.55`, Omada
+**Omada Software Controller** on **VM #100** (`omada-controller`, `192.168.32.40`, Omada
 **v5.15.8.2**), which runs today but does not yet manage this switch.
 
 ## Current state (examined 2026-06-18)
 
-- **Controller (VM #100):** running, `tpeap` active, on `vmbr01` / `192.168.32.55` (admin VLAN),
+- **Controller (VM #100):** running, `tpeap` active, on `vmbr01` / `192.168.32.40` (admin VLAN, static since 2026-11-16; it was `.55` on DHCP),
   2 vCPU / 4 GB, `onboot: 1`. Listening on Omada ports `8088`/`8843`/`8043` (web) and
   `29811-29814` (device management / adoption).
 - **Switch:** `192.168.32.39` on the **same admin L2** as the controller (✓ L2 discovery will

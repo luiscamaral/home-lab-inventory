@@ -1,0 +1,20 @@
+# Omada controller VM 100 (omada-controller), ADMIN network.
+# Source of truth. Apply with scripts/sync-guest-netplan.py. Do not edit on the guest.
+# The address matches the DHCP reservation in pfsense/dhcp-static-mappings.yml
+# and the DNS record in pfsense/host-overrides.yml.
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    ens18:
+      dhcp4: false
+      addresses:
+        - 192.168.32.40/27
+      routes:
+        - to: 0.0.0.0/0
+          via: 192.168.32.33
+      nameservers:
+        addresses:
+          - 192.168.32.33
+        search:
+          - admin.lcamaral.com
