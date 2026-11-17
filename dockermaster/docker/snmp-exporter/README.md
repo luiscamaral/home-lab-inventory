@@ -14,6 +14,31 @@ scratch, plus the generator output itself.
 | `Dockerfile.generator` | Builds a generator image preloaded with the IETF/IANA standard MIB tree (via Debian's `snmp-mibs-downloader`) plus the BEGEMOT MIBs. |
 | `regen.sh` | One-shot regen: build the helper image, run the generator, produce `snmp.yml`. |
 | `snmp.yml` | Generator output. Committed to git so we can audit changes. **Community string is the placeholder `public`** — real value is injected at deploy. |
+| `generator-switch24a.yml` | Walk list and auth for the switch24a module (IF-MIB only). |
+| `snmp-switch24a.yml` | Generator output for switch24a. Terraform deploys it. The community is the Compose variable `${SWITCH24A_SNMP_COMMUNITY}`, not a secret. |
+
+## Module: `switch24a`
+
+Added 2026-11-16. It scrapes the core switch (TP-Link TL-SG3428X,
+`192.168.32.39`) for per-port IF-MIB counters: status, last change,
+errors, discards, and 64-bit traffic counters. The switch does not
+support RMON `etherStats` or EtherLike `dot3Stats`, so IF-MIB is the
+only error source.
+
+Deploy path (IaC, no manual copy):
+
+1. `regen.sh` writes `snmp-switch24a.yml`.
+2. `terraform/portainer/stacks.tf` reads the file into the
+   snmp-exporter stack `configs:` block. The exporter loads it as a
+   second `--config.file`.
+3. Terraform sets the stack env `SWITCH24A_SNMP_COMMUNITY` from Vault
+   `secret/homelab/switch24a` (field `snmp_community`). Compose fills the
+   variable when the stack deploys.
+4. Prometheus job `snmp-switch24a` (both replicas, `locals.tf`) scrapes
+   it with `module=switch24a` and `auth=switch24a_v2`.
+
+The scrape path to the switch (ADMIN VLAN) is routed through pfSense.
+An `ix0` outage therefore also shows up as a switch scrape gap.
 
 ## Module: `pfsense`
 

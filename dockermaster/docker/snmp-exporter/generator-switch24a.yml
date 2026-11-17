@@ -1,0 +1,76 @@
+# snmp_exporter generator config for switch24a (TP-Link TL-SG3428X,
+# 192.168.32.39). Output: ./snmp-switch24a.yml.
+#
+# Regen:
+#   cd dockermaster/docker/snmp-exporter
+#   ./regen.sh   (regenerates snmp.yml and snmp-switch24a.yml)
+#
+# Deploy: Terraform. terraform/portainer/stacks.tf reads
+# snmp-switch24a.yml and injects it into the snmp-exporter stack with a
+# Compose `configs:` block. The exporter loads it as a second
+# `--config.file`, next to the pfSense snmp.yml.
+#
+# The community below is a Compose variable, not a secret. Compose fills
+# it at deploy time from the stack env, which Terraform reads from Vault
+# secret/homelab/switch24a (field snmp_community).
+#
+# Added 2026-11-16 to track Te1/0/25 and Te1/0/27 receive errors. See
+# docs/network/2026-11-16-network-instability-check.md.
+
+auths:
+  switch24a_v2:
+    version: 2
+    community: ${SWITCH24A_SNMP_COMMUNITY}
+
+modules:
+  switch24a:
+    # RMON etherStats and EtherLike dot3Stats are not supported on this
+    # switch (checked 2026-11-16, see
+    # docs/network/evidence/2026-11-16-ix0/switch-rmon-errortypes-mtu.txt).
+    # IF-MIB is the only error source.
+    walk:
+      - sysUpTime
+      - sysName
+      - sysDescr
+      - ifIndex
+      - ifDescr
+      - ifType
+      - ifMtu
+      - ifSpeed
+      - ifAdminStatus
+      - ifOperStatus
+      - ifLastChange
+      - ifInDiscards
+      - ifInErrors
+      - ifInUnknownProtos
+      - ifOutDiscards
+      - ifOutErrors
+      - ifName
+      - ifHCInOctets
+      - ifHCInUcastPkts
+      - ifHCInMulticastPkts
+      - ifHCInBroadcastPkts
+      - ifHCOutOctets
+      - ifHCOutUcastPkts
+      - ifHCOutMulticastPkts
+      - ifHCOutBroadcastPkts
+      - ifHighSpeed
+      - ifAlias
+
+    lookups:
+      - source_indexes: [ifIndex]
+        lookup: ifAlias
+      - source_indexes: [ifIndex]
+        lookup: ifDescr
+      - source_indexes: [ifIndex]
+        lookup: ifName
+
+    overrides:
+      ifAlias:
+        type: DisplayString
+      ifName:
+        type: DisplayString
+      sysName:
+        type: DisplayString
+      sysDescr:
+        type: DisplayString

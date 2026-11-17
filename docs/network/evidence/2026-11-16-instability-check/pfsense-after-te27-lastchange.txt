@@ -1,0 +1,17 @@
+2026-11-16 17:15:50 MST
+Nov 16 16:46:26 pfsense kernel: ix0.205: link state changed to UP
+Nov 16 16:46:26 pfsense kernel: ix0.10: link state changed to UP
+Nov 16 16:46:26 pfsense kernel: ix0.28: link state changed to UP
+Nov 16 16:46:26 pfsense kernel: ix0.105: link state changed to UP
+Nov 16 17:05:59 pfsense check_reload_status[685]: Linkup starting igc3
+Nov 16 17:05:59 pfsense kernel: igc3: link state changed to DOWN
+Nov 16 17:06:02 pfsense check_reload_status[685]: Linkup starting igc3
+Nov 16 17:06:02 pfsense kernel: igc3: link state changed to UP
+2026-11-16 16:45:33 all LAN targets unreachable (31/6, link=down)
+2026-11-16 16:45:33 nobounce flag set — NOT bouncing (blackout)
+2026-11-16 16:46:06 all LAN targets unreachable (32/6, link=down)
+2026-11-16 16:46:06 nobounce flag set — NOT bouncing (blackout)
+2026-11-16 16:46:36 recovered after 32 all-down probe(s)
+	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>)
+	status: active
+619372 2824 0

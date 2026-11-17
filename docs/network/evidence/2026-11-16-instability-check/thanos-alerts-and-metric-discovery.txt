@@ -1,0 +1,13 @@
+# collected 2026-11-16 17:05:39 MST from Thanos query http://192.168.59.26:10902 (instant queries)
+### query: ALERTS{alertstate="firing"}
+{"alertname":"Ix0AutoBounceFailed","alertstate":"firing","category":"network","device":"ix0","instance":"pfsense","job":"node","severity":"critical"}  1
+{"alertname":"Ix0WatchdogDisarmed","alertstate":"firing","category":"network","device":"ix0","instance":"pfsense","job":"node","severity":"critical"}  1
+{"alertname":"MinIOBucketCapacityForecastExhausted","alertstate":"firing","instance":"minio-1","job":"minio","owner":"homelab","server":"127.0.0.1:9000","severity":"warning","team":"storage"}  1
+{"alertname":"PrometheusScrapeFailureSustained","alertstate":"firing","instance":"minio-2","job":"minio","owner":"homelab","severity":"warning","team":"platform"}  1
+{"alertname":"RProxyEndpointDown","alertstate":"firing","category":"rproxy","instance":"https://karma.d.lcamaral.com","job":"blackbox-rproxy","severity":"warning"}  1
+{"alertname":"RProxyEndpointDown","alertstate":"firing","category":"rproxy","instance":"https://keycloak.d.lcamaral.com","job":"blackbox-rproxy","severity":"warning"}  1
+{"alertname":"RProxyEndpointDown","alertstate":"firing","category":"rproxy","instance":"https://rustdesk.home.lcamaral.com","job":"blackbox-rproxy","severity":"warning"}  1
+
+### query: {__name__=~".*remote_fault.*|.*local_fault.*"}
+{"device":"ix0","instance":"pfsense","job":"node"}  2824
+{"device":"ix0","instance":"pfsense","job":"node"}  15

@@ -1,0 +1,14 @@
+== 2026-11-16 17:05:34 MST sample 1
+15 2824 0 ipkts=2738839 ierr=0 idrop=0 ibytes=1926706556 opkts=2786167 oerr=0 obytes=1752254467
+== 2026-11-16 17:06:04 MST sample 2
+15 2824 0 ipkts=2859701 ierr=0 idrop=0 ibytes=2053248620 opkts=2875177 oerr=0 obytes=1801634313
+== 2026-11-16 17:06:34 MST sample 3
+15 2824 0 ipkts=2967681 ierr=0 idrop=0 ibytes=2167079616 opkts=2954511 oerr=0 obytes=1838140043
+== 2026-11-16 17:07:04 MST sample 4
+15 2824 0 ipkts=3077585 ierr=0 idrop=0 ibytes=2278548475 opkts=3032264 oerr=0 obytes=1872810227
+== 2026-11-16 17:07:34 MST sample 5
+15 2824 0 ipkts=3178002 ierr=0 idrop=0 ibytes=2380433492 opkts=3105131 oerr=0 obytes=1903900994
+== 2026-11-16 17:08:04 MST sample 6
+15 2824 0 ipkts=3285671 ierr=0 idrop=0 ibytes=2492393761 opkts=3180129 oerr=0 obytes=1933894827
+== 2026-11-16 17:08:34 MST sample 7
+16 2824 0 ipkts=3451577 ierr=0 idrop=0 ibytes=2619847491 opkts=3316509 oerr=0 obytes=1984859556

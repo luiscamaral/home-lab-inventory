@@ -1,0 +1,149 @@
+# collected 2026-11-16 17:05:51 MST from Thanos query http://192.168.59.26:10902 (instant queries)
+### query: pfsense_ix0_large_frame_loss_percent
+{"device":"ix0","instance":"pfsense","size":"1400","target":"192.168.48.44"}  0
+{"device":"ix0","instance":"pfsense","size":"1400","target":"192.168.48.45"}  0
+
+### query: max_over_time(pfsense_ix0_large_frame_loss_percent[24h])
+{"device":"ix0","instance":"pfsense","size":"1400","target":"192.168.48.44"}  57
+{"device":"ix0","instance":"pfsense","size":"1400","target":"192.168.48.45"}  71
+
+### query: avg_over_time(pfsense_ix0_large_frame_loss_percent[24h])
+{"device":"ix0","instance":"pfsense","size":"1400","target":"192.168.48.44"}  0.356067476872846
+{"device":"ix0","instance":"pfsense","size":"1400","target":"192.168.48.45"}  0.38418284055867946
+
+### query: increase(pfsense_link_flaps_total[24h]) > 0
+{"device":"ix0","instance":"pfsense"}  1.0001736412571627
+
+### query: increase(node_network_carrier_changes_total{device=~"ix0|igc.*"}[24h])
+
+### query: max_over_time(pfsense_gateway_loss_ratio[24h])
+{"gateway":"WAN1_DHCP","instance":"pfsense","monitor":"8.8.4.4","source":"136.38.130.122"}  0.09
+{"gateway":"WAN2_DHCP","instance":"pfsense","monitor":"192.168.12.1","source":"192.168.12.32"}  0
+
+### query: avg_over_time(pfsense_gateway_loss_ratio[24h])
+{"gateway":"WAN1_DHCP","instance":"pfsense","monitor":"8.8.4.4","source":"136.38.130.122"}  0.00034807831762146487
+{"gateway":"WAN2_DHCP","instance":"pfsense","monitor":"192.168.12.1","source":"192.168.12.32"}  0
+
+### query: max_over_time(pfsense_gateway_delay_seconds[24h])
+{"gateway":"WAN1_DHCP","instance":"pfsense","monitor":"8.8.4.4","source":"136.38.130.122"}  0.017857
+{"gateway":"WAN2_DHCP","instance":"pfsense","monitor":"192.168.12.1","source":"192.168.12.32"}  0.001624
+
+### query: pfsense_ix0_watchdog_disarmed
+{"device":"ix0","instance":"pfsense"}  1
+
+### query: pfsense_ix0_watchdog_paused
+{"device":"ix0","instance":"pfsense"}  1
+
+### query: pfsense_ix0_watchdog_blackout_gave_up
+{"device":"ix0","instance":"pfsense"}  0
+
+### query: rate(ifInErrors[15m]) > 0
+
+### query: increase(ifInErrors[24h]) > 0
+{"ifDescr":"ix0","ifIndex":"1","ifName":"ix0","instance":"pfsense"}  8.005131323844902
+
+### query: increase(ifOutDiscards[1h]) > 100
+
+### query: changes(ifOperStatus[24h]) > 0
+
+### query: ifOperStatus != 1
+{"ifDescr":"enc0","ifIndex":"7","ifName":"enc0","instance":"pfsense"}  2
+{"ifDescr":"igc2","ifIndex":"5","ifName":"igc2","instance":"pfsense"}  2
+{"ifDescr":"ix1","ifIndex":"2","ifName":"ix1","instance":"pfsense"}  2
+{"ifDescr":"pflog0","ifIndex":"9","ifName":"pflog0","instance":"pfsense"}  2
+{"ifDescr":"pfsync0","ifIndex":"10","ifName":"pfsync0","instance":"pfsense"}  2
+
+### query: avg_over_time(probe_success[1h]) < 1
+{"instance":"192.168.100.254:53"}  0.3103448275862069
+{"instance":"192.168.16.2"}  0.3103448275862069
+{"instance":"192.168.4.1:53"}  0.2413793103448276
+{"instance":"192.168.4.1"}  0.3103448275862069
+{"instance":"192.168.4.236:53"}  0.25
+{"instance":"192.168.4.236"}  0.3
+{"instance":"192.168.59.28:443","sni":"auth.cf.lcamaral.com"}  0.3076923076923077
+{"instance":"192.168.59.48:443","sni":"auth.cf.lcamaral.com"}  0.25
+{"instance":"192.168.59.49:443","sni":"auth.cf.lcamaral.com"}  0.3333333333333333
+{"instance":"192.168.7.11"}  0.3333333333333333
+{"instance":"ha.home.lcamaral.com:443"}  0.3333333333333333
+{"instance":"https://calibre.d.lcamaral.com"}  0.2627118644067797
+{"instance":"https://grafana.d.lcamaral.com"}  0.2627118644067797
+{"instance":"https://ha.home.lcamaral.com"}  0.25833333333333336
+{"instance":"https://hub.d.lcamaral.com/v2/library/zz-blackbox-canary/tags/list"}  0.2796610169491525
+{"instance":"https://karma.d.lcamaral.com"}  0.275
+{"instance":"https://keycloak.d.lcamaral.com"}  0.1724137931034483
+{"instance":"https://keycloak.d.lcamaral.com"}  0.24369747899159663
+{"instance":"https://portainer.d.lcamaral.com"}  0.26666666666666666
+{"instance":"https://portainer.d.lcamaral.com"}  0.275
+{"instance":"https://prometheus.d.lcamaral.com"}  0.26666666666666666
+{"instance":"https://prometheus.d.lcamaral.com"}  0.275
+{"instance":"https://rundeck.d.lcamaral.com"}  0.2711864406779661
+{"instance":"https://rustdesk-relay.home.lcamaral.com"}  0
+{"instance":"https://rustdesk.home.lcamaral.com"}  0
+{"instance":"https://s3.d.lcamaral.com"}  0.275
+{"instance":"https://vault.d.lcamaral.com"}  0.2833333333333333
+{"instance":"https://vault.d.lcamaral.com"}  0.3050847457627119
+{"instance":"https://zot.d.lcamaral.com"}  0.2833333333333333
+{"instance":"keycloak.d.lcamaral.com:443"}  0.38461538461538464
+{"instance":"vault.d.lcamaral.com:443"}  0.3333333333333333
+
+### query: avg_over_time(up[1h]) < 1
+{"instance":"192.168.100.254:53"}  0.9836065573770492
+{"instance":"192.168.16.2"}  0.3
+{"instance":"192.168.4.1:53"}  0.29508196721311475
+{"instance":"192.168.4.1"}  0.3
+{"instance":"192.168.4.236:53"}  0.3114754098360656
+{"instance":"192.168.4.236"}  0.9836065573770492
+{"instance":"192.168.48.44"}  0.29508196721311475
+{"instance":"192.168.48.45"}  0.2833333333333333
+{"instance":"192.168.48.46"}  0.3114754098360656
+{"instance":"192.168.59.28:443","sni":"auth.cf.lcamaral.com"}  0.3333333333333333
+{"instance":"192.168.59.46:8889"}  0.9416666666666667
+{"instance":"192.168.59.48:443","sni":"auth.cf.lcamaral.com"}  0.23076923076923078
+{"instance":"192.168.59.49:443","sni":"auth.cf.lcamaral.com"}  0.8571428571428571
+{"instance":"192.168.59.50:53"}  0.3548387096774194
+{"instance":"192.168.7.11"}  0.31666666666666665
+{"instance":"192.168.7.11"}  0.3548387096774194
+{"instance":"alertmanager-2"}  0.6
+{"instance":"cloudflare-tunnel-1"}  0.275
+{"instance":"cloudflare-tunnel-2"}  0.275
+{"instance":"cloudflare-tunnel-3"}  0.6721991701244814
+{"instance":"dockermaster"}  0.2791666666666667
+{"instance":"dockermaster"}  0.6
+{"instance":"ds-1"}  0.6
+{"instance":"ds-1"}  0.6541666666666667
+{"instance":"ds-2"}  0.275
+{"instance":"ds-2"}  0.9958333333333333
+{"instance":"ha.home.lcamaral.com:443"}  0.8333333333333334
+{"instance":"hbbr.d.lcamaral.com:21117"}  0.29508196721311475
+{"instance":"hbbr.d.lcamaral.com:21119"}  0.9836065573770492
+{"instance":"hbbs.d.lcamaral.com:21115"}  0.2786885245901639
+{"instance":"hbbs.d.lcamaral.com:21116"}  0.26229508196721313
+{"instance":"hbbs.d.lcamaral.com:21118"}  0.9836065573770492
+{"instance":"home-assistant"}  0.2459016393442623
+{"instance":"https://calibre.d.lcamaral.com"}  0.26666666666666666
+{"instance":"https://grafana.d.lcamaral.com"}  0.325
+{"instance":"https://ha.home.lcamaral.com"}  0.9917355371900827
+{"instance":"https://hub.d.lcamaral.com/v2/library/zz-blackbox-canary/tags/list"}  0.2727272727272727
+{"instance":"https://karma.d.lcamaral.com"}  0.9416666666666667
+{"instance":"https://keycloak.d.lcamaral.com"}  0.25
+{"instance":"https://keycloak.d.lcamaral.com"}  0.9416666666666667
+{"instance":"https://portainer.d.lcamaral.com"}  0.2809917355371901
+{"instance":"https://portainer.d.lcamaral.com"}  0.3114754098360656
+{"instance":"https://prometheus.d.lcamaral.com"}  0.9836065573770492
+{"instance":"https://prometheus.d.lcamaral.com"}  0.9917355371900827
+{"instance":"https://rundeck.d.lcamaral.com"}  0.31666666666666665
+{"instance":"https://rustdesk-relay.home.lcamaral.com"}  0.2809917355371901
+{"instance":"https://rustdesk.home.lcamaral.com"}  0.9416666666666667
+{"instance":"https://s3.d.lcamaral.com"}  0.9416666666666667
+{"instance":"https://vault.d.lcamaral.com"}  0.3333333333333333
+{"instance":"https://zot.d.lcamaral.com"}  0.9416666666666667
+{"instance":"keycloak-1"}  0.6708333333333333
+{"instance":"keycloak-2"}  0.2791666666666667
+{"instance":"keycloak-db-0"}  0.2791666666666667
+{"instance":"keycloak-db-1"}  0.6763485477178424
+{"instance":"keycloak.d.lcamaral.com:443"}  0.3333333333333333
+{"instance":"minio-1"}  0.2697095435684647
+{"instance":"minio-2"}  0
+{"instance":"nas"}  0.32916666666666666
+{"instance":"nas"}  0.32916666666666666
+{"instance":"nginx-rproxy"}  0.26556016597510373

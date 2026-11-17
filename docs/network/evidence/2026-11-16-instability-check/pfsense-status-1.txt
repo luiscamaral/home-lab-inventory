@@ -1,0 +1,15 @@
+Mon Nov 16 17:04:41 MST 2026
+ 5:04PM  up 36 mins, 1 user, load averages: 0.25, 0.28, 0.24
+ix0 	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>) 	status: active
+ix0.10 	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>) 	status: active
+ix0.28 	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>) 	status: active
+ix0.105 	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>) 	status: active
+ix0.205 	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>) 	status: active
+igc0 	media: Ethernet 2500Base-T (2500Base-T <full-duplex>) 	status: active
+igc1 	media: Ethernet 1000baseT <full-duplex> 	status: active
+igc2 	media: Ethernet autoselect 	status: no carrier
+igc3 	media: Ethernet autoselect (1000baseT <full-duplex>) 	status: active
+dev.ix.0.mac_stats.remote_faults: 15
+dev.ix.0.mac_stats.local_faults: 2824
+dev.ix.0.mac_stats.crc_errs: 0
+dev.ix.0.mac_stats.rx_missed_packets: 0

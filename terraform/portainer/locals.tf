@@ -148,6 +148,31 @@ locals {
           - target_label: __address__
             replacement: 192.168.59.29:9116
 
+      # ── snmp_exporter — switch24a (TL-SG3428X core switch) ─────────
+      # Added 2026-11-16 to track receive errors on Te1/0/25 (AP-2.5G
+      # switch) and Te1/0/27 (pfSense ix0). IF-MIB only; RMON and
+      # EtherLike are not supported by this switch. The `switch24a_v2`
+      # auth lives in the second snmp-exporter config file. The path to
+      # 192.168.32.39 (ADMIN) is routed through pfSense, so an ix0
+      # outage also shows up here as a scrape gap.
+      - job_name: snmp-switch24a
+        scrape_interval: 30s
+        scrape_timeout: 20s
+        metrics_path: /snmp
+        params:
+          module: [switch24a]
+          auth: [switch24a_v2]
+        static_configs:
+          - targets:
+              - 192.168.32.39
+            labels:
+              instance: switch24a
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - target_label: __address__
+            replacement: 192.168.59.29:9116
+
       # ── Thanos self-scrape (sidecar-1+2, query, store-gw, compact, rule) ─
       - job_name: thanos
         static_configs:
@@ -627,6 +652,24 @@ locals {
               - 192.168.48.1
             labels:
               instance: pfsense
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - target_label: __address__
+            replacement: 192.168.59.29:9116
+
+      - job_name: snmp-switch24a
+        scrape_interval: 30s
+        scrape_timeout: 20s
+        metrics_path: /snmp
+        params:
+          module: [switch24a]
+          auth: [switch24a_v2]
+        static_configs:
+          - targets:
+              - 192.168.32.39
+            labels:
+              instance: switch24a
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target

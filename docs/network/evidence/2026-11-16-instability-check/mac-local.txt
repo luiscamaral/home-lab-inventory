@@ -1,0 +1,8 @@
+# collected 2026-11-16 17:04:41 MST from Mac
+en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500
+	inet 192.168.0.7 netmask 0xfffff000 broadcast 192.168.15.255
+--
+bridge100: flags=8a63<UP,BROADCAST,SMART,RUNNING,ALLMULTI,SIMPLEX,MULTICAST> mtu 1500
+	inet 192.168.64.1 netmask 0xffffff00 broadcast 192.168.64.255
+    gateway: 192.168.4.1
+  interface: en0
