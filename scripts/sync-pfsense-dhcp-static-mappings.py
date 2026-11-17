@@ -5,37 +5,36 @@ Sync repo-declared pfSense DHCP static mappings (reservations) to the live
 
 Source of truth: pfsense/dhcp-static-mappings.yml
 Read:  SSH to pfSense, awk the <dhcpd> block out of /cf/conf/config.xml.
-Write: REST API /api/v2/services/dhcp_server/static_mapping.
-Auth:  macOS Keychain `pfsense-api-token` (same as every other pfSense API tool).
+Write: PHP on pfSense, run over SSH. It uses the same calls as the GUI page
+       "Services > DHCP Server > edit static mapping": config_set_path,
+       write_config and mark_subsystem_dirty.
 
-We read via SSH (not REST) because the static_mapping LIST endpoint returns 504
-through HAProxy on this build -- the HOME scope alone holds ~256 reservations
-and enumerating them exceeds the gateway timeout. Same approach as
-sync-pfsense-outbound-nat.py and sync-pfsense-cron-jobs.py.
+Why not the REST API: on 2026-11-16 a REST write for the ADMIN scope ran for 180 s
+and then timed out. The API loads every reservation (258 in the HOME scope) for
+each call, and HAProxy cuts requests at 30 s. The PHP path takes a moment.
 
 Matching strategy: upsert by (interface, mac). MAC is the identity. Any
 reservation NOT listed in the manifest is LEFT UNTOUCHED -- the HOME scope is
 full of hand-made entries that predate this manifest and must never be deleted.
 
-Drift on a listed MAC (ipaddr/hostname/descr differ) is reported and, with
---apply, PATCHed. The pfSense API addresses a mapping by (parent_id, id) where
-`id` is its index within the scope, so the index is taken from config.xml
-ordering -- the same ordering the API exposes.
+Safety rules:
+  * Each write is sent once. The script never resends a write.
+  * pfSense validates the entry first: valid MAC and IPv4, inside the interface
+    subnet, outside the dynamic range and pools, and not used by another MAC.
+  * The dry run asks pfSense to validate each pending change without writing.
+  * After a write the script reads the live config back and compares it.
+  * If the outcome is unknown, the script stops. It does not retry.
+  * The SSH path is the ADMIN address (igc3). It does not depend on the ix0 trunk.
+  * write_config keeps its normal backup in /cf/conf/backup. To roll back, restore the
+    previous revision in the GUI (Diagnostics > Backup & Restore > Config History).
 
-Writes: each write is sent ONCE. The script never resends a write after a
-timeout. pfSense serves these endpoints slowly (one-mapping reads took ~56 s on
-2026-11-16), and HAProxy cuts requests at 30 s. So writes bypass HAProxy: the
-script runs curl on pfSense against the local web listener, over the ADMIN path
-(igc3), which does not depend on the ix0 trunk. After a write, the script reads
-the live config back and reports the real outcome. If the outcome is unknown, it
-stops and tells you to inspect the live state. It does not retry.
-
-Writes change the stored configuration only. The DHCP server keeps its running
-configuration until you pass --activate, which reloads dhcpd (existing leases
-survive).
+A write changes the stored configuration only. The DHCP server keeps running its
+old configuration until you pass --activate. That reloads only dhcpd, and existing
+leases survive. It does not restart the DNS resolver. The resolver registers the
+new static name at its next reload.
 
 Workflow:
-    scripts/sync-pfsense-dhcp-static-mappings.py                        # dry run
+    scripts/sync-pfsense-dhcp-static-mappings.py                        # dry run + validate
     scripts/sync-pfsense-dhcp-static-mappings.py --apply --only lan MAC # write one
     scripts/sync-pfsense-dhcp-static-mappings.py --activate             # reload dhcpd
 """
@@ -53,73 +52,142 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = REPO_ROOT / "pfsense" / "dhcp-static-mappings.yml"
 
-# Writes use pfSense's local web listener, past HAProxy's 30 s gateway timeout.
-LOCAL_API = "http://127.0.0.1:56880/api/v2"
-WRITE_TIMEOUT = 240  # seconds, below nginx fastcgi_read_timeout (360)
+PHP_TIMEOUT = 120  # seconds
 # ADMIN path (igc3). It stays up when the ix0 trunk is down. The host key is
 # stored under the HOME address, so HostKeyAlias keeps strict checking.
 ADMIN_SSH = ["ssh", "-o", "HostName=192.168.32.33",
              "-o", "HostKeyAlias=[192.168.4.1]:3220",
              "-o", "ServerAliveInterval=10", "-o", "ServerAliveCountMax=3",
              "pfsense"]
-TOKEN_KEYCHAIN_SERVICE = "pfsense-api-token"
 
 # Fields we reconcile. `mac` and `interface` form the key and are not diffed.
 FIELDS = ("ipaddr", "hostname", "descr")
 
+# PHP run on pfSense. The payload is JSON in a nowdoc, so nothing needs escaping.
+PHP_TEMPLATE = r"""<?php
+require_once("config.inc");
+require_once("util.inc");
+require_once("services.inc");
+require_once("pfsense-utils.inc");
+require_once("interfaces.inc");
 
-def keychain_token() -> str:
-    out = subprocess.run(
-        ["security", "find-generic-password", "-s", TOKEN_KEYCHAIN_SERVICE, "-w"],
-        capture_output=True, text=True, check=True,
-    )
-    return out.stdout.strip()
+function done(array $r): void {
+    echo json_encode($r), "\n";
+    exit($r['ok'] ? 0 : 1);
+}
+function fail(string $why): void {
+    done(['ok' => false, 'error' => $why]);
+}
+
+$d = json_decode(<<<'JSON'
+@@PAYLOAD@@
+JSON, true);
+if (!is_array($d) || !isset($d['op'])) {
+    fail('bad payload');
+}
+
+if ($d['op'] === 'activate') {
+    $rc = services_dhcpd_configure();
+    if ($rc == 0) {
+        clear_subsystem_dirty('dhcpd');
+    }
+    done(['ok' => $rc == 0, 'op' => 'activate', 'rc' => $rc]);
+}
+
+$if = (string)$d['interface'];
+$mac = strtolower((string)$d['mac']);
+$ip = (string)$d['ipaddr'];
+if (!config_path_enabled("dhcpd/{$if}")) {
+    fail("DHCP server is not enabled on {$if}");
+}
+if (!is_macaddr($mac)) {
+    fail("bad MAC {$mac}");
+}
+if (!is_ipaddrv4($ip)) {
+    fail("bad IPv4 {$ip}");
+}
+$ifip = config_get_path("interfaces/{$if}/ipaddr");
+$bits = config_get_path("interfaces/{$if}/subnet");
+if (!is_ipaddrv4($ifip) || !ip_in_subnet($ip, "{$ifip}/{$bits}")) {
+    fail("{$ip} is outside the subnet of {$if}");
+}
+if ($ip === $ifip) {
+    fail("{$ip} is the address of {$if} itself");
+}
+$from = config_get_path("dhcpd/{$if}/range/from");
+$to = config_get_path("dhcpd/{$if}/range/to");
+if ($from && $to && is_inrange_v4($ip, $from, $to)) {
+    fail("{$ip} is inside the dynamic range {$from}-{$to}");
+}
+foreach (config_get_path("dhcpd/{$if}/pool", []) as $pool) {
+    if (is_inrange_v4($ip, $pool['range']['from'], $pool['range']['to'])) {
+        fail("{$ip} is inside an address pool");
+    }
+}
+
+$maps = config_get_path("dhcpd/{$if}/staticmap", []);
+$found = null;
+foreach ($maps as $i => $m) {
+    if (strtolower($m['mac'] ?? '') === $mac) {
+        $found = $i;
+    } elseif (($m['ipaddr'] ?? '') === $ip) {
+        fail("{$ip} is already reserved for " . ($m['mac'] ?? '?'));
+    }
+}
+
+$new = ($found !== null) ? $maps[$found] : [];
+$new['mac'] = $mac;
+$new['cid'] = $new['cid'] ?? '';
+$new['ipaddr'] = $ip;
+$new['hostname'] = (string)$d['hostname'];
+$new['descr'] = (string)$d['descr'];
+
+$action = 'create';
+if ($found !== null) {
+    $same = ($maps[$found]['ipaddr'] ?? '') === $ip
+        && ($maps[$found]['hostname'] ?? '') === $new['hostname']
+        && ($maps[$found]['descr'] ?? '') === $new['descr'];
+    $action = $same ? 'noop' : 'update';
+}
+if (!empty($d['dry']) || $action === 'noop') {
+    done(['ok' => true, 'action' => $action, 'dry' => !empty($d['dry'])]);
+}
+
+if ($found !== null) {
+    $maps[$found] = $new;
+} else {
+    $maps[] = $new;
+}
+usort($maps, fn($a, $b) => ipcmp($a['ipaddr'], $b['ipaddr']));
+config_set_path("dhcpd/{$if}/staticmap", $maps);
+write_config("DHCP static mapping {$new['hostname']} ({$mac}) set by sync-pfsense-dhcp-static-mappings.py");
+mark_subsystem_dirty('dhcpd');
+done(['ok' => true, 'action' => $action, 'dry' => false]);
+"""
 
 
 class OutcomeUnknown(RuntimeError):
     """A write was sent but its result is not known. Do not retry blindly."""
 
 
-def _cfg(value: str) -> str:
-    """Quote a value for a curl config file."""
-    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
-
-def write_api(method: str, path: str, token: str, body: dict) -> dict:
-    """Send ONE write to the local pfSense API. Never retries.
-
-    The request goes through ssh to curl on pfSense. The token and body travel
-    on stdin as a curl config, so they do not appear in any process list.
-    """
-    cfg = "\n".join([
-        f"url = {_cfg(LOCAL_API + path)}",
-        f"request = {_cfg(method)}",
-        f"header = {_cfg('X-API-Key: ' + token)}",
-        'header = "Content-Type: application/json"',
-        f"data = {_cfg(json.dumps(body))}",
-        "silent",
-        "show-error",
-        f"max-time = {WRITE_TIMEOUT}",
-    ]) + "\n"
+def php_run(payload: dict) -> dict:
+    """Run the PHP above once on pfSense. Returns its JSON answer."""
+    body = json.dumps(payload)
     try:
-        r = subprocess.run(ADMIN_SSH + ["curl -K -"], input=cfg, capture_output=True,
-                           text=True, timeout=WRITE_TIMEOUT + 30)
+        r = subprocess.run(ADMIN_SSH + ["php -q"], input=PHP_TEMPLATE.replace("@@PAYLOAD@@", body),
+                           capture_output=True, text=True, timeout=PHP_TIMEOUT)
     except subprocess.TimeoutExpired as e:
-        raise OutcomeUnknown(f"{method} {path}: no answer after {e.timeout}s") from e
-    if r.returncode != 0:
-        raise OutcomeUnknown(f"{method} {path}: curl/ssh exit {r.returncode}: {r.stderr.strip()[:200]}")
+        raise OutcomeUnknown(f"no answer after {e.timeout}s") from e
+    lines = [ln for ln in r.stdout.splitlines() if ln.startswith("{")]
+    if not lines:
+        raise OutcomeUnknown(f"ssh/php exit {r.returncode}, no JSON answer: {(r.stderr or r.stdout).strip()[:300]}")
     try:
-        return json.loads(r.stdout)
+        answer = json.loads(lines[-1])
     except json.JSONDecodeError as e:
-        raise OutcomeUnknown(f"{method} {path}: unreadable answer: {r.stdout[:200]!r}") from e
-
-
-def _check(resp: dict, what: str) -> dict:
-    """Fail on an API error answer. The API reports errors in `code`."""
-    if int(resp.get("code", 200)) >= 400:
-        raise SystemExit(f"error: {what}: API returned {resp.get('code')} "
-                         f"{resp.get('message', '')} ({resp.get('response_id', '')})")
-    return resp
+        raise OutcomeUnknown(f"unreadable answer: {lines[-1][:200]!r}") from e
+    if not answer.get("ok"):
+        raise SystemExit(f"error: pfSense refused: {answer.get('error', answer)}")
+    return answer
 
 
 def _text(el, tag: str) -> str:
@@ -131,10 +199,10 @@ def fetch_live() -> dict[tuple[str, str], dict]:
     """Read <dhcpd> from config.xml via SSH.
 
     Returns {(interface, mac_lower): {ipaddr, hostname, descr, index}} where
-    `index` is the mapping's position within its scope (the API's `id`).
+    `index` is the mapping's position within its scope.
     """
     out = subprocess.run(
-        ["ssh", "pfsense", "awk '/<dhcpd>/,/<\\/dhcpd>/' /cf/conf/config.xml"],
+        ADMIN_SSH + ["awk '/<dhcpd>/,/<\\/dhcpd>/' /cf/conf/config.xml"],
         capture_output=True, text=True, check=True,
     )
     # Use stdlib ElementTree, like the outbound NAT and cron sync scripts.
@@ -161,17 +229,31 @@ def fetch_live() -> dict[tuple[str, str], dict]:
     return live
 
 
-def write_and_verify(method: str, token: str, body: dict, want: dict) -> None:
+def _payload(want: dict, dry: bool) -> dict:
+    return {"op": "upsert", "interface": want["interface"], "mac": str(want["mac"]).lower(),
+            "ipaddr": want["ipaddr"], "hostname": want.get("hostname", ""),
+            "descr": want.get("descr", ""), "dry": dry}
+
+
+def validate(want: dict) -> None:
+    """Ask pfSense to validate one mapping without writing it."""
+    try:
+        answer = php_run(_payload(want, dry=True))
+    except OutcomeUnknown as e:
+        sys.exit(f"error: could not validate on pfSense: {e}")
+    print(f"    pfSense accepts it ({answer['action']}, nothing written)")
+
+
+def write_and_verify(want: dict) -> None:
     """Send one write, then read the live config back and compare."""
     iface, mac = want["interface"], str(want["mac"]).lower()
     try:
-        _check(write_api(method, "/services/dhcp_server/static_mapping", token, body),
-               f"{method} {iface} {mac}")
+        php_run(_payload(want, dry=False))
     except OutcomeUnknown as e:
         sys.exit(f"outcome unknown: {e}\nDo NOT retry. Run the dry run to see the live state.")
     cur = fetch_live().get((iface, mac))
     if cur is None or any(cur[k] != str(want.get(k, "")) for k in FIELDS):
-        sys.exit(f"error: {method} answered, but live config does not match for {iface} {mac}: {cur}")
+        sys.exit(f"error: pfSense answered, but live config does not match for {iface} {mac}: {cur}")
     print(f"    -> verified live: {iface} {mac} -> {cur['ipaddr']}")
 
 
@@ -191,11 +273,10 @@ def main() -> int:
             sys.exit("error: --activate runs alone")
         print("reloading dhcpd (existing leases survive)...")
         try:
-            _check(write_api("POST", "/services/dhcp_server/apply", keychain_token(), {}),
-                   "dhcp apply")
+            php_run({"op": "activate"})
         except OutcomeUnknown as e:
             sys.exit(f"outcome unknown: {e}\nDo NOT retry. Check dhcpd on pfSense first.")
-        print("reload requested.")
+        print("reload done.")
         return 0
 
     if not MANIFEST.is_file():
@@ -216,7 +297,6 @@ def main() -> int:
     live = fetch_live()
     print(f"live reservations across all scopes: {len(live)}")
 
-    token = keychain_token() if args.apply else ""
     pending = 0
 
     for d in declared:
@@ -227,38 +307,20 @@ def main() -> int:
 
         if cur is None:
             print(f"  + CREATE {label}  ({d.get('descr', '')})")
-            pending += 1
-            if args.apply:
-                body = {
-                    "parent_id": iface,
-                    "mac": mac,
-                    "ipaddr": d["ipaddr"],
-                    "hostname": d.get("hostname", ""),
-                    "descr": d.get("descr", ""),
-                }
-                write_and_verify("POST", token, body, d)
-            continue
-
-        diffs = {k: (cur[k], str(d.get(k, ""))) for k in FIELDS
-                 if cur[k] != str(d.get(k, ""))}
-        if not diffs:
-            print(f"  = {label}: in sync")
-            continue
-
-        print(f"  ~ UPDATE {label}")
-        for k, (was, want) in diffs.items():
-            print(f"      {k}: {was!r} -> {want!r}")
+        else:
+            diffs = {k: (cur[k], str(d.get(k, ""))) for k in FIELDS
+                     if cur[k] != str(d.get(k, ""))}
+            if not diffs:
+                print(f"  = {label}: in sync")
+                continue
+            print(f"  ~ UPDATE {label}")
+            for k, (was, want) in diffs.items():
+                print(f"      {k}: {was!r} -> {want!r}")
         pending += 1
         if args.apply:
-            body = {
-                "parent_id": iface,
-                "id": cur["index"],
-                "mac": mac,
-                "ipaddr": d["ipaddr"],
-                "hostname": d.get("hostname", ""),
-                "descr": d.get("descr", ""),
-            }
-            write_and_verify("PATCH", token, body, d)
+            write_and_verify(d)
+        else:
+            validate(d)
 
     if pending == 0:
         print("DHCP static mappings in sync.")
