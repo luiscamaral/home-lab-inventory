@@ -1,0 +1,64 @@
+== 2026-11-16 17:04:47 MST watchdog tail
+2026-11-16 16:42:48 all LAN targets unreachable (26/6, link=down)
+2026-11-16 16:42:48 nobounce flag set — NOT bouncing (blackout)
+2026-11-16 16:43:21 all LAN targets unreachable (27/6, link=down)
+2026-11-16 16:43:21 nobounce flag set — NOT bouncing (blackout)
+2026-11-16 16:43:54 all LAN targets unreachable (28/6, link=down)
+2026-11-16 16:43:54 nobounce flag set — NOT bouncing (blackout)
+2026-11-16 16:44:27 all LAN targets unreachable (29/6, link=down)
+2026-11-16 16:44:27 nobounce flag set — NOT bouncing (blackout)
+2026-11-16 16:45:00 all LAN targets unreachable (30/6, link=down)
+2026-11-16 16:45:00 nobounce flag set — NOT bouncing (blackout)
+2026-11-16 16:45:33 all LAN targets unreachable (31/6, link=down)
+2026-11-16 16:45:33 nobounce flag set — NOT bouncing (blackout)
+2026-11-16 16:46:06 all LAN targets unreachable (32/6, link=down)
+2026-11-16 16:46:06 nobounce flag set — NOT bouncing (blackout)
+2026-11-16 16:46:36 recovered after 32 all-down probe(s)
+== link events since boot (system log)
+Nov 16 16:43:54 pfsense ix0-watchdog[89953]: all LAN targets unreachable (28/6, link=down)
+Nov 16 16:44:21 pfsense check_reload_status[685]: Linkup starting igc3
+Nov 16 16:44:21 pfsense kernel: igc3: link state changed to DOWN
+Nov 16 16:44:27 pfsense ix0-watchdog[2066]: all LAN targets unreachable (29/6, link=down)
+Nov 16 16:45:00 pfsense ix0-watchdog[34696]: all LAN targets unreachable (30/6, link=down)
+Nov 16 16:45:33 pfsense ix0-watchdog[73809]: all LAN targets unreachable (31/6, link=down)
+Nov 16 16:46:06 pfsense ix0-watchdog[4277]: all LAN targets unreachable (32/6, link=down)
+Nov 16 16:46:20 pfsense check_reload_status[685]: Linkup starting igc3
+Nov 16 16:46:21 pfsense kernel: igc3: link state changed to UP
+Nov 16 16:46:26 pfsense check_reload_status[685]: Linkup starting ix0
+Nov 16 16:46:26 pfsense check_reload_status[685]: Linkup starting ix0.205
+Nov 16 16:46:26 pfsense check_reload_status[685]: Linkup starting ix0.10
+Nov 16 16:46:26 pfsense check_reload_status[685]: Linkup starting ix0.28
+Nov 16 16:46:26 pfsense check_reload_status[685]: Linkup starting ix0.105
+Nov 16 16:46:26 pfsense kernel: ix0: link state changed to UP
+Nov 16 16:46:26 pfsense kernel: ix0.205: link state changed to UP
+Nov 16 16:46:26 pfsense kernel: ix0.10: link state changed to UP
+Nov 16 16:46:26 pfsense kernel: ix0.28: link state changed to UP
+Nov 16 16:46:26 pfsense kernel: ix0.105: link state changed to UP
+Nov 16 16:46:36 pfsense ix0-watchdog[3107]: recovered after 32 all-down probe(s)
+== gateways (dpinger)
+Name       Monitor       Source               Delay   StdDev  Loss  Status  Substatus
+WAN1_DHCP  8.8.4.4       136.38.130.122    14.319ms  0.219ms  0.0%  online       none
+WAN2_DHCP  192.168.12.1  192.168.12.32      0.864ms  1.094ms  0.0%  online       none
+== netstat -I ix0
+Name    Mtu Network        Address                          Ipkts Ierrs Idrop      Ibytes    Opkts Oerrs      Obytes  Coll  Drop
+ix0    1500 <Link#1>       a8:b8:e0:03:70:35              2614828     0     0  1805423116  2687892     0  1701881591     0     0
+ix0       - fe80::%ix0/64  fe80::aab8:e0ff:fe03:7035%ix0        0     -     -           0        2     -         172     -     -
+== netstat igc0/igc1
+Name    Mtu Network          Address                           Ipkts Ierrs Idrop    Opkts Oerrs  Coll  Drop
+igc0   1500 <Link#3>         a8:b8:e0:00:bc:4d               1075991     0     0   946741     0     0     0
+igc0      - fe80::%igc0/64   fe80::aab8:e0ff:fe00:bc4d%igc0        0     -     -        1     -     -     -
+Name    Mtu Network          Address                           Ipkts Ierrs Idrop    Opkts Oerrs  Coll  Drop
+igc1   1500 <Link#4>         a8:b8:e0:00:bc:4e                  5153     0     0     7892     0     0     0
+igc1      - fe80::%igc1/64   fe80::aab8:e0ff:fe00:bc4e%igc1        0     -     -        1     -     -     -
+== mbuf/queue drops
+0/0/0 requests for mbufs denied (mbufs/clusters/mbuf+clusters)
+0/0/0 requests for mbufs delayed (mbufs/clusters/mbuf+clusters)
+0/0/0 requests for jumbo clusters delayed (4k/9k/16k)
+0/0/0 requests for jumbo clusters denied (4k/9k/16k)
+0 requests for sfbufs denied
+0 requests for sfbufs delayed
+== pf states
+  current entries                    12425
+  memory                                 0            0.0/s
+  congestion                             0            0.0/s
+  state-limit                            0            0.0/s

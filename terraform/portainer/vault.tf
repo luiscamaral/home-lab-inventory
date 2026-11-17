@@ -152,6 +152,14 @@ data "vault_kv_secret_v2" "telegram" {
   name  = "homelab/telegram/alertmanager"
 }
 
+# switch24a (TP-Link TL-SG3428X) SNMP v2c read community for the
+# snmp-exporter `switch24a_v2` auth. Field used: snmp_community. Passed to
+# the snmp-exporter stack as env, not baked into the compose body.
+data "vault_kv_secret_v2" "switch24a" {
+  mount = "secret"
+  name  = "homelab/switch24a"
+}
+
 # Proxmox API token for pve-exporter (Phase 3c). The exporter uses an
 # unprivileged read-only token `prometheus@pam!metrics` to walk the PVE
 # API. Fields: token_id (= prometheus@pam!metrics), token_secret.

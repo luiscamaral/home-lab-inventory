@@ -19,8 +19,15 @@ docker run --rm -v "$PWD:/opt" -w /opt --entrypoint /bin/generator \
   local/snmp-generator-with-mibs \
   generate --no-fail-on-parse-errors -g generator.yml -o snmp.yml
 
+# switch24a module. Terraform reads this output and deploys it through
+# the snmp-exporter stack `configs:` block (no manual copy step).
+docker run --rm -v "$PWD:/opt" -w /opt --entrypoint /bin/generator \
+  local/snmp-generator-with-mibs \
+  generate --no-fail-on-parse-errors -g generator-switch24a.yml -o snmp-switch24a.yml
+
 echo
 echo "Generated snmp.yml: $(wc -l < snmp.yml) lines, $(grep -c '^    - name:' snmp.yml) walked metrics"
+echo "Generated snmp-switch24a.yml: $(wc -l < snmp-switch24a.yml) lines (deploy with terraform/portainer)"
 echo
 echo "Deploy: see README.md. Until baked-image migration, the runtime"
 echo "community string is injected by sed-substituting 'community: public'"

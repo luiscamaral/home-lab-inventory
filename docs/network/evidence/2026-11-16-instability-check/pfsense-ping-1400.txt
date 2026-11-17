@@ -1,0 +1,11 @@
+== 2026-11-16 17:05:34 MST ping from pfSense, 100 pkts, 0.2s, 1400B payload
+192.168.7.11    100 packets transmitted, 100 packets received, 0.0% packet loss round-trip min/avg/max/stddev = 0.159/0.209/1.043/0.088 ms
+192.168.7.10    100 packets transmitted, 100 packets received, 0.0% packet loss round-trip min/avg/max/stddev = 0.137/0.208/0.466/0.045 ms
+192.168.2.50    100 packets transmitted, 87 packets received, 13.0% packet loss round-trip min/avg/max/stddev = 0.173/7.344/414.979/48.976 ms
+192.168.48.44   100 packets transmitted, 100 packets received, 0.0% packet loss round-trip min/avg/max/stddev = 0.208/0.317/1.584/0.138 ms
+192.168.59.25   100 packets transmitted, 100 packets received, 0.0% packet loss round-trip min/avg/max/stddev = 0.193/0.321/0.605/0.060 ms
+192.168.59.26   100 packets transmitted, 100 packets received, 0.0% packet loss round-trip min/avg/max/stddev = 0.193/0.304/0.510/0.058 ms
+192.168.16.1    100 packets transmitted, 100 packets received, 0.0% packet loss round-trip min/avg/max/stddev = 0.036/0.124/0.187/0.024 ms
+192.168.32.39   100 packets transmitted, 100 packets received, 0.0% packet loss round-trip min/avg/max/stddev = 0.966/2.846/11.775/3.016 ms
+8.8.8.8         100 packets transmitted, 100 packets received, 0.0% packet loss round-trip min/avg/max/stddev = 14.224/14.472/14.744/0.136 ms
+1.1.1.1         100 packets transmitted, 100 packets received, 0.0% packet loss round-trip min/avg/max/stddev = 1.842/2.101/2.719/0.157 ms

@@ -1,0 +1,42 @@
+now=2026-11-16 17:07:07 MST uptime_s=1326404
+11-16 14:54:28 [1318445.397857] r8168: eth0: link down
+11-16 14:54:29 [1318446.400885] r8168: eth1: link down
+11-16 14:54:29 [1318446.417922] bond0: link status definitely down for interface eth1, disabling it
+11-16 14:54:29 [1318446.425419] bond0: first active interface up!
+11-16 14:54:31 [1318448.465375] r8168: eth0: link up 1 Gbps
+11-16 14:54:31 [1318448.835971] r8168: eth2: link down
+11-16 14:54:31 [1318448.930006] bond0: link status definitely down for interface eth2, disabling it
+11-16 14:54:31 [1318448.937534] bond0: first active interface up!
+11-16 14:54:32 [1318449.463427] r8168: eth1: link up 1 Gbps
+11-16 14:54:32 [1318449.542007] bond0: link status up for interface eth1, enabling it in 100 ms
+11-16 14:54:32 [1318449.649008] bond0: link status definitely up for interface eth1, 1000 Mbps full duplex
+11-16 14:54:32 [1318449.948009] r8168: eth3: link down
+11-16 14:54:32 [1318449.957048] bond0: link status definitely down for interface eth3, disabling it
+11-16 14:54:32 [1318449.957052] bond0: first active interface up!
+11-16 14:54:34 [1318451.897498] r8168: eth2: link up 1 Gbps
+11-16 14:54:34 [1318451.963086] bond0: link status up for interface eth2, enabling it in 100 ms
+11-16 14:54:35 [1318452.070132] bond0: link status definitely up for interface eth2, 1000 Mbps full duplex
+11-16 14:54:36 [1318453.021545] r8168: eth3: link up 1 Gbps
+11-16 14:54:36 [1318453.087125] bond0: link status up for interface eth3, enabling it in 100 ms
+11-16 14:54:36 [1318453.194127] bond0: link status definitely up for interface eth3, 1000 Mbps full duplex
+11-16 15:43:19 [1321376.563908] atlantic_v2 0000:01:00.0 eth4: atlantic_v2: link change old 2500 new 0
+11-16 16:30:37 [1324214.528302] atlantic_v2 0000:01:00.0 eth4: atlantic_v2: link change old 0 new 2500
+11-16 16:45:07 [1325084.659920] r8168: eth2: link down
+11-16 16:45:07 [1325084.701942] bond0: link status definitely down for interface eth2, disabling it
+11-16 16:45:07 [1325084.923946] r8168: eth3: link down
+11-16 16:45:08 [1325085.008945] bond0: link status definitely down for interface eth3, disabling it
+11-16 16:45:08 [1325085.334290] r8168: eth1: link down
+11-16 16:45:08 [1325085.369508] r8168: eth0: link down
+11-16 16:45:08 [1325085.415961] bond0: link status definitely down for interface eth1, disabling it
+11-16 16:45:08 [1325085.423453] bond0: now running without any active interface!
+11-16 16:47:06 [1325203.638372] r8168: eth1: link up 1 Gbps
+11-16 16:47:06 [1325203.642421] bond0: link status up for interface eth1, enabling it in 0 ms
+11-16 16:47:06 [1325203.665114] r8168: eth0: link up 1 Gbps
+11-16 16:47:06 [1325203.674845] bond0: link status definitely up for interface eth1, 0 Mbps full duplex
+11-16 16:47:06 [1325203.682695] bond0: first active interface up!
+11-16 16:47:06 [1325203.965381] r8168: eth2: link up 1 Gbps
+11-16 16:47:06 [1325203.986984] bond0: link status up for interface eth2, enabling it in 100 ms
+11-16 16:47:07 [1325204.093977] bond0: link status definitely up for interface eth2, 1000 Mbps full duplex
+11-16 16:47:07 [1325204.227396] r8168: eth3: link up 1 Gbps
+11-16 16:47:07 [1325204.302991] bond0: link status up for interface eth3, enabling it in 100 ms
+11-16 16:47:07 [1325204.410255] bond0: link status definitely up for interface eth3, 1000 Mbps full duplex

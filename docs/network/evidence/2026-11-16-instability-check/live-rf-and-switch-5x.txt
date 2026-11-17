@@ -1,0 +1,10 @@
+== 2026-11-16 17:15:58 MST s1 rf/lf/crc: 636622 2824 0  | sw upt/Te25 inErr/Te27 inErr/Te27 lastChange: 0:0:31:16.79 65109 456 0:0:30:56.79 0:0:01:43.78
+50 packets transmitted, 47 packets received, 6.0% packet loss
+== 2026-11-16 17:16:09 MST s2 rf/lf/crc: 661219 2825 0  | sw upt/Te25 inErr/Te27 inErr/Te27 lastChange: 0:0:31:27.93 65415 514 0:0:30:56.79 0:0:01:43.78
+50 packets transmitted, 47 packets received, 6.0% packet loss
+== 2026-11-16 17:16:21 MST s3 rf/lf/crc: 685871 2825 0  | sw upt/Te25 inErr/Te27 inErr/Te27 lastChange: 0:0:31:39.07 65756 548 0:0:30:56.79 0:0:01:43.78
+50 packets transmitted, 48 packets received, 4.0% packet loss
+== 2026-11-16 17:16:32 MST s4 rf/lf/crc: 712409 2825 0  | sw upt/Te25 inErr/Te27 inErr/Te27 lastChange: 0:0:31:50.20 66181 585 0:0:30:56.79 0:0:01:43.78
+50 packets transmitted, 48 packets received, 4.0% packet loss
+== 2026-11-16 17:16:43 MST s5 rf/lf/crc: 738259 2825 0  | sw upt/Te25 inErr/Te27 inErr/Te27 lastChange: 0:0:32:01.37 66527 613 0:0:30:56.79 0:0:01:43.78
+50 packets transmitted, 48 packets received, 4.0% packet loss

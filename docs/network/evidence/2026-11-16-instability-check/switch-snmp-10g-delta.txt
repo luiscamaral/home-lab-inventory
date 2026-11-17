@@ -1,0 +1,16 @@
+### pass 1 2026-11-16 17:14:41 MST snmp v2c from pfSense (ADMIN), community from Vault secret/homelab/switch24a (redacted)
+sysUpTime 0:0:29:59.66
+ifIndex=49177 oper/inErr/outErr/inDisc/outDisc/lastChange: up 62482 0 0 0 0:0:01:43.78
+ifIndex=49178 oper/inErr/outErr/inDisc/outDisc/lastChange: up 49 0 0 0 0:0:01:44.01
+ifIndex=49179 oper/inErr/outErr/inDisc/outDisc/lastChange: up 212 0 0 0 0:0:01:44.34
+ifIndex=49180 oper/inErr/outErr/inDisc/outDisc/lastChange: up 0 0 0 0 0:0:01:44.67
+### pass 2 2026-11-16 17:15:41 MST snmp v2c from pfSense (ADMIN), community from Vault secret/homelab/switch24a (redacted)
+sysUpTime 0:0:30:59.96
+ifIndex=49177 oper/inErr/outErr/inDisc/outDisc/lastChange: up 64403 0 0 0 0:0:01:43.78
+ifIndex=49178 oper/inErr/outErr/inDisc/outDisc/lastChange: up 49 0 0 0 0:0:01:44.01
+ifIndex=49179 oper/inErr/outErr/inDisc/outDisc/lastChange: up 383 0 0 0 0:0:30:56.79
+ifIndex=49180 oper/inErr/outErr/inDisc/outDisc/lastChange: up 0 0 0 0 0:0:01:44.67
+### all ports nonzero ifInErrors / ifOutDiscards
+IF-MIB::ifInErrors.49177 64412
+IF-MIB::ifInErrors.49178 49
+IF-MIB::ifInErrors.49179 383

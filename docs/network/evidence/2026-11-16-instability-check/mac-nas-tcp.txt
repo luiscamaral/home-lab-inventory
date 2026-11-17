@@ -1,0 +1,28 @@
+== 2026-11-16 17:11:03 MST Mac name resolution and TCP checks to NAS
+ip_address: 192.168.0.50
+192.168.0.50:22 Connection to 192.168.0.50 port 22 [tcp/ssh] succeeded!
+open
+192.168.0.50:5000 Connection to 192.168.0.50 port 5000 [tcp/commplex-main] succeeded!
+open
+192.168.1.50:22 Connection to 192.168.1.50 port 22 [tcp/ssh] succeeded!
+open
+192.168.1.50:5000 Connection to 192.168.1.50 port 5000 [tcp/commplex-main] succeeded!
+open
+192.168.2.50:22 Connection to 192.168.2.50 port 22 [tcp/ssh] succeeded!
+open
+192.168.2.50:5000 Connection to 192.168.2.50 port 5000 [tcp/commplex-main] succeeded!
+open
+192.168.32.50:22 Connection to 192.168.32.50 port 22 [tcp/ssh] succeeded!
+open
+192.168.32.50:5000 Connection to 192.168.32.50 port 5000 [tcp/commplex-main] succeeded!
+open
+192.168.4.237:22 fail
+192.168.4.237:5000 fail
+? (192.168.0.50) at 90:9:d0:1a:5a:8 on en0 ifscope [ethernet]
+? (192.168.1.50) at 90:9:d0:1a:5a:9 on en0 ifscope [ethernet]
+? (192.168.2.50) at 90:9:d0:71:27:11 on en0 ifscope [ethernet]
+? (192.168.4.237) at 2:42:c0:a8:4:ed on en0 ifscope [ethernet]
+17:11:37 4.237:9090 200 0.100233s
+17:11:39 4.237:9090 200 0.041984s
+17:11:41 4.237:9090 200 0.048272s
+17:11:43 4.237:9090 200 0.044263s

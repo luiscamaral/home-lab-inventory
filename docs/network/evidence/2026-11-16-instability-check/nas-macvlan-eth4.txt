@@ -1,0 +1,28 @@
+17:11:53
+eth4 rx_err rx_drop tx_err tx_drop:
+0 0 0 0
+eth4.10:
+0 0 0 0
+default via 192.168.4.1 dev eth4.10  src 192.168.2.50
+172.17.0.0/16 dev docker0  proto kernel  scope link  src 172.17.0.1 linkdown
+172.18.0.0/16 dev docker-266b038e  proto kernel  scope link  src 172.18.0.1 linkdown
+172.20.0.0/16 dev docker-d1070d7d  proto kernel  scope link  src 172.20.0.1 linkdown
+172.24.0.0/16 dev docker-23d6bda8  proto kernel  scope link  src 172.24.0.1 linkdown
+172.27.0.0/16 dev docker-55df9514  proto kernel  scope link  src 172.27.0.1 linkdown
+192.168.0.0/20 dev eth0  proto kernel  scope link  src 192.168.0.50
+192.168.0.0/20 dev bond0.10  proto kernel  scope link  src 192.168.1.50
+192.168.0.0/20 dev eth4.10  proto kernel  scope link  src 192.168.2.50
+192.168.32.0/26 dev bond0.1  proto kernel  scope link  src 192.168.32.50
+192.168.160.0/20 dev docker-e96968fa  proto kernel  scope link  src 192.168.160.1 linkdown
+0:	from all lookup local
+2:	from all lookup static-table
+8:	from 192.168.0.50 lookup eth0-table
+10:	from 192.168.1.50 lookup bond0.10-table
+11:	from 192.168.32.50 lookup bond0.1-table
+13:	from 192.168.2.50 lookup eth4.10-table
+32766:	from all lookup main
+32767:	from all lookup default
+net.ipv4.conf.all.arp_ignore = 1
+net.ipv4.conf.all.arp_announce = 2
+net.ipv4.conf.all.rp_filter = 0
+net.ipv4.conf.eth4/10.rp_filter = 0

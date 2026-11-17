@@ -750,13 +750,25 @@ resource "portainer_stack" "cadvisor_nas" {
 # /nfs/dockermaster/docker/snmp-exporter/snmp.yml — the orchestrator must
 # pre-stage this file before the legacy prometheus stack is destroyed in
 # Phase 0 (or accept a brief snmp scrape gap).
+#
+# switch24a (2026-11-16): the generated switch module is read from
+# dockermaster/docker/snmp-exporter/snmp-switch24a.yml (regen.sh output)
+# and injected through `configs:`. The community stays a Compose variable
+# in that file; the env block below fills it from Vault at deploy time.
 resource "portainer_stack" "snmp_exporter" {
   name            = "snmp-exporter"
   endpoint_id     = var.ds1_endpoint_id
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/snmp-exporter.yml")
+  stack_file_content = templatefile("${path.module}/stacks/snmp-exporter.yml.tftpl", {
+    switch24a_config = file("${path.module}/../../dockermaster/docker/snmp-exporter/snmp-switch24a.yml")
+  })
+
+  env {
+    name  = "SWITCH24A_SNMP_COMMUNITY"
+    value = data.vault_kv_secret_v2.switch24a.data["snmp_community"]
+  }
 }
 
 # pve-exporter on dockermaster (Phase 3c — Proxmox VE metrics).

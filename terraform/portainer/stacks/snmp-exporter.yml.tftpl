@@ -16,6 +16,18 @@ name: snmp-exporter
 # https://github.com/prometheus/snmp_exporter/blob/main/auth-split-migration.md).
 # `auths.public_v2.community` carries the pfSense community string so the
 # default (no `auth_module` param) prometheus scrape just works.
+#
+# switch24a (2026-11-16): a second config file holds the `switch24a`
+# module and `switch24a_v2` auth. Terraform renders it from
+# dockermaster/docker/snmp-exporter/snmp-switch24a.yml into the
+# `configs:` block below. Its community is the Compose variable
+# SWITCH24A_SNMP_COMMUNITY. Terraform sets it in the stack env from
+# Vault secret/homelab/switch24a, so the secret is not in this file.
+
+configs:
+  snmp_switch24a_yml:
+    content: |
+      ${indent(6, switch24a_config)}
 
 networks:
   servers-net:
@@ -32,9 +44,14 @@ services:
         ipv4_address: 192.168.59.29
     command:
       - '--config.file=/etc/snmp_exporter/snmp.yml'
+      - '--config.file=/etc/snmp_exporter/snmp-switch24a.yml'
       - '--web.listen-address=:9116'
     volumes:
       - /nfs/dockermaster/docker/snmp-exporter/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
+    configs:
+      - source: snmp_switch24a_yml
+        target: /etc/snmp_exporter/snmp-switch24a.yml
+        mode: 0444
     expose:
       - "9116"
     restart: unless-stopped
