@@ -12,7 +12,8 @@ Bring **switch24a** (TP-Link **TL-SG3428X**, currently **standalone**) under man
 
 ## Current state (examined 2026-06-18)
 
-- **Controller (VM #100):** running, `tpeap` active, on `vmbr01` / `192.168.32.40` (admin VLAN, static since 2026-11-16; it was `.55` on DHCP),
+- **Controller (VM #100):** running, `tpeap` active, on `vmbr01` / `192.168.32.40` (admin VLAN, static
+  since 2026-11-16; it was `.55` on DHCP),
   2 vCPU / 4 GB, `onboot: 1`. Listening on Omada ports `8088`/`8843`/`8043` (web) and
   `29811-29814` (device management / adoption).
 - **Switch:** `192.168.32.39` on the **same admin L2** as the controller (✓ L2 discovery will
