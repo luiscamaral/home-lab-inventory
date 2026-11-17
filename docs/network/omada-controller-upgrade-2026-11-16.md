@@ -66,3 +66,82 @@ Delete the snapshot and the folder `/root/omada-pre-6.3.0.111/` after a week wit
   controller 6.4. The switch had no such marker in the API data. Check the UI before any 6.4 upgrade.
 - The guest runs Ubuntu 20.04, which is past standard support. This was not a blocker.
   The dependencies (Java 17 and MongoDB 7.0.37) were already met.
+
+## Same-day follow-up: OS packages and Ubuntu 24.04
+
+Status: done on 2026-11-16 at 19:49 MST. Verified. This was also a break-glass change, approved
+by the user in the session.
+
+### Timeline
+
+| Time (MST) | Step |
+| --- | --- |
+| 18:25 | The user ran `apt update && apt upgrade` on the guest by hand. It upgraded 17 packages. One of them was MongoDB, from 7.0.37 to 7.0.48. |
+| 18:36 | Check: the controller kept running. Both MongoDB processes still ran the old 7.0.37 binary. |
+| 18:39 | Reboot of VM 100. Both MongoDB processes came up on 7.0.48. The static IP survived. |
+| 18:43 | Snapshot `pre-ubuntu-22-04-20261116`, database dump, upgrade settings. |
+| 18:45 to 19:11 | Ubuntu 20.04 to 22.04.5 with `do-release-upgrade`. |
+| 19:12 | Reboot into 22.04. Controller and switch verified. |
+| 19:18 | Snapshot `pre-ubuntu-24-04-20261116`, database dump. |
+| 19:18 to 19:39 | Ubuntu 22.04 to 24.04.5. |
+| 19:45 | Reboot into 24.04, kernel 6.8.0-149. |
+| 19:49 | Verified. |
+
+### Result
+
+- Ubuntu 24.04.5 LTS, kernel 6.8.0-149, no failed systemd units.
+- Static `192.168.32.40/27` on `ens18`, unchanged. `sync-guest-netplan.py` reports the file in sync.
+- Omada 6.3.0.111. Sites (1), networks (6), port profiles (15), and ports (28) matched the baseline.
+- The switch reconnected on its own after every reboot, about 20 seconds after the controller came up.
+- MongoDB 7.0.48 on both ports (27017 and 27217). Java 17.0.21. jsvc 1.0.15.
+
+### How the upgrade ran
+
+Ubuntu cannot jump from 20.04 to 24.04. Each hop ran detached on the guest:
+
+```sh
+systemd-run --unit=release-upgrade --property=KillMode=process /bin/sh -c \
+  'DEBIAN_FRONTEND=noninteractive do-release-upgrade -f DistUpgradeViewNonInteractive \
+   > /var/log/omada-release-upgrade.log 2>&1; echo EXIT=$? >> /var/log/omada-release-upgrade.log'
+```
+
+Settings that mattered:
+
+- `/etc/update-manager/release-upgrades` has `Prompt=lts`. It stays that way.
+- A temporary `/etc/apt/apt.conf.d/99-upgrade-confold` kept existing config files during the upgrade.
+  It was removed afterwards.
+- `/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg` holds `network: {config: disabled}`.
+  It stops cloud-init from writing a DHCP netplan file. A DHCP file can override the static one.
+  Someone set this file by hand. It is not in the repo yet.
+- The upgrader refuses to start while any update is pending. A held `mongodb-mongosh` blocked it.
+  The hold was lifted and the package upgraded.
+- The upgrader disables the MongoDB repo and renames the file to `.list.distUpgrade`.
+
+### MongoDB caveat
+
+MongoDB publishes no 7.0 repo for Ubuntu 24.04 (`noble` has no Release file). The guest runs the
+MongoDB 7.0 packages from the `jammy` repo: `jammy/mongodb-org/7.0` in
+`/etc/apt/sources.list.d/mongodb-org-7.0.list`. The `mongod` binary links only to OpenSSL 3
+and runs on 24.04. MongoDB does not support this combination.
+
+- On 22.04 the focal build still needed `libssl1.1`, so the packages were reinstalled from `jammy`
+  before the first reboot. Do the same check after any release upgrade.
+- Moving to MongoDB 8.0 is the supported path for 24.04. It needs a staged database compatibility
+  upgrade (feature compatibility version 7.0 to 8.0). Plan it as its own change.
+
+### Notes for later
+
+- `/etc/netplan/01-netcfg.yaml` is mode 600, as netplan 1.1 prefers. The sync script now writes mode 600.
+- The old backup `/etc/netplan/01-netcfg.yaml.bak-20261116-173518` is still on the guest.
+  Netplan ignores it.
+- `motd-news.service` failed before the upgrades. It did not fail after.
+- Ubuntu 24.04 has standard support to 2029. The project rules exclude Ubuntu Pro.
+
+### Rollback and cleanup
+
+Snapshots on VM 100, newest first: `pre-ubuntu-24-04-20261116`, `pre-ubuntu-22-04-20261116`,
+`pre-omada-6-3-0-111-20261116`. Roll back with `qm rollback 100 <name>`. Rolling back to an older
+snapshot discards the newer ones.
+
+After a week without problems, delete the three snapshots and the folders under `/root/`:
+`omada-pre-6.3.0.111`, `omada-pre-ubuntu-22.04`, and `omada-pre-ubuntu-24.04`.
