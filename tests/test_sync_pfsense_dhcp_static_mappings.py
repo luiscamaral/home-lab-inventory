@@ -1,6 +1,8 @@
 import importlib.util
+import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -17,7 +19,9 @@ MANIFEST_TEXT = (
     " hostname: omada-controller, descr: Omada Controller TP-Link}\n"
     "  - {interface: opt2, mac: 'aa:bb:cc:dd:ee:ff', ipaddr: 192.168.0.23}\n"
 )
-DRIFTED = {("opt2", "aa:bb:cc:dd:ee:ff"): {"ipaddr": "192.168.0.23", "hostname": "", "descr": "drift", "index": 0}}
+OTHER = {("opt2", "aa:bb:cc:dd:ee:ff"): {"ipaddr": "192.168.0.23", "hostname": "", "descr": "drift", "index": 0}}
+WITH_OMADA = {**OTHER, ("lan", "12:32:f0:cc:79:e5"): {**OMADA, "index": 0}}
+ARGS = ["--only", "lan", "12:32:F0:CC:79:E5"]
 
 
 @pytest.fixture
@@ -27,51 +31,49 @@ def manifest(tmp_path):
     return path
 
 
-def run(argv, manifest, live, write):
+def run(argv, manifest, live, php):
     with patch.object(dhcp, "MANIFEST", manifest), patch.object(dhcp, "fetch_live", side_effect=live), \
-         patch.object(dhcp, "keychain_token", return_value="test"), \
-         patch.object(dhcp, "write_api", write), patch.object(sys, "argv", ["sync", *argv]):
+         patch.object(dhcp, "php_run", php), patch.object(sys, "argv", ["sync", *argv]):
         return dhcp.main()
 
 
-def test_only_writes_selected_mapping_once_then_verifies(manifest):
-    created = {**DRIFTED, ("lan", "12:32:f0:cc:79:e5"): {**OMADA, "index": 0}}
-    write = patch.object(dhcp, "write_api", return_value={"code": 200}).start()
+def test_apply_writes_selected_mapping_once_then_verifies(manifest):
+    php = patch.object(dhcp, "php_run", return_value={"ok": True, "action": "create"}).start()
     try:
-        rc = run(["--apply", "--only", "lan", "12:32:F0:CC:79:E5"], manifest, [DRIFTED, created], write)
+        assert run(["--apply", *ARGS], manifest, [OTHER, WITH_OMADA], php) == 0
     finally:
         patch.stopall()
-    assert rc == 0
-    assert write.call_count == 1
-    method, path, _token, body = write.call_args.args
-    assert (method, path) == ("POST", "/services/dhcp_server/static_mapping")
-    assert body["ipaddr"] == "192.168.32.40"
+    assert php.call_count == 1
+    payload = php.call_args.args[0]
+    assert payload["op"] == "upsert" and payload["dry"] is False
+    assert (payload["interface"], payload["ipaddr"]) == ("lan", "192.168.32.40")
+
+
+def test_dry_run_validates_without_writing(manifest):
+    php = patch.object(dhcp, "php_run", return_value={"ok": True, "action": "create"}).start()
+    try:
+        assert run(ARGS, manifest, [OTHER], php) == 0
+    finally:
+        patch.stopall()
+    assert php.call_count == 1
+    assert php.call_args.args[0]["dry"] is True
 
 
 def test_unknown_outcome_stops_and_never_resends(manifest):
-    write = patch.object(dhcp, "write_api", side_effect=dhcp.OutcomeUnknown("no answer")).start()
+    php = patch.object(dhcp, "php_run", side_effect=dhcp.OutcomeUnknown("no answer")).start()
     try:
         with pytest.raises(SystemExit, match="Do NOT retry"):
-            run(["--apply", "--only", "lan", "12:32:f0:cc:79:e5"], manifest, [DRIFTED], write)
+            run(["--apply", *ARGS], manifest, [OTHER], php)
     finally:
         patch.stopall()
-    assert write.call_count == 1
+    assert php.call_count == 1
 
 
 def test_answer_without_live_change_is_an_error(manifest):
-    write = patch.object(dhcp, "write_api", return_value={"code": 200}).start()
+    php = patch.object(dhcp, "php_run", return_value={"ok": True, "action": "create"}).start()
     try:
         with pytest.raises(SystemExit, match="live config does not match"):
-            run(["--apply", "--only", "lan", "12:32:f0:cc:79:e5"], manifest, [DRIFTED, DRIFTED], write)
-    finally:
-        patch.stopall()
-
-
-def test_api_error_answer_is_an_error(manifest):
-    write = patch.object(dhcp, "write_api", return_value={"code": 409, "message": "overlap"}).start()
-    try:
-        with pytest.raises(SystemExit, match="API returned 409"):
-            run(["--apply", "--only", "lan", "12:32:f0:cc:79:e5"], manifest, [DRIFTED], write)
+            run(["--apply", *ARGS], manifest, [OTHER, OTHER], php)
     finally:
         patch.stopall()
 
@@ -84,13 +86,11 @@ def test_only_unknown_mapping_fails_before_live_access(manifest):
     fetch.assert_not_called()
 
 
-def test_activate_runs_alone_and_calls_apply_once():
-    with patch.object(dhcp, "keychain_token", return_value="test"), \
-         patch.object(dhcp, "write_api", return_value={"code": 200}) as write, \
+def test_activate_runs_alone_and_calls_once():
+    with patch.object(dhcp, "php_run", return_value={"ok": True}) as php, \
          patch.object(sys, "argv", ["sync", "--activate"]):
         assert dhcp.main() == 0
-    assert write.call_count == 1
-    assert write.call_args.args[:2] == ("POST", "/services/dhcp_server/apply")
+    php.assert_called_once_with({"op": "activate"})
 
 
 def test_activate_rejects_mapping_options():
@@ -99,5 +99,35 @@ def test_activate_rejects_mapping_options():
             dhcp.main()
 
 
-def test_curl_config_quoting():
-    assert dhcp._cfg('a"b\\c') == '"a\\"b\\\\c"'
+def fake_ssh(stdout="", returncode=0, stderr=""):
+    return patch.object(dhcp.subprocess, "run",
+                        return_value=SimpleNamespace(stdout=stdout, returncode=returncode, stderr=stderr))
+
+
+def test_php_run_reads_last_json_line_past_php_notices():
+    with fake_ssh('PHP Deprecated: noise\n{"ok": true, "action": "create"}\n') as ssh:
+        assert dhcp.php_run({"op": "upsert"}) == {"ok": True, "action": "create"}
+    sent = ssh.call_args.kwargs["input"]
+    assert '"op": "upsert"' in sent and "@@PAYLOAD@@" not in sent
+
+
+def test_php_run_refusal_is_an_error_not_unknown():
+    with fake_ssh('{"ok": false, "error": "192.168.32.56 is inside the dynamic range"}\n', returncode=1):
+        with pytest.raises(SystemExit, match="inside the dynamic range"):
+            dhcp.php_run({"op": "upsert"})
+
+
+def test_php_run_without_json_is_unknown():
+    with fake_ssh("Segmentation fault", returncode=139):
+        with pytest.raises(dhcp.OutcomeUnknown):
+            dhcp.php_run({"op": "upsert"})
+
+
+def test_php_run_timeout_is_unknown():
+    with patch.object(dhcp.subprocess, "run", side_effect=subprocess.TimeoutExpired("ssh", 120)):
+        with pytest.raises(dhcp.OutcomeUnknown, match="no answer"):
+            dhcp.php_run({"op": "upsert"})
+
+
+def test_template_has_one_payload_slot():
+    assert dhcp.PHP_TEMPLATE.count("@@PAYLOAD@@") == 1
