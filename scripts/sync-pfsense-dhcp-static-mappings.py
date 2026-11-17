@@ -22,9 +22,22 @@ Drift on a listed MAC (ipaddr/hostname/descr differ) is reported and, with
 `id` is its index within the scope, so the index is taken from config.xml
 ordering -- the same ordering the API exposes.
 
+Writes: each write is sent ONCE. The script never resends a write after a
+timeout. pfSense serves these endpoints slowly (one-mapping reads took ~56 s on
+2026-11-16), and HAProxy cuts requests at 30 s. So writes bypass HAProxy: the
+script runs curl on pfSense against the local web listener, over the ADMIN path
+(igc3), which does not depend on the ix0 trunk. After a write, the script reads
+the live config back and reports the real outcome. If the outcome is unknown, it
+stops and tells you to inspect the live state. It does not retry.
+
+Writes change the stored configuration only. The DHCP server keeps its running
+configuration until you pass --activate, which reloads dhcpd (existing leases
+survive).
+
 Workflow:
-    scripts/sync-pfsense-dhcp-static-mappings.py            # dry run -- show diff
-    scripts/sync-pfsense-dhcp-static-mappings.py --apply    # create/update
+    scripts/sync-pfsense-dhcp-static-mappings.py                        # dry run
+    scripts/sync-pfsense-dhcp-static-mappings.py --apply --only lan MAC # write one
+    scripts/sync-pfsense-dhcp-static-mappings.py --activate             # reload dhcpd
 """
 
 from __future__ import annotations
@@ -33,7 +46,6 @@ import argparse
 import json
 import subprocess
 import sys
-import urllib.request
 from pathlib import Path
 
 import yaml
@@ -41,7 +53,15 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = REPO_ROOT / "pfsense" / "dhcp-static-mappings.yml"
 
-PFSENSE_API = "https://pfsense.home.lcamaral.com/api/v2"
+# Writes use pfSense's local web listener, past HAProxy's 30 s gateway timeout.
+LOCAL_API = "http://127.0.0.1:56880/api/v2"
+WRITE_TIMEOUT = 240  # seconds, below nginx fastcgi_read_timeout (360)
+# ADMIN path (igc3). It stays up when the ix0 trunk is down. The host key is
+# stored under the HOME address, so HostKeyAlias keeps strict checking.
+ADMIN_SSH = ["ssh", "-o", "HostName=192.168.32.33",
+             "-o", "HostKeyAlias=[192.168.4.1]:3220",
+             "-o", "ServerAliveInterval=10", "-o", "ServerAliveCountMax=3",
+             "pfsense"]
 TOKEN_KEYCHAIN_SERVICE = "pfsense-api-token"
 
 # Fields we reconcile. `mac` and `interface` form the key and are not diffed.
@@ -56,30 +76,50 @@ def keychain_token() -> str:
     return out.stdout.strip()
 
 
-def api(method: str, path: str, token: str, body: dict | None = None,
-        timeout: int = 60, retries: int = 3) -> dict:
-    import ssl  # noqa: PLC0415
-    import time  # noqa: PLC0415
-    # HAProxy fronts the pfSense API with a Let's Encrypt cert
-    # (*.home.lcamaral.com), so default TLS verification works.
-    ctx = ssl.create_default_context()
-    last_err: Exception | None = None
-    for attempt in range(1, retries + 1):
-        req = urllib.request.Request(
-            f"{PFSENSE_API}{path}",
-            method=method,
-            headers={"X-API-Key": token, "Content-Type": "application/json"},
-            data=json.dumps(body).encode() if body is not None else None,
-        )
-        try:
-            with urllib.request.urlopen(req, context=ctx, timeout=timeout) as r:
-                return json.loads(r.read())
-        except (TimeoutError, urllib.error.URLError) as e:
-            last_err = e
-            if attempt < retries:
-                time.sleep(2 * attempt)
-    raise RuntimeError(
-        f"pfSense API {method} {path} failed after {retries} attempts: {last_err}")
+class OutcomeUnknown(RuntimeError):
+    """A write was sent but its result is not known. Do not retry blindly."""
+
+
+def _cfg(value: str) -> str:
+    """Quote a value for a curl config file."""
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def write_api(method: str, path: str, token: str, body: dict) -> dict:
+    """Send ONE write to the local pfSense API. Never retries.
+
+    The request goes through ssh to curl on pfSense. The token and body travel
+    on stdin as a curl config, so they do not appear in any process list.
+    """
+    cfg = "\n".join([
+        f"url = {_cfg(LOCAL_API + path)}",
+        f"request = {_cfg(method)}",
+        f"header = {_cfg('X-API-Key: ' + token)}",
+        'header = "Content-Type: application/json"',
+        f"data = {_cfg(json.dumps(body))}",
+        "silent",
+        "show-error",
+        f"max-time = {WRITE_TIMEOUT}",
+    ]) + "\n"
+    try:
+        r = subprocess.run(ADMIN_SSH + ["curl -K -"], input=cfg, capture_output=True,
+                           text=True, timeout=WRITE_TIMEOUT + 30)
+    except subprocess.TimeoutExpired as e:
+        raise OutcomeUnknown(f"{method} {path}: no answer after {e.timeout}s") from e
+    if r.returncode != 0:
+        raise OutcomeUnknown(f"{method} {path}: curl/ssh exit {r.returncode}: {r.stderr.strip()[:200]}")
+    try:
+        return json.loads(r.stdout)
+    except json.JSONDecodeError as e:
+        raise OutcomeUnknown(f"{method} {path}: unreadable answer: {r.stdout[:200]!r}") from e
+
+
+def _check(resp: dict, what: str) -> dict:
+    """Fail on an API error answer. The API reports errors in `code`."""
+    if int(resp.get("code", 200)) >= 400:
+        raise SystemExit(f"error: {what}: API returned {resp.get('code')} "
+                         f"{resp.get('message', '')} ({resp.get('response_id', '')})")
+    return resp
 
 
 def _text(el, tag: str) -> str:
@@ -121,6 +161,20 @@ def fetch_live() -> dict[tuple[str, str], dict]:
     return live
 
 
+def write_and_verify(method: str, token: str, body: dict, want: dict) -> None:
+    """Send one write, then read the live config back and compare."""
+    iface, mac = want["interface"], str(want["mac"]).lower()
+    try:
+        _check(write_api(method, "/services/dhcp_server/static_mapping", token, body),
+               f"{method} {iface} {mac}")
+    except OutcomeUnknown as e:
+        sys.exit(f"outcome unknown: {e}\nDo NOT retry. Run the dry run to see the live state.")
+    cur = fetch_live().get((iface, mac))
+    if cur is None or any(cur[k] != str(want.get(k, "")) for k in FIELDS):
+        sys.exit(f"error: {method} answered, but live config does not match for {iface} {mac}: {cur}")
+    print(f"    -> verified live: {iface} {mac} -> {cur['ipaddr']}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -128,7 +182,21 @@ def main() -> int:
                         help="Create/update mappings (default: dry-run)")
     parser.add_argument("--only", nargs=2, metavar=("INTERFACE", "MAC"),
                         help="Reconcile only the specified interface and MAC")
+    parser.add_argument("--activate", action="store_true",
+                        help="Reload dhcpd so stored changes take effect (no mapping writes)")
     args = parser.parse_args()
+
+    if args.activate:
+        if args.apply or args.only:
+            sys.exit("error: --activate runs alone")
+        print("reloading dhcpd (existing leases survive)...")
+        try:
+            _check(write_api("POST", "/services/dhcp_server/apply", keychain_token(), {}),
+                   "dhcp apply")
+        except OutcomeUnknown as e:
+            sys.exit(f"outcome unknown: {e}\nDo NOT retry. Check dhcpd on pfSense first.")
+        print("reload requested.")
+        return 0
 
     if not MANIFEST.is_file():
         sys.exit(f"error: {MANIFEST} not found")
@@ -168,8 +236,7 @@ def main() -> int:
                     "hostname": d.get("hostname", ""),
                     "descr": d.get("descr", ""),
                 }
-                resp = api("POST", "/services/dhcp_server/static_mapping", token, body)
-                print(f"    -> id={resp.get('data', {}).get('id')}")
+                write_and_verify("POST", token, body, d)
             continue
 
         diffs = {k: (cur[k], str(d.get(k, ""))) for k in FIELDS
@@ -191,13 +258,14 @@ def main() -> int:
                 "hostname": d.get("hostname", ""),
                 "descr": d.get("descr", ""),
             }
-            api("PATCH", "/services/dhcp_server/static_mapping", token, body)
-            print("    -> updated")
+            write_and_verify("PATCH", token, body, d)
 
     if pending == 0:
         print("DHCP static mappings in sync.")
     elif not args.apply:
         print(f"\n{pending} change(s) pending -- re-run with --apply.")
+    else:
+        print("\nStored. dhcpd still runs its old config: use --activate to reload it.")
     return 0
 
 
