@@ -5,9 +5,15 @@
 name: Service Health Monitor
 
 on:
-  # Scheduled health checks every 15 minutes
-  schedule:
-    - cron: '*/15 * * * *'  # Every 15 minutes
+  # PAUSED 2026-11-18. The schedule is off until the monitor is fixed or retired.
+  # First real run (after the runner labels were fixed) found two bugs:
+  #   1. DEPLOY_PATH is /nfs/dockermaster/docker, but the runner container only
+  #      mounts that tree at /deployment, so no service is found and the empty
+  #      JSON breaks $GITHUB_OUTPUT.
+  #   2. The job sees only the ds-1 Docker socket, so it would raise false
+  #      alerts for services that run on other hosts.
+  # Prometheus and Alertmanager already monitor these services.
+  # To resume: restore `schedule: - cron: '*/15 * * * *'` after fixing both.
 
   # Manual health check trigger
   workflow_dispatch:
