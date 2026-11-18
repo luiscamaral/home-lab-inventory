@@ -17,3 +17,8 @@ All AI agents (Claude Code, pi, Codex, Devin, sub-agents) must follow
 Never apply from a feature branch, and never change live infrastructure before the merge.
 Docs-only changes still need a PR. The only exception is break-glass with explicit user
 approval, followed by a `post-hoc` PR in the same session.
+
+## Parked projects
+
+Read [`docs/projects/README.md`](docs/projects/README.md) at the start of every session and before
+work on any area it lists. Never delete the branch of a parked project.
