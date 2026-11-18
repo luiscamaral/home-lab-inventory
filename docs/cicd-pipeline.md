@@ -40,7 +40,7 @@ graph TD
 | Workflow | Purpose | Triggers | Duration |
 |----------|---------|----------|----------|
 | `dockermaster-deployment.yml` | Main deployment pipeline | Manual, post-build | 10-15 min |
-| `service-health-monitor.yml` | Continuous health monitoring | Schedule (15 min), manual | 2-5 min |
+| `service-health-monitor.yml` | Health monitoring (schedule paused 2026-11-18) | Manual | 2-5 min |
 | `emergency-rollback.yml` | Emergency rollback procedures | Manual only | 5-8 min |
 
 ### Supporting Workflows
@@ -136,7 +136,7 @@ The pipeline automatically discovers services based on:
 
 #### Monitoring Schedule
 
-- **Frequency**: Every 15 minutes (configurable)
+- **Frequency**: Paused on 2026-11-18. Manual runs only. See the comment at the top of the workflow.
 - **Coverage**: All active dockermaster services
 - **Alerting**: Automatic issue creation for failures
 
