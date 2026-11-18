@@ -130,3 +130,9 @@ correct this. The second step needed its own IaC path (`hosts/<vm>/etc/netplan` 
   apply. A web UI change by the user can look like your change.
 - **Network repairs need a revert guard.** For a change that can cut your own path, arm a timed
   revert first, apply detached, verify, and only then cancel the revert.
+
+## 10. Parked projects: read the register often
+Some work is parked, not abandoned, and its only copy can be an unmerged branch. The register is
+`docs/projects/README.md`. Read it at the start of every session, each time you re-anchor (section 5), and
+before any task that touches a listed area. If a task touches one, tell the user first. Never delete the
+branch of a parked project.

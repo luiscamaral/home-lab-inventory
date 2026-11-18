@@ -16,6 +16,8 @@
   Never SSH-edit `config.xml`, run `write_config`, or hand-place cron/scripts.
 - **Destructive / host / network changes** (link bounce, `pfctl -F`, `docker rm -f`, VM/LXC stop,
   reboot): present options + rollback, get explicit approval **first**.
+- **Parked projects** — read `docs/projects/README.md` at session start, when you re-anchor, and before work
+  on a listed area. Never delete a parked project's branch; it can be the only copy.
 - **Re-anchor when the session gets long** — scope creep dilutes these rules; stop and re-read the
   file. `SessionStart` loads it; there is **no tool-time gate** (the IaC-guard `PreToolUse` hook was
   removed 2026-08-18), so these are self-enforced.
