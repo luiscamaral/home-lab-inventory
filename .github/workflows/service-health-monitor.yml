@@ -44,7 +44,8 @@ jobs:
   # Job 1: Service discovery and health assessment
   health-assessment:
     name: Service Health Assessment
-    runs-on: [self-hosted, dockermaster]
+    # Needs the ds-1 host (Docker socket and NFS mount): use the specific label.
+    runs-on: [self-hosted, dockerserver-1]
     outputs:
       services-status: ${{ steps.health-check.outputs.services-status }}
       unhealthy-services: ${{ steps.health-check.outputs.unhealthy-services }}
@@ -306,7 +307,7 @@ jobs:
     name: Alert Management
     needs: health-assessment
     if: needs.health-assessment.outputs.alert-required == 'true'
-    runs-on: [self-hosted, dockermaster]
+    runs-on: [self-hosted, docker] # any Docker runner
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -443,7 +444,7 @@ jobs:
     name: Status Reporting
     needs: [health-assessment, alert-management, close-resolved-alerts]
     if: always()
-    runs-on: [self-hosted, dockermaster]
+    runs-on: [self-hosted, docker] # any Docker runner
     steps:
       # All `>> $GITHUB_STEP_SUMMARY` redirects are wrapped in `{ … } >> $GHS`
       # blocks (was 4x SC2129 from shellcheck) and the inner `read` uses `-r`
