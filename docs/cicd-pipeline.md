@@ -228,6 +228,33 @@ gh workflow run emergency-rollback.yml \
   -f reason="Revert to stable release"
 ```
 
+## 🏷️ Runner Labels
+
+The self-hosted runner registers two kinds of label. Use the specific label when a job needs one host.
+Use the whole-fleet label when any Docker runner will do.
+
+| Label | Scope | Use it for |
+| --- | --- | --- |
+| `self-hosted` | GitHub built-in | Every self-hosted job |
+| `docker` | Whole fleet | Jobs that need only a Docker runner, such as GitHub API calls |
+| `dockerserver-1` | One host | Jobs that need the ds-1 Docker socket or NFS mount |
+
+The labels come from `LABELS` in `terraform/portainer/stacks/github-runner.yml`. A job whose labels match no
+runner waits in the queue forever. There is no `dockermaster` label.
+
+Current use:
+
+| Workflow | Job | Labels |
+| --- | --- | --- |
+| `service-health-monitor.yml` | Service Health Assessment | `self-hosted`, `dockerserver-1` |
+| `service-health-monitor.yml` | Alert Management, Status Reporting | `self-hosted`, `docker` |
+| `dockermaster-deployment.yml` | all self-hosted jobs | `dockermaster` (no runner has it, on purpose) |
+| `emergency-rollback.yml` | all self-hosted jobs | `dockermaster` (no runner has it, on purpose) |
+
+The deployment and rollback workflows run `docker compose up` and `down` through the runner Docker socket.
+That path bypasses the Terraform and Portainer flow. Their label stays unmatched until the owner decides to
+retire or re-enable them.
+
 ## 🔐 Vault Integration
 
 ### Secret Management Architecture
