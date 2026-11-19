@@ -50,10 +50,10 @@ _portainer_jwt() {
 _papi() {
   local method="$1" path="$2" body="${3:-}"
   if [ -n "$body" ]; then
-    curl -skS -m 30 -X "$method" -H "Authorization: Bearer $JWT" \
+    curl -skS -m 120 -X "$method" -H "Authorization: Bearer $JWT" \
       -H 'Content-Type: application/json' --data "$body" "$PORTAINER_URL$path"
   else
-    curl -skS -m 30 -X "$method" -H "Authorization: Bearer $JWT" "$PORTAINER_URL$path"
+    curl -skS -m 120 -X "$method" -H "Authorization: Bearer $JWT" "$PORTAINER_URL$path"
   fi
 }
 
