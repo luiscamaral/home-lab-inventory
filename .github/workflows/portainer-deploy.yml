@@ -1,0 +1,45 @@
+name: Portainer Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      stacks:
+        description: 'Stack names to redeploy (comma-separated, or "all")'
+        required: true
+        default: 'all'
+        type: string
+      dry_run:
+        description: 'Dry run: list what would be redeployed, touch nothing'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Redeploy stacks
+    runs-on: [self-hosted, docker]
+    env:
+      VAULT_ADDR: http://192.168.59.25:8200
+      VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
+      VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
+      DRY_RUN: ${{ github.event.inputs.dry_run }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Redeploy stacks
+        run: |
+          set -euo pipefail
+          STACKS=$(./scripts/ci/portainer-cli.sh list)
+          echo "$STACKS"
+          echo "---"
+          if [ "${{ github.event.inputs.stacks }}" = "all" ]; then
+            TARGETS=$(printf '%s' "$STACKS" | cut -f1)
+          else
+            TARGETS=$(printf '%s' "${{ github.event.inputs.stacks }}" | tr ',' ' ')
+          fi
+          echo "Targets: $TARGETS"
+          ./scripts/ci/portainer-cli.sh redeploy $TARGETS
