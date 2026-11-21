@@ -2,10 +2,11 @@ import { userInfo } from "node:os";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { ACCESS, PREFIX, SERVER, TOOLS, TOOL_EXPOSURE, URL, parseCommand, terminalText } from "./catalog.ts";
 import { HomeAssistantClient } from "./client.ts";
+import { formatPrompt, formatSnapshot, formatTool, prepareDisplay } from "./results.ts";
+import { openViewer } from "./viewer.ts";
 
 const KEYCHAIN_SERVICE = "HA-TOKEN";
 const MAX_APPROVAL_BYTES = 8192;
-const MAX_DISPLAY_CHARS = 16_000;
 const ADMIN_TOOLS = new Set(["config__reload_config_entry", "homeassistant__call_action"]);
 
 type Connection = { client: HomeAssistantClient; token: string };
@@ -28,16 +29,13 @@ async function approve(name: string, input: Record<string, unknown>, ctx: Extens
   const preview = terminalText(JSON.stringify(input, null, 2));
   if (Buffer.byteLength(preview) > MAX_APPROVAL_BYTES) return false;
   const title = `Review Home Assistant request: ${name}`;
-  if (await ctx.ui.editor(title, preview) !== preview || ctx.signal?.aborted) return false;
+  if (!(await openViewer(ctx, title, preview, true).catch(() => false)) || ctx.signal?.aborted) return false;
   const note = ADMIN_TOOLS.has(name) ? " Follow the repo approval rules for any infrastructure change." : "";
   return ctx.ui.confirm(`Send ${name} once?`, `This sends the reviewed request to Home Assistant.${note}`, { signal: ctx.signal });
 }
 
-function showResult(ctx: ExtensionContext, title: string, result: unknown, token?: string) {
-  const raw = typeof result === "string" ? result : JSON.stringify(result, null, 2);
-  const text = terminalText(token ? raw.replaceAll(token, "[redacted]") : raw);
-  const view = text.length > MAX_DISPLAY_CHARS ? `${text.slice(0, MAX_DISPLAY_CHARS)}\n[Display limit reached]` : text;
-  return ctx.ui.editor(`${title} (local view, edits are ignored)`, view);
+function showResult(ctx: ExtensionContext, title: string, text: string, token: string) {
+  return openViewer(ctx, title, prepareDisplay(text, token));
 }
 
 function mapTools(live: Awaited<ReturnType<HomeAssistantClient["listTools"]>>) {
@@ -149,21 +147,25 @@ export default function homeAssistant(pi: ExtensionAPI) {
   register("ha-tools", "List Home Assistant aliases and live argument names", async (_args, ctx, active) =>
     showResult(ctx, "Home Assistant tools", mapTools(await active.client.listTools()), active.token));
   register("ha-snapshot", "View the exposed Home Assistant entity snapshot", async (_args, ctx, active) =>
-    showResult(ctx, "Home Assistant snapshot", await active.client.snapshot(), active.token));
+    showResult(ctx, "Home Assistant snapshot", formatSnapshot(await active.client.snapshot()), active.token));
   register("ha-prompt", "View the Home Assistant MCP prompt without sending it to a model", async (_args, ctx, active) =>
-    showResult(ctx, "Home Assistant prompt", await active.client.prompt(), active.token));
+    showResult(ctx, "Home Assistant prompt", formatPrompt(await active.client.prompt()), active.token));
   register("ha", "Run a mapped tool without a model: /ha <alias> [JSON]", async (args, ctx, active) => {
     const { name, input } = parseCommand(args);
     if (!(await approve(name, input, ctx)) || connection !== active) {
       ctx.ui.notify("Home Assistant request canceled.", "warning");
       return;
     }
-    try {
-      const result = await active.client.call(name, input);
-      await showResult(ctx, `${name}${result.isError ? " returned an error" : ""}`, result, active.token);
-    } catch (error) {
+    const result = await active.client.call(name, input).catch((error: unknown) => {
       if (ACCESS.get(name) !== "write") throw error;
       throw new Error("Home Assistant did not confirm the write. Read the current state before you retry.");
-    }
+    });
+    const title = `${name}${result.isError ? " returned an error" : ""}`;
+    await showResult(ctx, title, formatTool(result), active.token).catch(() => {
+      if (ACCESS.get(name) === "write") {
+        throw new Error("Home Assistant replied, but Pi could not show the write result. Read the current state before you retry.");
+      }
+      throw new Error("Home Assistant replied, but Pi could not open the result view.");
+    });
   });
 }

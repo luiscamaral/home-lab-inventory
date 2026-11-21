@@ -51,8 +51,8 @@ Pi exposes reads through `codemode`. It exposes the write tools and `template` o
 `searchTools()` to `inventory_ha`. Native Pi can also list and read the Assist snapshot. The local shortcut client
 supports this server's JSON replies. Native Pi supports streaming tool replies.
 
-Both paths require terminal review for all 20 writes and for `template`. Read the tool name and JSON. Submit the review
-without edits, then confirm the request. Escape cancels.
+Both paths require terminal review for all 20 writes and for `template`. Read the tool name and JSON. Press Enter to
+continue to a separate confirmation. Escape cancels.
 
 Pi blocks unmapped tools and blocks writes outside the Pi terminal. The extension does not retry writes. If the result
 is unclear, check the live state before you retry.
@@ -61,7 +61,11 @@ A terminal confirmation does not approve an infrastructure change. Do not use ge
 bypass the repo's approval and apply rules. Use a Home Assistant account with only the permissions you need. This
 extension gates its own tools. It is not a sandbox for shell commands or other extensions.
 
-The shortcut results stay in the terminal view. Native MCP results can reach the model and transcript. Do not share
+Shortcut results open at the top of a read-only view. Use Up and Down to scroll, Page Up and Page Down to move a page,
+or Home and End to jump. Press Escape or Enter to close the result. The view shows the snapshot and prompt text without
+wrapping them in JSON. Large results may reach the display limit. Use a narrower query for more detail.
+
+Shortcut results do not enter the Pi transcript. Native MCP results can reach the model and transcript. Do not share
 private logs or whole-house snapshots when a narrower query will do. Keep the token out of prompts, files, and terminal
 history.
 
@@ -70,8 +74,9 @@ history.
 Run `node --test tests/pi-home-assistant.test.ts` from the repository root. The tests use a mock server. They do not read
 Keychain or contact Home Assistant.
 
-For a live read-only check, run `/ha-connect`, `/ha-status`, and `/ha time`, then `/ha-disconnect`. Do not send a live
-write to test the setup.
+For a live read-only check, run `/ha-connect`, `/ha-tools`, `/ha time`, `/ha-prompt`, and `/ha-snapshot`. Check that each
+view opens at line 1. In the snapshot, page down, jump back to the top, and resize the pane. Close the result and run
+`/ha-disconnect`. Do not send a live write to test the setup.
 
 To stop now, run `/ha-disconnect`. To remove the project feature, revert its PR and run `/reload`. There is no
 server-side change to roll back.
