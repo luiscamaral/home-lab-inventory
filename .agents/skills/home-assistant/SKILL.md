@@ -23,7 +23,8 @@ It is not a complete inventory. The user can inspect it locally with `/ha-snapsh
 
 - Act only on an explicit user request. Prefer the narrow tool for the task.
   If the device, room, list, or desired state is unclear, ask the user.
-- Show the target and expected change. Pi asks the user to review the exact arguments and confirm in the terminal.
+- Show the target and expected change. Pi posts the exact arguments and an approval ID in chat.
+- Let the user type the approval or cancellation. Do not call the same tool again while the request is pending.
 - Read the target after the write when a read tool can verify it. If a write times out, read the live state before any retry.
 - Use `homeassistant__search_actions` before a generic action. Check its schema and the target.
   Do not use it to bypass repo rules.

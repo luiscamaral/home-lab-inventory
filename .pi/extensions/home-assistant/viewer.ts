@@ -1,6 +1,6 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-export function openViewer(ctx: ExtensionContext, title: string, text: string, review = false) {
+export function openViewer(ctx: ExtensionContext, title: string, text: string) {
   return ctx.ui.custom<boolean>(async (tui, theme, keys, done) => {
     const { matchesKey, truncateToWidth, wrapTextWithAnsi } = await import("@earendil-works/pi-tui");
     let offset = 0;
@@ -25,12 +25,11 @@ export function openViewer(ctx: ExtensionContext, title: string, text: string, r
         }
         setOffset(offset);
         const end = Math.min(offset + height, lines.length);
-        const hint = review ? "Enter: continue  Esc: cancel" : "Esc or Enter: close";
         return [
           theme.fg("accent", truncateToWidth(title, width)),
           ...lines.slice(offset, end),
           theme.fg("dim", truncateToWidth(`Lines ${offset + 1}–${end}/${lines.length}  ↑/↓ · PgUp/PgDn · Home/End`, width)),
-          theme.fg("dim", truncateToWidth(hint, width)),
+          theme.fg("dim", truncateToWidth("Esc or Enter: close", width)),
         ].map((line) => theme.bg("customMessageBg", truncateToWidth(line, width, "", true)));
       },
       handleInput(input: string) {
@@ -51,6 +50,6 @@ export function openViewer(ctx: ExtensionContext, title: string, text: string, r
   }, {
     overlay: true,
     overlayOptions: { width: "94%" },
-    blocked: { kind: review ? "permission" : "question", message: title },
+    blocked: { kind: "question", message: title },
   });
 }

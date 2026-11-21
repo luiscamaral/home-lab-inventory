@@ -4,7 +4,8 @@ import { test } from "node:test";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { ACCESS, PREFIX, PROMPT, RESOURCE, SERVER, TOOLS, URL, parseCommand } from "../.pi/extensions/home-assistant/catalog.ts";
 import { HomeAssistantClient } from "../.pi/extensions/home-assistant/client.ts";
-import extension from "../.pi/extensions/home-assistant/index.ts";
+import extension from "../.pi/extensions/home-assistant/extension.ts";
+import { ApprovalQueue, parseApproval } from "../.pi/extensions/home-assistant/approval.ts";
 import { formatPrompt, formatSnapshot, formatTool, prepareDisplay } from "../.pi/extensions/home-assistant/results.ts";
 
 const TOKEN = "test-token";
@@ -102,13 +103,34 @@ test("display redacts credentials and terminal control characters without losing
   assert.ok(!long.includes("\ud83d"));
 });
 
-test("extension locks writes until terminal approval and keeps shortcut calls out of native model flow", async (t) => {
+test("approval IDs are exact, tied to frozen requests, and expire", () => {
+  const queue = new ApprovalQueue();
+  const input = { name: "Original" };
+  const { request } = queue.stage("off", input, TOKEN, 100);
+  assert.ok(request);
+  input.name = "Changed";
+  assert.equal(parseApproval(`Approve ${request.id.toLowerCase()}`)?.id, request.id);
+  assert.equal(parseApproval(`approve ${request.id} then turn off another light`), null);
+  assert.equal(parseApproval("yes"), null);
+  assert.match(queue.stage("on", input, TOKEN, 100).reason!, /already pending/);
+  assert.equal(queue.take("HA-00000000", 110), request.id === "HA-00000000" ? request : undefined);
+  assert.equal(queue.take(request.id, request.expiresAt), undefined);
+  const second = queue.stage("off", { secret: TOKEN }, TOKEN, 150);
+  assert.ok(!second.request);
+  const third = queue.stage("off", { name: "Original" }, TOKEN, 200).request!;
+  assert.equal(JSON.parse(queue.take(third.id, 210)!.args).name, "Original");
+  assert.equal(queue.take(third.id, 211), undefined);
+  assert.equal(JSON.parse(request.args).name, "Original");
+});
+
+test("native and slash writes wait for a single matching human chat reply", async (t) => {
   type Handler = (...args: any[]) => any;
   const handlers = new Map<string, Handler>();
   const commands = new Map<string, { handler: Handler }>();
   const requests: Request[] = [];
   const registrations: Array<[string, Record<string, any>]> = [];
   const removed: string[] = [];
+  const entries: string[] = [];
   const pi = {
     on: (event: string, handler: Handler) => handlers.set(event, handler),
     registerCommand: (name: string, command: { handler: Handler }) => commands.set(name, command),
@@ -116,20 +138,12 @@ test("extension locks writes until terminal approval and keeps shortcut calls ou
     unregisterMcpServer: (name: string) => removed.push(name),
     exec: async () => ({ code: 0, stdout: TOKEN }),
     getAllTools: () => [],
+    appendEntry: (_kind: string, text: string) => entries.push(text),
   } as unknown as ExtensionAPI;
-  let confirms = false;
-  let continues = true;
-  const views: Array<{ kind: string; message: string }> = [];
+  let idle = true;
   const ctx = {
-    hasUI: true, mode: "tui", isProjectTrusted: () => true,
-    ui: {
-      custom: async (_factory: unknown, options: { blocked: { kind: string; message: string } }) => {
-        views.push(options.blocked);
-        return continues;
-      },
-      confirm: async () => confirms,
-      notify: () => undefined,
-    },
+    hasUI: true, mode: "tui", isProjectTrusted: () => true, isIdle: () => idle,
+    ui: { notify: () => undefined },
   } as unknown as ExtensionContext;
   t.mock.method(globalThis, "fetch", mockMcp(requests));
   extension(pi);
@@ -143,20 +157,34 @@ test("extension locks writes until terminal approval and keeps shortcut calls ou
   assert.deepEqual(Object.keys(registrations[0][1].toolExposure).sort(), [...ACCESS.keys()].sort());
   assert.equal(await gate("homeassistant__GetLiveContext"), undefined);
   assert.equal((await gate("unknown")).block, true);
-  assert.equal((await gate("intent__HassTurnOn")).block, true);
-  assert.deepEqual(views.at(-1), { kind: "permission", message: "Review Home Assistant request: intent__HassTurnOn" });
-  confirms = true;
-  continues = false;
-  await run("ha", 'on {"name":"Test lamp"}');
-  assert.equal(requests.filter(({ method }) => method === "tools/call").length, 0);
-  continues = true;
+  const reply = (text: string, source = "interactive") => handlers.get("input")!({ text, source }, ctx);
+  const callParams = () => requests.filter(({ method }) => method === "tools/call").map(({ params }) => params);
+  const currentId = () => /Type approve (HA-[A-F0-9]{8})/.exec(entries.at(-1)!)![1];
   assert.equal((await gate("intent__HassTurnOn", { ...ctx, mode: "rpc" })).block, true);
-  assert.equal(await gate("intent__HassTurnOn"), undefined);
-  await run("ha", 'on {"name":"Test lamp"}');
-  assert.deepEqual(requests.filter(({ method }) => method === "tools/call").map(({ params }) => params), [
-    { name: "intent__HassTurnOn", arguments: { name: "Test lamp" } },
-  ]);
-  assert.deepEqual(views.at(-1), { kind: "question", message: "intent__HassTurnOn" });
+  assert.equal(entries.length, 0);
+  assert.equal((await gate("intent__HassTurnOn")).block, true);
+  assert.match(entries.at(-1)!, /"name": "Test lamp"/);
+  const id = currentId();
+  assert.match((await gate("intent__HassTurnOff")).reason, /already pending/);
+  assert.equal(await reply("yes"), undefined);
+  assert.equal((await reply(`approve ${id}`, "extension")).action, "handled");
+  assert.equal((await reply(`approve ${id}`, "rpc")).action, "handled");
+  idle = false;
+  await reply(`approve ${id}`);
+  idle = true;
+  assert.deepEqual(callParams(), []);
+  await reply(`approve ${id}`);
+  assert.match(entries.at(-1)!, /completed\.\n\[redacted\]/);
+  await reply(`approve ${id}`);
+  assert.deepEqual(callParams(), [{ name: "intent__HassTurnOn", arguments: { name: "Test lamp" } }]);
+  await run("ha", 'off {"name":"Test lamp"}');
+  await reply(`cancel ${currentId()}`);
+  assert.match(entries.at(-1)!, /canceled\. Nothing sent/);
+  await run("ha", 'template {"template":"{{ 2 + 2 }}"}');
+  const templateId = currentId();
+  handlers.get("session_tree")!();
+  await reply(`approve ${templateId}`);
+  assert.equal(callParams().length, 1);
   await handlers.get("session_start")!();
   assert.deepEqual(removed, [SERVER]);
   assert.equal((await gate("homeassistant__GetLiveContext")).block, true);
