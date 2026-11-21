@@ -1,5 +1,9 @@
 # Virtual Machine Inventory
 
+Live state and allocations checked 2026-11-18, 16:59–17:04 UTC.
+Sources: [assessment evidence E3, E6, and E12](../docs/operations/2026-11-18-proxmox-assessment.md#evidence-index).
+Application roles and IP notes remain historical unless the assessment confirms them.
+
 ## Proxmox Virtual Machines
 
 ### Infrastructure Services
@@ -8,16 +12,16 @@
 
 - **Status**: ✅ Running
 - **CPU**: 2 cores (host)
-- **RAM**: 2 GB
-- **Storage**: 30 GB SSD
+- **RAM**: 4 GiB maximum, 2 GiB balloon minimum
+- **Storage**: 30 GiB SSD
 - **Network**: vmbr01 (Management network)
-- **OS**: Linux
+- **OS**: Ubuntu 24.04.5 LTS
 - **Purpose**: TP-Link Omada SDN Controller
 - **Auto-start**: Yes (startup delay: 180s)
 
-#### VM 110 - Laorion
+#### VM 110 - Laorion, historical record
 
-- **Status**: 🔴 Stopped
+- **Status**: Not present in the live VM list. Allocations below are historical.
 - **CPU**: 4 cores (host)
 - **RAM**: 16 GB
 - **Storage**:
@@ -32,25 +36,25 @@
 #### VM 111 - Rootmaster
 
 - **Status**: 🔴 Stopped
-- **CPU**: 2 cores (host)
-- **RAM**: 2 GB
+- **CPU**: 4 cores (host)
+- **RAM**: 8096 MiB maximum, 2048 MiB balloon minimum
 - **Storage**:
   - 80 GB SSD (System)
   - 16 GB SSD (Additional)
 - **Network**: vmbr10 (VLAN 10)
-- **OS**: Linux
-- **Auto-start**: Yes (currently powered off)
+- **OS**: Not queried while stopped
+- **Auto-start**: No explicit onboot setting
 
 #### VM 120 - dockermaster (Docker Master)
 
 - **Status**: ✅ Running
-- **CPU**: 20 cores (2 sockets × 10 cores, host), pinned to socket 0 (CPUs 0-9,20-29)
-- **RAM**: 64 GB
-- **Storage**: 196 GB SSD
+- **CPU**: 8 cores (one socket, host), pinned to socket 0 (CPUs 0-9,20-29)
+- **RAM**: 16256 MiB maximum, 4192 MiB balloon minimum
+- **Storage**: 120 GiB SSD. LVM mapping warning needs review.
 - **Network**: vmbr28
 - **IP**: 192.168.48.44
-- **OS**: Ubuntu Linux
-- **Purpose**: Control plane — Portainer, Nginx-1, Bind9-primary, vault-1, Docker Registry, cloudflared-1
+- **OS**: Ubuntu 24.04.4 LTS
+- **Purpose**: Control plane, Portainer, Nginx-1, Bind9-primary, vault-1, Docker Registry, cloudflared-1
 - **Auto-start**: Yes (startup delay: 30s)
 
 #### VM 123 - dockerserver-1 (short: ds-1)
@@ -61,8 +65,8 @@
 - **Storage**: 120 GB SSD (thin-pool)
 - **Network**: vmbr28
 - **IP**: 192.168.48.45
-- **OS**: Ubuntu Linux (clone of dockermaster)
-- **Purpose**: App Plane A — vault-2, GitHub Runner, Twingate A, Calibre, Rundeck, Prometheus, MinIO, Keycloak-1
+- **OS**: Ubuntu 24.04.4 LTS (clone of dockermaster)
+- **Purpose**: App Plane A, vault-2, GitHub Runner, Twingate A, Calibre, Rundeck, Prometheus, MinIO, Keycloak-1
 - **Portainer endpoint ID**: 9
 - **Auto-start**: Yes (startup delay: 30s)
 
@@ -70,41 +74,41 @@
 
 - **Status**: ✅ Running
 - **CPU**: 10 cores (host), pinned to socket 1 (CPUs 10-19,30-39)
-- **RAM**: 48 GB
-- **Storage**: 120 GB SSD (thin-pool)
+- **RAM**: 48 GiB
+- **Storage**: 120 GiB SSD (thin-pool)
 - **Network**: vmbr28
 - **IP**: 192.168.48.46
 - **MAC**: bc:24:11:84:bc:16
-- **OS**: Ubuntu Linux (clone of dockerserver-1, 2026-04-11)
+- **OS**: Ubuntu 24.04.4 LTS (clone of dockerserver-1, 2026-04-11)
 - **Purpose**: App Plane B — vault-3, Twingate B, Keycloak-2, FreeSWITCH, RustDesk, Watchtower
 - **Portainer endpoint ID**: 13
-- **Portainer agent macvlan IP**: 192.168.59.59 (.46 collided with otel-collector, then .42 with
-  pihole-exporter-2; moved 2026-11-05)
-- **Portainer agent MAC**: not pinned (the compose file sets none; Docker assigns a random MAC on recreate)
+- **Portainer agent macvlan IP**: 192.168.59.59. The old .46 address collided with otel-collector, then .42 with pihole-exporter-2.
+  Moved 2026-11-05.
+- **Portainer agent MAC**: Not pinned. Docker assigns a random MAC on recreation because the compose file sets none.
 - **Auto-start**: Yes (startup order: 1, delay: 30s)
 
 #### VM 121 - Home Assistant
 
 - **Status**: ✅ Running
-- **CPU**: 4 cores (SandyBridge)
-- **RAM**: 16 GB
-- **Storage**: 32 GB
+- **CPU**: 4 cores (host)
+- **RAM**: 16 GiB
+- **Storage**: 64 GiB
 - **Network**: vmbr205
-- **OS**: Linux (UEFI/OVMF)
+- **OS**: Home Assistant OS 18.4 (UEFI/OVMF)
 - **Purpose**: Home automation platform
-- **Auto-start**: Yes (startup order: 1)
+- **Auto-start**: Yes (startup order: 2)
 
 #### VM 122 - UniFi Controller
 
 - **Status**: ✅ Running
-- **CPU**: 2 cores (host)
-- **RAM**: 2 GB
+- **CPU**: 2 cores (x86-64-v2-AES)
+- **RAM**: 8 GiB maximum, 2 GiB balloon minimum
 - **Storage**: 128 GB (write-through cache)
 - **Network**:
   - net0 vmbr010 (HOME VLAN, `link_down=1` / disabled)
-  - net1 vmbr01 (ADMIN, untagged/eno1) — `192.168.32.41`; was on vmbr1 (tagged-VID1/eno2),
-    re-homed 2026-06-26 because the tagged-VID1 path died after the switch24a Omada rebuild
-- **OS**: Linux
+  - net1 vmbr01 (ADMIN, untagged/eno1). Historical IP: `192.168.32.41`.
+    Previously on vmbr1 (tagged-VID1/eno2). Re-homed 2026-06-26 after the switch24a Omada rebuild.
+- **OS**: Ubuntu 20.04.6 LTS. Standard support ended 2025-05-31. Extended support status was not checked.
 - **Purpose**: UniFi network management
 - **Auto-start**: Yes (startup delay: 120s)
 
@@ -117,27 +121,29 @@
 - **RAM**: 1 GB (512 MB swap)
 - **Storage**: 8 GB SSD (thin-pool)
 - **Network**: vmbr0, IP 192.168.100.254/24, GW 192.168.100.1
-- **OS**: Debian (unprivileged)
+- **OS**: Debian 12 (unprivileged), verified through a read-only container command
 - **Auto-start**: Yes (startup order 1)
-- **Purpose**: Pi-hole v6.3.3 DNS — authoritative for `*.lab.home` via `pihole.toml` hosts array
+- **Purpose**: Pi-hole v6.3.3 DNS, authoritative for `*.lab.home` via `pihole.toml` hosts array
 - **Search domain**: lab.lcamaral.com
 
-#### LXC 10010 - openclaw
+#### LXC 10010 - openclaw, historical record
 
-- **Status**: 🔴 Stopped (retired, replaced by hermes 10020)
+- **Status**: Not present in the live container list. Retired and replaced by hermes 10020.
+  The configuration below is historical.
 - **CPU**: 6 cores
 - **RAM**: 8 GB (8128 MB)
 - **Storage**: 236 GB SSD (thin-pool)
 - **Network**: vmbr0, IP 192.168.100.244/24, GW 192.168.100.1
 - **OS**: Debian 12 (bookworm)
 - **Features**: nesting=1, unprivileged
-- **Snapshot**: `initial-installation` (2026-02-26) — used as source for template 9000
+- **Snapshot**: `initial-installation` (2026-02-26), used as source for template 9000
 - **Purpose (legacy)**: Nginx reverse proxy for openclaw/byte application
-- **⚠️ IP conflict**: configured for `192.168.100.244` — same as hermes 10020. Do not start while hermes is running.
+- **Historical IP conflict**: Used `192.168.100.244`, the same address as hermes 10020.
+  Check address ownership before any recovery.
 
 #### LXC 10020 - hermes
 
-- **Status**: ✅ Running (since 2026-05-20)
+- **Status**: 🔴 Stopped at the 2026-11-18 check
 - **CPU**: 6 cores
 - **RAM**: 8 GB (8128 MB)
 - **Storage**: 236 GB SSD (thin-pool, full clone of base-9000-disk-0)
@@ -146,9 +152,19 @@
 - **Features**: nesting=1, unprivileged
 - **DNS**: nameserver 192.168.100.254 (pihole), searchdomain lab.lcamaral.com
 - **Auto-start**: No (`onboot: 0`)
-- **Cloned from**: template `tmpl-debian-devops` (9000) — full clone
+- **Cloned from**: template `tmpl-debian-devops` (9000), full clone
 - **Post-clone fixes applied**: machine-id regenerated, SSH host keys regenerated, locale `en_US.UTF-8` generated
 - **DNS entries (pihole)**: `hermes.lab`, `hermes.lab.home`
+
+#### VM 130 - lab-router
+
+- **Status**: 🔴 Stopped
+- **CPU**: 2 cores (host)
+- **RAM**: 2 GiB
+- **Storage**: 8 GiB SSD, plus cloud-init disk
+- **Network**: vmbr30, vmbr28, vmbr10, vmbr0
+- **OS**: Not queried while stopped
+- **Auto-start**: No explicit onboot setting
 
 ### Templates & Testing
 
@@ -175,10 +191,11 @@
 
 ## Summary
 
-- **Total VMs**: 9 (6 running: 100, 120, 121, 122, 123, 124; 3 stopped: 101, 110, 111)
-- **Total LXCs**: 4 entries
-  - Running: 10000 pihole, 10020 hermes
-  - Stopped: 10010 openclaw
+- **Total VMs**: 9. Six running: 100, 120, 121, 122, 123, 124. Three stopped: 101, 111, 130.
+- **Total live LXC entries**: 3
+  - Running: 10000 pihole
+  - Stopped: 10020 hermes
   - Template: 9000 tmpl-debian-devops
+- **Historical entries absent from live lists**: VM 110 and LXC 10010
 - **Templates**: 1 LXC (`tmpl-debian-devops` 9000)
-- **Last reconciled with live `qm list` / `pct list`**: 2026-05-20
+- **Last reconciled with live `qm list` / `pct list`**: 2026-11-18

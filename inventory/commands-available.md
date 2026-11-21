@@ -26,10 +26,47 @@
 
 ### Version Information
 
-- **Proxmox VE**: 8.3.5
-- **Kernel**: 6.8.12-9-pve
-- **QEMU**: 9.2.0-2
-- **Corosync**: 3.1.7-pve3
+Checked 2026-11-18, 16:59–17:04 UTC on `proxmox`.
+See [assessment evidence E1–E12](../docs/operations/2026-11-18-proxmox-assessment.md#evidence-index).
+
+- **Proxmox manager**: 9.1.7
+- **OS**: Debian 13 (trixie)
+- **Kernel**: 6.17.13-2-pve
+- **QEMU**: 10.1.2-7
+- **LXC runtime**: 6.0.5-4
+- **Corosync**: 3.1.10-pve2 installed. No Corosync cluster configuration.
+- **LVM**: 2.03.31-2+pmx1
+- **smartmontools**: 7.4-pve1
+- **ssacli**: 6.15-11.0
+- **hponcfg**: 6.0.0-0
+
+### Read-only assessment commands
+
+These commands ran on `proxmox`. The SSH account needs sudo for privileged queries.
+
+- `hostnamectl`, `uname -a`, `uptime`, `lscpu`, `free -h`, `vmstat 1 3`: OS, hardware, and load.
+- `dmidecode -t system -t baseboard -t bios -t memory`, `lspci -nn`: Hardware details.
+- `qm list`, `pct list`, `pvesh get /cluster/resources --type vm`: Guest state.
+- `qm guest cmd <vmid> get-osinfo`, `qm guest cmd <vmid> get-fsinfo`: Guest-agent OS and filesystem data.
+- `pvesh get /nodes/proxmox/status`, `pvecm status`: Node and cluster state.
+- `lsblk`, `findmnt`, `df -hT`, `pvesm status`, `pvs`, `vgs`, `lvs`: Storage layout and allocation.
+- `ssacli ctrl all show status`, `ssacli ctrl all show config`, `ssacli ctrl all show detail`: P420i RAID health.
+- `smartctl -H /dev/sda`: Reports that physical-drive access needs `-d cciss,N`. This query did not establish drive health.
+- `pvesh get /cluster/backup`, `pvesh get /nodes/proxmox/tasks`: Backup configuration and history.
+- `pvesm list pve-backups --content backup`: Backup archive inventory.
+- `ip -br address`, `ip route`, `ip -d link show`, `bridge vlan show`, `ethtool <nic>`: Network state.
+- `ss -lntup`, `sshd -T`, `pve-firewall status`, `nft list tables`, `iptables -S`, `ip6tables -S`: Host access controls.
+- `chronyc tracking`, `chronyc sources -v`: Time synchronization.
+- `apt-cache policy <package>`, `apt list --upgradable`, `apt-mark showhold`: Cached update candidates.
+- `apt-get --simulate dist-upgrade`: Package simulation only. Proposed 275 upgrades and seven additions.
+- `systemctl --failed`, `systemctl list-timers --all`, `journalctl`: Services, schedules, and logs.
+- `proxmox-boot-tool status`, `pvenode cert info`: Boot setup and public certificates.
+- `zpool status`, `ceph -s`: No ZFS pools. Ceph did not identify monitors.
+- `pct exec 10000 -- grep -E '^(PRETTY_NAME|VERSION_ID)=' /etc/os-release`: Pi-hole container OS.
+
+On `nas`, `df -h`, `stat -f`, and `ls -ldn` checked storage capacity and backup path ownership without sudo.
+The workstation queried primary Prometheus through `/api/v1/query` for the PVE scrape and version.
+No installs, metadata refresh, service changes, or restores took place.
 
 ---
 
@@ -99,7 +136,7 @@
 
 ### Docker via Container Manager
 
-> The Docker binary on the NAS is non-standard — installed by the Synology Container Manager package.
+> Synology Container Manager installs the NAS Docker binary at a non-standard path.
 
 ```bash
 # Full path required unless added to PATH
@@ -145,14 +182,14 @@ export PATH="/var/packages/ContainerManager/target/usr/bin:$PATH"
 
 ## pfSense (Main Router & Gateway)
 
-> FreeBSD-based. Most commands need to run directly (no `sudo` prompt —
-> root-by-default via key auth). Destructive operations are gated — see the
+> FreeBSD-based. Most commands run as root through key authentication, without a `sudo` prompt.
+> Destructive operations need approval. See the
 > `pfsense-manage` skill for safe workflows.
 
 ### System Information
 
 - `uname -a` - Kernel, hostname, architecture
-- `cat /etc/version` - pfSense Plus version (e.g. `26.07-RELEASE`)
+- `cat /etc/version` - pfSense Plus version (for example, `26.07-RELEASE`)
 - `cat /etc/version.buildtime` - Build timestamp
 - `sysctl -n hw.model hw.ncpu hw.physmem` - CPU model, core count, RAM bytes
 - `uptime` / `top -b` - Load and processes
@@ -161,7 +198,7 @@ export PATH="/var/packages/ContainerManager/target/usr/bin:$PATH"
 
 ### Networking
 
-- `ifconfig -a` - All interfaces incl. VLANs (`ix0.10`, etc.)
+- `ifconfig -a` - All interfaces and VLANs such as `ix0.10`
 - `netstat -rn4` / `netstat -rn6` - IPv4/IPv6 routing tables
 - `pfctl -s info` - pf firewall status and counters
 - `pfctl -s labels` - Rule hit counts with descriptions
@@ -203,7 +240,7 @@ export PATH="/var/packages/ContainerManager/target/usr/bin:$PATH"
 
 ### Config
 
-- `cat /cf/conf/config.xml` - **Main config** (sensitive — contains hashed passwords, PSKs)
+- `cat /cf/conf/config.xml` - **Main config** (sensitive, contains hashed passwords and PSKs)
 - `ls /cf/conf/backup/` - Automatic config backups (timestamped)
 - `ls /cf/conf/config.xml.bak.*` - Recent change snapshots
 
