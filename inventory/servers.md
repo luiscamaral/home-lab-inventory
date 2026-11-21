@@ -2,7 +2,7 @@
 
 ## Physical Servers
 
-### pfSense — Main Router & Gateway
+### pfSense, Main Router & Gateway
 
 - **Hostname**: `pfsense.admin.lcamaral.com` (short: `pfsense`)
 - **Role**: Main router, firewall, DNS resolver, DHCP, ACME CA, HAProxy edge, dual-WAN gateway
@@ -13,11 +13,11 @@
   - **RAM**: 16 GB
   - **Storage**: ZFS pool `pfSense`, 408 GB usable, 5 boot environments
   - **NICs**: 2× 10GbE SFP+ (`ix0`/`ix1`) + 4× 2.5GbE (`igc0`–`igc3`)
-  - **Vendor OUI**: `a8:b8:e0` (Netgate) — likely Netgate 8200 (unconfirmed)
+  - **Vendor OUI**: `a8:b8:e0` (Netgate), likely Netgate 8200 (unconfirmed)
 - **Network Configuration**:
-  - **WAN1** (`igc0`): `192.168.28.3/24` — Google Fiber (primary)
-  - **WAN2** (`igc1`): `192.168.12.2` + `192.168.12.32/24` — backup ISP
-  - **ADMIN** (`igc3`): `192.168.32.33/27` — management subnet
+  - **WAN1** (`igc0`): `192.168.28.3/24`, Google Fiber (primary)
+  - **WAN2** (`igc1`): `192.168.12.2` + `192.168.12.32/24`, backup ISP
+  - **ADMIN** (`igc3`): `192.168.32.33/27`, management subnet
   - **LAN trunk** (`ix0`, 10GbE) carries VLANs:
     - VLAN 10 **HOME**: `192.168.0.0/20` gw `192.168.4.1`
     - VLAN 28 **SRVAN**: `192.168.48.0/20` gw `192.168.48.1` (Docker macvlan)
@@ -33,7 +33,7 @@
   - HAProxy (LAN TLS edge on `192.168.4.1:443` and `192.168.48.1:443`)
   - ACME/LetsEncrypt issuer for `*.d.lcamaral.com`, `home.lcamaral.com`, `*.home.lcamaral.com`
   - pfBlockerNG (IP + DNS blocklists)
-  - `node_exporter` on `192.168.4.1:9100` — Prometheus scrape target
+  - `node_exporter` on `192.168.4.1:9100`, Prometheus scrape target
   - NTP server for all LAN VLANs
   - DynDNS → DreamHost (updates `wan1`/`wan2`/`homelab`/`hbbs`/`hbbr`.home.lcamaral.com)
 - **Access**: SSH via `ssh pfsense` (key-based, no username / password, port 3220)
@@ -43,30 +43,42 @@
 
 ### Proxmox Hypervisor
 
+Live check: 2026-11-18, 16:59–17:04 UTC. Sources: assessment evidence E1–E12.
+See [the full assessment](../docs/operations/2026-11-18-proxmox-assessment.md) for commands, findings, and limits.
+
 - **Hostname**: proxmox
-- **OS**: Debian GNU/Linux 12 (bookworm)
-- **Kernel**: Linux 6.8.12-9-pve
-- **Proxmox Version**: 8.3.5
+- **OS**: Debian GNU/Linux 13 (trixie)
+- **Kernel**: Linux 6.17.13-2-pve
+- **Proxmox manager**: 9.1.7, with cached candidate 9.2.28
+- **QEMU**: 10.1.2-7
 - **Hardware**:
-  - **CPU**: 2x Intel Xeon E5-2680 v2 @ 2.80GHz (20 cores / 40 threads total)
-  - **RAM**: 243 GB
-  - **Architecture**: x86_64
+  - **Model**: HP ProLiant DL360p Gen8, BIOS P71 dated 2019-05-24
+  - **CPU**: Two Intel Xeon E5-2680 v2 @ 2.80 GHz, 20 cores and 40 threads
+  - **RAM**: 256 GiB installed DDR3 ECC, 243.97 GiB visible to the OS
+  - **Architecture**: x86_64, two NUMA nodes, no AVX2 in reported flags
 - **Network Configuration**:
-  - **Management IP**: 192.168.32.61/27 (vmbr01)
-  - **Secondary IP**: 192.168.32.62/27 (vmbr1)
-  - **VLAN 10 IP**: 192.168.7.10/20 (vmbr10) - MTU 9000
-  - **Secondary VLAN 10 IP**: 192.168.7.11/20 (vmbr010)
-  - **Network Bridges**: vmbr01, vmbr1, vmbr10, vmbr010, vmbr28, vmbr205
+  - **Management IPs**: 192.168.32.61/27 (vmbr01), 192.168.32.62/27 (vmbr1)
+  - **HOME IPs**: 192.168.7.10/20 (vmbr10), 192.168.7.11/20 (vmbr010)
+  - **Lab IP**: 192.168.100.1/24 (vmbr0)
+  - **Bridges**: vmbr01, vmbr1, vmbr10, vmbr010, vmbr28, vmbr205, vmbr0, vmbr30
+  - **10 GbE**: ens1f0 link up at 10 Gb/s, MTU 1500. ens1f1 has no link.
+  - **DNS**: 192.168.4.1, 192.168.100.254, 192.168.4.236. Matches `hosts/proxmox/dns.yml`.
 - **Storage Configuration**:
-  - **local**: 34GB total (37% used) - Root filesystem
-  - **local-lvm**: 44GB LVM thin pool (0% used)
-  - **thin-pool-ssd**: 1.76TB SSD thin pool (41% used)
-  - **hdd-pool**: 1.09TB HDD LVM (4% used)
-  - **pve-servers-shared**: 6TB NFS mount from NAS (95% used)
-  - **pve-backups**: 6TB NFS mount from NAS (95% used)
-- **Virtual Machines**: 18 total (7 running, 11 stopped)
-- **Services**: Proxmox VE virtualization platform
-- **Access**: SSH via `ssh proxmox`
+  - **RAID**: P420i, SSD RAID5 and HDD RAID5. Logical drives report OK.
+  - **Safety warning**: Cache capacitor reports failure. No-battery write cache remains enabled.
+  - **local**: About 34 GiB root filesystem, 15 GiB available, `df` reports 56% use
+  - **local-lvm**: 42 GiB thin pool, 0% data allocation
+  - **thin-pool-ssd**: 1806.67 GiB, 42.87% data allocation, 14.60% metadata use
+  - **hdd-pool**: 1117.75 GiB free, no logical volumes
+  - **NFS backup/shared exports**: Each reports 6 TiB capacity, 97.62% use, about 146 GiB free
+  - **NAS-side check**: `/volume2` reports 25 TiB total and 5.3 TiB free. Export capacity accounting remains unresolved.
+  - **LVM warning**: VM 120 and 123 mappings exceed their declared 120 GiB logical-volume sizes.
+- **Guests**: Nine VMs, six running. One running LXC, one stopped LXC, one LXC template.
+- **Cluster**: Standalone node. No Corosync configuration or HA-managed resources.
+- **Backups**: Monday/Thursday snapshots. Latest six VM backups completed. Pi-hole backup failed with permission denied.
+- **Monitoring**: Primary Prometheus PVE scrape works. No host node exporter installed.
+- **Access**: SSH via `ssh proxmox`. Root/password login defaults remain enabled.
+- **Host firewall**: Disabled. Upstream firewall rules were not checked.
 
 ### NAS Server
 
@@ -80,8 +92,8 @@
   - **RAM**: 7.7 GiB (supports up to 32 GB ECC DDR4)
   - **Kernel**: 4.4.302+
 - **Storage**:
-  - `/volume2`: 25TB total, 2.5TB free (90% used, 2026-11-03), btrfs on RAID5 (5 HDD)
-    behind a 2x NVMe RAID1 write-back SSD cache
+  - `/volume2`: 25 TiB total, 5.3 TiB free (79% used, 2026-11-18, evidence E7).
+    Historical layout: btrfs on RAID5 (5 HDD), behind a 2x NVMe RAID1 write-back SSD cache.
 - **Docker Environment** (Synology Container Manager):
   - **Docker Binary**: `/var/packages/ContainerManager/target/usr/bin/docker`
   - **Docker Version**: 24.0.2 (API 1.43)
@@ -95,11 +107,12 @@
   - **Endpoint ID**: 6 (name: "nas")
   - **Agent Image**: `portainer/agent:2.39.1`
   - **Credentials**: `secret/homelab/portainer-nas-agent` in Vault
-  - **Note**: NAS is not directly reachable from dockermaster (different subnets). Edge Agent reverses the connection.
+  - **Historical access note**: NAS was not directly reachable from dockermaster. Edge Agent reverses the connection.
+    This assessment did not recheck that path.
 - **Services**:
   - NFS shares for VM storage and backups
-  - Docker containers via Portainer Edge (4 active stacks — see `docker-containers.md`)
-- **Kernel tuning**: IaC-managed writeback limits — `nas/tuning/sysctl.yml`, applied by
+  - Docker containers via Portainer Edge (4 active stacks, see `docker-containers.md`)
+- **Kernel tuning**: IaC-managed writeback limits, `nas/tuning/sysctl.yml`, applied by
   `scripts/sync-nas-tuning.py` (see `nas/tuning/README.md`)
 - **Access**: SSH via `ssh nas`
 
@@ -108,28 +121,28 @@
 > **HA topology:** Each VM hosts a slice of the active-active HA setup. See
 > `docs/ha-architecture.md` for the full picture.
 
-### dockermaster (VM 120) — control plane + edge
+### dockermaster (VM 120), control plane + edge
 
 - **Hostname**: dockermaster
 - **Type**: Virtual Machine on Proxmox (VMID 120)
 - **OS**: Ubuntu 24.04 LTS
 - **Hardware**:
-  - **CPU**: 8 cores (reduced from 6 → 8 on 2026-04-12)
-  - **RAM**: 62 GB
+  - **CPU**: 8 vCPUs, checked 2026-11-18, evidence E3
+  - **RAM**: 16256 MiB maximum, checked 2026-11-18, evidence E3
   - **Storage**: 120 GB SSD (shrunk from 196GB → 120GB on 2026-04-12)
 - **Network**:
   - **LAN IP**: 192.168.48.44/20
   - **Macvlan gateway**: 192.168.59.1/26 (host alias for `docker-servers-net`)
   - **Macvlan shim MAC**: `02:00:00:00:00:01` (explicit in
-    `hosts/dockermaster/etc/systemd/network/10-server-net-shim.netdev` —
+    `hosts/dockermaster/etc/systemd/network/10-server-net-shim.netdev`,
     see task #31)
-  - **machine-id**: `2bd69dbe597b47edb0bbc1e571c208bf` (the original; ds-1
+  - **machine-id**: `2bd69dbe597b47edb0bbc1e571c208bf` (the original. ds-1
     and ds-2 were cloned from this host and regenerated theirs on
     2026-04-13)
 - **Docker**: 28.3.2, systemd cgroup driver
 - **NFS Mounts**:
-  - `/nfs/calibre` — Calibre library (legacy mount, served from NAS)
-  - `/nfs/dockermaster` — Persistent data, registry, configs
+  - `/nfs/calibre`, Calibre library (legacy mount, served from NAS)
+  - `/nfs/dockermaster`, Persistent data, registry, configs
 - **Services Hosted** (12 containers):
   - **Edge tier (HA 1/3):** rproxy (`.28`), cloudflare-tunnel-cloudflare-1, reverse-proxy-promtail-1
   - **Auth tier:** keycloak (`.13`, HA 1/2), keycloak-db-0 (`.44`, PG HA primary), homelab-portal (`.18`, HA 1/2)
@@ -138,26 +151,26 @@
   - **Management:** portainer (`.2`), watchtower
 - **Access**: SSH via `ssh dockermaster`
 
-### dockerserver-1 (VM 123) — primary workloads + HA peers
+### dockerserver-1 (VM 123), primary workloads + HA peers
 
 - **Hostname**: dockerserver-1
 - **Type**: Virtual Machine on Proxmox (VMID 123)
 - **OS**: Ubuntu 24.04 LTS
 - **Hardware**:
-  - **CPU**: 8 cores
-  - **RAM**: 24 GB
-  - **Storage**: 120 GB SSD
+  - **CPU**: 10 vCPUs, checked 2026-11-18, evidence E3
+  - **RAM**: 24 GiB maximum
+  - **Storage**: 120 GiB SSD
 - **Network**:
   - **LAN IP**: 192.168.48.45/20
   - **Macvlan**: 192.168.59.33 (host alias in `docker-servers-net`)
-  - **Macvlan shim MAC**: `02:00:00:00:00:02` (explicit; reconciled 2026-07-01
-    to match live — repo previously drifted to `:21`, never applied)
+  - **Macvlan shim MAC**: `02:00:00:00:00:02` (explicit, reconciled 2026-07-01
+    to match live. Repo previously drifted to `:21`, never applied)
   - **machine-id**: `de152d98902944208fb3571dd969c3a9` (regenerated
-    2026-04-13 — was identical to dm's before; caused shim MAC collision)
+    2026-04-13. Previously identical to dm's, which caused a shim MAC collision)
 - **Docker**: Latest CE, Portainer agent endpoint ID 9
 - **NFS Mounts**:
-  - `/nfs/dockermaster` — Shared Docker persistent data via NFS
-  - `/nfs/calibre` — Calibre library (NAS export added 2026-04-12)
+  - `/nfs/dockermaster`, Shared Docker persistent data via NFS
+  - `/nfs/calibre`, Calibre library (NAS export added 2026-04-12)
 - **Services Hosted** (21 containers):
   - **Edge tier (HA 2/3):** rproxy-2 (`.48`), cloudflare-tunnel-2 (local rproxy bridge)
   - **Auth tier:** keycloak-2 (`.43`, Infinispan peer), keycloak-db-1 (`.54`, PG HA standby), homelab-portal-2 (`.38`)
@@ -169,26 +182,26 @@
   - **Ancillary:** portainer-agent (`.34`), watchtower
 - **Access**: SSH via `ssh dockerserver-1`
 
-### dockerserver-2 (VM 124) — workloads + HA peers
+### dockerserver-2 (VM 124), workloads + HA peers
 
 - **Hostname**: dockerserver-2
 - **Type**: Virtual Machine on Proxmox (VMID 124, cloned from VM 123)
 - **OS**: Ubuntu 24.04 LTS
 - **Hardware**:
-  - **CPU**: 8 cores
-  - **RAM**: 48 GB
-  - **Storage**: 120 GB SSD (local for MinIO site replication)
+  - **CPU**: 10 vCPUs (checked live 2026-11-21)
+  - **RAM**: 48 GiB
+  - **Storage**: 120 GiB SSD (local for MinIO site replication)
 - **Network**:
   - **LAN IP**: 192.168.48.46/20
-  - **Macvlan shim**: 192.168.59.62 (was .46 — collided with the otel-collector
-    container on dm; moved to top of the /26 on 2026-07-01)
-  - **Macvlan shim MAC**: `02:00:00:00:00:03` (explicit; reconciled 2026-07-01
-    to match live — repo previously drifted to `:2e`, never applied)
+  - **Macvlan shim**: 192.168.59.62. The old address .46 collided with otel-collector on dm.
+    Moved to the top of the /26 on 2026-07-01.
+  - **Macvlan shim MAC**: `02:00:00:00:00:03` (explicit, reconciled 2026-07-01
+    to match live. Repo previously drifted to `:2e`, never applied)
   - **machine-id**: `3b8d239a029a4afbb7cb0e562e8b407f` (regenerated
     2026-04-13)
 - **Docker**: Latest CE, Portainer agent endpoint ID 13
 - **NFS Mounts**:
-  - `/nfs/dockermaster` — Shared Docker persistent data via NFS
+  - `/nfs/dockermaster`, Shared Docker persistent data via NFS
 - **Services Hosted** (9 containers):
   - **Edge tier (HA 3/3):** rproxy-3 (`.49`), cloudflare-tunnel-3 (local rproxy bridge)
   - **HA backing:** vault-3 (`.15`, raft 3/3), minio-2 (`.37`, site replication 2/2, local disk)
