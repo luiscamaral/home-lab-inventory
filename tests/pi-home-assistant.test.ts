@@ -5,6 +5,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { ACCESS, PREFIX, PROMPT, RESOURCE, SERVER, TOOLS, URL, parseCommand } from "../.pi/extensions/home-assistant/catalog.ts";
 import { HomeAssistantClient } from "../.pi/extensions/home-assistant/client.ts";
 import extension from "../.pi/extensions/home-assistant/index.ts";
+import { formatPrompt, formatSnapshot, formatTool, prepareDisplay } from "../.pi/extensions/home-assistant/results.ts";
 
 const TOKEN = "test-token";
 
@@ -69,6 +70,38 @@ test("shortcut client handles sessions, pagination, prompt, resource, and an unc
   assert.equal(requests.filter(({ method }) => method === "tools/call").length, 1);
 });
 
+test("snapshot and prompt show multiline text instead of the MCP envelopes", () => {
+  const text = "- names: Test light\n  state: on\n";
+  const snapshot = formatSnapshot({ contents: [{ text, uri: RESOURCE }, { uri: "fixture://binary", blob: "AAAB" }] });
+  assert.ok(snapshot.startsWith(text));
+  assert.ok(!snapshot.includes('"contents"') && !snapshot.includes("AAAB") && !snapshot.includes("\\n"));
+  const prompt = formatPrompt({ description: "Test prompt", messages: [
+    { role: "user", content: { type: "text", text: "Line one\nLine two" } },
+    { role: "assistant", content: { type: "image", data: "AAA=" } },
+  ] });
+  assert.equal(prompt, "Test prompt\n\n[user]\nLine one\nLine two\n\n[assistant]\n[image content omitted]");
+  assert.match(formatSnapshot({ contents: [] }), /no displayable content/);
+});
+
+test("tool results show structured data, multiline logs, plain text, and errors", () => {
+  const payload = { logs: "first\nsecond", count: 0, active: false };
+  const result = formatTool({ content: [{ type: "text", text: JSON.stringify(payload) }], structuredContent: payload });
+  assert.equal(result, "logs:\n  first\n  second\ncount: 0\nactive: false");
+  assert.equal(formatTool({ structuredContent: { devices: [{ name: "🚦 灯", state: null }] } }), "devices:\n  - name: 🚦 灯\n    state: null");
+  assert.equal(formatTool({ content: [{ type: "text", text: "[2026-11-21] log" }] }), "[2026-11-21] log");
+  assert.equal(formatTool({ content: [{ type: "resource", resource: { uri: RESOURCE, text: "line 1\nline 2" } }] }), "line 1\nline 2");
+  assert.equal(formatTool({ isError: true, content: [{ type: "text", text: "No match found." }] }), "No match found.");
+  assert.match(formatTool({ isError: true }), /error without details/);
+});
+
+test("display redacts credentials and terminal control characters without losing line breaks", () => {
+  const formatted = prepareDisplay(`first\r\n\t${TOKEN}\n\x1b[2J\u202edisplay`, TOKEN);
+  assert.equal(formatted, "first\n    [redacted]\n\\u{1b}[2J\\u{202e}display");
+  const long = prepareDisplay("a".repeat(127_999) + "🚦rest", TOKEN);
+  assert.ok(long.includes("Display limit reached"));
+  assert.ok(!long.includes("\ud83d"));
+});
+
 test("extension locks writes until terminal approval and keeps shortcut calls out of native model flow", async (t) => {
   type Handler = (...args: any[]) => any;
   const handlers = new Map<string, Handler>();
@@ -85,11 +118,15 @@ test("extension locks writes until terminal approval and keeps shortcut calls ou
     getAllTools: () => [],
   } as unknown as ExtensionAPI;
   let confirms = false;
-  let reviewed = "";
+  let continues = true;
+  const views: Array<{ kind: string; message: string }> = [];
   const ctx = {
     hasUI: true, mode: "tui", isProjectTrusted: () => true,
     ui: {
-      editor: async (_title: string, text: string) => { reviewed = text; return text; },
+      custom: async (_factory: unknown, options: { blocked: { kind: string; message: string } }) => {
+        views.push(options.blocked);
+        return continues;
+      },
       confirm: async () => confirms,
       notify: () => undefined,
     },
@@ -107,18 +144,19 @@ test("extension locks writes until terminal approval and keeps shortcut calls ou
   assert.equal(await gate("homeassistant__GetLiveContext"), undefined);
   assert.equal((await gate("unknown")).block, true);
   assert.equal((await gate("intent__HassTurnOn")).block, true);
-  assert.match(reviewed, /Test lamp/);
+  assert.deepEqual(views.at(-1), { kind: "permission", message: "Review Home Assistant request: intent__HassTurnOn" });
+  confirms = true;
+  continues = false;
   await run("ha", 'on {"name":"Test lamp"}');
   assert.equal(requests.filter(({ method }) => method === "tools/call").length, 0);
-  confirms = true;
+  continues = true;
   assert.equal((await gate("intent__HassTurnOn", { ...ctx, mode: "rpc" })).block, true);
   assert.equal(await gate("intent__HassTurnOn"), undefined);
   await run("ha", 'on {"name":"Test lamp"}');
   assert.deepEqual(requests.filter(({ method }) => method === "tools/call").map(({ params }) => params), [
     { name: "intent__HassTurnOn", arguments: { name: "Test lamp" } },
   ]);
-  assert.ok(reviewed.includes("[redacted]"));
-  assert.ok(!reviewed.includes(TOKEN));
+  assert.deepEqual(views.at(-1), { kind: "question", message: "intent__HassTurnOn" });
   await handlers.get("session_start")!();
   assert.deepEqual(removed, [SERVER]);
   assert.equal((await gate("homeassistant__GetLiveContext")).block, true);
