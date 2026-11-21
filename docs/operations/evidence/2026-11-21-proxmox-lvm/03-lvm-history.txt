@@ -1,0 +1,84 @@
+Collection started UTC: 2026-11-21T06:31:45.144286+00:00
+Collection ended UTC: 2026-11-21T06:31:46.075328+00:00
+Source: SSH proxmox, sudo read-only commands; guest commands through QEMU agent
+Scope: 03-lvm-history
+No disk writes, TRIM, metadata snapshot messages, repairs, snapshots, guest stops, or reboots.
+Exit status: 0
+Commands:
+
+date -u +%Y-%m-%dT%H:%M:%SZ
+python3 - <<'P'
+from pathlib import Path
+import re,datetime,json
+wanted=['vm-120-disk-2','vm-123-disk-0','thin-pool']
+files=sorted([*Path('/etc/lvm/archive').glob('ssd_vg_*.vg'),*Path('/etc/lvm/backup').glob('ssd_vg')])
+print('ARCHIVE_FILE_COUNT',len(files))
+def block(text,name):
+ m=re.search(r'^\s*'+re.escape(name)+r'\s*\{',text,re.M)
+ if not m:return None
+ start=m.start();depth=0
+ for i in range(text.index('{',m.start()),len(text)):
+  if text[i]=='{':depth+=1
+  elif text[i]=='}':
+   depth-=1
+   if depth==0:return text[start:i+1]
+def scalar(text,key):
+ m=re.search(r'^\s*'+re.escape(key)+r'\s*=\s*(.+)$',text,re.M)
+ return m.group(1).strip() if m else None
+records=[]
+for path in files:
+ text=path.read_text(errors='replace')
+ record={'file':path.name,'description':scalar(text,'description'),'creation_time':scalar(text,'creation_time'),'seqno':scalar(text,'seqno'),'extent_size_sectors':scalar(text,'extent_size')}
+ record['volumes']={}
+ for name in wanted:
+  b=block(text,name)
+  if b:
+   record['volumes'][name]={k:scalar(b,k) for k in ['extent_count','start_extent','device_id','transaction_id','thin_pool','type']}
+ records.append(record)
+records.sort(key=lambda x:int(re.match(r'\d+',x['seqno'] or '0').group()))
+last=None
+for record in records:
+ signature={n:{k:v for k,v in val.items() if k!='transaction_id'} for n,val in record['volumes'].items()}
+ if signature!=last:
+  print(json.dumps(record,sort_keys=True));last=signature
+print('LATEST_ARCHIVE_RECORDS')
+for record in records[-6:]:print(json.dumps(record,sort_keys=True))
+print('CURRENT_BACKUP_HEADER')
+p=Path('/etc/lvm/backup/ssd_vg')
+if p.exists():
+ text=p.read_text()
+ for line in text.splitlines()[:18]:print(line)
+P
+
+OUTPUT:
+2026-11-21T06:31:45Z
++ date -u +%Y-%m-%dT%H:%M:%SZ
++ python3 -
+ARCHIVE_FILE_COUNT 43
+{"creation_time": "1792652922\t# Thu Oct 22 01:08:42 2026", "description": "\"Created *before* executing '/sbin/lvcreate -n snap_vm-10000-disk-0_vzdump -pr -s ssd_vg/vm-10000-disk-0'\"", "extent_size_sectors": "8192\t\t# 4 Megabytes", "file": "ssd_vg_00944-1310464524.vg", "seqno": "941", "volumes": {"thin-pool": {"device_id": null, "extent_count": "462508\t# 1.76433 Terabytes", "start_extent": "0", "thin_pool": null, "transaction_id": "448", "type": "\"thin-pool\""}, "vm-120-disk-2": {"device_id": "5", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "4", "type": "\"thin\""}, "vm-123-disk-0": {"device_id": "43", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "308", "type": "\"thin\""}}}
+LATEST_ARCHIVE_RECORDS
+{"creation_time": "1794881886\t# Mon Nov 16 19:18:06 2026", "description": "\"Created *before* executing '/sbin/lvcreate -n snap_vm-100-disk-0_pre-ubuntu-24-04-20261116 -pr -s ssd_vg/vm-100-disk-0'\"", "extent_size_sectors": "8192\t\t# 4 Megabytes", "file": "ssd_vg_00981-647844260.vg", "seqno": "978", "volumes": {"thin-pool": {"device_id": null, "extent_count": "462508\t# 1.76433 Terabytes", "start_extent": "0", "thin_pool": null, "transaction_id": "467", "type": "\"thin-pool\""}, "vm-120-disk-2": {"device_id": "5", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "4", "type": "\"thin\""}, "vm-123-disk-0": {"device_id": "43", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "308", "type": "\"thin\""}}}
+{"creation_time": "1795076065\t# Thu Nov 19 01:14:25 2026", "description": "\"Created *before* executing '/sbin/lvcreate -n snap_vm-10000-disk-0_vzdump -pr -s ssd_vg/vm-10000-disk-0'\"", "extent_size_sectors": "8192\t\t# 4 Megabytes", "file": "ssd_vg_00982-767711782.vg", "seqno": "979", "volumes": {"thin-pool": {"device_id": null, "extent_count": "462508\t# 1.76433 Terabytes", "start_extent": "0", "thin_pool": null, "transaction_id": "467", "type": "\"thin-pool\""}, "vm-120-disk-2": {"device_id": "5", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "4", "type": "\"thin\""}, "vm-123-disk-0": {"device_id": "43", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "308", "type": "\"thin\""}}}
+{"creation_time": "1795076065\t# Thu Nov 19 01:14:25 2026", "description": "\"Created *before* executing '/sbin/lvcreate -n snap_vm-10000-disk-0_vzdump -pr -s ssd_vg/vm-10000-disk-0'\"", "extent_size_sectors": "8192\t\t# 4 Megabytes", "file": "ssd_vg_00983-583644097.vg", "seqno": "980", "volumes": {"thin-pool": {"device_id": null, "extent_count": "462508\t# 1.76433 Terabytes", "start_extent": "0", "thin_pool": null, "transaction_id": "468", "type": "\"thin-pool\""}, "vm-120-disk-2": {"device_id": "5", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "4", "type": "\"thin\""}, "vm-123-disk-0": {"device_id": "43", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "308", "type": "\"thin\""}}}
+{"creation_time": "1795076066\t# Thu Nov 19 01:14:26 2026", "description": "\"Created *before* executing '/sbin/lvremove -f ssd_vg/snap_vm-10000-disk-0_vzdump'\"", "extent_size_sectors": "8192\t\t# 4 Megabytes", "file": "ssd_vg_00984-1633619450.vg", "seqno": "981", "volumes": {"thin-pool": {"device_id": null, "extent_count": "462508\t# 1.76433 Terabytes", "start_extent": "0", "thin_pool": null, "transaction_id": "468", "type": "\"thin-pool\""}, "vm-120-disk-2": {"device_id": "5", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "4", "type": "\"thin\""}, "vm-123-disk-0": {"device_id": "43", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "308", "type": "\"thin\""}}}
+{"creation_time": "1795076067\t# Thu Nov 19 01:14:27 2026", "description": "\"Created *before* executing '/sbin/lvremove -f ssd_vg/snap_vm-10000-disk-0_vzdump'\"", "extent_size_sectors": "8192\t\t# 4 Megabytes", "file": "ssd_vg_00985-2059134952.vg", "seqno": "982", "volumes": {"thin-pool": {"device_id": null, "extent_count": "462508\t# 1.76433 Terabytes", "start_extent": "0", "thin_pool": null, "transaction_id": "469", "type": "\"thin-pool\""}, "vm-120-disk-2": {"device_id": "5", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "4", "type": "\"thin\""}, "vm-123-disk-0": {"device_id": "43", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "308", "type": "\"thin\""}}}
+{"creation_time": "1795076067\t# Thu Nov 19 01:14:27 2026", "description": "\"Created *after* executing '/sbin/lvremove -f ssd_vg/snap_vm-10000-disk-0_vzdump'\"", "extent_size_sectors": "8192\t\t# 4 Megabytes", "file": "ssd_vg", "seqno": "983", "volumes": {"thin-pool": {"device_id": null, "extent_count": "462508\t# 1.76433 Terabytes", "start_extent": "0", "thin_pool": null, "transaction_id": "469", "type": "\"thin-pool\""}, "vm-120-disk-2": {"device_id": "5", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "4", "type": "\"thin\""}, "vm-123-disk-0": {"device_id": "43", "extent_count": "30720\t# 120 Gigabytes", "start_extent": "0", "thin_pool": "\"thin-pool\"", "transaction_id": "308", "type": "\"thin\""}}}
+CURRENT_BACKUP_HEADER
+# Generated by LVM2 version 2.03.31(2) (2025-02-27): Thu Nov 19 01:14:27 2026
+
+contents = "Text Format Volume Group"
+version = 1
+
+description = "Created *after* executing '/sbin/lvremove -f ssd_vg/snap_vm-10000-disk-0_vzdump'"
+
+creation_host = "proxmox"	# Linux proxmox 6.17.13-2-pve #1 SMP PREEMPT_DYNAMIC PMX 6.17.13-2 (2026-03-13T08:06Z) x86_64
+creation_time = 1795076067	# Thu Nov 19 01:14:27 2026
+
+ssd_vg {
+	id = "N3YGZy-I75t-W66n-isiH-LS3N-kBWz-UaL32L"
+	seqno = 983
+	format = "lvm2"			# informational
+	status = ["RESIZEABLE", "READ", "WRITE"]
+	flags = []
+	extent_size = 8192		# 4 Megabytes
+	max_lv = 0

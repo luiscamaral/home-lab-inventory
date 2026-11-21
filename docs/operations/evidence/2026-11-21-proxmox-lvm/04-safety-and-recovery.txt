@@ -1,0 +1,53 @@
+Collected UTC: 2026-11-21T06:33:04.368044+00:00
+Source: SSH proxmox, sudo read-only commands
+Scope: pool growth defaults, RAID cache protection, archive presence, log availability
+No infrastructure changes or restores.
+Commands:
+
+date -u +%Y-%m-%dT%H:%M:%SZ
+lvmconfig --type full activation/thin_pool_autoextend_threshold activation/thin_pool_autoextend_percent
+ssacli ctrl all show status
+ssacli ctrl all show detail | grep -E 'No-Battery Write Cache:|Drive Write Cache:|Battery/Capacitor Status:'
+python3 - <<'P'
+import subprocess,datetime
+p=subprocess.run(['pvesm','list','pve-backups','--content','backup'],capture_output=True,text=True,timeout=25)
+print('BACKUP_LIST_EXIT',p.returncode)
+for line in p.stdout.splitlines():
+ if line.startswith('Volid') or any(x in line for x in ['vzdump-qemu-120-','vzdump-qemu-123-']):print(line)
+print(p.stderr)
+p=subprocess.run(['journalctl','-k','--since','7 days ago','--no-pager','-n','3'],capture_output=True,text=True)
+print('KERNEL_LOG_CONTROL_SAMPLE',p.returncode);print(p.stdout)
+P
+
+Exit status: 0
+OUTPUT:
+2026-11-21T06:32:59Z
++ date -u +%Y-%m-%dT%H:%M:%SZ
++ lvmconfig --type full activation/thin_pool_autoextend_threshold activation/thin_pool_autoextend_percent
+thin_pool_autoextend_threshold=100
+thin_pool_autoextend_percent=20
++ ssacli ctrl all show status
+
+Smart Array P420i in Slot 0 (Embedded)
+   Controller Status: OK
+   Cache Status: OK
+   Battery/Capacitor Status: Failed (Replace Batteries/Capacitors)
+
+
++ ssacli ctrl all show detail
++ grep -E 'No-Battery Write Cache:|Drive Write Cache:|Battery/Capacitor Status:'
+   Drive Write Cache: Enabled
+   No-Battery Write Cache: Enabled
+   Battery/Capacitor Status: Failed (Replace Batteries)
++ python3 -
+BACKUP_LIST_EXIT 0
+Volid                                                           Format  Type             Size VMID
+pve-backups:backup/vzdump-qemu-120-2026_11_12-00_03_47.vma.zst  vma.zst backup    48633868439 120
+pve-backups:backup/vzdump-qemu-120-2026_11_19-00_03_27.vma.zst  vma.zst backup    47950034075 120
+pve-backups:backup/vzdump-qemu-123-2026_11_12-00_40_38.vma.zst  vma.zst backup    41747266785 123
+pve-backups:backup/vzdump-qemu-123-2026_11_19-00_39_51.vma.zst  vma.zst backup    41994864762 123
+
+KERNEL_LOG_CONTROL_SAMPLE 0
+Nov 20 22:19:06 proxmox kernel: hpilo 0000:01:00.2: Open could not dequeue a packet
+Nov 20 22:19:06 proxmox kernel: hpilo 0000:01:00.2: Open could not dequeue a packet
+Nov 20 22:19:06 proxmox kernel: hpilo 0000:01:00.2: Open could not dequeue a packet

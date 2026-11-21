@@ -172,6 +172,9 @@ The HDD pool's three physical-volume entries are partitions of one RAID logical 
 
 ### High: thin-volume mapping warnings
 
+Follow-up: the [2026-11-21 diagnosis](2026-11-21-proxmox-lvm-diagnosis.md) confirms mappings beyond the current disk limits.
+Current disk and filesystem sizes fit their boundaries. That check did not prove full data integrity.
+
 LVM reports that VM 120 maps 193.89 GiB and VM 123 maps 196 GiB, but both logical volumes declare 120 GiB. [E2]
 
 Proxmox guest configs also declare 120 GiB disks. Guest-agent data reports root filesystems of about 111.1 GiB and 106.4 GiB. [E3, E6]

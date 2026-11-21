@@ -1,0 +1,48 @@
+Collection started UTC: 2026-11-21T06:31:45.141617+00:00
+Collection ended UTC: 2026-11-21T06:31:53.333471+00:00
+Source: SSH proxmox, sudo read-only commands; guest commands through QEMU agent
+Scope: 02-guest-sizes
+No disk writes, TRIM, metadata snapshot messages, repairs, snapshots, guest stops, or reboots.
+Exit status: 0
+Commands:
+
+date -u +%Y-%m-%dT%H:%M:%SZ
+python3 - <<'P'
+import subprocess
+script="""date -u +%Y-%m-%dT%H:%M:%SZ
+lsblk -b -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINTS
+findmnt -n / -o SOURCE,FSTYPE,OPTIONS
+df -B1 /
+blockdev --getsize64 /dev/sda
+sfdisk --dump /dev/sda
+tune2fs -l /dev/sda2 2>/dev/null | grep -E 'Filesystem state:|Errors behavior:|Block count:|Free blocks:|Block size:|Last checked:|Last mount time:|Last write time:|Lifetime writes:'
+journalctl -k --since '7 days ago' --no-pager | grep -Ei 'I/O error|Buffer I/O|EXT4-fs.*(error|warning)|critical medium|rejecting I/O' | tail -40
+"""
+for vm in [120,123]:
+ print('\nGUEST_READ_ONLY',vm,flush=True)
+ p=subprocess.run(['qm','guest','exec',str(vm),'--timeout','45','--','/bin/sh','-c',script],capture_output=True,text=True,timeout=55)
+ print('CLI_EXIT',p.returncode);print(p.stdout);print(p.stderr)
+P
+
+OUTPUT:
++ date -u +%Y-%m-%dT%H:%M:%SZ
+2026-11-21T06:31:45Z
++ python3 -
+
+GUEST_READ_ONLY 120
+CLI_EXIT 0
+{
+   "exitcode" : 0,
+   "exited" : 1,
+   "out-data" : "2026-11-21T06:31:47Z\nNAME           SIZE TYPE FSTYPE   MOUNTPOINTS\nloop0     139853824 loop squashfs /snap/cmake/1186\nloop1     141078528 loop squashfs /snap/cmake/1204\nloop2      58281984 loop squashfs /snap/core18/2620\nloop3      58281984 loop squashfs /snap/core18/2632\nloop4      66265088 loop squashfs /snap/core20/1634\nloop5      66314240 loop squashfs /snap/core20/1695\nloop6      70029312 loop squashfs /snap/core24/1055\nloop7      96292864 loop squashfs /snap/lxd/24061\nloop8      52031488 loop squashfs /snap/snapd/17883\nloop9     240738304 loop squashfs /snap/vault/2424\nsda    128849018880 disk          \nââsda1      1048576 part          \nââsda2 128845873152 part ext4     /var/lib/docker/volumes/vault_vault_raft/_data\n                                  /\n/dev/sda2 ext4   rw,relatime\nFilesystem        1B-blocks        Used   Available Use% Mounted on\n/dev/sda2      125687103488 44990418944 74291281920  38% /\n128849018880\nlabel: gpt\nlabel-id: 8DF91146-9D06-4927-B9D1-318381152090\ndevice: /dev/sda\nunit: sectors\nfirst-lba: 34\nlast-lba: 251658206\nsector-size: 512\n\n/dev/sda1 : start=        2048, size=        2048, type=21686148-6449-6E6F-744E-656564454649, uuid=6105D219-CE42-4311-BC5C-DBE515764279, name=\"BIOS boot partition\"\n/dev/sda2 : start=        4096, size=   251652096, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=3E7D0CC2-7A3F-4FC7-97A2-1A6D3D83BBF7, name=\"Linux filesystem\"\nFilesystem state:         clean\nErrors behavior:          Continue\nBlock count:              31456512\nFree blocks:              19701780\nBlock size:               4096\nLast mount time:          Fri Oct 30 16:12:10 2026\nLast write time:          Fri Nov 20 23:03:32 2026\nLast checked:             Sun Apr 12 23:20:36 2026\nLifetime writes:          12 TB\n"
+}
+
+
+
+GUEST_READ_ONLY 123
+CLI_EXIT 0
+{
+   "exitcode" : 0,
+   "exited" : 1,
+   "out-data" : "2026-11-21T06:31:52Z\nNAME           SIZE TYPE FSTYPE   MOUNTPOINTS\nloop0     139853824 loop squashfs /snap/cmake/1186\nloop1     141078528 loop squashfs /snap/cmake/1204\nloop2      58281984 loop squashfs /snap/core18/2620\nloop3      58281984 loop squashfs /snap/core18/2632\nloop4      66265088 loop squashfs /snap/core20/1634\nloop5      66314240 loop squashfs /snap/core20/1695\nloop6      70029312 loop squashfs /snap/core24/1055\nloop7      96292864 loop squashfs /snap/lxd/24061\nloop8      52031488 loop squashfs /snap/snapd/17883\nloop9     240738304 loop squashfs /snap/vault/2424\nsda    128849018880 disk          \nââsda1      1048576 part          \nââsda2 128845873152 part ext4     /var/lib/docker/volumes/vault-2_vault_raft/_data\n                                  /\n/dev/sda2 ext4   rw,relatime\nFilesystem        1B-blocks        Used   Available Use% Mounted on\n/dev/sda2      120405753856 78347157504 35867807744  69% /\n128849018880\nlabel: gpt\nlabel-id: C19B1B58-C8F6-4FE1-852D-2F468B652E15\ndevice: /dev/sda\nunit: sectors\nfirst-lba: 34\nlast-lba: 251658206\nsector-size: 512\n\n/dev/sda1 : start=        2048, size=        2048, type=21686148-6449-6E6F-744E-656564454649, uuid=97F03894-E154-4C1D-A075-DC05F4EA5B65\n/dev/sda2 : start=        4096, size=   251652096, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=080EB71C-B01F-41CD-854B-3770F6D6AFBA\nFilesystem state:         clean\nErrors behavior:          Continue\nBlock count:              30146560\nFree blocks:              10283918\nBlock size:               4096\nLast mount time:          Fri Oct 30 00:40:12 2026\nLast write time:          Fri Nov 20 22:40:06 2026\nLast checked:             Sat Apr 11 20:15:30 2026\nLifetime writes:          13 TB\n"
+}

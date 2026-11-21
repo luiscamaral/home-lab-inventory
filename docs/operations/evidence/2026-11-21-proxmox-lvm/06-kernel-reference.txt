@@ -1,0 +1,31 @@
+Collected UTC: 2026-11-21, about 06:30 to 06:32 UTC
+Source: official Linux kernel documentation
+URL: https://docs.kernel.org/admin-guide/device-mapper/thin-provisioning.html
+Method: fetch_content and get_search_content
+Tool result: mwq14hqrfol1tw, URL index 0
+Queries: highest mapped sector, beyond, metadata snapshot
+Scope: thin target size and status semantics
+
+Exact excerpts:
+"The pool doesn’t store any size against the thin devices. If you load a thin target that is smaller than you’ve been using previously, then you’ll have no access to blocks mapped beyond the end. If you load a target that is bigger than before, then extra blocks will be provisioned as and when needed."
+
+Thin-target status format:
+<nr mapped sectors> <highest mapped sector>
+
+"If the pool has encountered device errors and failed, the status will just contain the string ‘Fail’. The userspace recovery tools should then be used."
+
+"In the case where <nr mapped sectors> is 0, there is no highest mapped sector and the value of <highest mapped sector> is unspecified."
+
+Metadata inspection:
+"Reserve a copy of the data mapping btree for use by userland. This allows userland to inspect the mappings as they were when this message was executed. Use the pool’s status command to get the root block associated with the metadata snapshot."
+
+No reserve_metadata_snap message was sent in this investigation. No active thin metadata dump or check was attempted.
+
+Additional reference: lvmthin(7)
+URL: https://man7.org/linux/man-pages/man7/lvmthin.7.html
+Tool result: mwq14hqrfol1tw, URL index 1, query 100 disables
+Scope: automatic extension threshold and shared-space accounting
+Exact excerpts:
+"Setting to 100 disables autoextend."
+"Thin snapshots also keep thin pool chunks from being freed."
+"removing thin LVs is not always an effective way of freeing space in a thin pool because blocks may be shared by snapshots"
