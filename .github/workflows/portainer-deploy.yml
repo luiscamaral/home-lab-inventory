@@ -28,7 +28,7 @@ jobs:
       DRY_RUN: ${{ github.event.inputs.dry_run }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Redeploy stacks
         run: |

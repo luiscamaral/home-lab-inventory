@@ -22,7 +22,7 @@ jobs:
       alert-required: ${{ steps.check.outputs.alert-required }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Query Thanos for firing alerts and down targets
         id: check
