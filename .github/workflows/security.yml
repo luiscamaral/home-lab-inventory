@@ -307,65 +307,54 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Find recently built images
-        id: find-images
+      # Scan the image built from THIS checkout's Dockerfile, not the registry's
+      # :latest. Pull requests never push to the registry, so scanning :latest
+      # could not reflect a Dockerfile fix before merge (deadlock), and a failed
+      # pull was silently treated as a clean scan (the gate passed with no data
+      # until the first image was published on 2026-11-21).
+      - name: Build images from Dockerfiles
+        id: build-images
         run: |
-          # Build list of images to scan, one per line.
-          POTENTIAL_IMAGES=""
-          if [ -f "dockermaster/docker/compose/calibre-server/Dockerfile" ]; then
-            POTENTIAL_IMAGES="ghcr.io/${{ env.IMAGE_PREFIX }}/calibre-server:latest"
-          fi
-
-          echo "Potential images to scan: $POTENTIAL_IMAGES"
-
-          # Multiline values must use the heredoc form to land in
-          # $GITHUB_OUTPUT — the previous single-`echo` approach produced
-          # "Invalid format 'ghcr.io/...'" errors when the body
-          # contained a newline.
-          {
-            echo 'images<<EOF'
-            echo "$POTENTIAL_IMAGES"
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
+          IMAGES=""
+          for service in calibre-server; do
+            dir="dockermaster/docker/compose/${service}"
+            if [ -f "${dir}/Dockerfile" ]; then
+              echo "Building ${service} from ${dir}/Dockerfile"
+              docker build -t "scan-local/${service}:scan" "${dir}"
+              IMAGES="${IMAGES} scan-local/${service}:scan"
+            fi
+          done
+          echo "images=${IMAGES# }" >> "$GITHUB_OUTPUT"
 
       - name: Scan built images with Trivy
-        if: steps.find-images.outputs.images != ''
+        if: steps.build-images.outputs.images != ''
         run: |
           mkdir -p image-scan-results
 
-          for image in ${{ steps.find-images.outputs.images }}; do
-            if [ -n "$image" ]; then
-              echo "Scanning $image"
-              # Try to pull the image first
-              if docker pull "$image" 2>/dev/null; then
-                image_name=$(echo "$image" | sed 's|/|-|g' | sed 's|:|-|g')
+          for image in ${{ steps.build-images.outputs.images }}; do
+            echo "Scanning $image"
+            image_name=$(echo "$image" | sed 's|/|-|g' | sed 's|:|-|g')
 
-                # Scan the image
-                docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-                  -v "$PWD:/workspace" \
-                  aquasec/trivy:latest image \
-                  --format sarif \
-                  --output "/workspace/image-scan-results/trivy-${image_name}.sarif" \
-                  "$image" || true
+            # --ignore-unfixed: gate on what a rebuild or package upgrade can
+            # actually fix. Vulnerabilities with no upstream fix stay visible in
+            # the Trivy reports of the base image but do not block unrelated PRs.
+            for fmt in sarif json; do
+              docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                -v "$PWD:/workspace" \
+                aquasec/trivy:latest image \
+                --ignore-unfixed \
+                --format "$fmt" \
+                --output "/workspace/image-scan-results/trivy-${image_name}.${fmt}" \
+                "$image" || true
+            done
 
-                # Also generate JSON for easier parsing
-                docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-                  -v "$PWD:/workspace" \
-                  aquasec/trivy:latest image \
-                  --format json \
-                  --output "/workspace/image-scan-results/trivy-${image_name}.json" \
-                  "$image" || true
-              else
-                echo "Warning: Could not pull image $image - it may not exist or be accessible"
+            # A scan that produced no result must fail, never pass silently.
+            for fmt in sarif json; do
+              if [ ! -s "image-scan-results/trivy-${image_name}.${fmt}" ]; then
+                echo "::error::Trivy produced no ${fmt} result for $image"
+                exit 1
               fi
-            fi
+            done
           done
 
       - name: Upload built image scan results
