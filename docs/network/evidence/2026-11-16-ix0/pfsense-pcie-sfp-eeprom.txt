@@ -1,0 +1,43 @@
+##### collected 2026-11-16T21:09:38Z
+## pciconf -l (ix)
+ix0@pci0:1:0:0:	class=0x020000 rev=0x01 hdr=0x00 vendor=0x8086 device=0x10fb subvendor=0xffff subdevice=0xffff
+ix1@pci0:1:0:1:	class=0x020000 rev=0x01 hdr=0x00 vendor=0x8086 device=0x10fb subvendor=0xffff subdevice=0xffff
+selector: ix0@pci0:1:0:0
+ix0@pci0:1:0:0:	class=0x020000 rev=0x01 hdr=0x00 vendor=0x8086 device=0x10fb subvendor=0xffff subdevice=0xffff
+    vendor     = 'Intel Corporation'
+    device     = '82599ES 10-Gigabit SFI/SFP+ Network Connection'
+    class      = network
+    subclass   = ethernet
+## pciconf caps for ix0
+pciconf: Device not found
+## ifconfig -vvv ix0
+	plugged: SFP/SFP+/SFP28 Unknown (Copper pigtail)
+	vendor: Cable Matters PN: 104033-1m-VN SN: URHDPSHL1 DATE: 2026-05-15
+
+	SFF8472 DUMP (0xA0 0..127 range):
+	 03 04 21 00 00 00 00 00 04 00 00 00 67 00 00 00
+	 00 00 01 00 43 61 62 6c 65 20 4d 61 74 74 65 72
+	 73 20 20 20 00 00 02 c9 31 30 34 30 33 33 2d 31
+	 6d 2d 56 4e 20 20 20 20 30 33 20 20 01 00 00 81
+	 00 00 00 00 55 52 48 44 50 53 48 4c 31 20 20 20
+	 20 20 20 20 32 36 30 35 31 35 30 30 00 00 00 0e
+	 80 00 11 48 fd 7f 3d f0 c3 fc 05 11 e2 e7 8d 76
+	 44 02 1b 00 00 00 00 00 00 00 00 00 15 98 50 81
+## dev.ix.0 PHY/SFP specific
+dev.ix.0.advertise_speed: 6
+dev.ix.0.fc: 3
+dev.ix.0.link_irq: 13384907
+dev.ix.0.%desc: Intel(R) X520 82599ES (SFI/SFP+)
+## sysctl dev.ix.0.queue0 sample
+dev.ix.0.queue0.rx_discarded: 0
+dev.ix.0.queue0.rx_copies: 0
+dev.ix.0.queue0.rx_bytes: 138925578787
+dev.ix.0.queue0.rx_packets: 174188805
+dev.ix.0.queue0.rxd_tail: 260
+dev.ix.0.queue0.rxd_head: 261
+dev.ix.0.queue0.irqs: 192780607
+dev.ix.0.queue0.interrupt_rate: 31250
+dev.ix.0.queue0.tx_packets: 183749714
+dev.ix.0.queue0.tso_tx: 0
+dev.ix.0.queue0.txd_tail: 1375
+dev.ix.0.queue0.txd_head: 1375

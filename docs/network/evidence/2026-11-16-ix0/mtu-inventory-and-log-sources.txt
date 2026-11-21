@@ -1,0 +1,42 @@
+### collected 2026-11-16T21:54:25Z
+## NAS (non-sudo)
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+eth2: mtu 1500
+eth1: mtu 1500
+eth0: mtu 1500
+eth3: mtu 1500
+eth4: mtu 9000
+bond0: mtu 1500
+bond0.1@bond0: mtu 1500
+bond0.10@bond0: mtu 1500
+eth4.10@eth4: mtu 9000
+-- syslog listeners
+udp        0      0 0.0.0.0:514             0.0.0.0:*
+-- candidate log dirs
+ls: cannot access '/volume*/@syslog*': No such file or directory
+ls: cannot access '/volume*/syslog*': No such file or directory
+drwx------ 2 system log  4096 Nov 16 14:54 /var/log/synolog
+drwxr-xr-x 1 root   root  136 Aug 25 04:22 /volume2/@appstore/LogCenter
+-rw-rw---- 1 system log 1181553 Nov 16 14:54 /var/log/messages
+-rw-rw---- 1 system log   86484 Nov 15 18:01 /var/log/messages.1.xz
+-rw-rw---- 1 system log   73212 Nov 11 10:58 /var/log/messages.2.xz
+## dockerserver-1 MTU
+ens19: mtu 1500
+server-net-shim@ens19: mtu 1500
+## dockerserver-2 MTU
+ens19: mtu 1500
+server-net-shim@ens19: mtu 1500
+## pfSense interface MTUs
+ix0: 1500
+ix1: 1500
+igc0: 1500
+igc1: 1500
+igc2: 1500
+igc3: 1500
+ix0.10: 1500
+ix0.28: 1500
+ix0.105: 1500
+ix0.205: 1500
+controltun0: 1300

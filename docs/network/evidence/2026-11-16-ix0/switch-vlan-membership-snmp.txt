@@ -1,0 +1,14 @@
+collected_utc 2026-11-16T21:12:47.553575+00:00 source: SNMP Q-BRIDGE-MIB dot1qVlanStaticEgressPorts/UntaggedPorts on switch24a (live switch state, not Omada intent)
+
+Port 27 (Te1/0/27, pfSense ix0): member of VLANs [] ; untagged on []
+Port 28 (Te1/0/28, Proxmox): member of VLANs [] ; untagged on []
+Port 25 (Te1/0/25, AP switch): member of VLANs [] ; untagged on []
+## pfSense VLAN interfaces on ix0 (2026-11-16T21:12:47Z)
+ix0.10: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 mtu 1500
+	vlan: 10 vlanproto: 802.1q vlanpcp: 0 parent interface: ix0
+ix0.28: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 mtu 1500
+	vlan: 28 vlanproto: 802.1q vlanpcp: 0 parent interface: ix0
+ix0.105: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 mtu 1500
+	vlan: 105 vlanproto: 802.1q vlanpcp: 0 parent interface: ix0
+ix0.205: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 mtu 1500
+	vlan: 205 vlanproto: 802.1q vlanpcp: 0 parent interface: ix0

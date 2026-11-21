@@ -1,0 +1,4630 @@
+{
+  "base": "18786b56395a9c43003022965ee224a748bee6dd",
+  "collected_at": "2026-11-17T00:24:51.239298+00:00",
+  "commands": [
+    "git for-each-ref",
+    "git rev-list --left-right --count origin/main...REF",
+    "git merge-base --is-ancestor REF origin/main"
+  ],
+  "data": [
+    {
+      "ahead_main": 5,
+      "ancestor_of_main": false,
+      "behind_main": 80,
+      "name": "backup/zot-registry-pre-rebase",
+      "prs": [],
+      "ref": "refs/heads/backup/zot-registry-pre-rebase",
+      "sha": "4fe1532deb0ecf2f04397d366ce9b2f841b608f9",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 6,
+      "ancestor_of_main": false,
+      "behind_main": 256,
+      "name": "chore/ci-fix-pr-validation",
+      "prs": [
+        {
+          "headRefOid": "c08dc44029e4403103b1681e1e088b10d1f85225",
+          "mergedAt": "2026-05-08T04:32:36Z",
+          "number": 34,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/chore/ci-fix-pr-validation",
+      "sha": "c08dc44029e4403103b1681e1e088b10d1f85225",
+      "upstream": "origin/chore/ci-fix-pr-validation"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 253,
+      "name": "chore/dependabot-drop-scope",
+      "prs": [
+        {
+          "headRefOid": "061b7d5a7c2add30b95f6b05ce99919c23cf929e",
+          "mergedAt": "2026-05-10T04:51:40Z",
+          "number": 37,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/chore/dependabot-drop-scope",
+      "sha": "061b7d5a7c2add30b95f6b05ce99919c23cf929e",
+      "upstream": "origin/chore/dependabot-drop-scope"
+    },
+    {
+      "ahead_main": 37,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "chore/operating-rules-hooks",
+      "prs": [],
+      "ref": "refs/heads/chore/operating-rules-hooks",
+      "sha": "477fbbf4fc158fa99b609524199b6ee951a6db98",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 81,
+      "name": "chore/remove-ollama",
+      "prs": [
+        {
+          "headRefOid": "c6fd78fe5cb21a0b8e21066ecd850d82ae423c74",
+          "mergedAt": "2026-11-06T19:52:15Z",
+          "number": 66,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/chore/remove-ollama",
+      "sha": "c6fd78fe5cb21a0b8e21066ecd850d82ae423c74",
+      "upstream": "origin/chore/remove-ollama"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 70,
+      "name": "chore/terraform-commit-lock-files",
+      "prs": [
+        {
+          "headRefOid": "eed0c67b9aef33bd4c965d1818edc75f4bfe2fbc",
+          "mergedAt": "2026-11-08T20:43:48Z",
+          "number": 78,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/chore/terraform-commit-lock-files",
+      "sha": "eed0c67b9aef33bd4c965d1818edc75f4bfe2fbc",
+      "upstream": "origin/chore/terraform-commit-lock-files"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 62,
+      "name": "chore/wifi-probe-fw-0.14.0",
+      "prs": [
+        {
+          "headRefOid": "a48cb809a5004e7f30e75c043c6890d6122bbcb1",
+          "mergedAt": "2026-11-09T05:21:46Z",
+          "number": 85,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/chore/wifi-probe-fw-0.14.0",
+      "sha": "a48cb809a5004e7f30e75c043c6890d6122bbcb1",
+      "upstream": "origin/chore/wifi-probe-fw-0.14.0"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 61,
+      "name": "chore/wifi-probe-fw-0.14.1",
+      "prs": [
+        {
+          "headRefOid": "a63e2ad5c1cbf94e6b698253aad5bc4eb055b20a",
+          "mergedAt": "2026-11-10T21:50:29Z",
+          "number": 86,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/chore/wifi-probe-fw-0.14.1",
+      "sha": "a63e2ad5c1cbf94e6b698253aad5bc4eb055b20a",
+      "upstream": "origin/chore/wifi-probe-fw-0.14.1"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 66,
+      "name": "chore/wifi-probe-submodule-0.11.1",
+      "prs": [
+        {
+          "headRefOid": "e72eca76e0d3eeddbee246a3fc27e4f6cf2b337a",
+          "mergedAt": "2026-11-08T23:58:52Z",
+          "number": 81,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/chore/wifi-probe-submodule-0.11.1",
+      "sha": "e72eca76e0d3eeddbee246a3fc27e4f6cf2b337a",
+      "upstream": "origin/chore/wifi-probe-submodule-0.11.1"
+    },
+    {
+      "ahead_main": 53,
+      "ancestor_of_main": false,
+      "behind_main": 295,
+      "name": "cloudflare-terraform",
+      "prs": [
+        {
+          "headRefOid": "0922020a7090e0f466e15faca90564fdd017aa9d",
+          "mergedAt": "2026-04-10T01:45:05Z",
+          "number": 5,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/cloudflare-terraform",
+      "sha": "0922020a7090e0f466e15faca90564fdd017aa9d",
+      "upstream": "origin/cloudflare-terraform"
+    },
+    {
+      "ahead_main": 32,
+      "ancestor_of_main": false,
+      "behind_main": 293,
+      "name": "custom-login-portal",
+      "prs": [
+        {
+          "headRefOid": "a1ca9c81ce29d5828ae989d49c28814034d45a2b",
+          "mergedAt": null,
+          "number": 6,
+          "state": "OPEN"
+        }
+      ],
+      "ref": "refs/heads/custom-login-portal",
+      "sha": "a1ca9c81ce29d5828ae989d49c28814034d45a2b",
+      "upstream": "origin/custom-login-portal"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 60,
+      "name": "docs/cloudflare-grafana-docs-sync",
+      "prs": [
+        {
+          "headRefOid": "80b2d4e459b6a72115f97d58f6154842c8b6b966",
+          "mergedAt": "2026-11-10T20:59:27Z",
+          "number": 88,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/docs/cloudflare-grafana-docs-sync",
+      "sha": "80b2d4e459b6a72115f97d58f6154842c8b6b966",
+      "upstream": "origin/docs/cloudflare-grafana-docs-sync"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 3,
+      "name": "docs/keychain-credential-backup",
+      "prs": [
+        {
+          "headRefOid": "571da87a2a042c5754d924226d02cfaf772851a3",
+          "mergedAt": "2026-11-16T23:53:03Z",
+          "number": 145,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/docs/keychain-credential-backup",
+      "sha": "571da87a2a042c5754d924226d02cfaf772851a3",
+      "upstream": "origin/docs/keychain-credential-backup"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 24,
+      "name": "docs/nas-drive-versioning-applied",
+      "prs": [
+        {
+          "headRefOid": "83e2d8ea126f95809dac913d6f8e49b8e6ea5b0f",
+          "mergedAt": "2026-11-12T09:05:03Z",
+          "number": 123,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/docs/nas-drive-versioning-applied",
+      "sha": "83e2d8ea126f95809dac913d6f8e49b8e6ea5b0f",
+      "upstream": "origin/docs/nas-drive-versioning-applied"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 57,
+      "name": "docs/nas-drive-versioning-record",
+      "prs": [
+        {
+          "headRefOid": "b174abfa14f25eb0d1081ef2e8d8ea8a13ff40cd",
+          "mergedAt": "2026-11-12T07:37:14Z",
+          "number": 90,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/docs/nas-drive-versioning-record",
+      "sha": "abd895fd976fde69f98066bf98b680cd9177c951",
+      "upstream": "origin/docs/nas-drive-versioning-record"
+    },
+    {
+      "ahead_main": 71,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "docs/network-resilience-redesign",
+      "prs": [],
+      "ref": "refs/heads/docs/network-resilience-redesign",
+      "sha": "e84c87b840687213522223d74bbf259d14ed62c3",
+      "upstream": "origin/docs/network-resilience-redesign"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 5,
+      "name": "docs/nfs-storage-rule",
+      "prs": [
+        {
+          "headRefOid": "0745c07b927928120b326bba05c56dd6ced568c2",
+          "mergedAt": null,
+          "number": 143,
+          "state": "CLOSED"
+        },
+        {
+          "headRefOid": "cbba593e24b7c6d57b669526edaf4f8185ffc39b",
+          "mergedAt": "2026-11-15T20:41:03Z",
+          "number": 142,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/docs/nfs-storage-rule",
+      "sha": "0745c07b927928120b326bba05c56dd6ced568c2",
+      "upstream": "origin/docs/nfs-storage-rule"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 57,
+      "name": "docs/pfsense-sync-2026-11-10",
+      "prs": [
+        {
+          "headRefOid": "5fbd8f819f2bb271c1119648ea5a44e190135eaa",
+          "mergedAt": "2026-11-11T06:57:47Z",
+          "number": 91,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/docs/pfsense-sync-2026-11-10",
+      "sha": "5fbd8f819f2bb271c1119648ea5a44e190135eaa",
+      "upstream": "origin/docs/pfsense-sync-2026-11-10"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 80,
+      "name": "docs/pr-merge-apply-rule",
+      "prs": [
+        {
+          "headRefOid": "f838d1865557b4be672df04b68393bf2916ed847",
+          "mergedAt": "2026-11-08T18:07:23Z",
+          "number": 68,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/docs/pr-merge-apply-rule",
+      "sha": "f838d1865557b4be672df04b68393bf2916ed847",
+      "upstream": "origin/docs/pr-merge-apply-rule"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 64,
+      "name": "docs/wifi-probe-f7",
+      "prs": [
+        {
+          "headRefOid": "7d2eaaf910d0d49015ca9a42c65b8cc3c5098e30",
+          "mergedAt": "2026-11-09T02:47:21Z",
+          "number": 83,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/docs/wifi-probe-f7",
+      "sha": "7d2eaaf910d0d49015ca9a42c65b8cc3c5098e30",
+      "upstream": "origin/docs/wifi-probe-f7"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 55,
+      "name": "feat/acme-cert-iac",
+      "prs": [
+        {
+          "headRefOid": "18cd82bdbd4852968408f05e2fcbc020bf3b5a88",
+          "mergedAt": "2026-11-11T09:04:27Z",
+          "number": 94,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/acme-cert-iac",
+      "sha": "18cd82bdbd4852968408f05e2fcbc020bf3b5a88",
+      "upstream": "origin/feat/acme-cert-iac"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 54,
+      "name": "feat/acme-cf-cert",
+      "prs": [
+        {
+          "headRefOid": "9c879ef62dbe5695c316cee6c7baf0d81fa62dff",
+          "mergedAt": "2026-11-11T09:07:57Z",
+          "number": 95,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/acme-cf-cert",
+      "sha": "9c879ef62dbe5695c316cee6c7baf0d81fa62dff",
+      "upstream": "origin/feat/acme-cf-cert"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 52,
+      "name": "feat/acme-cf-explicit-sans",
+      "prs": [
+        {
+          "headRefOid": "848743f505ae524b7f842886a6f69761bba0babb",
+          "mergedAt": "2026-11-11T09:18:11Z",
+          "number": 97,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/acme-cf-explicit-sans",
+      "sha": "848743f505ae524b7f842886a6f69761bba0babb",
+      "upstream": "origin/feat/acme-cf-explicit-sans"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 58,
+      "name": "feat/acme-unbound-dot-restart",
+      "prs": [
+        {
+          "headRefOid": "cad32dd1c66e92adfb82a7c156095e182812ff03",
+          "mergedAt": "2026-11-11T06:07:38Z",
+          "number": 89,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/acme-unbound-dot-restart",
+      "sha": "cad32dd1c66e92adfb82a7c156095e182812ff03",
+      "upstream": "origin/feat/acme-unbound-dot-restart"
+    },
+    {
+      "ahead_main": 54,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/alerting-ix0-watchdog",
+      "prs": [],
+      "ref": "refs/heads/feat/alerting-ix0-watchdog",
+      "sha": "30c54db29dc7b5ec393111c7307a1091b4f7bf2e",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 50,
+      "name": "feat/blackbox-auth-cf-probe",
+      "prs": [
+        {
+          "headRefOid": "fd4fc019a07803e8b2569c6373fd93264aa160c4",
+          "mergedAt": "2026-11-11T17:07:08Z",
+          "number": 101,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/blackbox-auth-cf-probe",
+      "sha": "bd428ad6eb46a30cbe43b378bba4c7c893c4285e",
+      "upstream": "origin/feat/blackbox-auth-cf-probe"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 81,
+      "name": "feat/circunflexo-dns-root",
+      "prs": [],
+      "ref": "refs/heads/feat/circunflexo-dns-root",
+      "sha": "f46a87ecd32e2b060faa3f3edb88329194e08f94",
+      "upstream": "origin/feat/circunflexo-dns-root"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 78,
+      "name": "feat/docker-daemon-iac",
+      "prs": [
+        {
+          "headRefOid": "5a97708d6809468f9cdb63c8fa68295d898f14e0",
+          "mergedAt": "2026-11-08T19:35:36Z",
+          "number": 69,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/docker-daemon-iac",
+      "sha": "80849800b52f4a3b2f2b71ff9ffde6bd6b4eaa4b",
+      "upstream": "origin/feat/docker-daemon-iac"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 70,
+      "name": "feat/docker-registry-mirror",
+      "prs": [
+        {
+          "headRefOid": "f53fc447e7c70ac1ffb314563c9dfc799f90aade",
+          "mergedAt": "2026-11-08T20:38:19Z",
+          "number": 76,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/docker-registry-mirror",
+      "sha": "f53fc447e7c70ac1ffb314563c9dfc799f90aade",
+      "upstream": "origin/feat/docker-registry-mirror"
+    },
+    {
+      "ahead_main": 6,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/esp32-c5-wifi-probe",
+      "prs": [],
+      "ref": "refs/heads/feat/esp32-c5-wifi-probe",
+      "sha": "bf1e49754980f83903f4fff3c8db6592d7e4813b",
+      "upstream": "origin/feat/esp32-c5-wifi-probe"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 238,
+      "name": "feat/exporters-batch1",
+      "prs": [
+        {
+          "headRefOid": "71be7e1a203f9a6b7b8cfbb78bc964c66f66d939",
+          "mergedAt": "2026-05-10T12:13:06Z",
+          "number": 46,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/exporters-batch1",
+      "sha": "71be7e1a203f9a6b7b8cfbb78bc964c66f66d939",
+      "upstream": "origin/feat/exporters-batch1"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 237,
+      "name": "feat/exporters-batch2-nginx",
+      "prs": [
+        {
+          "headRefOid": "cfeebc3c48ab3cb4fd30ec4a14331c2ef50b14c7",
+          "mergedAt": "2026-05-10T12:27:07Z",
+          "number": 47,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/exporters-batch2-nginx",
+      "sha": "cfeebc3c48ab3cb4fd30ec4a14331c2ef50b14c7",
+      "upstream": "origin/feat/exporters-batch2-nginx"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 287,
+      "name": "feat/grafana",
+      "prs": [
+        {
+          "headRefOid": "10b6c28769b4c5bd2936a361bedc70a02b7a1500",
+          "mergedAt": "2026-04-29T18:05:30Z",
+          "number": 14,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/grafana",
+      "sha": "10b6c28769b4c5bd2936a361bedc70a02b7a1500",
+      "upstream": "origin/feat/grafana"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 61,
+      "name": "feat/grafana-public-url",
+      "prs": [
+        {
+          "headRefOid": "a3db4fa8e05cb3b840dafb21b224f7ca56dfa26c",
+          "mergedAt": "2026-11-10T19:52:39Z",
+          "number": 87,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/grafana-public-url",
+      "sha": "a3db4fa8e05cb3b840dafb21b224f7ca56dfa26c",
+      "upstream": "origin/feat/grafana-public-url"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 233,
+      "name": "feat/grafana-thanos-prom-dashboard",
+      "prs": [
+        {
+          "headRefOid": "006b11c5a27d53ef7b156f9e681e281b35670637",
+          "mergedAt": "2026-05-11T06:24:26Z",
+          "number": 52,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/grafana-thanos-prom-dashboard",
+      "sha": "006b11c5a27d53ef7b156f9e681e281b35670637",
+      "upstream": "origin/feat/grafana-thanos-prom-dashboard"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 75,
+      "name": "feat/hub-mirror-vhost",
+      "prs": [
+        {
+          "headRefOid": "57b57f9459b74895c58eaadd128665a5055ee751",
+          "mergedAt": "2026-11-08T19:44:00Z",
+          "number": 73,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/hub-mirror-vhost",
+      "sha": "3c45b6a1a61ef62cc4fe5b451a0acccd9bff4b7e",
+      "upstream": "origin/feat/hub-mirror-vhost"
+    },
+    {
+      "ahead_main": 70,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/ix0-degraded-autobounce",
+      "prs": [],
+      "ref": "refs/heads/feat/ix0-degraded-autobounce",
+      "sha": "537c6860ce11994d724d9b5e422d7f2693eb2dfb",
+      "upstream": "origin/feat/ix0-degraded-autobounce"
+    },
+    {
+      "ahead_main": 37,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/ix0-flap-monitoring",
+      "prs": [],
+      "ref": "refs/heads/feat/ix0-flap-monitoring",
+      "sha": "32c70bc315ab095cc792e3b5f18bab6fdc80a303",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 36,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/k8s-talos-lab-cluster",
+      "prs": [],
+      "ref": "refs/heads/feat/k8s-talos-lab-cluster",
+      "sha": "28acf610aac52cbdc2498bd8d479bc6f92d45ca0",
+      "upstream": "origin/feat/k8s-talos-lab-cluster"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 38,
+      "name": "feat/keycloak-edge-lockdown",
+      "prs": [
+        {
+          "headRefOid": "ad6cd9e7f7907ffe96a2833d4e7fa15084c05f61",
+          "mergedAt": "2026-11-11T22:00:31Z",
+          "number": 104,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/keycloak-edge-lockdown",
+      "sha": "ad6cd9e7f7907ffe96a2833d4e7fa15084c05f61",
+      "upstream": "origin/feat/keycloak-edge-lockdown"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 46,
+      "name": "feat/keycloak-hostname-admin",
+      "prs": [
+        {
+          "headRefOid": "a51fe6410b8b79d46e7a843ea1c227f1a785599e",
+          "mergedAt": "2026-11-11T21:49:46Z",
+          "number": 105,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/keycloak-hostname-admin",
+      "sha": "a9b4d6e52c7669dcb8adc1f3ee7b3dd549da2f16",
+      "upstream": "origin/feat/keycloak-hostname-admin"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 37,
+      "name": "feat/keycloak-k-tests",
+      "prs": [
+        {
+          "headRefOid": "14675dc165531a01c5a141fa31cc6f1584beea6a",
+          "mergedAt": "2026-11-11T22:12:01Z",
+          "number": 114,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/keycloak-k-tests",
+      "sha": "14675dc165531a01c5a141fa31cc6f1584beea6a",
+      "upstream": "origin/feat/keycloak-k-tests"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 37,
+      "name": "feat/keycloak-k2-brute-force",
+      "prs": [
+        {
+          "headRefOid": "9357ebf9c6e1675315054637832e82d59812a036",
+          "mergedAt": "2026-11-11T22:13:06Z",
+          "number": 112,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/keycloak-k2-brute-force",
+      "sha": "9357ebf9c6e1675315054637832e82d59812a036",
+      "upstream": "origin/feat/keycloak-k2-brute-force"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 37,
+      "name": "feat/keycloak-k3a-mail-path",
+      "prs": [
+        {
+          "headRefOid": "7e32b148a26c487952c33de9efc4a0dd041a3c90",
+          "mergedAt": "2026-11-11T22:13:24Z",
+          "number": 113,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/keycloak-k3a-mail-path",
+      "sha": "7e32b148a26c487952c33de9efc4a0dd041a3c90",
+      "upstream": "origin/feat/keycloak-k3a-mail-path"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 33,
+      "name": "feat/keycloak-k3b-reset-flow",
+      "prs": [
+        {
+          "headRefOid": "293897cc6284bfc5614c6158962e12200a626774",
+          "mergedAt": "2026-11-12T01:53:40Z",
+          "number": 115,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/keycloak-k3b-reset-flow",
+      "sha": "293897cc6284bfc5614c6158962e12200a626774",
+      "upstream": "origin/feat/keycloak-k3b-reset-flow"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 37,
+      "name": "feat/keycloak-k4-events",
+      "prs": [
+        {
+          "headRefOid": "26bd1e69e298148bb2aee04094a4f579285b693e",
+          "mergedAt": "2026-11-11T22:12:46Z",
+          "number": 111,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/keycloak-k4-events",
+      "sha": "26bd1e69e298148bb2aee04094a4f579285b693e",
+      "upstream": "origin/feat/keycloak-k4-events"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 42,
+      "name": "feat/keycloak-master-frontend-url",
+      "prs": [
+        {
+          "headRefOid": "450c94819b9cbc0095a504cabbe2ad9a97b65ccc",
+          "mergedAt": "2026-11-11T21:57:06Z",
+          "number": 109,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/keycloak-master-frontend-url",
+      "sha": "b2e5872d85e66c32878808cacda0818acf69bc10",
+      "upstream": "origin/feat/keycloak-master-frontend-url"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 46,
+      "name": "feat/keycloak-realm-import",
+      "prs": [
+        {
+          "headRefOid": "12bfeba4e9e0d7cbc9b32cd7947bee7599d1aeb2",
+          "mergedAt": "2026-11-11T21:19:30Z",
+          "number": 103,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/keycloak-realm-import",
+      "sha": "12bfeba4e9e0d7cbc9b32cd7947bee7599d1aeb2",
+      "upstream": "origin/feat/keycloak-realm-import"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 45,
+      "name": "feat/keycloak-registration-off",
+      "prs": [
+        {
+          "headRefOid": "54629fb753e2a7269aaa534a074a9e5636f1eb14",
+          "mergedAt": "2026-11-11T21:22:32Z",
+          "number": 106,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/keycloak-registration-off",
+      "sha": "54629fb753e2a7269aaa534a074a9e5636f1eb14",
+      "upstream": "origin/feat/keycloak-registration-off"
+    },
+    {
+      "ahead_main": 60,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/minio-tfstate-access",
+      "prs": [],
+      "ref": "refs/heads/feat/minio-tfstate-access",
+      "sha": "8fd78d525f4d0a6177e976e79422c55416c38332",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 255,
+      "name": "feat/monitoring-phase-a-alertmanager-sidecar2",
+      "prs": [
+        {
+          "headRefOid": "ef610195abba662e09aa7398c50a0ae957969517",
+          "mergedAt": "2026-05-08T05:00:47Z",
+          "number": 33,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/monitoring-phase-a-alertmanager-sidecar2",
+      "sha": "ef610195abba662e09aa7398c50a0ae957969517",
+      "upstream": "origin/feat/monitoring-phase-a-alertmanager-sidecar2"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 84,
+      "name": "feat/nas-kernel-tuning-iac",
+      "prs": [
+        {
+          "headRefOid": "c7d05a7f1f91f0ac28674c4e92ae47d657d1d8ca",
+          "mergedAt": "2026-11-04T06:09:38Z",
+          "number": 65,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/nas-kernel-tuning-iac",
+      "sha": "c7d05a7f1f91f0ac28674c4e92ae47d657d1d8ca",
+      "upstream": "origin/feat/nas-kernel-tuning-iac"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 20,
+      "name": "feat/nomad-agy-models",
+      "prs": [
+        {
+          "headRefOid": "3c46baa017ff652fc5e21fac9ee984c8b7a0f275",
+          "mergedAt": "2026-11-14T18:59:27Z",
+          "number": 127,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/nomad-agy-models",
+      "sha": "3c46baa017ff652fc5e21fac9ee984c8b7a0f275",
+      "upstream": "origin/feat/nomad-agy-models"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 10,
+      "name": "feat/nomad-embed-ollama-10cpu",
+      "prs": [
+        {
+          "headRefOid": "a98859c9fea7361fefba2e23f06fbd567aaa05bc",
+          "mergedAt": "2026-11-15T02:30:41Z",
+          "number": 137,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/nomad-embed-ollama-10cpu",
+      "sha": "a98859c9fea7361fefba2e23f06fbd567aaa05bc",
+      "upstream": "origin/feat/nomad-embed-ollama-10cpu"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 11,
+      "name": "feat/nomad-embedding-gemma2",
+      "prs": [
+        {
+          "headRefOid": "0cac5fb641d1d70656eb699a6b45a0edba95bdfb",
+          "mergedAt": "2026-11-15T01:24:50Z",
+          "number": 136,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/nomad-embedding-gemma2",
+      "sha": "0cac5fb641d1d70656eb699a6b45a0edba95bdfb",
+      "upstream": "origin/feat/nomad-embedding-gemma2"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 12,
+      "name": "feat/nomad-embedding-qwen3-4b",
+      "prs": [
+        {
+          "headRefOid": "77807524fd0389a6c186af79d20e5678a63583a2",
+          "mergedAt": "2026-11-15T00:51:38Z",
+          "number": 135,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/nomad-embedding-qwen3-4b",
+      "sha": "77807524fd0389a6c186af79d20e5678a63583a2",
+      "upstream": "origin/feat/nomad-embedding-qwen3-4b"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 13,
+      "name": "feat/nomad-embedding-qwen3-reranker",
+      "prs": [
+        {
+          "headRefOid": "a1bc46860920af78f0ef0079f38a923cebd6da58",
+          "mergedAt": "2026-11-15T00:21:44Z",
+          "number": 134,
+          "state": "MERGED"
+        },
+        {
+          "headRefOid": "a0bf08907364123dbe031976c152fba59e161bda",
+          "mergedAt": "2026-11-15T00:07:07Z",
+          "number": 133,
+          "state": "MERGED"
+        },
+        {
+          "headRefOid": "4b45bcdd6feeeeefba6d59ca03ca5a483e459bf5",
+          "mergedAt": "2026-11-14T23:44:23Z",
+          "number": 132,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/nomad-embedding-qwen3-reranker",
+      "sha": "a1bc46860920af78f0ef0079f38a923cebd6da58",
+      "upstream": "origin/feat/nomad-embedding-qwen3-reranker"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 21,
+      "name": "feat/nomad-gemini-subscription",
+      "prs": [
+        {
+          "headRefOid": "e5188c6efe3eae35d6ddafd951157ebb1954e132",
+          "mergedAt": "2026-11-14T18:42:49Z",
+          "number": 126,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/nomad-gemini-subscription",
+      "sha": "e5188c6efe3eae35d6ddafd951157ebb1954e132",
+      "upstream": "origin/feat/nomad-gemini-subscription"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 9,
+      "name": "feat/nomad-gemma-deploy",
+      "prs": [
+        {
+          "headRefOid": "aea4d6de4044bf50a7d1ab0fb1e637efd87b8786",
+          "mergedAt": "2026-11-15T05:05:33Z",
+          "number": 138,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/nomad-gemma-deploy",
+      "sha": "aea4d6de4044bf50a7d1ab0fb1e637efd87b8786",
+      "upstream": "origin/feat/nomad-gemma-deploy"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 19,
+      "name": "feat/nomad-iac-remote-ai",
+      "prs": [
+        {
+          "headRefOid": "b7365a330054d27063a398eaec003d07a35f1867",
+          "mergedAt": "2026-11-14T19:35:15Z",
+          "number": 128,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/nomad-iac-remote-ai",
+      "sha": "b7365a330054d27063a398eaec003d07a35f1867",
+      "upstream": "origin/feat/nomad-iac-remote-ai"
+    },
+    {
+      "ahead_main": 68,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/pfsense-dhcp-static-mappings",
+      "prs": [],
+      "ref": "refs/heads/feat/pfsense-dhcp-static-mappings",
+      "sha": "2823314c7f5bd5dbda1bb14d417539dad77c76be",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 64,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/pfsense-p2p-scavenger-shaper",
+      "prs": [],
+      "ref": "refs/heads/feat/pfsense-p2p-scavenger-shaper",
+      "sha": "4380c5e67b9b359066ddc1393b4e9a63dd241d82",
+      "upstream": "origin/feat/pfsense-p2p-scavenger-shaper"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 289,
+      "name": "feat/pihole6-exporter-swap",
+      "prs": [
+        {
+          "headRefOid": "84093b8454e43225679daefc2e15b9217b3eb2bf",
+          "mergedAt": "2026-04-29T15:20:30Z",
+          "number": 12,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/pihole6-exporter-swap",
+      "sha": "84093b8454e43225679daefc2e15b9217b3eb2bf",
+      "upstream": "origin/feat/pihole6-exporter-swap"
+    },
+    {
+      "ahead_main": 73,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/portainer-reverse-proxy",
+      "prs": [],
+      "ref": "refs/heads/feat/portainer-reverse-proxy",
+      "sha": "7e8c3e075508380703c49b2e52dc0aa08458e693",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 0,
+      "ancestor_of_main": true,
+      "behind_main": 166,
+      "name": "feat/portainer-vhost",
+      "prs": [],
+      "ref": "refs/heads/feat/portainer-vhost",
+      "sha": "ba954563b4a1246c624a1312d4a7bf0959aa3d0e",
+      "upstream": "origin/feat/portainer-vhost"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 23,
+      "name": "feat/project-nomad",
+      "prs": [
+        {
+          "headRefOid": "14722d580fcdd7b2fbb1b188e1001eaa20d7e842",
+          "mergedAt": "2026-11-14T06:08:15Z",
+          "number": 124,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/project-nomad",
+      "sha": "14722d580fcdd7b2fbb1b188e1001eaa20d7e842",
+      "upstream": "origin/feat/project-nomad"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 49,
+      "name": "feat/rproxy-cf-cert",
+      "prs": [
+        {
+          "headRefOid": "7d64e92ee6d3f4b6908c43181627928197f04979",
+          "mergedAt": "2026-11-11T16:48:25Z",
+          "number": 100,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/rproxy-cf-cert",
+      "sha": "7d64e92ee6d3f4b6908c43181627928197f04979",
+      "upstream": "origin/feat/rproxy-cf-cert"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 76,
+      "name": "feat/rundeck-from-zot",
+      "prs": [
+        {
+          "headRefOid": "7979a3817f16b235225e22e1d047378834e23cb6",
+          "mergedAt": "2026-11-08T19:39:34Z",
+          "number": 72,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/rundeck-from-zot",
+      "sha": "be0391d1eeac151ee44cd8064ebc2038408eee90",
+      "upstream": "origin/feat/rundeck-from-zot"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 291,
+      "name": "feat/rundeck-maintenance-jobs",
+      "prs": [
+        {
+          "headRefOid": "b9b49f1aa212d17533ea79f2641610bf3f133c47",
+          "mergedAt": "2026-04-29T04:34:45Z",
+          "number": 10,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/rundeck-maintenance-jobs",
+      "sha": "b9b49f1aa212d17533ea79f2641610bf3f133c47",
+      "upstream": "origin/feat/rundeck-maintenance-jobs"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 254,
+      "name": "feat/snmp-pfsense-regen",
+      "prs": [
+        {
+          "headRefOid": "2e03727f5040589fe47b502b1332f623d59a7909",
+          "mergedAt": "2026-05-09T05:08:17Z",
+          "number": 35,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/snmp-pfsense-regen",
+      "sha": "2e03727f5040589fe47b502b1332f623d59a7909",
+      "upstream": "origin/feat/snmp-pfsense-regen"
+    },
+    {
+      "ahead_main": 3,
+      "ancestor_of_main": false,
+      "behind_main": 81,
+      "name": "feat/storage-policy",
+      "prs": [],
+      "ref": "refs/heads/feat/storage-policy",
+      "sha": "cb7b8bbd4e0857d77e90bfe848f30f49b538fad3",
+      "upstream": "origin/feat/storage-policy"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 239,
+      "name": "feat/thanos-compactor-ruler",
+      "prs": [
+        {
+          "headRefOid": "b14b2fe641802cce7814302f997e31d51391aa57",
+          "mergedAt": "2026-05-10T06:23:36Z",
+          "number": 45,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/thanos-compactor-ruler",
+      "sha": "b14b2fe641802cce7814302f997e31d51391aa57",
+      "upstream": "origin/feat/thanos-compactor-ruler"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 235,
+      "name": "feat/thanos-rule-starter-rules",
+      "prs": [
+        {
+          "headRefOid": "9706972c5369673d99d60bca6352df8f8b32c242",
+          "mergedAt": "2026-05-10T18:57:24Z",
+          "number": 49,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/thanos-rule-starter-rules",
+      "sha": "9706972c5369673d99d60bca6352df8f8b32c242",
+      "upstream": "origin/feat/thanos-rule-starter-rules"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 65,
+      "name": "feat/wifi-probe-fw-0.12.0",
+      "prs": [
+        {
+          "headRefOid": "e9eb282f5be825448cc1bbc5bd383967666d5c30",
+          "mergedAt": "2026-11-09T00:32:12Z",
+          "number": 82,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/wifi-probe-fw-0.12.0",
+      "sha": "e9eb282f5be825448cc1bbc5bd383967666d5c30",
+      "upstream": "origin/feat/wifi-probe-fw-0.12.0"
+    },
+    {
+      "ahead_main": 3,
+      "ancestor_of_main": false,
+      "behind_main": 78,
+      "name": "feat/wifi-probes-dashboard-liveness",
+      "prs": [
+        {
+          "headRefOid": "230871338b330fc3882034060c77d8af8ae164a0",
+          "mergedAt": "2026-11-08T19:31:56Z",
+          "number": 71,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/wifi-probes-dashboard-liveness",
+      "sha": "230871338b330fc3882034060c77d8af8ae164a0",
+      "upstream": "origin/feat/wifi-probes-dashboard-liveness"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 46,
+      "name": "feat/zot-e2e-test",
+      "prs": [
+        {
+          "headRefOid": "9981e2e5cf552346e0d52fa1299bc7bac8274eb7",
+          "mergedAt": "2026-11-11T21:26:12Z",
+          "number": 102,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/zot-e2e-test",
+      "sha": "c629c30bb944a0f65217bed1c87e5b430138ee8c",
+      "upstream": "origin/feat/zot-e2e-test"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 28,
+      "name": "feat/zot-error-alerts",
+      "prs": [
+        {
+          "headRefOid": "f89782a82672a5b0e02c83e3ffb6a1a3d58fdce3",
+          "mergedAt": "2026-11-12T06:56:04Z",
+          "number": 120,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/zot-error-alerts",
+      "sha": "f89782a82672a5b0e02c83e3ffb6a1a3d58fdce3",
+      "upstream": "origin/feat/zot-error-alerts"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 30,
+      "name": "feat/zot-local-metadb",
+      "prs": [
+        {
+          "headRefOid": "4a1f2df82c6f7005ea2b60850ffd4347cfd7e789",
+          "mergedAt": "2026-11-12T06:43:39Z",
+          "number": 118,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/zot-local-metadb",
+      "sha": "4a1f2df82c6f7005ea2b60850ffd4347cfd7e789",
+      "upstream": "origin/feat/zot-local-metadb"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 27,
+      "name": "feat/zot-meta-backup",
+      "prs": [
+        {
+          "headRefOid": "114a14c0d815165954d70aa0f7ecc0ab2ecba5eb",
+          "mergedAt": "2026-11-12T07:08:46Z",
+          "number": 121,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/zot-meta-backup",
+      "sha": "114a14c0d815165954d70aa0f7ecc0ab2ecba5eb",
+      "upstream": "origin/feat/zot-meta-backup"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 48,
+      "name": "feat/zot-oidc-lan-hosts",
+      "prs": [
+        {
+          "headRefOid": "bf0a4cc9253bcadd0a4902082b4604d416f1f579",
+          "mergedAt": "2026-11-11T17:01:07Z",
+          "number": 93,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/zot-oidc-lan-hosts",
+      "sha": "bf0a4cc9253bcadd0a4902082b4604d416f1f579",
+      "upstream": "origin/feat/zot-oidc-lan-hosts"
+    },
+    {
+      "ahead_main": 4,
+      "ancestor_of_main": false,
+      "behind_main": 79,
+      "name": "feat/zot-registry",
+      "prs": [
+        {
+          "headRefOid": "7a337073139d7e842fc478e5ddac0f374620eb91",
+          "mergedAt": "2026-11-08T18:12:09Z",
+          "number": 67,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/zot-registry",
+      "sha": "7a337073139d7e842fc478e5ddac0f374620eb91",
+      "upstream": "origin/feat/zot-registry"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 73,
+      "name": "feat/zot-sso",
+      "prs": [
+        {
+          "headRefOid": "c19869e4822d7edb7ddbe946ceb4f7995e7f1676",
+          "mergedAt": "2026-11-08T19:59:21Z",
+          "number": 74,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feat/zot-sso",
+      "sha": "c19869e4822d7edb7ddbe946ceb4f7995e7f1676",
+      "upstream": "origin/feat/zot-sso"
+    },
+    {
+      "ahead_main": 77,
+      "ancestor_of_main": false,
+      "behind_main": 293,
+      "name": "feature/prometheus-thanos-plan",
+      "prs": [
+        {
+          "headRefOid": "687b2f6df0535cbd380a97f0f9bc826835b3beb6",
+          "mergedAt": "2026-04-27T22:09:43Z",
+          "number": 7,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/feature/prometheus-thanos-plan",
+      "sha": "687b2f6df0535cbd380a97f0f9bc826835b3beb6",
+      "upstream": "origin/feature/prometheus-thanos-plan"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 53,
+      "name": "fix/acme-cert-create-name",
+      "prs": [
+        {
+          "headRefOid": "b04e32a50865bda6bce7f4547a88e6314d171e02",
+          "mergedAt": "2026-11-11T09:12:53Z",
+          "number": 96,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/acme-cert-create-name",
+      "sha": "b04e32a50865bda6bce7f4547a88e6314d171e02",
+      "upstream": "origin/fix/acme-cert-create-name"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 51,
+      "name": "fix/acme-issue-polling",
+      "prs": [
+        {
+          "headRefOid": "5bfaa4d549064806ebaf2d75f9654aa0bb1ff773",
+          "mergedAt": "2026-11-11T10:00:08Z",
+          "number": 98,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/acme-issue-polling",
+      "sha": "5bfaa4d549064806ebaf2d75f9654aa0bb1ff773",
+      "upstream": "origin/fix/acme-issue-polling"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 50,
+      "name": "fix/acme-poller-stale-log",
+      "prs": [
+        {
+          "headRefOid": "ff069af07437874a3a8b37edbb4f8012ebfb41e0",
+          "mergedAt": "2026-11-11T16:42:52Z",
+          "number": 99,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/acme-poller-stale-log",
+      "sha": "ff069af07437874a3a8b37edbb4f8012ebfb41e0",
+      "upstream": "origin/fix/acme-poller-stale-log"
+    },
+    {
+      "ahead_main": 0,
+      "ancestor_of_main": true,
+      "behind_main": 257,
+      "name": "fix/audit-final-items",
+      "prs": [
+        {
+          "headRefOid": "ad61330f630d22345004fe15b06168d54bde0d19",
+          "mergedAt": "2026-04-30T16:20:37Z",
+          "number": 31,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/audit-final-items",
+      "sha": "ad61330f630d22345004fe15b06168d54bde0d19",
+      "upstream": "origin/fix/audit-final-items"
+    },
+    {
+      "ahead_main": 0,
+      "ancestor_of_main": true,
+      "behind_main": 262,
+      "name": "fix/audit-remaining-items",
+      "prs": [
+        {
+          "headRefOid": "a2c7f1959fbc22b4b4add7c393cb48fbd9097d94",
+          "mergedAt": "2026-04-30T16:04:11Z",
+          "number": 21,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/audit-remaining-items",
+      "sha": "a2c7f1959fbc22b4b4add7c393cb48fbd9097d94",
+      "upstream": "origin/fix/audit-remaining-items"
+    },
+    {
+      "ahead_main": 66,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/calibre-gui-supervision",
+      "prs": [],
+      "ref": "refs/heads/fix/calibre-gui-supervision",
+      "sha": "e23b5b602de5a7007a997c58d4291edf0eb34a8a",
+      "upstream": "origin/fix/calibre-gui-supervision"
+    },
+    {
+      "ahead_main": 82,
+      "ancestor_of_main": false,
+      "behind_main": 166,
+      "name": "fix/calibre-selkies-pin",
+      "prs": [
+        {
+          "headRefOid": "779dc1c2245908840dc02862e8a45377fd71e25f",
+          "mergedAt": "2026-11-01T19:04:23Z",
+          "number": 64,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/calibre-selkies-pin",
+      "sha": "779dc1c2245908840dc02862e8a45377fd71e25f",
+      "upstream": "origin/fix/calibre-selkies-pin"
+    },
+    {
+      "ahead_main": 3,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/calibre-version-bump",
+      "prs": [],
+      "ref": "refs/heads/fix/calibre-version-bump",
+      "sha": "fab1145e26cae78dad8390cc3048615c8c3274b2",
+      "upstream": "origin/fix/calibre-version-bump"
+    },
+    {
+      "ahead_main": 72,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/calibre-web-sqlite-off-nfs",
+      "prs": [],
+      "ref": "refs/heads/fix/calibre-web-sqlite-off-nfs",
+      "sha": "dedaa1816015fb48e8a3f7f43a9b20c41379c306",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 71,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/dhcp-option-121-default-route",
+      "prs": [],
+      "ref": "refs/heads/fix/dhcp-option-121-default-route",
+      "sha": "b92baa5c57baa92b0400ef7d8851116c0bb10b7f",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 1,
+      "name": "fix/dhcp-static-php-writer",
+      "prs": [
+        {
+          "headRefOid": "172d719f9b346d0d427c5555c19575037ddbd63e",
+          "mergedAt": "2026-11-17T00:20:41Z",
+          "number": 147,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/dhcp-static-php-writer",
+      "sha": "172d719f9b346d0d427c5555c19575037ddbd63e",
+      "upstream": "origin/fix/dhcp-static-php-writer"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 2,
+      "name": "fix/dhcp-sync-safe-writes",
+      "prs": [
+        {
+          "headRefOid": "08f3d3a4c35be3d1fb3c6b43cba57cda6fb71da4",
+          "mergedAt": "2026-11-17T00:08:18Z",
+          "number": 146,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/dhcp-sync-safe-writes",
+      "sha": "08f3d3a4c35be3d1fb3c6b43cba57cda6fb71da4",
+      "upstream": "origin/fix/dhcp-sync-safe-writes"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 81,
+      "name": "fix/ds2-portainer-agent-ip-collision",
+      "prs": [
+        {
+          "headRefOid": "9dcd4e2c93dae47ec8d89296632a019e3599bfcf",
+          "mergedAt": "2026-11-12T06:51:08Z",
+          "number": 119,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/ds2-portainer-agent-ip-collision",
+      "sha": "6104e15c71115c47b335b38ba905011cd489fa5d",
+      "upstream": "origin/fix/ds2-portainer-agent-ip-collision"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 84,
+      "name": "fix/freeswitch-pin-dhcp-write-path",
+      "prs": [],
+      "ref": "refs/heads/fix/freeswitch-pin-dhcp-write-path",
+      "sha": "72c82971a9b813a11d1cb00a86dc7418a5930d2d",
+      "upstream": "origin/fix/freeswitch-pin-dhcp-write-path"
+    },
+    {
+      "ahead_main": 70,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/github-runner-image-pin",
+      "prs": [],
+      "ref": "refs/heads/fix/github-runner-image-pin",
+      "sha": "bbcd5be3c150700f24bbfa371abcc85dc34bf16a",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 37,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/grafana-oauth-disable-keycloak-down",
+      "prs": [],
+      "ref": "refs/heads/fix/grafana-oauth-disable-keycloak-down",
+      "sha": "7443199ed2a0ae1fedf153631e2337090531225f",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 288,
+      "name": "fix/ha-cert-renewal-and-alerts",
+      "prs": [
+        {
+          "headRefOid": "e006e71b58adc91c3ad110d91d8cd48913ee3000",
+          "mergedAt": "2026-04-29T17:15:10Z",
+          "number": 13,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/ha-cert-renewal-and-alerts",
+      "sha": "e006e71b58adc91c3ad110d91d8cd48913ee3000",
+      "upstream": "origin/fix/ha-cert-renewal-and-alerts"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 71,
+      "name": "fix/hub-mirror-ping",
+      "prs": [
+        {
+          "headRefOid": "f01dea83b7383effb83f77baa38a271a0041099c",
+          "mergedAt": "2026-11-08T20:28:07Z",
+          "number": 77,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/hub-mirror-ping",
+      "sha": "f01dea83b7383effb83f77baa38a271a0041099c",
+      "upstream": "origin/fix/hub-mirror-ping"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 67,
+      "name": "fix/hub-mirror-probe-path",
+      "prs": [
+        {
+          "headRefOid": "aa71bc3d1902196ad7582e24d8a611bda88e6a95",
+          "mergedAt": "2026-11-08T22:44:53Z",
+          "number": 80,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/hub-mirror-probe-path",
+      "sha": "aa71bc3d1902196ad7582e24d8a611bda88e6a95",
+      "upstream": "origin/fix/hub-mirror-probe-path"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 72,
+      "name": "fix/hub-mirror-set-order",
+      "prs": [
+        {
+          "headRefOid": "0002170da193644710c93742ef39a91e7f06cdb0",
+          "mergedAt": "2026-11-08T20:03:54Z",
+          "number": 75,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/hub-mirror-set-order",
+      "sha": "0002170da193644710c93742ef39a91e7f06cdb0",
+      "upstream": "origin/fix/hub-mirror-set-order"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 269,
+      "name": "fix/iac-followups",
+      "prs": [
+        {
+          "headRefOid": "44a20cb4826b3d27ce9ed725b52876f6559ae8a8",
+          "mergedAt": "2026-04-30T15:48:38Z",
+          "number": 17,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/iac-followups",
+      "sha": "62c745893ebd54eb3753ad9eafd0dba7db6d6164",
+      "upstream": "origin/fix/iac-followups"
+    },
+    {
+      "ahead_main": 0,
+      "ancestor_of_main": true,
+      "behind_main": 280,
+      "name": "fix/iac-gaps-batch1",
+      "prs": [
+        {
+          "headRefOid": "5a02f57b958f1c985ea3ae9eb5e2200aa3b0659a",
+          "mergedAt": null,
+          "number": 16,
+          "state": "CLOSED"
+        }
+      ],
+      "ref": "refs/heads/fix/iac-gaps-batch1",
+      "sha": "5a02f57b958f1c985ea3ae9eb5e2200aa3b0659a",
+      "upstream": "origin/fix/iac-gaps-batch1"
+    },
+    {
+      "ahead_main": 47,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/ix0-optic-flap-handoff",
+      "prs": [],
+      "ref": "refs/heads/fix/ix0-optic-flap-handoff",
+      "sha": "ed71d7e821f144b123eb40b429f97abb0120bb14",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 4,
+      "ancestor_of_main": false,
+      "behind_main": 56,
+      "name": "fix/ix0-watchdog-posthoc",
+      "prs": [
+        {
+          "headRefOid": "0806b9ba923cbe2404aa724ea3eeec0cfadf568c",
+          "mergedAt": "2026-11-11T07:12:39Z",
+          "number": 92,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/ix0-watchdog-posthoc",
+      "sha": "0806b9ba923cbe2404aa724ea3eeec0cfadf568c",
+      "upstream": "origin/fix/ix0-watchdog-posthoc"
+    },
+    {
+      "ahead_main": 73,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/ix0-watchdog-safety",
+      "prs": [],
+      "ref": "refs/heads/fix/ix0-watchdog-safety",
+      "sha": "cc31249a64580322b2262192d346630239edd353",
+      "upstream": "origin/fix/ix0-watchdog-safety"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 33,
+      "name": "fix/kc-test-totp-secret",
+      "prs": [
+        {
+          "headRefOid": "d1aafdd0b84bb2c6563139297f72ec79a0c4ef84",
+          "mergedAt": "2026-11-12T01:57:11Z",
+          "number": 116,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/kc-test-totp-secret",
+      "sha": "d1aafdd0b84bb2c6563139297f72ec79a0c4ef84",
+      "upstream": "origin/fix/kc-test-totp-secret"
+    },
+    {
+      "ahead_main": 46,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/keycloak-db0-off-nfs",
+      "prs": [],
+      "ref": "refs/heads/fix/keycloak-db0-off-nfs",
+      "sha": "db64d585ce53d9ac6c376aadf41faa2e600cc6c4",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 31,
+      "name": "fix/keycloak-reset-flow-priority",
+      "prs": [
+        {
+          "headRefOid": "a9ff81f909877c810d28a0270d3c47d78aa85303",
+          "mergedAt": "2026-11-12T02:08:25Z",
+          "number": 117,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/keycloak-reset-flow-priority",
+      "sha": "a9ff81f909877c810d28a0270d3c47d78aa85303",
+      "upstream": "origin/fix/keycloak-reset-flow-priority"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 290,
+      "name": "fix/macvlan-routing",
+      "prs": [
+        {
+          "headRefOid": "57a487914176521d9a53bc0c05f2f0c0a95442c5",
+          "mergedAt": "2026-04-29T04:45:12Z",
+          "number": 11,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/macvlan-routing",
+      "sha": "57a487914176521d9a53bc0c05f2f0c0a95442c5",
+      "upstream": "origin/fix/macvlan-routing"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 236,
+      "name": "fix/nginx-stub-acl-macvlan",
+      "prs": [
+        {
+          "headRefOid": "9f3d165b772f817839e5f3704cb961c0353b0f6f",
+          "mergedAt": "2026-05-10T12:34:44Z",
+          "number": 48,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/nginx-stub-acl-macvlan",
+      "sha": "9f3d165b772f817839e5f3704cb961c0353b0f6f",
+      "upstream": "origin/fix/nginx-stub-acl-macvlan"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 16,
+      "name": "fix/nomad-eval-config-compat",
+      "prs": [
+        {
+          "headRefOid": "d2dbc614dd6bdb068bd8019c2f07e95d978a10c0",
+          "mergedAt": "2026-11-14T21:48:47Z",
+          "number": 131,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/nomad-eval-config-compat",
+      "sha": "d2dbc614dd6bdb068bd8019c2f07e95d978a10c0",
+      "upstream": "origin/fix/nomad-eval-config-compat"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 22,
+      "name": "fix/nomad-litellm-boot",
+      "prs": [
+        {
+          "headRefOid": "36dcac883d781330e1199277641aefb6a9fe2cf5",
+          "mergedAt": "2026-11-14T06:21:17Z",
+          "number": 125,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/nomad-litellm-boot",
+      "sha": "36dcac883d781330e1199277641aefb6a9fe2cf5",
+      "upstream": "origin/fix/nomad-litellm-boot"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 6,
+      "name": "fix/nomad-macvlan",
+      "prs": [
+        {
+          "headRefOid": "313eb7fe634d714b6553b9ed380005d077ed1995",
+          "mergedAt": "2026-11-15T17:34:11Z",
+          "number": 141,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/nomad-macvlan",
+      "sha": "313eb7fe634d714b6553b9ed380005d077ed1995",
+      "upstream": "origin/fix/nomad-macvlan"
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 18,
+      "name": "fix/nomad-observability-bge-eval",
+      "prs": [
+        {
+          "headRefOid": "2b96337e446b6e7c6c23d4171520756930b306e5",
+          "mergedAt": "2026-11-14T20:36:46Z",
+          "number": 129,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/nomad-observability-bge-eval",
+      "sha": "2b96337e446b6e7c6c23d4171520756930b306e5",
+      "upstream": "origin/fix/nomad-observability-bge-eval"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 7,
+      "name": "fix/nomad-private-children",
+      "prs": [
+        {
+          "headRefOid": "1824b31697364c6d280d8c564bfba7afc3c16301",
+          "mergedAt": "2026-11-15T08:30:12Z",
+          "number": 140,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/nomad-private-children",
+      "sha": "1824b31697364c6d280d8c564bfba7afc3c16301",
+      "upstream": "origin/fix/nomad-private-children"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 8,
+      "name": "fix/nomad-qdrant-timeout",
+      "prs": [
+        {
+          "headRefOid": "c037e91cb92a2de196191a00b4ff3976d28fb59f",
+          "mergedAt": "2026-11-15T07:32:43Z",
+          "number": 139,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/nomad-qdrant-timeout",
+      "sha": "c037e91cb92a2de196191a00b4ff3976d28fb59f",
+      "upstream": "origin/fix/nomad-qdrant-timeout"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 17,
+      "name": "fix/nomad-socket-proxy-ipv4",
+      "prs": [
+        {
+          "headRefOid": "28eddfd7e4a398001a1766959ffd2f9f28aff51e",
+          "mergedAt": "2026-11-14T20:51:20Z",
+          "number": 130,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/nomad-socket-proxy-ipv4",
+      "sha": "28eddfd7e4a398001a1766959ffd2f9f28aff51e",
+      "upstream": "origin/fix/nomad-socket-proxy-ipv4"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 4,
+      "name": "fix/omada-admin-reservation",
+      "prs": [
+        {
+          "headRefOid": "364a8114d1863226b555b746eeffd96d501d09b8",
+          "mergedAt": "2026-11-16T22:41:06Z",
+          "number": 144,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/omada-admin-reservation",
+      "sha": "364a8114d1863226b555b746eeffd96d501d09b8",
+      "upstream": "origin/fix/omada-admin-reservation"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 81,
+      "name": "fix/ops-ds1-log-rotation",
+      "prs": [],
+      "ref": "refs/heads/fix/ops-ds1-log-rotation",
+      "sha": "a3d6fb742408df2a76212f14f2824e8ce70b5f6f",
+      "upstream": "origin/fix/ops-ds1-log-rotation"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 81,
+      "name": "fix/ops-ds2-agent-ip",
+      "prs": [],
+      "ref": "refs/heads/fix/ops-ds2-agent-ip",
+      "sha": "af4d3fa571df0f330400bbd91681bc903853a5ef",
+      "upstream": "origin/fix/ops-ds2-agent-ip"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 81,
+      "name": "fix/ops-github-runner",
+      "prs": [],
+      "ref": "refs/heads/fix/ops-github-runner",
+      "sha": "fe0f57d176c960589c6440cac681f02ede17a440",
+      "upstream": "origin/fix/ops-github-runner"
+    },
+    {
+      "ahead_main": 79,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/ops-portainer-agents-ds2-logs",
+      "prs": [],
+      "ref": "refs/heads/fix/ops-portainer-agents-ds2-logs",
+      "sha": "9ab08646401e63fb4ebe3de29403cf21393de2f6",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 37,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/pihole-exporter-fd-leak-failsafe",
+      "prs": [],
+      "ref": "refs/heads/fix/pihole-exporter-fd-leak-failsafe",
+      "sha": "3f02047f07f9087ecc2fd3c05c04eb8800d42537",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 37,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/pihole-v6-local-volume-upgrade",
+      "prs": [],
+      "ref": "refs/heads/fix/pihole-v6-local-volume-upgrade",
+      "sha": "45af9ea373e30488a939096130de636b4c6f546e",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 52,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/proxmox-dns-resilience",
+      "prs": [],
+      "ref": "refs/heads/fix/proxmox-dns-resilience",
+      "sha": "388384d71be45c36fd17d36d84faea37aaff6e65",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 46,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/rundeck-db-off-nfs",
+      "prs": [],
+      "ref": "refs/heads/fix/rundeck-db-off-nfs",
+      "sha": "d990041f2e0326389c7c62bc6c8f31e8a73805f9",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 292,
+      "name": "fix/rundeck-iac-password",
+      "prs": [
+        {
+          "headRefOid": "f06107de5486cdc2bca49ee9025ed406d10645fa",
+          "mergedAt": "2026-04-29T04:09:03Z",
+          "number": 9,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/rundeck-iac-password",
+      "sha": "f06107de5486cdc2bca49ee9025ed406d10645fa",
+      "upstream": "origin/fix/rundeck-iac-password"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 78,
+      "name": "fix/rundeck-reconcile-live",
+      "prs": [
+        {
+          "headRefOid": "14d70fb18bc270f53e28c74598b8785c77eff89f",
+          "mergedAt": "2026-11-08T19:28:49Z",
+          "number": 70,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/rundeck-reconcile-live",
+      "sha": "14d70fb18bc270f53e28c74598b8785c77eff89f",
+      "upstream": "origin/fix/rundeck-reconcile-live"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 63,
+      "name": "fix/s3-firmware-plain-http",
+      "prs": [
+        {
+          "headRefOid": "d4445dd2b1d23058f31a673291f0650484ac90c5",
+          "mergedAt": "2026-11-09T05:03:02Z",
+          "number": 84,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/s3-firmware-plain-http",
+      "sha": "d4445dd2b1d23058f31a673291f0650484ac90c5",
+      "upstream": "origin/fix/s3-firmware-plain-http"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 234,
+      "name": "fix/thanos-rule-dollar-escape",
+      "prs": [
+        {
+          "headRefOid": "79bf862e72a7e9f65267ee6b87fbba4a0d7cc4ee",
+          "mergedAt": "2026-05-10T19:03:19Z",
+          "number": 50,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/thanos-rule-dollar-escape",
+      "sha": "79bf862e72a7e9f65267ee6b87fbba4a0d7cc4ee",
+      "upstream": "origin/fix/thanos-rule-dollar-escape"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 233,
+      "name": "fix/thanos-rule-query-endpoint",
+      "prs": [
+        {
+          "headRefOid": "2a859b6d78cd00881002a3d3f289580ac731419f",
+          "mergedAt": "2026-05-10T19:05:09Z",
+          "number": 51,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/thanos-rule-query-endpoint",
+      "sha": "2a859b6d78cd00881002a3d3f289580ac731419f",
+      "upstream": "origin/fix/thanos-rule-query-endpoint"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 241,
+      "name": "fix/thanos-sidecar-2-mount",
+      "prs": [
+        {
+          "headRefOid": "bc7b0451ed34ec0c50b43a4e4e5866dbcca6b97f",
+          "mergedAt": "2026-05-10T06:05:15Z",
+          "number": 43,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/thanos-sidecar-2-mount",
+      "sha": "bc7b0451ed34ec0c50b43a4e4e5866dbcca6b97f",
+      "upstream": "origin/fix/thanos-sidecar-2-mount"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 240,
+      "name": "fix/thanos-sidecar-2-uid",
+      "prs": [
+        {
+          "headRefOid": "d32aef058049eddf3687a388dfc22c48f25468d4",
+          "mergedAt": "2026-05-10T06:11:06Z",
+          "number": 44,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/thanos-sidecar-2-uid",
+      "sha": "d32aef058049eddf3687a388dfc22c48f25468d4",
+      "upstream": "origin/fix/thanos-sidecar-2-uid"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 242,
+      "name": "fix/thanos-sidecar-uid",
+      "prs": [
+        {
+          "headRefOid": "0b35ef9ca0ba0532f6845a5868168bf92d5eb876",
+          "mergedAt": "2026-05-10T05:52:53Z",
+          "number": 42,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/thanos-sidecar-uid",
+      "sha": "0b35ef9ca0ba0532f6845a5868168bf92d5eb876",
+      "upstream": "origin/fix/thanos-sidecar-uid"
+    },
+    {
+      "ahead_main": 45,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/vault-audit-offnfs-ds2-agent",
+      "prs": [],
+      "ref": "refs/heads/fix/vault-audit-offnfs-ds2-agent",
+      "sha": "29e1887cc24f28d84719a4c217e08e709308d858",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 68,
+      "name": "fix/wifi-probes-liveness-gaps",
+      "prs": [
+        {
+          "headRefOid": "df2088e89f6b88372f654aa21845a1f0e021f1a4",
+          "mergedAt": "2026-11-08T20:59:14Z",
+          "number": 79,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/wifi-probes-liveness-gaps",
+      "sha": "df2088e89f6b88372f654aa21845a1f0e021f1a4",
+      "upstream": "origin/fix/wifi-probes-liveness-gaps"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 43,
+      "name": "fix/zot-e2e-email-username",
+      "prs": [
+        {
+          "headRefOid": "3cb1c54def75a18526ed604266a50412924ba9ce",
+          "mergedAt": "2026-11-11T21:32:02Z",
+          "number": 107,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/zot-e2e-email-username",
+      "sha": "3cb1c54def75a18526ed604266a50412924ba9ce",
+      "upstream": "origin/fix/zot-e2e-email-username"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 41,
+      "name": "fix/zot-e2e-jwks-evidence",
+      "prs": [
+        {
+          "headRefOid": "5e2642e22f622f303dbf88a63cb707d90673fd22",
+          "mergedAt": "2026-11-11T21:43:44Z",
+          "number": 110,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/zot-e2e-jwks-evidence",
+      "sha": "5e2642e22f622f303dbf88a63cb707d90673fd22",
+      "upstream": "origin/fix/zot-e2e-jwks-evidence"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 42,
+      "name": "fix/zot-e2e-session-header",
+      "prs": [
+        {
+          "headRefOid": "199d70fabd00908cead96addc1d76f32c47283ee",
+          "mergedAt": "2026-11-11T21:37:44Z",
+          "number": 108,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/zot-e2e-session-header",
+      "sha": "199d70fabd00908cead96addc1d76f32c47283ee",
+      "upstream": "origin/fix/zot-e2e-session-header"
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 26,
+      "name": "fix/zot-meta-backup-readonly",
+      "prs": [
+        {
+          "headRefOid": "06d2bd6eb57e468cd1816f541c22686465d4e749",
+          "mergedAt": "2026-11-12T07:13:44Z",
+          "number": 122,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/fix/zot-meta-backup-readonly",
+      "sha": "06d2bd6eb57e468cd1816f541c22686465d4e749",
+      "upstream": "origin/fix/zot-meta-backup-readonly"
+    },
+    {
+      "ahead_main": 20,
+      "ancestor_of_main": false,
+      "behind_main": 295,
+      "name": "github-runner-cicd",
+      "prs": [
+        {
+          "headRefOid": "92e0e03b8dd53180198c614b039328785a83a5ee",
+          "mergedAt": "2025-08-26T04:08:09Z",
+          "number": 3,
+          "state": "MERGED"
+        },
+        {
+          "headRefOid": "67fd5c8cfcb744aa5f2a6353d5e6aa2e6005e356",
+          "mergedAt": "2025-08-22T01:50:13Z",
+          "number": 2,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/github-runner-cicd",
+      "sha": "92e0e03b8dd53180198c614b039328785a83a5ee",
+      "upstream": "origin/github-runner-cicd"
+    },
+    {
+      "ahead_main": 0,
+      "ancestor_of_main": true,
+      "behind_main": 81,
+      "name": "main",
+      "prs": [],
+      "ref": "refs/heads/main",
+      "sha": "9e3a49d0a6cb904756bd719a3e1156954d9fd297",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 62,
+      "ancestor_of_main": false,
+      "behind_main": 293,
+      "name": "nas-docker-server",
+      "prs": [
+        {
+          "headRefOid": "44e7c24fddbd5b385f076768690d532733b4737c",
+          "mergedAt": "2026-04-28T04:22:58Z",
+          "number": 8,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/nas-docker-server",
+      "sha": "44e7c24fddbd5b385f076768690d532733b4737c",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 286,
+      "name": "refactor/grafana-dashboards-iac",
+      "prs": [
+        {
+          "headRefOid": "fc772f2f60feb45388ae6cbcc73624f137ed82be",
+          "mergedAt": "2026-04-29T19:58:30Z",
+          "number": 15,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/heads/refactor/grafana-dashboards-iac",
+      "sha": "fc772f2f60feb45388ae6cbcc73624f137ed82be",
+      "upstream": "origin/refactor/grafana-dashboards-iac"
+    },
+    {
+      "ahead_main": 38,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "refactor/pfsense-iac-retrofit",
+      "prs": [],
+      "ref": "refs/heads/refactor/pfsense-iac-retrofit",
+      "sha": "cb99f7cfed3e59a676ff9efe25bd438503db230d",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 39,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "security/pfsense-tls-verify",
+      "prs": [],
+      "ref": "refs/heads/security/pfsense-tls-verify",
+      "sha": "90483add3bcd5a8aeee15a5b7915bfcc6b317c7f",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 42,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "wip/session-2026-06-28-integration",
+      "prs": [],
+      "ref": "refs/heads/wip/session-2026-06-28-integration",
+      "sha": "fc87a4994d520d4ed9dc9302e9a7e1bbf9fa3c2c",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 6,
+      "ancestor_of_main": false,
+      "behind_main": 256,
+      "name": "chore/ci-fix-pr-validation",
+      "prs": [
+        {
+          "headRefOid": "c08dc44029e4403103b1681e1e088b10d1f85225",
+          "mergedAt": "2026-05-08T04:32:36Z",
+          "number": 34,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/chore/ci-fix-pr-validation",
+      "sha": "c08dc44029e4403103b1681e1e088b10d1f85225",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 253,
+      "name": "chore/dependabot-drop-scope",
+      "prs": [
+        {
+          "headRefOid": "061b7d5a7c2add30b95f6b05ce99919c23cf929e",
+          "mergedAt": "2026-05-10T04:51:40Z",
+          "number": 37,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/chore/dependabot-drop-scope",
+      "sha": "061b7d5a7c2add30b95f6b05ce99919c23cf929e",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 37,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "chore/operating-rules-hooks",
+      "prs": [],
+      "ref": "refs/remotes/origin/chore/operating-rules-hooks",
+      "sha": "477fbbf4fc158fa99b609524199b6ee951a6db98",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 81,
+      "name": "chore/remove-ollama",
+      "prs": [
+        {
+          "headRefOid": "c6fd78fe5cb21a0b8e21066ecd850d82ae423c74",
+          "mergedAt": "2026-11-06T19:52:15Z",
+          "number": 66,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/chore/remove-ollama",
+      "sha": "c6fd78fe5cb21a0b8e21066ecd850d82ae423c74",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 70,
+      "name": "chore/terraform-commit-lock-files",
+      "prs": [
+        {
+          "headRefOid": "eed0c67b9aef33bd4c965d1818edc75f4bfe2fbc",
+          "mergedAt": "2026-11-08T20:43:48Z",
+          "number": 78,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/chore/terraform-commit-lock-files",
+      "sha": "eed0c67b9aef33bd4c965d1818edc75f4bfe2fbc",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 62,
+      "name": "chore/wifi-probe-fw-0.14.0",
+      "prs": [
+        {
+          "headRefOid": "a48cb809a5004e7f30e75c043c6890d6122bbcb1",
+          "mergedAt": "2026-11-09T05:21:46Z",
+          "number": 85,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/chore/wifi-probe-fw-0.14.0",
+      "sha": "a48cb809a5004e7f30e75c043c6890d6122bbcb1",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 61,
+      "name": "chore/wifi-probe-fw-0.14.1",
+      "prs": [
+        {
+          "headRefOid": "a63e2ad5c1cbf94e6b698253aad5bc4eb055b20a",
+          "mergedAt": "2026-11-10T21:50:29Z",
+          "number": 86,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/chore/wifi-probe-fw-0.14.1",
+      "sha": "a63e2ad5c1cbf94e6b698253aad5bc4eb055b20a",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 66,
+      "name": "chore/wifi-probe-submodule-0.11.1",
+      "prs": [
+        {
+          "headRefOid": "e72eca76e0d3eeddbee246a3fc27e4f6cf2b337a",
+          "mergedAt": "2026-11-08T23:58:52Z",
+          "number": 81,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/chore/wifi-probe-submodule-0.11.1",
+      "sha": "e72eca76e0d3eeddbee246a3fc27e4f6cf2b337a",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 53,
+      "ancestor_of_main": false,
+      "behind_main": 295,
+      "name": "cloudflare-terraform",
+      "prs": [
+        {
+          "headRefOid": "0922020a7090e0f466e15faca90564fdd017aa9d",
+          "mergedAt": "2026-04-10T01:45:05Z",
+          "number": 5,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/cloudflare-terraform",
+      "sha": "0922020a7090e0f466e15faca90564fdd017aa9d",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 32,
+      "ancestor_of_main": false,
+      "behind_main": 293,
+      "name": "custom-login-portal",
+      "prs": [
+        {
+          "headRefOid": "a1ca9c81ce29d5828ae989d49c28814034d45a2b",
+          "mergedAt": null,
+          "number": 6,
+          "state": "OPEN"
+        }
+      ],
+      "ref": "refs/remotes/origin/custom-login-portal",
+      "sha": "a1ca9c81ce29d5828ae989d49c28814034d45a2b",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 231,
+      "name": "dependabot/github_actions/actions/checkout-6",
+      "prs": [
+        {
+          "headRefOid": "245a9a51d4f46881bd04f8825da08a0e17cd960a",
+          "mergedAt": null,
+          "number": 56,
+          "state": "OPEN"
+        }
+      ],
+      "ref": "refs/remotes/origin/dependabot/github_actions/actions/checkout-6",
+      "sha": "245a9a51d4f46881bd04f8825da08a0e17cd960a",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 231,
+      "name": "dependabot/github_actions/actions/download-artifact-8",
+      "prs": [
+        {
+          "headRefOid": "2affce6e89d81a8aee5ff0c5185183972362df58",
+          "mergedAt": null,
+          "number": 55,
+          "state": "OPEN"
+        }
+      ],
+      "ref": "refs/remotes/origin/dependabot/github_actions/actions/download-artifact-8",
+      "sha": "2affce6e89d81a8aee5ff0c5185183972362df58",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 231,
+      "name": "dependabot/github_actions/actions/github-script-9",
+      "prs": [
+        {
+          "headRefOid": "221657c9f5c272d65bf015fae1e1271245b39006",
+          "mergedAt": null,
+          "number": 57,
+          "state": "OPEN"
+        }
+      ],
+      "ref": "refs/remotes/origin/dependabot/github_actions/actions/github-script-9",
+      "sha": "221657c9f5c272d65bf015fae1e1271245b39006",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 231,
+      "name": "dependabot/github_actions/actions/upload-artifact-7",
+      "prs": [
+        {
+          "headRefOid": "da3ccfdc6aaf10dc544c4f1e7e9df92396818063",
+          "mergedAt": null,
+          "number": 54,
+          "state": "OPEN"
+        }
+      ],
+      "ref": "refs/remotes/origin/dependabot/github_actions/actions/upload-artifact-7",
+      "sha": "da3ccfdc6aaf10dc544c4f1e7e9df92396818063",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 231,
+      "name": "dependabot/github_actions/github/codeql-action-4",
+      "prs": [
+        {
+          "headRefOid": "89c998f41efdfe2e9c8cf01f13bbee76d0a5366a",
+          "mergedAt": null,
+          "number": 58,
+          "state": "OPEN"
+        }
+      ],
+      "ref": "refs/remotes/origin/dependabot/github_actions/github/codeql-action-4",
+      "sha": "89c998f41efdfe2e9c8cf01f13bbee76d0a5366a",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "dependabot/npm_and_yarn/commitlint/cli-21.2.1",
+      "prs": [
+        {
+          "headRefOid": "f28e75dc0d27af1906fd6332a4e2b591da2649e1",
+          "mergedAt": null,
+          "number": 63,
+          "state": "OPEN"
+        }
+      ],
+      "ref": "refs/remotes/origin/dependabot/npm_and_yarn/commitlint/cli-21.2.1",
+      "sha": "f28e75dc0d27af1906fd6332a4e2b591da2649e1",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 22,
+      "ancestor_of_main": false,
+      "behind_main": 295,
+      "name": "dockermaster-config",
+      "prs": [
+        {
+          "headRefOid": "9f30e61cd2f02a23795dcef3e37aa10e3c0f5087",
+          "mergedAt": null,
+          "number": 4,
+          "state": "CLOSED"
+        },
+        {
+          "headRefOid": "ecfe37c5e4c1a2f5951feff3b16f4da2db3466ed",
+          "mergedAt": "2025-08-22T01:01:26Z",
+          "number": 1,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/dockermaster-config",
+      "sha": "9f30e61cd2f02a23795dcef3e37aa10e3c0f5087",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 26,
+      "ancestor_of_main": false,
+      "behind_main": 295,
+      "name": "dockermaster-recovery",
+      "prs": [],
+      "ref": "refs/remotes/origin/dockermaster-recovery",
+      "sha": "1beb7517d63ecca561f80b6fa7ac3463bb8eb2f7",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 60,
+      "name": "docs/cloudflare-grafana-docs-sync",
+      "prs": [
+        {
+          "headRefOid": "80b2d4e459b6a72115f97d58f6154842c8b6b966",
+          "mergedAt": "2026-11-10T20:59:27Z",
+          "number": 88,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/docs/cloudflare-grafana-docs-sync",
+      "sha": "80b2d4e459b6a72115f97d58f6154842c8b6b966",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 3,
+      "name": "docs/keychain-credential-backup",
+      "prs": [
+        {
+          "headRefOid": "571da87a2a042c5754d924226d02cfaf772851a3",
+          "mergedAt": "2026-11-16T23:53:03Z",
+          "number": 145,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/docs/keychain-credential-backup",
+      "sha": "571da87a2a042c5754d924226d02cfaf772851a3",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 24,
+      "name": "docs/nas-drive-versioning-applied",
+      "prs": [
+        {
+          "headRefOid": "83e2d8ea126f95809dac913d6f8e49b8e6ea5b0f",
+          "mergedAt": "2026-11-12T09:05:03Z",
+          "number": 123,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/docs/nas-drive-versioning-applied",
+      "sha": "83e2d8ea126f95809dac913d6f8e49b8e6ea5b0f",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 25,
+      "name": "docs/nas-drive-versioning-record",
+      "prs": [
+        {
+          "headRefOid": "b174abfa14f25eb0d1081ef2e8d8ea8a13ff40cd",
+          "mergedAt": "2026-11-12T07:37:14Z",
+          "number": 90,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/docs/nas-drive-versioning-record",
+      "sha": "b174abfa14f25eb0d1081ef2e8d8ea8a13ff40cd",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 71,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "docs/network-resilience-redesign",
+      "prs": [],
+      "ref": "refs/remotes/origin/docs/network-resilience-redesign",
+      "sha": "e84c87b840687213522223d74bbf259d14ed62c3",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 57,
+      "name": "docs/pfsense-sync-2026-11-10",
+      "prs": [
+        {
+          "headRefOid": "5fbd8f819f2bb271c1119648ea5a44e190135eaa",
+          "mergedAt": "2026-11-11T06:57:47Z",
+          "number": 91,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/docs/pfsense-sync-2026-11-10",
+      "sha": "5fbd8f819f2bb271c1119648ea5a44e190135eaa",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 80,
+      "name": "docs/pr-merge-apply-rule",
+      "prs": [
+        {
+          "headRefOid": "f838d1865557b4be672df04b68393bf2916ed847",
+          "mergedAt": "2026-11-08T18:07:23Z",
+          "number": 68,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/docs/pr-merge-apply-rule",
+      "sha": "f838d1865557b4be672df04b68393bf2916ed847",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 64,
+      "name": "docs/wifi-probe-f7",
+      "prs": [
+        {
+          "headRefOid": "7d2eaaf910d0d49015ca9a42c65b8cc3c5098e30",
+          "mergedAt": "2026-11-09T02:47:21Z",
+          "number": 83,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/docs/wifi-probe-f7",
+      "sha": "7d2eaaf910d0d49015ca9a42c65b8cc3c5098e30",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 55,
+      "name": "feat/acme-cert-iac",
+      "prs": [
+        {
+          "headRefOid": "18cd82bdbd4852968408f05e2fcbc020bf3b5a88",
+          "mergedAt": "2026-11-11T09:04:27Z",
+          "number": 94,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/acme-cert-iac",
+      "sha": "18cd82bdbd4852968408f05e2fcbc020bf3b5a88",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 54,
+      "name": "feat/acme-cf-cert",
+      "prs": [
+        {
+          "headRefOid": "9c879ef62dbe5695c316cee6c7baf0d81fa62dff",
+          "mergedAt": "2026-11-11T09:07:57Z",
+          "number": 95,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/acme-cf-cert",
+      "sha": "9c879ef62dbe5695c316cee6c7baf0d81fa62dff",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 52,
+      "name": "feat/acme-cf-explicit-sans",
+      "prs": [
+        {
+          "headRefOid": "848743f505ae524b7f842886a6f69761bba0babb",
+          "mergedAt": "2026-11-11T09:18:11Z",
+          "number": 97,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/acme-cf-explicit-sans",
+      "sha": "848743f505ae524b7f842886a6f69761bba0babb",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 58,
+      "name": "feat/acme-unbound-dot-restart",
+      "prs": [
+        {
+          "headRefOid": "cad32dd1c66e92adfb82a7c156095e182812ff03",
+          "mergedAt": "2026-11-11T06:07:38Z",
+          "number": 89,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/acme-unbound-dot-restart",
+      "sha": "cad32dd1c66e92adfb82a7c156095e182812ff03",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 47,
+      "name": "feat/blackbox-auth-cf-probe",
+      "prs": [
+        {
+          "headRefOid": "fd4fc019a07803e8b2569c6373fd93264aa160c4",
+          "mergedAt": "2026-11-11T17:07:08Z",
+          "number": 101,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/blackbox-auth-cf-probe",
+      "sha": "fd4fc019a07803e8b2569c6373fd93264aa160c4",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 81,
+      "name": "feat/circunflexo-dns-root",
+      "prs": [],
+      "ref": "refs/remotes/origin/feat/circunflexo-dns-root",
+      "sha": "f46a87ecd32e2b060faa3f3edb88329194e08f94",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 3,
+      "ancestor_of_main": false,
+      "behind_main": 76,
+      "name": "feat/docker-daemon-iac",
+      "prs": [
+        {
+          "headRefOid": "5a97708d6809468f9cdb63c8fa68295d898f14e0",
+          "mergedAt": "2026-11-08T19:35:36Z",
+          "number": 69,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/docker-daemon-iac",
+      "sha": "5a97708d6809468f9cdb63c8fa68295d898f14e0",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 70,
+      "name": "feat/docker-registry-mirror",
+      "prs": [
+        {
+          "headRefOid": "f53fc447e7c70ac1ffb314563c9dfc799f90aade",
+          "mergedAt": "2026-11-08T20:38:19Z",
+          "number": 76,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/docker-registry-mirror",
+      "sha": "f53fc447e7c70ac1ffb314563c9dfc799f90aade",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 6,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/esp32-c5-wifi-probe",
+      "prs": [],
+      "ref": "refs/remotes/origin/feat/esp32-c5-wifi-probe",
+      "sha": "bf1e49754980f83903f4fff3c8db6592d7e4813b",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 238,
+      "name": "feat/exporters-batch1",
+      "prs": [
+        {
+          "headRefOid": "71be7e1a203f9a6b7b8cfbb78bc964c66f66d939",
+          "mergedAt": "2026-05-10T12:13:06Z",
+          "number": 46,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/exporters-batch1",
+      "sha": "71be7e1a203f9a6b7b8cfbb78bc964c66f66d939",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 237,
+      "name": "feat/exporters-batch2-nginx",
+      "prs": [
+        {
+          "headRefOid": "cfeebc3c48ab3cb4fd30ec4a14331c2ef50b14c7",
+          "mergedAt": "2026-05-10T12:27:07Z",
+          "number": 47,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/exporters-batch2-nginx",
+      "sha": "cfeebc3c48ab3cb4fd30ec4a14331c2ef50b14c7",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 287,
+      "name": "feat/grafana",
+      "prs": [
+        {
+          "headRefOid": "10b6c28769b4c5bd2936a361bedc70a02b7a1500",
+          "mergedAt": "2026-04-29T18:05:30Z",
+          "number": 14,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/grafana",
+      "sha": "10b6c28769b4c5bd2936a361bedc70a02b7a1500",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 61,
+      "name": "feat/grafana-public-url",
+      "prs": [
+        {
+          "headRefOid": "a3db4fa8e05cb3b840dafb21b224f7ca56dfa26c",
+          "mergedAt": "2026-11-10T19:52:39Z",
+          "number": 87,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/grafana-public-url",
+      "sha": "a3db4fa8e05cb3b840dafb21b224f7ca56dfa26c",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 233,
+      "name": "feat/grafana-thanos-prom-dashboard",
+      "prs": [
+        {
+          "headRefOid": "006b11c5a27d53ef7b156f9e681e281b35670637",
+          "mergedAt": "2026-05-11T06:24:26Z",
+          "number": 52,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/grafana-thanos-prom-dashboard",
+      "sha": "006b11c5a27d53ef7b156f9e681e281b35670637",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 74,
+      "name": "feat/hub-mirror-vhost",
+      "prs": [
+        {
+          "headRefOid": "57b57f9459b74895c58eaadd128665a5055ee751",
+          "mergedAt": "2026-11-08T19:44:00Z",
+          "number": 73,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/hub-mirror-vhost",
+      "sha": "57b57f9459b74895c58eaadd128665a5055ee751",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 70,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/ix0-degraded-autobounce",
+      "prs": [],
+      "ref": "refs/remotes/origin/feat/ix0-degraded-autobounce",
+      "sha": "537c6860ce11994d724d9b5e422d7f2693eb2dfb",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 37,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/ix0-flap-monitoring",
+      "prs": [],
+      "ref": "refs/remotes/origin/feat/ix0-flap-monitoring",
+      "sha": "32c70bc315ab095cc792e3b5f18bab6fdc80a303",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 36,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/k8s-talos-lab-cluster",
+      "prs": [],
+      "ref": "refs/remotes/origin/feat/k8s-talos-lab-cluster",
+      "sha": "28acf610aac52cbdc2498bd8d479bc6f92d45ca0",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 38,
+      "name": "feat/keycloak-edge-lockdown",
+      "prs": [
+        {
+          "headRefOid": "ad6cd9e7f7907ffe96a2833d4e7fa15084c05f61",
+          "mergedAt": "2026-11-11T22:00:31Z",
+          "number": 104,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/keycloak-edge-lockdown",
+      "sha": "ad6cd9e7f7907ffe96a2833d4e7fa15084c05f61",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 40,
+      "name": "feat/keycloak-hostname-admin",
+      "prs": [
+        {
+          "headRefOid": "a51fe6410b8b79d46e7a843ea1c227f1a785599e",
+          "mergedAt": "2026-11-11T21:49:46Z",
+          "number": 105,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/keycloak-hostname-admin",
+      "sha": "a51fe6410b8b79d46e7a843ea1c227f1a785599e",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 37,
+      "name": "feat/keycloak-k-tests",
+      "prs": [
+        {
+          "headRefOid": "14675dc165531a01c5a141fa31cc6f1584beea6a",
+          "mergedAt": "2026-11-11T22:12:01Z",
+          "number": 114,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/keycloak-k-tests",
+      "sha": "14675dc165531a01c5a141fa31cc6f1584beea6a",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 37,
+      "name": "feat/keycloak-k2-brute-force",
+      "prs": [
+        {
+          "headRefOid": "9357ebf9c6e1675315054637832e82d59812a036",
+          "mergedAt": "2026-11-11T22:13:06Z",
+          "number": 112,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/keycloak-k2-brute-force",
+      "sha": "9357ebf9c6e1675315054637832e82d59812a036",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 37,
+      "name": "feat/keycloak-k3a-mail-path",
+      "prs": [
+        {
+          "headRefOid": "7e32b148a26c487952c33de9efc4a0dd041a3c90",
+          "mergedAt": "2026-11-11T22:13:24Z",
+          "number": 113,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/keycloak-k3a-mail-path",
+      "sha": "7e32b148a26c487952c33de9efc4a0dd041a3c90",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 33,
+      "name": "feat/keycloak-k3b-reset-flow",
+      "prs": [
+        {
+          "headRefOid": "293897cc6284bfc5614c6158962e12200a626774",
+          "mergedAt": "2026-11-12T01:53:40Z",
+          "number": 115,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/keycloak-k3b-reset-flow",
+      "sha": "293897cc6284bfc5614c6158962e12200a626774",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 37,
+      "name": "feat/keycloak-k4-events",
+      "prs": [
+        {
+          "headRefOid": "26bd1e69e298148bb2aee04094a4f579285b693e",
+          "mergedAt": "2026-11-11T22:12:46Z",
+          "number": 111,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/keycloak-k4-events",
+      "sha": "26bd1e69e298148bb2aee04094a4f579285b693e",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 39,
+      "name": "feat/keycloak-master-frontend-url",
+      "prs": [
+        {
+          "headRefOid": "450c94819b9cbc0095a504cabbe2ad9a97b65ccc",
+          "mergedAt": "2026-11-11T21:57:06Z",
+          "number": 109,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/keycloak-master-frontend-url",
+      "sha": "450c94819b9cbc0095a504cabbe2ad9a97b65ccc",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 46,
+      "name": "feat/keycloak-realm-import",
+      "prs": [
+        {
+          "headRefOid": "12bfeba4e9e0d7cbc9b32cd7947bee7599d1aeb2",
+          "mergedAt": "2026-11-11T21:19:30Z",
+          "number": 103,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/keycloak-realm-import",
+      "sha": "12bfeba4e9e0d7cbc9b32cd7947bee7599d1aeb2",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 45,
+      "name": "feat/keycloak-registration-off",
+      "prs": [
+        {
+          "headRefOid": "54629fb753e2a7269aaa534a074a9e5636f1eb14",
+          "mergedAt": "2026-11-11T21:22:32Z",
+          "number": 106,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/keycloak-registration-off",
+      "sha": "54629fb753e2a7269aaa534a074a9e5636f1eb14",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 255,
+      "name": "feat/monitoring-phase-a-alertmanager-sidecar2",
+      "prs": [
+        {
+          "headRefOid": "ef610195abba662e09aa7398c50a0ae957969517",
+          "mergedAt": "2026-05-08T05:00:47Z",
+          "number": 33,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/monitoring-phase-a-alertmanager-sidecar2",
+      "sha": "ef610195abba662e09aa7398c50a0ae957969517",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 84,
+      "name": "feat/nas-kernel-tuning-iac",
+      "prs": [
+        {
+          "headRefOid": "c7d05a7f1f91f0ac28674c4e92ae47d657d1d8ca",
+          "mergedAt": "2026-11-04T06:09:38Z",
+          "number": 65,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/nas-kernel-tuning-iac",
+      "sha": "c7d05a7f1f91f0ac28674c4e92ae47d657d1d8ca",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 20,
+      "name": "feat/nomad-agy-models",
+      "prs": [
+        {
+          "headRefOid": "3c46baa017ff652fc5e21fac9ee984c8b7a0f275",
+          "mergedAt": "2026-11-14T18:59:27Z",
+          "number": 127,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/nomad-agy-models",
+      "sha": "3c46baa017ff652fc5e21fac9ee984c8b7a0f275",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 10,
+      "name": "feat/nomad-embed-ollama-10cpu",
+      "prs": [
+        {
+          "headRefOid": "a98859c9fea7361fefba2e23f06fbd567aaa05bc",
+          "mergedAt": "2026-11-15T02:30:41Z",
+          "number": 137,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/nomad-embed-ollama-10cpu",
+      "sha": "a98859c9fea7361fefba2e23f06fbd567aaa05bc",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 11,
+      "name": "feat/nomad-embedding-gemma2",
+      "prs": [
+        {
+          "headRefOid": "0cac5fb641d1d70656eb699a6b45a0edba95bdfb",
+          "mergedAt": "2026-11-15T01:24:50Z",
+          "number": 136,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/nomad-embedding-gemma2",
+      "sha": "0cac5fb641d1d70656eb699a6b45a0edba95bdfb",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 12,
+      "name": "feat/nomad-embedding-qwen3-4b",
+      "prs": [
+        {
+          "headRefOid": "77807524fd0389a6c186af79d20e5678a63583a2",
+          "mergedAt": "2026-11-15T00:51:38Z",
+          "number": 135,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/nomad-embedding-qwen3-4b",
+      "sha": "77807524fd0389a6c186af79d20e5678a63583a2",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 13,
+      "name": "feat/nomad-embedding-qwen3-reranker",
+      "prs": [
+        {
+          "headRefOid": "a1bc46860920af78f0ef0079f38a923cebd6da58",
+          "mergedAt": "2026-11-15T00:21:44Z",
+          "number": 134,
+          "state": "MERGED"
+        },
+        {
+          "headRefOid": "a0bf08907364123dbe031976c152fba59e161bda",
+          "mergedAt": "2026-11-15T00:07:07Z",
+          "number": 133,
+          "state": "MERGED"
+        },
+        {
+          "headRefOid": "4b45bcdd6feeeeefba6d59ca03ca5a483e459bf5",
+          "mergedAt": "2026-11-14T23:44:23Z",
+          "number": 132,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/nomad-embedding-qwen3-reranker",
+      "sha": "a1bc46860920af78f0ef0079f38a923cebd6da58",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 21,
+      "name": "feat/nomad-gemini-subscription",
+      "prs": [
+        {
+          "headRefOid": "e5188c6efe3eae35d6ddafd951157ebb1954e132",
+          "mergedAt": "2026-11-14T18:42:49Z",
+          "number": 126,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/nomad-gemini-subscription",
+      "sha": "e5188c6efe3eae35d6ddafd951157ebb1954e132",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 9,
+      "name": "feat/nomad-gemma-deploy",
+      "prs": [
+        {
+          "headRefOid": "aea4d6de4044bf50a7d1ab0fb1e637efd87b8786",
+          "mergedAt": "2026-11-15T05:05:33Z",
+          "number": 138,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/nomad-gemma-deploy",
+      "sha": "aea4d6de4044bf50a7d1ab0fb1e637efd87b8786",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 19,
+      "name": "feat/nomad-iac-remote-ai",
+      "prs": [
+        {
+          "headRefOid": "b7365a330054d27063a398eaec003d07a35f1867",
+          "mergedAt": "2026-11-14T19:35:15Z",
+          "number": 128,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/nomad-iac-remote-ai",
+      "sha": "b7365a330054d27063a398eaec003d07a35f1867",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 68,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/pfsense-dhcp-static-mappings",
+      "prs": [],
+      "ref": "refs/remotes/origin/feat/pfsense-dhcp-static-mappings",
+      "sha": "2823314c7f5bd5dbda1bb14d417539dad77c76be",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 64,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "feat/pfsense-p2p-scavenger-shaper",
+      "prs": [],
+      "ref": "refs/remotes/origin/feat/pfsense-p2p-scavenger-shaper",
+      "sha": "4380c5e67b9b359066ddc1393b4e9a63dd241d82",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 289,
+      "name": "feat/pihole6-exporter-swap",
+      "prs": [
+        {
+          "headRefOid": "84093b8454e43225679daefc2e15b9217b3eb2bf",
+          "mergedAt": "2026-04-29T15:20:30Z",
+          "number": 12,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/pihole6-exporter-swap",
+      "sha": "84093b8454e43225679daefc2e15b9217b3eb2bf",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 0,
+      "ancestor_of_main": true,
+      "behind_main": 166,
+      "name": "feat/portainer-vhost",
+      "prs": [],
+      "ref": "refs/remotes/origin/feat/portainer-vhost",
+      "sha": "ba954563b4a1246c624a1312d4a7bf0959aa3d0e",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 23,
+      "name": "feat/project-nomad",
+      "prs": [
+        {
+          "headRefOid": "14722d580fcdd7b2fbb1b188e1001eaa20d7e842",
+          "mergedAt": "2026-11-14T06:08:15Z",
+          "number": 124,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/project-nomad",
+      "sha": "14722d580fcdd7b2fbb1b188e1001eaa20d7e842",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 49,
+      "name": "feat/rproxy-cf-cert",
+      "prs": [
+        {
+          "headRefOid": "7d64e92ee6d3f4b6908c43181627928197f04979",
+          "mergedAt": "2026-11-11T16:48:25Z",
+          "number": 100,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/rproxy-cf-cert",
+      "sha": "7d64e92ee6d3f4b6908c43181627928197f04979",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 75,
+      "name": "feat/rundeck-from-zot",
+      "prs": [
+        {
+          "headRefOid": "7979a3817f16b235225e22e1d047378834e23cb6",
+          "mergedAt": "2026-11-08T19:39:34Z",
+          "number": 72,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/rundeck-from-zot",
+      "sha": "7979a3817f16b235225e22e1d047378834e23cb6",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 291,
+      "name": "feat/rundeck-maintenance-jobs",
+      "prs": [
+        {
+          "headRefOid": "b9b49f1aa212d17533ea79f2641610bf3f133c47",
+          "mergedAt": "2026-04-29T04:34:45Z",
+          "number": 10,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/rundeck-maintenance-jobs",
+      "sha": "b9b49f1aa212d17533ea79f2641610bf3f133c47",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 254,
+      "name": "feat/snmp-pfsense-regen",
+      "prs": [
+        {
+          "headRefOid": "2e03727f5040589fe47b502b1332f623d59a7909",
+          "mergedAt": "2026-05-09T05:08:17Z",
+          "number": 35,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/snmp-pfsense-regen",
+      "sha": "2e03727f5040589fe47b502b1332f623d59a7909",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 3,
+      "ancestor_of_main": false,
+      "behind_main": 81,
+      "name": "feat/storage-policy",
+      "prs": [],
+      "ref": "refs/remotes/origin/feat/storage-policy",
+      "sha": "cb7b8bbd4e0857d77e90bfe848f30f49b538fad3",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 239,
+      "name": "feat/thanos-compactor-ruler",
+      "prs": [
+        {
+          "headRefOid": "b14b2fe641802cce7814302f997e31d51391aa57",
+          "mergedAt": "2026-05-10T06:23:36Z",
+          "number": 45,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/thanos-compactor-ruler",
+      "sha": "b14b2fe641802cce7814302f997e31d51391aa57",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 235,
+      "name": "feat/thanos-rule-starter-rules",
+      "prs": [
+        {
+          "headRefOid": "9706972c5369673d99d60bca6352df8f8b32c242",
+          "mergedAt": "2026-05-10T18:57:24Z",
+          "number": 49,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/thanos-rule-starter-rules",
+      "sha": "9706972c5369673d99d60bca6352df8f8b32c242",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 65,
+      "name": "feat/wifi-probe-fw-0.12.0",
+      "prs": [
+        {
+          "headRefOid": "e9eb282f5be825448cc1bbc5bd383967666d5c30",
+          "mergedAt": "2026-11-09T00:32:12Z",
+          "number": 82,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/wifi-probe-fw-0.12.0",
+      "sha": "e9eb282f5be825448cc1bbc5bd383967666d5c30",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 3,
+      "ancestor_of_main": false,
+      "behind_main": 78,
+      "name": "feat/wifi-probes-dashboard-liveness",
+      "prs": [
+        {
+          "headRefOid": "230871338b330fc3882034060c77d8af8ae164a0",
+          "mergedAt": "2026-11-08T19:31:56Z",
+          "number": 71,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/wifi-probes-dashboard-liveness",
+      "sha": "230871338b330fc3882034060c77d8af8ae164a0",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 3,
+      "ancestor_of_main": false,
+      "behind_main": 44,
+      "name": "feat/zot-e2e-test",
+      "prs": [
+        {
+          "headRefOid": "9981e2e5cf552346e0d52fa1299bc7bac8274eb7",
+          "mergedAt": "2026-11-11T21:26:12Z",
+          "number": 102,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/zot-e2e-test",
+      "sha": "9981e2e5cf552346e0d52fa1299bc7bac8274eb7",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 28,
+      "name": "feat/zot-error-alerts",
+      "prs": [
+        {
+          "headRefOid": "f89782a82672a5b0e02c83e3ffb6a1a3d58fdce3",
+          "mergedAt": "2026-11-12T06:56:04Z",
+          "number": 120,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/zot-error-alerts",
+      "sha": "f89782a82672a5b0e02c83e3ffb6a1a3d58fdce3",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 30,
+      "name": "feat/zot-local-metadb",
+      "prs": [
+        {
+          "headRefOid": "4a1f2df82c6f7005ea2b60850ffd4347cfd7e789",
+          "mergedAt": "2026-11-12T06:43:39Z",
+          "number": 118,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/zot-local-metadb",
+      "sha": "4a1f2df82c6f7005ea2b60850ffd4347cfd7e789",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 27,
+      "name": "feat/zot-meta-backup",
+      "prs": [
+        {
+          "headRefOid": "114a14c0d815165954d70aa0f7ecc0ab2ecba5eb",
+          "mergedAt": "2026-11-12T07:08:46Z",
+          "number": 121,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/zot-meta-backup",
+      "sha": "114a14c0d815165954d70aa0f7ecc0ab2ecba5eb",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 48,
+      "name": "feat/zot-oidc-lan-hosts",
+      "prs": [
+        {
+          "headRefOid": "bf0a4cc9253bcadd0a4902082b4604d416f1f579",
+          "mergedAt": "2026-11-11T17:01:07Z",
+          "number": 93,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/zot-oidc-lan-hosts",
+      "sha": "bf0a4cc9253bcadd0a4902082b4604d416f1f579",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 4,
+      "ancestor_of_main": false,
+      "behind_main": 79,
+      "name": "feat/zot-registry",
+      "prs": [
+        {
+          "headRefOid": "7a337073139d7e842fc478e5ddac0f374620eb91",
+          "mergedAt": "2026-11-08T18:12:09Z",
+          "number": 67,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/zot-registry",
+      "sha": "7a337073139d7e842fc478e5ddac0f374620eb91",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 73,
+      "name": "feat/zot-sso",
+      "prs": [
+        {
+          "headRefOid": "c19869e4822d7edb7ddbe946ceb4f7995e7f1676",
+          "mergedAt": "2026-11-08T19:59:21Z",
+          "number": 74,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feat/zot-sso",
+      "sha": "c19869e4822d7edb7ddbe946ceb4f7995e7f1676",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 77,
+      "ancestor_of_main": false,
+      "behind_main": 293,
+      "name": "feature/prometheus-thanos-plan",
+      "prs": [
+        {
+          "headRefOid": "687b2f6df0535cbd380a97f0f9bc826835b3beb6",
+          "mergedAt": "2026-04-27T22:09:43Z",
+          "number": 7,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/feature/prometheus-thanos-plan",
+      "sha": "687b2f6df0535cbd380a97f0f9bc826835b3beb6",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 53,
+      "name": "fix/acme-cert-create-name",
+      "prs": [
+        {
+          "headRefOid": "b04e32a50865bda6bce7f4547a88e6314d171e02",
+          "mergedAt": "2026-11-11T09:12:53Z",
+          "number": 96,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/acme-cert-create-name",
+      "sha": "b04e32a50865bda6bce7f4547a88e6314d171e02",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 51,
+      "name": "fix/acme-issue-polling",
+      "prs": [
+        {
+          "headRefOid": "5bfaa4d549064806ebaf2d75f9654aa0bb1ff773",
+          "mergedAt": "2026-11-11T10:00:08Z",
+          "number": 98,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/acme-issue-polling",
+      "sha": "5bfaa4d549064806ebaf2d75f9654aa0bb1ff773",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 50,
+      "name": "fix/acme-poller-stale-log",
+      "prs": [
+        {
+          "headRefOid": "ff069af07437874a3a8b37edbb4f8012ebfb41e0",
+          "mergedAt": "2026-11-11T16:42:52Z",
+          "number": 99,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/acme-poller-stale-log",
+      "sha": "ff069af07437874a3a8b37edbb4f8012ebfb41e0",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 0,
+      "ancestor_of_main": true,
+      "behind_main": 257,
+      "name": "fix/audit-final-items",
+      "prs": [
+        {
+          "headRefOid": "ad61330f630d22345004fe15b06168d54bde0d19",
+          "mergedAt": "2026-04-30T16:20:37Z",
+          "number": 31,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/audit-final-items",
+      "sha": "ad61330f630d22345004fe15b06168d54bde0d19",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 0,
+      "ancestor_of_main": true,
+      "behind_main": 262,
+      "name": "fix/audit-remaining-items",
+      "prs": [
+        {
+          "headRefOid": "a2c7f1959fbc22b4b4add7c393cb48fbd9097d94",
+          "mergedAt": "2026-04-30T16:04:11Z",
+          "number": 21,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/audit-remaining-items",
+      "sha": "a2c7f1959fbc22b4b4add7c393cb48fbd9097d94",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 66,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/calibre-gui-supervision",
+      "prs": [],
+      "ref": "refs/remotes/origin/fix/calibre-gui-supervision",
+      "sha": "e23b5b602de5a7007a997c58d4291edf0eb34a8a",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 82,
+      "ancestor_of_main": false,
+      "behind_main": 166,
+      "name": "fix/calibre-selkies-pin",
+      "prs": [
+        {
+          "headRefOid": "779dc1c2245908840dc02862e8a45377fd71e25f",
+          "mergedAt": "2026-11-01T19:04:23Z",
+          "number": 64,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/calibre-selkies-pin",
+      "sha": "779dc1c2245908840dc02862e8a45377fd71e25f",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 3,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/calibre-version-bump",
+      "prs": [],
+      "ref": "refs/remotes/origin/fix/calibre-version-bump",
+      "sha": "fab1145e26cae78dad8390cc3048615c8c3274b2",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 1,
+      "name": "fix/dhcp-static-php-writer",
+      "prs": [
+        {
+          "headRefOid": "172d719f9b346d0d427c5555c19575037ddbd63e",
+          "mergedAt": "2026-11-17T00:20:41Z",
+          "number": 147,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/dhcp-static-php-writer",
+      "sha": "172d719f9b346d0d427c5555c19575037ddbd63e",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 2,
+      "name": "fix/dhcp-sync-safe-writes",
+      "prs": [
+        {
+          "headRefOid": "08f3d3a4c35be3d1fb3c6b43cba57cda6fb71da4",
+          "mergedAt": "2026-11-17T00:08:18Z",
+          "number": 146,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/dhcp-sync-safe-writes",
+      "sha": "08f3d3a4c35be3d1fb3c6b43cba57cda6fb71da4",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 4,
+      "ancestor_of_main": false,
+      "behind_main": 29,
+      "name": "fix/ds2-portainer-agent-ip-collision",
+      "prs": [
+        {
+          "headRefOid": "9dcd4e2c93dae47ec8d89296632a019e3599bfcf",
+          "mergedAt": "2026-11-12T06:51:08Z",
+          "number": 119,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/ds2-portainer-agent-ip-collision",
+      "sha": "9dcd4e2c93dae47ec8d89296632a019e3599bfcf",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 84,
+      "name": "fix/freeswitch-pin-dhcp-write-path",
+      "prs": [],
+      "ref": "refs/remotes/origin/fix/freeswitch-pin-dhcp-write-path",
+      "sha": "72c82971a9b813a11d1cb00a86dc7418a5930d2d",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 70,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/github-runner-image-pin",
+      "prs": [],
+      "ref": "refs/remotes/origin/fix/github-runner-image-pin",
+      "sha": "bbcd5be3c150700f24bbfa371abcc85dc34bf16a",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 37,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/grafana-oauth-disable-keycloak-down",
+      "prs": [],
+      "ref": "refs/remotes/origin/fix/grafana-oauth-disable-keycloak-down",
+      "sha": "7443199ed2a0ae1fedf153631e2337090531225f",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 288,
+      "name": "fix/ha-cert-renewal-and-alerts",
+      "prs": [
+        {
+          "headRefOid": "e006e71b58adc91c3ad110d91d8cd48913ee3000",
+          "mergedAt": "2026-04-29T17:15:10Z",
+          "number": 13,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/ha-cert-renewal-and-alerts",
+      "sha": "e006e71b58adc91c3ad110d91d8cd48913ee3000",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 71,
+      "name": "fix/hub-mirror-ping",
+      "prs": [
+        {
+          "headRefOid": "f01dea83b7383effb83f77baa38a271a0041099c",
+          "mergedAt": "2026-11-08T20:28:07Z",
+          "number": 77,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/hub-mirror-ping",
+      "sha": "f01dea83b7383effb83f77baa38a271a0041099c",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 67,
+      "name": "fix/hub-mirror-probe-path",
+      "prs": [
+        {
+          "headRefOid": "aa71bc3d1902196ad7582e24d8a611bda88e6a95",
+          "mergedAt": "2026-11-08T22:44:53Z",
+          "number": 80,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/hub-mirror-probe-path",
+      "sha": "aa71bc3d1902196ad7582e24d8a611bda88e6a95",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 72,
+      "name": "fix/hub-mirror-set-order",
+      "prs": [
+        {
+          "headRefOid": "0002170da193644710c93742ef39a91e7f06cdb0",
+          "mergedAt": "2026-11-08T20:03:54Z",
+          "number": 75,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/hub-mirror-set-order",
+      "sha": "0002170da193644710c93742ef39a91e7f06cdb0",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 269,
+      "name": "fix/iac-followups",
+      "prs": [
+        {
+          "headRefOid": "44a20cb4826b3d27ce9ed725b52876f6559ae8a8",
+          "mergedAt": "2026-04-30T15:48:38Z",
+          "number": 17,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/iac-followups",
+      "sha": "62c745893ebd54eb3753ad9eafd0dba7db6d6164",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 0,
+      "ancestor_of_main": true,
+      "behind_main": 280,
+      "name": "fix/iac-gaps-batch1",
+      "prs": [
+        {
+          "headRefOid": "5a02f57b958f1c985ea3ae9eb5e2200aa3b0659a",
+          "mergedAt": null,
+          "number": 16,
+          "state": "CLOSED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/iac-gaps-batch1",
+      "sha": "5a02f57b958f1c985ea3ae9eb5e2200aa3b0659a",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 47,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/ix0-optic-flap-handoff",
+      "prs": [],
+      "ref": "refs/remotes/origin/fix/ix0-optic-flap-handoff",
+      "sha": "ed71d7e821f144b123eb40b429f97abb0120bb14",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 4,
+      "ancestor_of_main": false,
+      "behind_main": 56,
+      "name": "fix/ix0-watchdog-posthoc",
+      "prs": [
+        {
+          "headRefOid": "0806b9ba923cbe2404aa724ea3eeec0cfadf568c",
+          "mergedAt": "2026-11-11T07:12:39Z",
+          "number": 92,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/ix0-watchdog-posthoc",
+      "sha": "0806b9ba923cbe2404aa724ea3eeec0cfadf568c",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 73,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/ix0-watchdog-safety",
+      "prs": [],
+      "ref": "refs/remotes/origin/fix/ix0-watchdog-safety",
+      "sha": "cc31249a64580322b2262192d346630239edd353",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 33,
+      "name": "fix/kc-test-totp-secret",
+      "prs": [
+        {
+          "headRefOid": "d1aafdd0b84bb2c6563139297f72ec79a0c4ef84",
+          "mergedAt": "2026-11-12T01:57:11Z",
+          "number": 116,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/kc-test-totp-secret",
+      "sha": "d1aafdd0b84bb2c6563139297f72ec79a0c4ef84",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 31,
+      "name": "fix/keycloak-reset-flow-priority",
+      "prs": [
+        {
+          "headRefOid": "a9ff81f909877c810d28a0270d3c47d78aa85303",
+          "mergedAt": "2026-11-12T02:08:25Z",
+          "number": 117,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/keycloak-reset-flow-priority",
+      "sha": "a9ff81f909877c810d28a0270d3c47d78aa85303",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 290,
+      "name": "fix/macvlan-routing",
+      "prs": [
+        {
+          "headRefOid": "57a487914176521d9a53bc0c05f2f0c0a95442c5",
+          "mergedAt": "2026-04-29T04:45:12Z",
+          "number": 11,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/macvlan-routing",
+      "sha": "57a487914176521d9a53bc0c05f2f0c0a95442c5",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 236,
+      "name": "fix/nginx-stub-acl-macvlan",
+      "prs": [
+        {
+          "headRefOid": "9f3d165b772f817839e5f3704cb961c0353b0f6f",
+          "mergedAt": "2026-05-10T12:34:44Z",
+          "number": 48,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/nginx-stub-acl-macvlan",
+      "sha": "9f3d165b772f817839e5f3704cb961c0353b0f6f",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 16,
+      "name": "fix/nomad-eval-config-compat",
+      "prs": [
+        {
+          "headRefOid": "d2dbc614dd6bdb068bd8019c2f07e95d978a10c0",
+          "mergedAt": "2026-11-14T21:48:47Z",
+          "number": 131,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/nomad-eval-config-compat",
+      "sha": "d2dbc614dd6bdb068bd8019c2f07e95d978a10c0",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 22,
+      "name": "fix/nomad-litellm-boot",
+      "prs": [
+        {
+          "headRefOid": "36dcac883d781330e1199277641aefb6a9fe2cf5",
+          "mergedAt": "2026-11-14T06:21:17Z",
+          "number": 125,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/nomad-litellm-boot",
+      "sha": "36dcac883d781330e1199277641aefb6a9fe2cf5",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 6,
+      "name": "fix/nomad-macvlan",
+      "prs": [
+        {
+          "headRefOid": "313eb7fe634d714b6553b9ed380005d077ed1995",
+          "mergedAt": "2026-11-15T17:34:11Z",
+          "number": 141,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/nomad-macvlan",
+      "sha": "313eb7fe634d714b6553b9ed380005d077ed1995",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 18,
+      "name": "fix/nomad-observability-bge-eval",
+      "prs": [
+        {
+          "headRefOid": "2b96337e446b6e7c6c23d4171520756930b306e5",
+          "mergedAt": "2026-11-14T20:36:46Z",
+          "number": 129,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/nomad-observability-bge-eval",
+      "sha": "2b96337e446b6e7c6c23d4171520756930b306e5",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 7,
+      "name": "fix/nomad-private-children",
+      "prs": [
+        {
+          "headRefOid": "1824b31697364c6d280d8c564bfba7afc3c16301",
+          "mergedAt": "2026-11-15T08:30:12Z",
+          "number": 140,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/nomad-private-children",
+      "sha": "1824b31697364c6d280d8c564bfba7afc3c16301",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 8,
+      "name": "fix/nomad-qdrant-timeout",
+      "prs": [
+        {
+          "headRefOid": "c037e91cb92a2de196191a00b4ff3976d28fb59f",
+          "mergedAt": "2026-11-15T07:32:43Z",
+          "number": 139,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/nomad-qdrant-timeout",
+      "sha": "c037e91cb92a2de196191a00b4ff3976d28fb59f",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 17,
+      "name": "fix/nomad-socket-proxy-ipv4",
+      "prs": [
+        {
+          "headRefOid": "28eddfd7e4a398001a1766959ffd2f9f28aff51e",
+          "mergedAt": "2026-11-14T20:51:20Z",
+          "number": 130,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/nomad-socket-proxy-ipv4",
+      "sha": "28eddfd7e4a398001a1766959ffd2f9f28aff51e",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 4,
+      "name": "fix/omada-admin-reservation",
+      "prs": [
+        {
+          "headRefOid": "364a8114d1863226b555b746eeffd96d501d09b8",
+          "mergedAt": "2026-11-16T22:41:06Z",
+          "number": 144,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/omada-admin-reservation",
+      "sha": "364a8114d1863226b555b746eeffd96d501d09b8",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 81,
+      "name": "fix/ops-ds1-log-rotation",
+      "prs": [],
+      "ref": "refs/remotes/origin/fix/ops-ds1-log-rotation",
+      "sha": "a3d6fb742408df2a76212f14f2824e8ce70b5f6f",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 81,
+      "name": "fix/ops-ds2-agent-ip",
+      "prs": [],
+      "ref": "refs/remotes/origin/fix/ops-ds2-agent-ip",
+      "sha": "af4d3fa571df0f330400bbd91681bc903853a5ef",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 81,
+      "name": "fix/ops-github-runner",
+      "prs": [],
+      "ref": "refs/remotes/origin/fix/ops-github-runner",
+      "sha": "fe0f57d176c960589c6440cac681f02ede17a440",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 37,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/pihole-exporter-fd-leak-failsafe",
+      "prs": [],
+      "ref": "refs/remotes/origin/fix/pihole-exporter-fd-leak-failsafe",
+      "sha": "3f02047f07f9087ecc2fd3c05c04eb8800d42537",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 37,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/pihole-v6-local-volume-upgrade",
+      "prs": [],
+      "ref": "refs/remotes/origin/fix/pihole-v6-local-volume-upgrade",
+      "sha": "45af9ea373e30488a939096130de636b4c6f546e",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 46,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "fix/rundeck-db-off-nfs",
+      "prs": [],
+      "ref": "refs/remotes/origin/fix/rundeck-db-off-nfs",
+      "sha": "d990041f2e0326389c7c62bc6c8f31e8a73805f9",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 292,
+      "name": "fix/rundeck-iac-password",
+      "prs": [
+        {
+          "headRefOid": "f06107de5486cdc2bca49ee9025ed406d10645fa",
+          "mergedAt": "2026-04-29T04:09:03Z",
+          "number": 9,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/rundeck-iac-password",
+      "sha": "f06107de5486cdc2bca49ee9025ed406d10645fa",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 78,
+      "name": "fix/rundeck-reconcile-live",
+      "prs": [
+        {
+          "headRefOid": "14d70fb18bc270f53e28c74598b8785c77eff89f",
+          "mergedAt": "2026-11-08T19:28:49Z",
+          "number": 70,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/rundeck-reconcile-live",
+      "sha": "14d70fb18bc270f53e28c74598b8785c77eff89f",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 63,
+      "name": "fix/s3-firmware-plain-http",
+      "prs": [
+        {
+          "headRefOid": "d4445dd2b1d23058f31a673291f0650484ac90c5",
+          "mergedAt": "2026-11-09T05:03:02Z",
+          "number": 84,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/s3-firmware-plain-http",
+      "sha": "d4445dd2b1d23058f31a673291f0650484ac90c5",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 234,
+      "name": "fix/thanos-rule-dollar-escape",
+      "prs": [
+        {
+          "headRefOid": "79bf862e72a7e9f65267ee6b87fbba4a0d7cc4ee",
+          "mergedAt": "2026-05-10T19:03:19Z",
+          "number": 50,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/thanos-rule-dollar-escape",
+      "sha": "79bf862e72a7e9f65267ee6b87fbba4a0d7cc4ee",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 233,
+      "name": "fix/thanos-rule-query-endpoint",
+      "prs": [
+        {
+          "headRefOid": "2a859b6d78cd00881002a3d3f289580ac731419f",
+          "mergedAt": "2026-05-10T19:05:09Z",
+          "number": 51,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/thanos-rule-query-endpoint",
+      "sha": "2a859b6d78cd00881002a3d3f289580ac731419f",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 241,
+      "name": "fix/thanos-sidecar-2-mount",
+      "prs": [
+        {
+          "headRefOid": "bc7b0451ed34ec0c50b43a4e4e5866dbcca6b97f",
+          "mergedAt": "2026-05-10T06:05:15Z",
+          "number": 43,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/thanos-sidecar-2-mount",
+      "sha": "bc7b0451ed34ec0c50b43a4e4e5866dbcca6b97f",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 240,
+      "name": "fix/thanos-sidecar-2-uid",
+      "prs": [
+        {
+          "headRefOid": "d32aef058049eddf3687a388dfc22c48f25468d4",
+          "mergedAt": "2026-05-10T06:11:06Z",
+          "number": 44,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/thanos-sidecar-2-uid",
+      "sha": "d32aef058049eddf3687a388dfc22c48f25468d4",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 242,
+      "name": "fix/thanos-sidecar-uid",
+      "prs": [
+        {
+          "headRefOid": "0b35ef9ca0ba0532f6845a5868168bf92d5eb876",
+          "mergedAt": "2026-05-10T05:52:53Z",
+          "number": 42,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/thanos-sidecar-uid",
+      "sha": "0b35ef9ca0ba0532f6845a5868168bf92d5eb876",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 2,
+      "ancestor_of_main": false,
+      "behind_main": 68,
+      "name": "fix/wifi-probes-liveness-gaps",
+      "prs": [
+        {
+          "headRefOid": "df2088e89f6b88372f654aa21845a1f0e021f1a4",
+          "mergedAt": "2026-11-08T20:59:14Z",
+          "number": 79,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/wifi-probes-liveness-gaps",
+      "sha": "df2088e89f6b88372f654aa21845a1f0e021f1a4",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 43,
+      "name": "fix/zot-e2e-email-username",
+      "prs": [
+        {
+          "headRefOid": "3cb1c54def75a18526ed604266a50412924ba9ce",
+          "mergedAt": "2026-11-11T21:32:02Z",
+          "number": 107,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/zot-e2e-email-username",
+      "sha": "3cb1c54def75a18526ed604266a50412924ba9ce",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 41,
+      "name": "fix/zot-e2e-jwks-evidence",
+      "prs": [
+        {
+          "headRefOid": "5e2642e22f622f303dbf88a63cb707d90673fd22",
+          "mergedAt": "2026-11-11T21:43:44Z",
+          "number": 110,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/zot-e2e-jwks-evidence",
+      "sha": "5e2642e22f622f303dbf88a63cb707d90673fd22",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 42,
+      "name": "fix/zot-e2e-session-header",
+      "prs": [
+        {
+          "headRefOid": "199d70fabd00908cead96addc1d76f32c47283ee",
+          "mergedAt": "2026-11-11T21:37:44Z",
+          "number": 108,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/zot-e2e-session-header",
+      "sha": "199d70fabd00908cead96addc1d76f32c47283ee",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 26,
+      "name": "fix/zot-meta-backup-readonly",
+      "prs": [
+        {
+          "headRefOid": "06d2bd6eb57e468cd1816f541c22686465d4e749",
+          "mergedAt": "2026-11-12T07:13:44Z",
+          "number": 122,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/fix/zot-meta-backup-readonly",
+      "sha": "06d2bd6eb57e468cd1816f541c22686465d4e749",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 20,
+      "ancestor_of_main": false,
+      "behind_main": 295,
+      "name": "github-runner-cicd",
+      "prs": [
+        {
+          "headRefOid": "92e0e03b8dd53180198c614b039328785a83a5ee",
+          "mergedAt": "2025-08-26T04:08:09Z",
+          "number": 3,
+          "state": "MERGED"
+        },
+        {
+          "headRefOid": "67fd5c8cfcb744aa5f2a6353d5e6aa2e6005e356",
+          "mergedAt": "2025-08-22T01:50:13Z",
+          "number": 2,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/github-runner-cicd",
+      "sha": "92e0e03b8dd53180198c614b039328785a83a5ee",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 0,
+      "ancestor_of_main": true,
+      "behind_main": 0,
+      "name": "main",
+      "prs": [],
+      "ref": "refs/remotes/origin/main",
+      "sha": "18786b56395a9c43003022965ee224a748bee6dd",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 62,
+      "ancestor_of_main": false,
+      "behind_main": 293,
+      "name": "nas-docker-server",
+      "prs": [
+        {
+          "headRefOid": "44e7c24fddbd5b385f076768690d532733b4737c",
+          "mergedAt": "2026-04-28T04:22:58Z",
+          "number": 8,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/nas-docker-server",
+      "sha": "44e7c24fddbd5b385f076768690d532733b4737c",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 1,
+      "ancestor_of_main": false,
+      "behind_main": 286,
+      "name": "refactor/grafana-dashboards-iac",
+      "prs": [
+        {
+          "headRefOid": "fc772f2f60feb45388ae6cbcc73624f137ed82be",
+          "mergedAt": "2026-04-29T19:58:30Z",
+          "number": 15,
+          "state": "MERGED"
+        }
+      ],
+      "ref": "refs/remotes/origin/refactor/grafana-dashboards-iac",
+      "sha": "fc772f2f60feb45388ae6cbcc73624f137ed82be",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 38,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "refactor/pfsense-iac-retrofit",
+      "prs": [],
+      "ref": "refs/remotes/origin/refactor/pfsense-iac-retrofit",
+      "sha": "cb99f7cfed3e59a676ff9efe25bd438503db230d",
+      "upstream": ""
+    },
+    {
+      "ahead_main": 39,
+      "ancestor_of_main": false,
+      "behind_main": 167,
+      "name": "security/pfsense-tls-verify",
+      "prs": [],
+      "ref": "refs/remotes/origin/security/pfsense-tls-verify",
+      "sha": "90483add3bcd5a8aeee15a5b7915bfcc6b317c7f",
+      "upstream": ""
+    }
+  ],
+  "source": "git graph after fetch and GitHub PR records"
+}

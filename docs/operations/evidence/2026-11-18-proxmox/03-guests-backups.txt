@@ -1,0 +1,1211 @@
+Collection started UTC: 2026-11-18T16:59:07.999781+00:00
+Collection ended UTC: 2026-11-18T16:59:18.777326+00:00
+Source: SSH proxmox, sudo read-only shell
+Scope: 03-guests-backups
+Exit status: 0
+No apt update, installs, service changes, or guest changes.
+Commands:
+
+date -u +%Y-%m-%dT%H:%M:%SZ
+qm list
+pct list
+pvesh get /cluster/resources --type vm --output-format json-pretty
+python3 - <<'P'
+from pathlib import Path
+import re
+keys={'agent','bios','boot','cores','cpu','cpulimit','cpuunits','affinity','memory','balloon','hugepages','numa','sockets','onboot','startup','ostype','name','hostname','template','machine','scsihw','unprivileged','features','swap','arch','nameserver','searchdomain','protection','lock','tpmstate0','efidisk0','rootfs'}
+for directory in ['/etc/pve/qemu-server','/etc/pve/lxc']:
+ for p in sorted(Path(directory).glob('*.conf')):
+  print('\nGUEST_CONFIG', p.name, directory)
+  section='current'
+  for line in p.read_text().splitlines():
+   if line.startswith('['): section=line; print(section); continue
+   key=line.split(':',1)[0]
+   if key in keys or re.fullmatch(r'(net|scsi|virtio|sata|ide|mp|unused|hostpci)\d+',key): print(line)
+for f in ['/etc/pve/jobs.cfg','/etc/pve/vzdump.cron','/etc/vzdump.conf']:
+ print('\nFILE',f)
+ try:
+  for line in Path(f).read_text().splitlines():
+   if not re.search(r'password|secret|token|mailto|mailnotification',line,re.I): print(line)
+ except FileNotFoundError: print('ABSENT')
+P
+pvesh get /cluster/backup --output-format json-pretty
+pvesh get /nodes/proxmox/tasks --typefilter vzdump --limit 25 --output-format json-pretty
+pvesh get /nodes/proxmox/tasks --errors 1 --limit 15 --output-format json-pretty
+find /var/log/vzdump -maxdepth 1 -type f -printf '%TY-%Tm-%Td %TH:%TM %f\n' 2>/dev/null | sort | tail -35
+
+
+OUTPUT (shell trace includes each command):
++ date -u +%Y-%m-%dT%H:%M:%SZ
+2026-11-18T16:59:08Z
++ qm list
+      VMID NAME                 STATUS     MEM(MB)    BOOTDISK(GB) PID
+       100 omada-controller     running    4096              30.00 1326871
+       101 tiny                 stopped    4096             120.00 0
+       111 rootmaster           stopped    8096              80.00 0
+       120 dockermaster         running    16256            120.00 3926
+       121 ha                   running    16384             64.00 2781
+       122 unifi-controller     running    8192             128.00 4195
+       123 dockerserver-1       running    24576            120.00 5889
+       124 dockerserver-2       running    49152            120.00 359447
+       130 lab-router           stopped    2048               8.00 0
++ pct list
+VMID       Status     Lock         Name
+9000       stopped                 tmpl-debian-devops
+10000      running                 pihole
+10020      stopped                 hermes
++ pvesh get /cluster/resources --type vm --output-format json-pretty
+[
+   {
+      "cpu" : 0.0538750828941105,
+      "disk" : 0,
+      "diskread" : 1196947968,
+      "diskwrite" : 7641176064,
+      "id" : "qemu/100",
+      "maxcpu" : 2,
+      "maxdisk" : 32212254720,
+      "maxmem" : 4294967296,
+      "mem" : 3380756480,
+      "memhost" : 4483481600,
+      "name" : "omada-controller",
+      "netin" : 332670007,
+      "netout" : 3823273,
+      "node" : "proxmox",
+      "status" : "running",
+      "template" : 0,
+      "type" : "qemu",
+      "uptime" : 137500,
+      "vmid" : 100
+   },
+   {
+      "cpu" : 0.00464999465443,
+      "disk" : 3401658368,
+      "diskread" : 6651564032,
+      "diskwrite" : 35266609152,
+      "id" : "lxc/10000",
+      "maxcpu" : 4,
+      "maxdisk" : 8350298112,
+      "maxmem" : 1073741824,
+      "mem" : 119291904,
+      "memhost" : 0,
+      "name" : "pihole",
+      "netin" : 2295168251,
+      "netout" : 14302281060,
+      "node" : "proxmox",
+      "status" : "running",
+      "template" : 0,
+      "type" : "lxc",
+      "uptime" : 3890579,
+      "vmid" : 10000
+   },
+   {
+      "cpu" : 0,
+      "disk" : 0,
+      "diskread" : 0,
+      "diskwrite" : 0,
+      "id" : "lxc/10020",
+      "maxcpu" : 6,
+      "maxdisk" : 253403070464,
+      "maxmem" : 8522825728,
+      "mem" : 0,
+      "memhost" : 0,
+      "name" : "hermes",
+      "netin" : 0,
+      "netout" : 0,
+      "node" : "proxmox",
+      "status" : "stopped",
+      "template" : 0,
+      "type" : "lxc",
+      "uptime" : 0,
+      "vmid" : 10020
+   },
+   {
+      "cpu" : 0,
+      "disk" : 0,
+      "diskread" : 0,
+      "diskwrite" : 0,
+      "id" : "qemu/101",
+      "maxcpu" : 4,
+      "maxdisk" : 128849018880,
+      "maxmem" : 4294967296,
+      "mem" : 0,
+      "memhost" : 0,
+      "name" : "tiny",
+      "netin" : 0,
+      "netout" : 0,
+      "node" : "proxmox",
+      "status" : "stopped",
+      "template" : 0,
+      "type" : "qemu",
+      "uptime" : 0,
+      "vmid" : 101
+   },
+   {
+      "cpu" : 0,
+      "disk" : 0,
+      "diskread" : 0,
+      "diskwrite" : 0,
+      "id" : "qemu/111",
+      "maxcpu" : 4,
+      "maxdisk" : 85899345920,
+      "maxmem" : 8489271296,
+      "mem" : 0,
+      "memhost" : 0,
+      "name" : "rootmaster",
+      "netin" : 0,
+      "netout" : 0,
+      "node" : "proxmox",
+      "status" : "stopped",
+      "template" : 0,
+      "type" : "qemu",
+      "uptime" : 0,
+      "vmid" : 111
+   },
+   {
+      "cpu" : 0.114673365692838,
+      "disk" : 0,
+      "diskread" : 8081125888,
+      "diskwrite" : 239856084992,
+      "id" : "qemu/120",
+      "maxcpu" : 8,
+      "maxdisk" : 128849018880,
+      "maxmem" : 17045651456,
+      "mem" : 13656440832,
+      "memhost" : 15090814976,
+      "name" : "dockermaster",
+      "netin" : 924883288160,
+      "netout" : 474837082830,
+      "node" : "proxmox",
+      "status" : "running",
+      "template" : 0,
+      "type" : "qemu",
+      "uptime" : 3890390,
+      "vmid" : 120
+   },
+   {
+      "cpu" : 0.0772880862079062,
+      "disk" : 0,
+      "diskread" : 10819761664,
+      "diskwrite" : 238791901184,
+      "id" : "qemu/121",
+      "maxcpu" : 4,
+      "maxdisk" : 68719476736,
+      "maxmem" : 17179869184,
+      "mem" : 15251005440,
+      "memhost" : 16335618048,
+      "name" : "ha",
+      "netin" : 375000691849,
+      "netout" : 482022622984,
+      "node" : "proxmox",
+      "status" : "running",
+      "template" : 0,
+      "type" : "qemu",
+      "uptime" : 3890574,
+      "vmid" : 121
+   },
+   {
+      "cpu" : 0.0971765513884423,
+      "disk" : 0,
+      "diskread" : 2403756544,
+      "diskwrite" : 201015002112,
+      "id" : "qemu/122",
+      "maxcpu" : 2,
+      "maxdisk" : 137438953472,
+      "maxmem" : 8589934592,
+      "mem" : 6926372864,
+      "memhost" : 9080201216,
+      "name" : "unifi-controller",
+      "netin" : 21465177871,
+      "netout" : 1660343703,
+      "node" : "proxmox",
+      "status" : "running",
+      "template" : 0,
+      "type" : "qemu",
+      "uptime" : 3890359,
+      "vmid" : 122
+   },
+   {
+      "cpu" : 0.126883372797344,
+      "disk" : 0,
+      "diskread" : 42039283200,
+      "diskwrite" : 318097876992,
+      "id" : "qemu/123",
+      "maxcpu" : 10,
+      "maxdisk" : 128849018880,
+      "maxmem" : 25769803776,
+      "mem" : 24827285504,
+      "memhost" : 25854590976,
+      "name" : "dockerserver-1",
+      "netin" : 10891764652888,
+      "netout" : 1159254785952,
+      "node" : "proxmox",
+      "status" : "running",
+      "template" : 0,
+      "type" : "qemu",
+      "uptime" : 3890240,
+      "vmid" : 123
+   },
+   {
+      "cpu" : 0.175018493588718,
+      "disk" : 0,
+      "diskread" : 7450276352,
+      "diskwrite" : 45119239168,
+      "id" : "qemu/124",
+      "maxcpu" : 10,
+      "maxdisk" : 128849018880,
+      "maxmem" : 51539607552,
+      "mem" : 49591578624,
+      "memhost" : 51492446208,
+      "name" : "dockerserver-2",
+      "netin" : 114744106738,
+      "netout" : 84757556059,
+      "node" : "proxmox",
+      "status" : "running",
+      "template" : 0,
+      "type" : "qemu",
+      "uptime" : 322930,
+      "vmid" : 124
+   },
+   {
+      "cpu" : 0,
+      "disk" : 0,
+      "diskread" : 0,
+      "diskwrite" : 0,
+      "id" : "qemu/130",
+      "maxcpu" : 2,
+      "maxdisk" : 8589934592,
+      "maxmem" : 2147483648,
+      "mem" : 0,
+      "memhost" : 0,
+      "name" : "lab-router",
+      "netin" : 0,
+      "netout" : 0,
+      "node" : "proxmox",
+      "status" : "stopped",
+      "template" : 0,
+      "type" : "qemu",
+      "uptime" : 0,
+      "vmid" : 130
+   },
+   {
+      "cpu" : 0,
+      "disk" : 0,
+      "diskread" : 0,
+      "diskwrite" : 0,
+      "id" : "lxc/9000",
+      "maxcpu" : 6,
+      "maxdisk" : 253403070464,
+      "maxmem" : 8522825728,
+      "mem" : 0,
+      "memhost" : 0,
+      "name" : "tmpl-debian-devops",
+      "netin" : 0,
+      "netout" : 0,
+      "node" : "proxmox",
+      "status" : "stopped",
+      "template" : 1,
+      "type" : "lxc",
+      "uptime" : 0,
+      "vmid" : 9000
+   }
+]
++ python3 -
+
+GUEST_CONFIG 100.conf /etc/pve/qemu-server
+affinity: 30-39
+agent: 1
+balloon: 2048
+boot: order=scsi0
+cores: 2
+cpu: host
+memory: 4096
+name: omada-controller
+net0: virtio=12:32:f0:cc:79:e5,bridge=vmbr01,firewall=1
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: thin-pool-ssd:vm-100-disk-0,iothread=1,size=30G
+scsihw: virtio-scsi-single
+sockets: 1
+startup: up=180
+[Pre-ansible]
+agent: 1
+boot: order=scsi0
+cores: 2
+cpu: host
+memory: 2048
+name: omada-controller
+net0: virtio=12:32:f0:cc:79:e5,bridge=vmbr01,firewall=1
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: thin-pool-ssd:vm-100-disk-0,iothread=1,size=30G
+scsihw: virtio-scsi-single
+sockets: 1
+startup: up=180
+[pre-omada-6-3-0-111-20261116]
+affinity: 30-39
+agent: 1
+balloon: 2048
+boot: order=scsi0
+cores: 2
+cpu: host
+memory: 4096
+name: omada-controller
+net0: virtio=12:32:f0:cc:79:e5,bridge=vmbr01,firewall=1
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: thin-pool-ssd:vm-100-disk-0,iothread=1,size=30G
+scsihw: virtio-scsi-single
+sockets: 1
+startup: up=180
+[pre-omada-v6-20260618]
+affinity: 30-39
+agent: 1
+balloon: 2048
+boot: order=scsi0
+cores: 2
+cpu: host
+memory: 4096
+name: omada-controller
+net0: virtio=12:32:f0:cc:79:e5,bridge=vmbr01,firewall=1
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: thin-pool-ssd:vm-100-disk-0,iothread=1,size=30G
+scsihw: virtio-scsi-single
+sockets: 1
+startup: up=180
+[pre-ubuntu-22-04-20261116]
+affinity: 30-39
+agent: 1
+balloon: 2048
+boot: order=scsi0
+cores: 2
+cpu: host
+memory: 4096
+name: omada-controller
+net0: virtio=12:32:f0:cc:79:e5,bridge=vmbr01,firewall=1
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: thin-pool-ssd:vm-100-disk-0,iothread=1,size=30G
+scsihw: virtio-scsi-single
+sockets: 1
+startup: up=180
+[pre-ubuntu-24-04-20261116]
+affinity: 30-39
+agent: 1
+balloon: 2048
+boot: order=scsi0
+cores: 2
+cpu: host
+memory: 4096
+name: omada-controller
+net0: virtio=12:32:f0:cc:79:e5,bridge=vmbr01,firewall=1
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: thin-pool-ssd:vm-100-disk-0,iothread=1,size=30G
+scsihw: virtio-scsi-single
+sockets: 1
+startup: up=180
+
+GUEST_CONFIG 101.conf /etc/pve/qemu-server
+boot: order=net0;scsi0;ide2
+cores: 4
+cpu: host
+ide2: none,media=cdrom
+memory: 4096
+name: tiny
+net0: virtio=BC:24:11:F6:2A:1B,bridge=vmbr10
+numa: 0
+ostype: l26
+scsi0: thin-pool-ssd:vm-101-disk-0,iothread=1,size=120G
+scsihw: virtio-scsi-single
+sockets: 1
+
+GUEST_CONFIG 111.conf /etc/pve/qemu-server
+affinity: 0-9,20-29
+agent: 1
+balloon: 2048
+boot: order=scsi0
+cores: 4
+cpu: host
+memory: 8096
+name: rootmaster
+net0: virtio=4a:7c:b1:86:32:49,bridge=vmbr10
+numa: 0
+ostype: l26
+scsi0: thin-pool-ssd:vm-111-disk-0,iothread=1,size=80G,ssd=1
+scsihw: virtio-scsi-single
+sockets: 1
+unused0: thin-pool-ssd:vm-111-disk-1
+
+GUEST_CONFIG 120.conf /etc/pve/qemu-server
+affinity: 0-9,20-29
+agent: 1
+balloon: 4192
+boot: order=scsi0
+cores: 8
+cpu: host
+memory: 16256
+name: dockermaster
+net1: virtio=0a:c2:93:83:02:12,bridge=vmbr28,firewall=1
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: thin-pool-ssd:vm-120-disk-2,iothread=1,size=120G,ssd=1
+scsihw: virtio-scsi-single
+sockets: 1
+startup: up=30
+
+GUEST_CONFIG 121.conf /etc/pve/qemu-server
+agent: 1
+bios: ovmf
+boot: order=scsi0
+cores: 4
+cpu: host
+memory: 16384
+name: ha
+net0: virtio=1a:25:3d:1f:cd:b3,bridge=vmbr205
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: thin-pool-ssd:vm-121-disk-0,iothread=1,size=64G
+scsihw: virtio-scsi-single
+sockets: 1
+startup: order=2
+[Dec22]
+agent: 1
+bios: ovmf
+boot: order=scsi0
+cores: 4
+cpu: SandyBridge
+memory: 16384
+name: ha
+net0: virtio=1a:25:3d:1f:cd:b3,bridge=vmbr205
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: thin-pool-ssd:vm-121-disk-0,iothread=1,size=32G
+scsihw: virtio-scsi-single
+sockets: 1
+startup: order=2
+[pre-resize-20251222]
+agent: 1
+bios: ovmf
+boot: order=scsi0
+cores: 4
+cpu: SandyBridge
+memory: 16384
+name: ha
+net0: virtio=1a:25:3d:1f:cd:b3,bridge=vmbr205
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: thin-pool-ssd:vm-121-disk-0,iothread=1,size=32G
+scsihw: virtio-scsi-single
+sockets: 1
+startup: order=2
+
+GUEST_CONFIG 122.conf /etc/pve/qemu-server
+affinity: 30-39
+agent: 1
+balloon: 2048
+boot: order=scsi0;net0
+cores: 2
+cpu: x86-64-v2-AES
+memory: 8192
+name: unifi-controller
+net0: virtio=5a:38:7b:4b:70:2e,bridge=vmbr010,firewall=1,link_down=1
+net1: virtio=5a:38:0f:4b:70:2f,bridge=vmbr01,firewall=1
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: thin-pool-ssd:vm-122-disk-0,cache=writethrough,iothread=1,size=128G
+scsihw: virtio-scsi-single
+sockets: 1
+startup: up=120
+
+GUEST_CONFIG 123.conf /etc/pve/qemu-server
+affinity: 0-9,20-29
+agent: 1
+boot: order=scsi0
+cores: 10
+cpu: host
+memory: 24576
+name: dockerserver-1
+net1: virtio=BC:24:11:56:DB:75,bridge=vmbr28
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: thin-pool-ssd:vm-123-disk-0,iothread=1,size=120G,ssd=1
+scsihw: virtio-scsi-single
+sockets: 1
+startup: up=30
+
+GUEST_CONFIG 124.conf /etc/pve/qemu-server
+affinity: 10-19,30-39
+agent: 1
+boot: order=scsi0
+cores: 10
+cpu: host
+memory: 49152
+name: dockerserver-2
+net1: virtio=BC:24:11:84:BC:16,bridge=vmbr28
+numa: 0
+onboot: 1
+ostype: l26
+scsi0: thin-pool-ssd:vm-124-disk-0,iothread=1,size=120G,ssd=1
+scsihw: virtio-scsi-single
+sockets: 1
+startup: order=1,up=30
+
+GUEST_CONFIG 130.conf /etc/pve/qemu-server
+agent: enabled=1
+boot: order=scsi0
+cores: 2
+cpu: host
+ide2: thin-pool-ssd:vm-130-cloudinit,media=cdrom
+memory: 2048
+name: lab-router
+nameserver: 192.168.4.1
+net0: virtio=BC:24:11:30:00:01,bridge=vmbr30
+net1: virtio=BC:24:11:4D:66:F9,bridge=vmbr28
+net2: virtio=BC:24:11:77:24:95,bridge=vmbr10
+net3: virtio=BC:24:11:C5:44:4D,bridge=vmbr0
+ostype: l26
+scsi0: thin-pool-ssd:vm-130-disk-0,size=8G
+scsihw: virtio-scsi-single
+
+GUEST_CONFIG 10000.conf /etc/pve/lxc
+arch: amd64
+cores: 4
+cpulimit: 8
+features: nesting=1
+hostname: pihole
+memory: 1024
+net0: name=eth0,bridge=vmbr0,firewall=1,gw=192.168.100.1,hwaddr=BC:24:11:F7:E3:5F,ip=192.168.100.254/24,rate=100,type=veth
+onboot: 1
+ostype: debian
+rootfs: thin-pool-ssd:vm-10000-disk-0,size=8G
+searchdomain: lab.lcamaral.com
+startup: order=1
+swap: 512
+unprivileged: 1
+
+GUEST_CONFIG 10020.conf /etc/pve/lxc
+arch: amd64
+cores: 6
+features: nesting=1
+hostname: hermes
+memory: 8128
+nameserver: 192.168.100.254
+net0: name=eth0,bridge=vmbr0,firewall=1,gw=192.168.100.1,hwaddr=BC:24:11:9F:DE:1F,ip=192.168.100.244/24,type=veth
+onboot: 0
+ostype: debian
+rootfs: thin-pool-ssd:vm-10020-disk-0,size=236G
+searchdomain: lab.lcamaral.com
+swap: 1024
+unprivileged: 1
+[start]
+arch: amd64
+cores: 6
+features: nesting=1
+hostname: hermes
+memory: 8128
+nameserver: 192.168.100.254
+net0: name=eth0,bridge=vmbr0,firewall=1,gw=192.168.100.1,hwaddr=BC:24:11:9F:DE:1F,ip=192.168.100.244/24,type=veth
+onboot: 0
+ostype: debian
+rootfs: thin-pool-ssd:vm-10020-disk-0,size=236G
+searchdomain: lab.lcamaral.com
+swap: 1024
+unprivileged: 1
+
+GUEST_CONFIG 9000.conf /etc/pve/lxc
+arch: amd64
+cores: 6
+features: nesting=1
+hostname: tmpl-debian-devops
+memory: 8128
+net0: name=eth0,bridge=vmbr0,firewall=1,gw=192.168.100.1,hwaddr=BC:24:11:35:38:90,ip=192.168.100.244/24,type=veth
+onboot: 1
+ostype: debian
+rootfs: thin-pool-ssd:base-9000-disk-0,size=236G
+swap: 1024
+template: 1
+unprivileged: 1
+
+FILE /etc/pve/jobs.cfg
+vzdump: backup-9ce15dc0-ddc7
+	compress zstd
+	enabled 1
+	fleecing 0
+	mode snapshot
+	node proxmox
+	notes-template {{guestname}}
+	notification-mode notification-system
+	prune-backups keep-daily=1,keep-weekly=1
+	repeat-missed 1
+	schedule mon,thu 00:00
+	storage pve-backups
+	vmid 122,121,120,124,123,100,10000
+
+
+FILE /etc/pve/vzdump.cron
+# cluster wide vzdump cron schedule
+# Automatically generated file - do not edit
+
+PATH="/usr/sbin:/usr/bin:/sbin:/bin"
+
+
+FILE /etc/vzdump.conf
+# vzdump default settings
+
+#tmpdir: DIR
+#dumpdir: DIR
+#storage: STORAGE_ID
+#mode: snapshot|suspend|stop
+#bwlimit: KBPS
+#performance: [max-workers=N][,pbs-entries-max=N]
+#ionice: PRI
+#lockwait: MINUTES
+#stopwait: MINUTES
+#stdexcludes: BOOLEAN
+#prune-backups: keep-INTERVAL=N[,...]
+#script: FILENAME
+#exclude-path: PATHLIST
+#pigz: N
+#notes-template: {{guestname}}
+#pbs-change-detection-mode: legacy|data|metadata
+#fleecing: enabled=BOOLEAN,storage=STORAGE_ID
++ pvesh get /cluster/backup --output-format json-pretty
+[
+   {
+      "compress" : "zstd",
+      "enabled" : 1,
+      "fleecing" : {
+         "enabled" : 0
+      },
+      "id" : "backup-9ce15dc0-ddc7",
+      "mode" : "snapshot",
+      "next-run" : 1795071600,
+      "node" : "proxmox",
+      "notes-template" : "{{guestname}}",
+      "notification-mode" : "notification-system",
+      "prune-backups" : {
+         "keep-daily" : "1",
+         "keep-weekly" : "1"
+      },
+      "repeat-missed" : 1,
+      "schedule" : "mon,thu 00:00",
+      "storage" : "pve-backups",
+      "type" : "vzdump",
+      "vmid" : "122,121,120,124,123,100,10000"
+   }
+]
++ pvesh get /nodes/proxmox/tasks --typefilter vzdump --limit 25 --output-format json-pretty
+[
+   {
+      "endtime" : 1794817468,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 948479,
+      "pstart" : 368195325,
+      "starttime" : 1794812405,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:000E78FF:15F236FD:6AFAA9F5:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1794470974,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 3344465,
+      "pstart" : 333635888,
+      "starttime" : 1794466810,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:00330851:13E2E130:6AF563FA:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1794211809,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 1987397,
+      "pstart" : 307715227,
+      "starttime" : 1794207604,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:001E5345:12575C9B:6AF16F74:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1793866246,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 161719,
+      "pstart" : 273155033,
+      "starttime" : 1793862002,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:000277B7:104803D9:6AEC2972:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1793606902,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 2953522,
+      "pstart" : 247234938,
+      "starttime" : 1793602801,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:002D1132:0EBC817A:6AE834F1:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1793257561,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 1018861,
+      "pstart" : 212314931,
+      "starttime" : 1793253601,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:000F8BED:0CA7AB33:6AE2E0E1:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1792998443,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 3746309,
+      "pstart" : 186394824,
+      "starttime" : 1792994400,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:00392A05:0B1C28C8:6ADEEC60:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1792652932,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 1760631,
+      "pstart" : 151835120,
+      "starttime" : 1792648803,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:001ADD77:090CD1F0:6AD9A663:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1792393506,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 432128,
+      "pstart" : 125915840,
+      "starttime" : 1792389610,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:00069800:078152C0:6AD5B1EA:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1792048286,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 2583341,
+      "pstart" : 91354825,
+      "starttime" : 1792044000,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:00276B2D:0571F6C9:6AD06BE0:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1791788965,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 1005217,
+      "pstart" : 65435367,
+      "starttime" : 1791784805,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:000F56A1:03E676E7:6ACC7765:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1791443347,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 2895596,
+      "pstart" : 30875054,
+      "starttime" : 1791439202,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:002C2EEC:01D71DAE:6AC73162:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1791184726,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 744670,
+      "pstart" : 4955391,
+      "starttime" : 1791180005,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:000B5CDE:004B9CFF:6AC33CE5:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1790838843,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 3208026,
+      "pstart" : 527666621,
+      "starttime" : 1790834414,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:0030F35A:1F738DBD:6ABDF6EE:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1790579834,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 1985559,
+      "pstart" : 501745693,
+      "starttime" : 1790575205,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:001E4C17:1DE8081D:6ABA0265:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1790234173,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 350024,
+      "pstart" : 467186239,
+      "starttime" : 1790229611,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:00055748:1BD8B23F:6AB4BC6B:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1789975455,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 3315392,
+      "pstart" : 441265915,
+      "starttime" : 1789970407,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:003296C0:1A4D2EFB:6AB0C7E7:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1789629350,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 1671308,
+      "pstart" : 406705682,
+      "starttime" : 1789624805,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:0019808C:183DD612:6AAB81E5:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1789370118,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 433960,
+      "pstart" : 380785670,
+      "starttime" : 1789365605,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:00069F28:16B25406:6AA78D65:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1789024278,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 2970106,
+      "pstart" : 346225554,
+      "starttime" : 1789020004,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:002D51FA:14A2FB92:6AA24764:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1788765086,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 1716713,
+      "pstart" : 320305351,
+      "starttime" : 1788760802,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:001A31E9:131778C7:6A9E52E2:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1788419571,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 35073,
+      "pstart" : 285746233,
+      "starttime" : 1788415211,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:00008901:11082439:6A990CEB:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1788160616,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 2955010,
+      "pstart" : 259825537,
+      "starttime" : 1788156004,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:002D1702:0F7C9F81:6A951864:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1787814809,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 1229852,
+      "pstart" : 225265491,
+      "starttime" : 1787810403,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:0012C41C:0D6D4753:6A8FD263:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1787555630,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 4117765,
+      "pstart" : 199345656,
+      "starttime" : 1787551205,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:003ED505:0BE1C5F8:6A8BDDE5:vzdump::root@pam:",
+      "user" : "root@pam"
+   }
+]
++ pvesh get /nodes/proxmox/tasks --errors 1 --limit 15 --output-format json-pretty
+[
+   {
+      "endtime" : 1794817468,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 948479,
+      "pstart" : 368195325,
+      "starttime" : 1794812405,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:000E78FF:15F236FD:6AFAA9F5:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1794470974,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 3344465,
+      "pstart" : 333635888,
+      "starttime" : 1794466810,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:00330851:13E2E130:6AF563FA:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1794211809,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 1987397,
+      "pstart" : 307715227,
+      "starttime" : 1794207604,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:001E5345:12575C9B:6AF16F74:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1793866246,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 161719,
+      "pstart" : 273155033,
+      "starttime" : 1793862002,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:000277B7:104803D9:6AEC2972:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1793606902,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 2953522,
+      "pstart" : 247234938,
+      "starttime" : 1793602801,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:002D1132:0EBC817A:6AE834F1:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1793257561,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 1018861,
+      "pstart" : 212314931,
+      "starttime" : 1793253601,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:000F8BED:0CA7AB33:6AE2E0E1:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1792998443,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 3746309,
+      "pstart" : 186394824,
+      "starttime" : 1792994400,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:00392A05:0B1C28C8:6ADEEC60:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1792652932,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 1760631,
+      "pstart" : 151835120,
+      "starttime" : 1792648803,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:001ADD77:090CD1F0:6AD9A663:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1792393506,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 432128,
+      "pstart" : 125915840,
+      "starttime" : 1792389610,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:00069800:078152C0:6AD5B1EA:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1792048286,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 2583341,
+      "pstart" : 91354825,
+      "starttime" : 1792044000,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:00276B2D:0571F6C9:6AD06BE0:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1791788965,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 1005217,
+      "pstart" : 65435367,
+      "starttime" : 1791784805,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:000F56A1:03E676E7:6ACC7765:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1791443347,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 2895596,
+      "pstart" : 30875054,
+      "starttime" : 1791439202,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:002C2EEC:01D71DAE:6AC73162:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1791184726,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 744670,
+      "pstart" : 4955391,
+      "starttime" : 1791180005,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:000B5CDE:004B9CFF:6AC33CE5:vzdump::root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1791130571,
+      "id" : "121",
+      "node" : "proxmox",
+      "pid" : 2660,
+      "pstart" : 11531,
+      "starttime" : 1791130567,
+      "status" : "WARNINGS: 1",
+      "type" : "qmstart",
+      "upid" : "UPID:proxmox:00000A64:00002D0B:6AC27BC7:qmstart:121:root@pam:",
+      "user" : "root@pam"
+   },
+   {
+      "endtime" : 1790838843,
+      "id" : "",
+      "node" : "proxmox",
+      "pid" : 3208026,
+      "pstart" : 527666621,
+      "starttime" : 1790834414,
+      "status" : "job errors",
+      "type" : "vzdump",
+      "upid" : "UPID:proxmox:0030F35A:1F738DBD:6ABDF6EE:vzdump::root@pam:",
+      "user" : "root@pam"
+   }
+]
++ find /var/log/vzdump -maxdepth 1 -type f -printf '%TY-%Tm-%Td %TH:%TM %f\n'
++ tail -35
++ sort
+2025-03-24 15:28 qemu-101.log
+2025-11-15 06:43 qemu-110.log
+2025-11-15 07:15 qemu-111.log
+2025-11-15 11:55 qemu-240.log
+2025-11-15 12:12 qemu-241.log
+2025-11-15 12:14 qemu-10001.log
+2026-11-16 00:04 qemu-100.log
+2026-11-16 00:27 qemu-120.log
+2026-11-16 00:39 qemu-121.log
+2026-11-16 00:48 qemu-122.log
+2026-11-16 01:07 qemu-123.log
+2026-11-16 01:24 lxc-10000.log
+2026-11-16 01:24 qemu-124.log

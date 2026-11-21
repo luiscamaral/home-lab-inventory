@@ -1,0 +1,286 @@
+[
+  {
+    "collected_at": "2026-11-17T00:25:19.113536+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/luiscamaral/home-lab-inventory/pulls/6"
+    ],
+    "data": {
+      "additions": 10424,
+      "base": {
+        "ref": "main",
+        "sha": "381bc4a6a611081ca06bd04083c8be750ab6659f"
+      },
+      "changed_files": 86,
+      "commits": 32,
+      "deletions": 9,
+      "draft": true,
+      "head": {
+        "ref": "custom-login-portal",
+        "sha": "a1ca9c81ce29d5828ae989d49c28814034d45a2b"
+      },
+      "html_url": "https://github.com/luiscamaral/home-lab-inventory/pull/6",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "number": 6,
+      "state": "open",
+      "title": "\u2728(portal): homelab login portal (sveltekit + keycloak)",
+      "updated_at": "2026-04-11T07:17:44Z"
+    },
+    "exit_code": 0,
+    "source": "GitHub REST pull details and PR diff"
+  },
+  {
+    "collected_at": "2026-11-17T00:25:20.182948+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/luiscamaral/home-lab-inventory/pulls/54"
+    ],
+    "data": {
+      "additions": 12,
+      "base": {
+        "ref": "main",
+        "sha": "3b9a49eb1a09c81e673779f5a8587c61a6f3da20"
+      },
+      "changed_files": 2,
+      "commits": 1,
+      "deletions": 12,
+      "diff": "diff --git a/.github/workflows/pr-validation.yml b/.github/workflows/pr-validation.yml\nindex 5bd569d..49c8ac1 100644\n--- a/.github/workflows/pr-validation.yml\n+++ b/.github/workflows/pr-validation.yml\n@@ -279,7 +279,7 @@ jobs:\n \n       - name: Upload pre-commit report\n         if: always()\n-        uses: actions/upload-artifact@v4\n+        uses: actions/upload-artifact@v7\n         with:\n           name: pre-commit-report\n           path: pre-commit-report.md\n@@ -401,7 +401,7 @@ jobs:\n \n       - name: Upload commit validation report\n         if: always()\n-        uses: actions/upload-artifact@v4\n+        uses: actions/upload-artifact@v7\n         with:\n           name: commit-validation-report\n           path: commit-report.md\n@@ -553,7 +553,7 @@ jobs:\n \n       - name: Upload Docker validation report\n         if: always()\n-        uses: actions/upload-artifact@v4\n+        uses: actions/upload-artifact@v7\n         with:\n           name: docker-validation-report\n           path: docker-report.md\n@@ -717,7 +717,7 @@ jobs:\n \n       - name: Upload documentation report\n         if: always()\n-        uses: actions/upload-artifact@v4\n+        uses: actions/upload-artifact@v7\n         with:\n           name: documentation-report\n           path: docs-report.md\n@@ -858,7 +858,7 @@ jobs:\n \n       - name: Upload file structure report\n         if: always()\n-        uses: actions/upload-artifact@v4\n+        uses: actions/upload-artifact@v7\n         with:\n           name: file-structure-report\n           path: structure-report.md\n@@ -1165,7 +1165,7 @@ jobs:\n \n       - name: Upload comprehensive summary\n         if: always()\n-        uses: actions/upload-artifact@v4\n+        uses: actions/upload-artifact@v7\n         with:\n           name: pr-validation-summary\n           path: pr-summary.md\ndiff --git a/.github/workflows/security.yml b/.github/workflows/security.yml\nindex cdb933a..e16d157 100644\n--- a/.github/workflows/security.yml\n+++ b/.github/workflows/security.yml\n@@ -93,7 +93,7 @@ jobs:\n \n       - name: Archive secret scan results\n         if: always()\n-        uses: actions/upload-artifact@v4\n+        uses: actions/upload-artifact@v7\n         with:\n           name: gitleaks-results-${{ github.run_number }}\n           path: gitleaks.sarif\n@@ -204,7 +204,7 @@ jobs:\n \n       - name: Archive Hadolint results\n         if: always()\n-        uses: actions/upload-artifact@v4\n+        uses: actions/upload-artifact@v7\n         with:\n           name: hadolint-results-${{ github.run_number }}\n           path: |\n@@ -289,7 +289,7 @@ jobs:\n \n       - name: Archive container scan results\n         if: always()\n-        uses: actions/upload-artifact@v4\n+        uses: actions/upload-artifact@v7\n         with:\n           name: trivy-results-${{ github.run_number }}\n           path: |\n@@ -370,7 +370,7 @@ jobs:\n \n       - name: Upload built image scan results\n         if: always()\n-        uses: actions/upload-artifact@v4\n+        uses: actions/upload-artifact@v7\n         with:\n           name: built-image-scan-results-${{ github.run_number }}\n           path: image-scan-results/\n@@ -432,7 +432,7 @@ jobs:\n \n       - name: Archive dependency scan results\n         if: always()\n-        uses: actions/upload-artifact@v4\n+        uses: actions/upload-artifact@v7\n         with:\n           name: dependency-results-${{ github.run_number }}\n           path: dependency-results.json\n@@ -771,7 +771,7 @@ jobs:\n \n       - name: Upload security gate results\n         if: always()\n-        uses: actions/upload-artifact@v4\n+        uses: actions/upload-artifact@v7\n         with:\n           name: security-gate-results-${{ github.run_number }}\n           path: security-gate-summary.txt\n",
+      "diff_command": [
+        "gh",
+        "pr",
+        "diff",
+        "54",
+        "--repo",
+        "luiscamaral/home-lab-inventory"
+      ],
+      "diff_exit": 0,
+      "draft": false,
+      "head": {
+        "ref": "dependabot/github_actions/actions/upload-artifact-7",
+        "sha": "da3ccfdc6aaf10dc544c4f1e7e9df92396818063"
+      },
+      "html_url": "https://github.com/luiscamaral/home-lab-inventory/pull/54",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "number": 54,
+      "state": "open",
+      "title": "chore: bump actions/upload-artifact from 4 to 7",
+      "updated_at": "2026-05-11T19:16:58Z"
+    },
+    "exit_code": 0,
+    "source": "GitHub REST pull details and PR diff"
+  },
+  {
+    "collected_at": "2026-11-17T00:25:20.156244+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/luiscamaral/home-lab-inventory/pulls/55"
+    ],
+    "data": {
+      "additions": 3,
+      "base": {
+        "ref": "main",
+        "sha": "3b9a49eb1a09c81e673779f5a8587c61a6f3da20"
+      },
+      "changed_files": 2,
+      "commits": 1,
+      "deletions": 3,
+      "diff": "diff --git a/.github/workflows/pr-validation.yml b/.github/workflows/pr-validation.yml\nindex 5bd569d..3ecdcc1 100644\n--- a/.github/workflows/pr-validation.yml\n+++ b/.github/workflows/pr-validation.yml\n@@ -875,7 +875,7 @@ jobs:\n         uses: actions/checkout@v4\n \n       - name: Download all reports\n-        uses: actions/download-artifact@v4\n+        uses: actions/download-artifact@v8\n         with:\n           path: validation-reports\n \ndiff --git a/.github/workflows/security.yml b/.github/workflows/security.yml\nindex cdb933a..4d649a2 100644\n--- a/.github/workflows/security.yml\n+++ b/.github/workflows/security.yml\n@@ -449,7 +449,7 @@ jobs:\n         uses: actions/checkout@v4\n \n       - name: Download all scan results\n-        uses: actions/download-artifact@v4\n+        uses: actions/download-artifact@v8\n         with:\n           path: scan-results\n \n@@ -664,7 +664,7 @@ jobs:\n         uses: actions/checkout@v4\n \n       - name: Download scan results\n-        uses: actions/download-artifact@v4\n+        uses: actions/download-artifact@v8\n         with:\n           path: scan-results\n \n",
+      "diff_command": [
+        "gh",
+        "pr",
+        "diff",
+        "55",
+        "--repo",
+        "luiscamaral/home-lab-inventory"
+      ],
+      "diff_exit": 0,
+      "draft": false,
+      "head": {
+        "ref": "dependabot/github_actions/actions/download-artifact-8",
+        "sha": "2affce6e89d81a8aee5ff0c5185183972362df58"
+      },
+      "html_url": "https://github.com/luiscamaral/home-lab-inventory/pull/55",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "number": 55,
+      "state": "open",
+      "title": "chore: bump actions/download-artifact from 4 to 8",
+      "updated_at": "2026-05-11T19:17:05Z"
+    },
+    "exit_code": 0,
+    "source": "GitHub REST pull details and PR diff"
+  },
+  {
+    "collected_at": "2026-11-17T00:25:20.182210+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/luiscamaral/home-lab-inventory/pulls/56"
+    ],
+    "data": {
+      "additions": 28,
+      "base": {
+        "ref": "main",
+        "sha": "3b9a49eb1a09c81e673779f5a8587c61a6f3da20"
+      },
+      "changed_files": 8,
+      "commits": 1,
+      "deletions": 28,
+      "diff": "diff --git a/.github/workflows/build-images.yml b/.github/workflows/build-images.yml\nindex f6d56c5..eaf97c6 100644\n--- a/.github/workflows/build-images.yml\n+++ b/.github/workflows/build-images.yml\n@@ -32,7 +32,7 @@ jobs:\n       has-services: ${{ steps.set-matrix.outputs.has-services }}\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n         with:\n           fetch-depth: 2\n \n@@ -87,7 +87,7 @@ jobs:\n       packages: write\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Set up Docker Buildx\n         uses: docker/setup-buildx-action@v4\ndiff --git a/.github/workflows/build-multi-type-images.yml b/.github/workflows/build-multi-type-images.yml\nindex c21ea47..cf829ba 100644\n--- a/.github/workflows/build-multi-type-images.yml\n+++ b/.github/workflows/build-multi-type-images.yml\n@@ -45,7 +45,7 @@ jobs:\n       image-list: ${{ steps.set-matrix.outputs.image-list }}\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n         with:\n           fetch-depth: 0\n \n@@ -205,7 +205,7 @@ jobs:\n       DOCKER_HUB_AVAILABLE: ${{ secrets.DOCKER_HUB_USERNAME != '' && 'true' || 'false' }}\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Set up QEMU\n         uses: docker/setup-qemu-action@v4\ndiff --git a/.github/workflows/deploy.yml b/.github/workflows/deploy.yml\nindex 5456e5f..690ddd0 100644\n--- a/.github/workflows/deploy.yml\n+++ b/.github/workflows/deploy.yml\n@@ -42,7 +42,7 @@ jobs:\n     runs-on: ubuntu-latest\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Determine services to deploy\n         id: services\n@@ -98,7 +98,7 @@ jobs:\n     runs-on: ubuntu-latest\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Deploy to server via SSH\n         uses: appleboy/ssh-action@v1.2.5\ndiff --git a/.github/workflows/dockermaster-deployment.yml b/.github/workflows/dockermaster-deployment.yml\nindex fc1150a..ab1522a 100644\n--- a/.github/workflows/dockermaster-deployment.yml\n+++ b/.github/workflows/dockermaster-deployment.yml\n@@ -74,7 +74,7 @@ jobs:\n       vault_available: ${{ steps.vault-auth.outputs.vault_available }}\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n         with:\n           fetch-depth: 2\n \n@@ -242,7 +242,7 @@ jobs:\n       deployment-results: ${{ steps.deploy.outputs.result }}\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Load service secrets from Vault\n         id: load-secrets\n@@ -364,7 +364,7 @@ jobs:\n       failed-services: ${{ steps.health-check.outputs.failed }}\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Service health validation\n         id: health-check\n@@ -480,7 +480,7 @@ jobs:\n     timeout-minutes: 8\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Initiate rollback\n         run: |\ndiff --git a/.github/workflows/emergency-rollback.yml b/.github/workflows/emergency-rollback.yml\nindex 9a7d92f..408c3d9 100644\n--- a/.github/workflows/emergency-rollback.yml\n+++ b/.github/workflows/emergency-rollback.yml\n@@ -72,7 +72,7 @@ jobs:\n       deployment-id: ${{ steps.create-emergency-deployment.outputs.deployment-id }}\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n         with:\n           fetch-depth: 0  # Full history for git-commit rollbacks\n \n@@ -240,7 +240,7 @@ jobs:\n     timeout-minutes: 8\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n         with:\n           fetch-depth: 0\n \ndiff --git a/.github/workflows/pr-validation.yml b/.github/workflows/pr-validation.yml\nindex 5bd569d..415854d 100644\n--- a/.github/workflows/pr-validation.yml\n+++ b/.github/workflows/pr-validation.yml\n@@ -53,7 +53,7 @@ jobs:\n       actionlint-result: ${{ steps.actionlint.outputs.result }}\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n         with:\n           fetch-depth: 0\n \n@@ -210,7 +210,7 @@ jobs:\n     if: github.event.pull_request.draft == false\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n         with:\n           fetch-depth: 0\n \n@@ -292,7 +292,7 @@ jobs:\n     if: github.event.pull_request.draft == false\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n         with:\n           fetch-depth: 0\n \n@@ -414,7 +414,7 @@ jobs:\n     if: github.event.pull_request.draft == false\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n         with:\n           fetch-depth: 0\n \n@@ -566,7 +566,7 @@ jobs:\n     if: github.event.pull_request.draft == false\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n         with:\n           fetch-depth: 0\n \n@@ -730,7 +730,7 @@ jobs:\n     if: github.event.pull_request.draft == false\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Validate file structure\n         id: structure-check\n@@ -872,7 +872,7 @@ jobs:\n     if: always() && github.event.pull_request.draft == false\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Download all reports\n         uses: actions/download-artifact@v4\ndiff --git a/.github/workflows/security.yml b/.github/workflows/security.yml\nindex cdb933a..277e5d7 100644\n--- a/.github/workflows/security.yml\n+++ b/.github/workflows/security.yml\n@@ -56,7 +56,7 @@ jobs:\n     runs-on: ubuntu-latest\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n         with:\n           # Fetch full history for comprehensive secret scanning\n           fetch-depth: 0\n@@ -128,7 +128,7 @@ jobs:\n     runs-on: ubuntu-latest\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Find all Dockerfiles\n         id: find-dockerfiles\n@@ -218,7 +218,7 @@ jobs:\n     runs-on: ubuntu-latest\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       # Cache Trivy database for faster subsequent runs\n       - name: Cache Trivy database\n@@ -305,7 +305,7 @@ jobs:\n     if: github.event.inputs.scan_built_images == 'true' || github.event.inputs.scan_built_images == null\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Log in to GitHub Container Registry\n         uses: docker/login-action@v3\n@@ -391,7 +391,7 @@ jobs:\n     if: github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event.inputs.full_scan == 'true'\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       # Cache dependency databases\n       - name: Cache dependency scan data\n@@ -446,7 +446,7 @@ jobs:\n     if: always() && github.event_name == 'pull_request'\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Download all scan results\n         uses: actions/download-artifact@v4\n@@ -661,7 +661,7 @@ jobs:\n     if: always()\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Download scan results\n         uses: actions/download-artifact@v4\ndiff --git a/.github/workflows/service-health-monitor.yml b/.github/workflows/service-health-monitor.yml\nindex 32783a3..00f39a6 100644\n--- a/.github/workflows/service-health-monitor.yml\n+++ b/.github/workflows/service-health-monitor.yml\n@@ -52,7 +52,7 @@ jobs:\n       alert-required: ${{ steps.health-check.outputs.alert-required }}\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Discover active services\n         id: discover\n@@ -309,7 +309,7 @@ jobs:\n     runs-on: [self-hosted, dockermaster]\n     steps:\n       - name: Checkout repository\n-        uses: actions/checkout@v4\n+        uses: actions/checkout@v6\n \n       - name: Create or update health issue\n         uses: actions/github-script@v7\n",
+      "diff_command": [
+        "gh",
+        "pr",
+        "diff",
+        "56",
+        "--repo",
+        "luiscamaral/home-lab-inventory"
+      ],
+      "diff_exit": 0,
+      "draft": false,
+      "head": {
+        "ref": "dependabot/github_actions/actions/checkout-6",
+        "sha": "245a9a51d4f46881bd04f8825da08a0e17cd960a"
+      },
+      "html_url": "https://github.com/luiscamaral/home-lab-inventory/pull/56",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "number": 56,
+      "state": "open",
+      "title": "chore: bump actions/checkout from 4 to 6",
+      "updated_at": "2026-05-11T19:17:32Z"
+    },
+    "exit_code": 0,
+    "source": "GitHub REST pull details and PR diff"
+  },
+  {
+    "collected_at": "2026-11-17T00:25:20.491325+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/luiscamaral/home-lab-inventory/pulls/57"
+    ],
+    "data": {
+      "additions": 10,
+      "base": {
+        "ref": "main",
+        "sha": "3b9a49eb1a09c81e673779f5a8587c61a6f3da20"
+      },
+      "changed_files": 5,
+      "commits": 1,
+      "deletions": 10,
+      "diff": "diff --git a/.github/workflows/dockermaster-deployment.yml b/.github/workflows/dockermaster-deployment.yml\nindex fc1150a..46aa38f 100644\n--- a/.github/workflows/dockermaster-deployment.yml\n+++ b/.github/workflows/dockermaster-deployment.yml\n@@ -179,7 +179,7 @@ jobs:\n         # accept single-quote string literals.\n         env:\n           DEPLOY_ENV: ${{ github.event.inputs.environment || 'production' }}\n-        uses: actions/github-script@v7\n+        uses: actions/github-script@v9\n         with:\n           script: |\n             const deployment = await github.rest.repos.createDeployment({\n@@ -614,7 +614,7 @@ jobs:\n           echo \"color=$COLOR\" >> $GITHUB_OUTPUT\n \n       - name: Update GitHub deployment status\n-        uses: actions/github-script@v7\n+        uses: actions/github-script@v9\n         with:\n           script: |\n             const deploymentId = '${{ needs.pre-deployment.outputs.deployment-id }}';\ndiff --git a/.github/workflows/emergency-rollback.yml b/.github/workflows/emergency-rollback.yml\nindex 9a7d92f..d1201a3 100644\n--- a/.github/workflows/emergency-rollback.yml\n+++ b/.github/workflows/emergency-rollback.yml\n@@ -110,7 +110,7 @@ jobs:\n \n       - name: Create emergency deployment record\n         id: create-emergency-deployment\n-        uses: actions/github-script@v7\n+        uses: actions/github-script@v9\n         with:\n           script: |\n             const deployment = await github.rest.repos.createDeployment({\n@@ -472,7 +472,7 @@ jobs:\n     runs-on: ubuntu-latest\n     steps:\n       - name: Create emergency incident issue\n-        uses: actions/github-script@v7\n+        uses: actions/github-script@v9\n         with:\n           script: |\n             const rollbackPlan = JSON.parse('${{ needs.rollback-preparation.outputs.rollback-plan }}');\n@@ -567,7 +567,7 @@ jobs:\n             console.log(`Created emergency incident issue #${issue.data.number}`);\n \n       - name: Update deployment status\n-        uses: actions/github-script@v7\n+        uses: actions/github-script@v9\n         with:\n           script: |\n             const deploymentId = '${{ needs.rollback-preparation.outputs.deployment-id }}';\ndiff --git a/.github/workflows/pr-validation.yml b/.github/workflows/pr-validation.yml\nindex 5bd569d..67425ce 100644\n--- a/.github/workflows/pr-validation.yml\n+++ b/.github/workflows/pr-validation.yml\n@@ -1086,7 +1086,7 @@ jobs:\n       # template literal \u2014 that produced \"SyntaxError: Unexpected\n       # identifier 'type'\" on every PR before this fix.\n       - name: Comment on PR\n-        uses: actions/github-script@v7\n+        uses: actions/github-script@v9\n         env:\n           PR_COMMENT: ${{ steps.summary.outputs.pr_comment }}\n         with:\n@@ -1130,7 +1130,7 @@ jobs:\n       # critical_failures are short and quote-free today, but env-passing\n       # is the safe default for action inputs we don't fully control.\n       - name: Set PR status check\n-        uses: actions/github-script@v7\n+        uses: actions/github-script@v9\n         env:\n           OVERALL_STATUS: ${{ steps.summary.outputs.overall_status }}\n           CRITICAL_FAILURES: ${{ steps.summary.outputs.critical_failures }}\ndiff --git a/.github/workflows/security.yml b/.github/workflows/security.yml\nindex cdb933a..3845899 100644\n--- a/.github/workflows/security.yml\n+++ b/.github/workflows/security.yml\n@@ -604,7 +604,7 @@ jobs:\n \n       - name: Comment security results on PR\n         if: github.event_name == 'pull_request'\n-        uses: actions/github-script@v7\n+        uses: actions/github-script@v9\n         with:\n           github-token: ${{ secrets.GITHUB_TOKEN }}\n           script: |\ndiff --git a/.github/workflows/service-health-monitor.yml b/.github/workflows/service-health-monitor.yml\nindex 32783a3..2e3414f 100644\n--- a/.github/workflows/service-health-monitor.yml\n+++ b/.github/workflows/service-health-monitor.yml\n@@ -312,7 +312,7 @@ jobs:\n         uses: actions/checkout@v4\n \n       - name: Create or update health issue\n-        uses: actions/github-script@v7\n+        uses: actions/github-script@v9\n         with:\n           script: |\n             const criticalServices = JSON.parse('${{ needs.health-assessment.outputs.critical-services }}');\n@@ -407,7 +407,7 @@ jobs:\n     runs-on: ubuntu-latest\n     steps:\n       - name: Close resolved health alert issues\n-        uses: actions/github-script@v7\n+        uses: actions/github-script@v9\n         with:\n           script: |\n             // Find open health alert issues\n",
+      "diff_command": [
+        "gh",
+        "pr",
+        "diff",
+        "57",
+        "--repo",
+        "luiscamaral/home-lab-inventory"
+      ],
+      "diff_exit": 0,
+      "draft": false,
+      "head": {
+        "ref": "dependabot/github_actions/actions/github-script-9",
+        "sha": "221657c9f5c272d65bf015fae1e1271245b39006"
+      },
+      "html_url": "https://github.com/luiscamaral/home-lab-inventory/pull/57",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "number": 57,
+      "state": "open",
+      "title": "chore: bump actions/github-script from 7 to 9",
+      "updated_at": "2026-05-11T19:17:45Z"
+    },
+    "exit_code": 0,
+    "source": "GitHub REST pull details and PR diff"
+  },
+  {
+    "collected_at": "2026-11-17T00:25:20.869514+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/luiscamaral/home-lab-inventory/pulls/58"
+    ],
+    "data": {
+      "additions": 5,
+      "base": {
+        "ref": "main",
+        "sha": "3b9a49eb1a09c81e673779f5a8587c61a6f3da20"
+      },
+      "changed_files": 1,
+      "commits": 1,
+      "deletions": 5,
+      "diff": "diff --git a/.github/workflows/security.yml b/.github/workflows/security.yml\nindex cdb933a..c37d568 100644\n--- a/.github/workflows/security.yml\n+++ b/.github/workflows/security.yml\n@@ -86,7 +86,7 @@ jobs:\n         # found. Don't try to upload a non-existent file (was producing\n         # \"Path does not exist: gitleaks.sarif\" failures on every run).\n         if: always() && hashFiles('gitleaks.sarif') != ''\n-        uses: github/codeql-action/upload-sarif@v3\n+        uses: github/codeql-action/upload-sarif@v4\n         with:\n           sarif_file: gitleaks.sarif\n           category: secrets\n@@ -197,7 +197,7 @@ jobs:\n \n       - name: Upload Hadolint SARIF report\n         if: always() && steps.find-dockerfiles.outputs.dockerfiles != ''\n-        uses: github/codeql-action/upload-sarif@v3\n+        uses: github/codeql-action/upload-sarif@v4\n         with:\n           sarif_file: hadolint-merged.sarif\n           category: hadolint\n@@ -268,21 +268,21 @@ jobs:\n \n       - name: Upload Trivy filesystem SARIF report\n         if: always()\n-        uses: github/codeql-action/upload-sarif@v3\n+        uses: github/codeql-action/upload-sarif@v4\n         with:\n           sarif_file: trivy-fs.sarif\n           category: trivy-filesystem\n \n       - name: Upload Trivy Dockerfile SARIF report\n         if: always()\n-        uses: github/codeql-action/upload-sarif@v3\n+        uses: github/codeql-action/upload-sarif@v4\n         with:\n           sarif_file: trivy-dockerfile.sarif\n           category: trivy-dockerfile\n \n       - name: Upload Trivy docker-compose SARIF report\n         if: always()\n-        uses: github/codeql-action/upload-sarif@v3\n+        uses: github/codeql-action/upload-sarif@v4\n         with:\n           sarif_file: trivy-compose.sarif\n           category: trivy-docker-compose\n",
+      "diff_command": [
+        "gh",
+        "pr",
+        "diff",
+        "58",
+        "--repo",
+        "luiscamaral/home-lab-inventory"
+      ],
+      "diff_exit": 0,
+      "draft": false,
+      "head": {
+        "ref": "dependabot/github_actions/github/codeql-action-4",
+        "sha": "89c998f41efdfe2e9c8cf01f13bbee76d0a5366a"
+      },
+      "html_url": "https://github.com/luiscamaral/home-lab-inventory/pull/58",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "number": 58,
+      "state": "open",
+      "title": "chore: bump github/codeql-action from 3 to 4",
+      "updated_at": "2026-05-11T19:17:35Z"
+    },
+    "exit_code": 0,
+    "source": "GitHub REST pull details and PR diff"
+  },
+  {
+    "collected_at": "2026-11-17T00:25:21.698369+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/luiscamaral/home-lab-inventory/pulls/63"
+    ],
+    "data": {
+      "additions": 1,
+      "base": {
+        "ref": "main",
+        "sha": "2b3b330810bcce31592e480f650081647c02cd6b"
+      },
+      "changed_files": 1,
+      "commits": 1,
+      "deletions": 1,
+      "diff": "diff --git a/package.json b/package.json\nindex b1e043e..1360c41 100644\n--- a/package.json\n+++ b/package.json\n@@ -10,7 +10,7 @@\n   },\n   \"description\": \"Home lab infrastructure inventory and management system\",\n   \"devDependencies\": {\n-    \"@commitlint/cli\": \"^19.5.0\",\n+    \"@commitlint/cli\": \"^21.2.1\",\n     \"@commitlint/config-conventional\": \"^21.0.0\",\n     \"@commitlint/cz-commitlint\": \"^21.0.0\",\n     \"@commitlint/prompt-cli\": \"^21.0.0\",\n",
+      "diff_command": [
+        "gh",
+        "pr",
+        "diff",
+        "63",
+        "--repo",
+        "luiscamaral/home-lab-inventory"
+      ],
+      "diff_exit": 0,
+      "draft": false,
+      "head": {
+        "ref": "dependabot/npm_and_yarn/commitlint/cli-21.2.1",
+        "sha": "f28e75dc0d27af1906fd6332a4e2b591da2649e1"
+      },
+      "html_url": "https://github.com/luiscamaral/home-lab-inventory/pull/63",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "number": 63,
+      "state": "open",
+      "title": "chore: bump @commitlint/cli from 19.8.1 to 21.2.1",
+      "updated_at": "2026-07-13T12:10:35Z"
+    },
+    "exit_code": 0,
+    "source": "GitHub REST pull details and PR diff"
+  }
+]

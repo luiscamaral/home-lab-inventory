@@ -1,0 +1,36 @@
+{
+  "added_branches": [
+    {
+      "head": "37f3a3a9033df88170b89440d3c99f75cafa1883",
+      "ref": "refs/heads/feat/omada-vm-static-ip"
+    },
+    {
+      "head": "18786b56395a9c43003022965ee224a748bee6dd",
+      "ref": "refs/heads/feat/switch24a-snmp-metrics"
+    }
+  ],
+  "added_worktrees": [
+    {
+      "HEAD": "37f3a3a9033df88170b89440d3c99f75cafa1883",
+      "branch": "refs/heads/feat/omada-vm-static-ip",
+      "status": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/omada-static"
+    },
+    {
+      "HEAD": "18786b56395a9c43003022965ee224a748bee6dd",
+      "branch": "refs/heads/feat/switch24a-snmp-metrics",
+      "status": " M dockermaster/docker/snmp-exporter/README.md\n M dockermaster/docker/snmp-exporter/regen.sh\nM  terraform/portainer/locals.tf\nM  terraform/portainer/stacks.tf\nR  terraform/portainer/stacks/snmp-exporter.yml -> terraform/portainer/stacks/snmp-exporter.yml.tftpl\nM  terraform/portainer/vault.tf\n?? dockermaster/docker/snmp-exporter/generator-switch24a.yml\n?? dockermaster/docker/snmp-exporter/snmp-switch24a.yml\n?? docs/network/2026-11-16-network-instability-check.md\n?? docs/network/evidence/\n",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/switch24a-snmp"
+    }
+  ],
+  "collected_at": "2026-11-17T00:30:48.574830+00:00",
+  "commands": [
+    "git for-each-ref refs/heads",
+    "git worktree list --porcelain",
+    "git status --short"
+  ],
+  "current_status": "## fix/ds2-portainer-agent-ip-collision...origin/fix/ds2-portainer-agent-ip-collision [behind 54]\n?? .pi/\n?? docs/network/2026-11-16-ix0-live-evidence.md\n?? docs/network/2026-11-16-ix0-rca.md\n?? docs/network/2026-11-16-ix0-switch-evidence.md\n?? docs/network/evidence/\n?? docs/operations/evidence/\n?? hosts/nas/drive-versioning.md\n",
+  "local_branches": 152,
+  "source": "local refs and worktrees, later concurrent snapshot",
+  "worktrees": 71
+}

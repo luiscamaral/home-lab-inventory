@@ -1,0 +1,515 @@
+Collection started UTC: 2026-11-18T17:01:08.048979+00:00
+Collection ended UTC: 2026-11-18T17:01:21.976714+00:00
+Source: SSH proxmox; read-only, no sudo on NAS
+Scope: 06-guests-network-followup
+Exit status: 0
+Commands:
+
+date -u +%Y-%m-%dT%H:%M:%SZ
+for v in 100 120 121 122 123 124; do printf '\nGUEST_OS %s\n' "$v"; timeout 10 qm guest cmd "$v" get-osinfo; done
+for v in 120 123; do printf '\nGUEST_FILESYSTEMS %s\n' "$v"; timeout 10 qm guest cmd "$v" get-fsinfo; done
+ip route get 192.168.2.50
+for nic in eno1 eno2 ens1f0 ens1f1; do printf '\nNIC %s\n' "$nic"; ethtool "$nic" | grep -E 'Speed:|Duplex:|Link detected:|Auto-negotiation:'; done
+ip -s link show ens1f0
+python3 - <<'P'
+from pathlib import Path
+for f in Path('/etc/network/interfaces.d').glob('*'):
+ if f.is_file():
+  print('\nINTERFACES_INCLUDE',f.name)
+  for line in f.read_text().splitlines():
+   if not any(w in line.lower() for w in ['password','secret','token']): print(line)
+print('\nSSH_MATCH_BLOCKS')
+for f in [Path('/etc/ssh/sshd_config'),*Path('/etc/ssh/sshd_config.d').glob('*.conf')]:
+ if f.exists():
+  for line in f.read_text().splitlines():
+   if line.strip().lower().startswith(('match ','passwordauthentication ','permitrootlogin ','allowusers ','allowgroups ','authenticationmethods ')): print(f.name,line)
+print('\nNOTIFICATION_PUBLIC_CONFIG')
+p=Path('/etc/pve/notifications.cfg')
+if p.exists():
+ for line in p.read_text().splitlines():
+  if not any(w in line.lower() for w in ['password','token','secret','mailto','username','header','body']): print(line)
+else: print('ABSENT')
+P
+systemctl is-active ceph.target ceph-mon.target ceph-osd.target docker containerd
+journalctl -u apt-daily.service -u apt-daily-upgrade.service -u pve-daily-update.service --since '7 days ago' --no-pager -n 50
+
+
+OUTPUT:
++ date -u +%Y-%m-%dT%H:%M:%SZ
+2026-11-18T17:01:08Z
+
+GUEST_OS 100
++ for v in 100 120 121 122 123 124
++ printf '\nGUEST_OS %s\n' 100
++ timeout 10 qm guest cmd 100 get-osinfo
+{
+   "id" : "ubuntu",
+   "kernel-release" : "6.8.0-149-generic",
+   "kernel-version" : "#149-Ubuntu SMP PREEMPT_DYNAMIC Fri Oct 23 13:21:10 UTC 2026",
+   "machine" : "x86_64",
+   "name" : "Ubuntu",
+   "pretty-name" : "Ubuntu 24.04.5 LTS",
+   "version" : "24.04.5 LTS (Noble Numbat)",
+   "version-id" : "24.04"
+}
+
+GUEST_OS 120
++ for v in 100 120 121 122 123 124
++ printf '\nGUEST_OS %s\n' 120
++ timeout 10 qm guest cmd 120 get-osinfo
+{
+   "id" : "ubuntu",
+   "kernel-release" : "6.8.0-147-generic",
+   "kernel-version" : "#147-Ubuntu SMP PREEMPT_DYNAMIC Thu Sep 24 11:33:16 UTC 2026",
+   "machine" : "x86_64",
+   "name" : "Ubuntu",
+   "pretty-name" : "Ubuntu 24.04.4 LTS",
+   "version" : "24.04.4 LTS (Noble Numbat)",
+   "version-id" : "24.04"
+}
+
+GUEST_OS 121
++ for v in 100 120 121 122 123 124
++ printf '\nGUEST_OS %s\n' 121
++ timeout 10 qm guest cmd 121 get-osinfo
+{
+   "id" : "haos",
+   "kernel-release" : "6.18.58-haos",
+   "kernel-version" : "#1 SMP PREEMPT_DYNAMIC Tue Oct 27 13:48:56 UTC 2026",
+   "machine" : "x86_64",
+   "name" : "Home Assistant OS",
+   "pretty-name" : "Home Assistant OS 18.4",
+   "variant" : "Home Assistant OS Open Virtual Appliance",
+   "variant-id" : "ova",
+   "version" : "18.4 (Open Virtual Appliance)",
+   "version-id" : "18.4"
+}
+
+GUEST_OS 122
++ for v in 100 120 121 122 123 124
++ printf '\nGUEST_OS %s\n' 122
++ timeout 10 qm guest cmd 122 get-osinfo
+{
+   "id" : "ubuntu",
+   "kernel-release" : "5.4.0-241-generic",
+   "kernel-version" : "#261-Ubuntu SMP Thu Sep 3 20:19:34 UTC 2026",
+   "machine" : "x86_64",
+   "name" : "Ubuntu",
+   "pretty-name" : "Ubuntu 20.04.6 LTS",
+   "version" : "20.04.6 LTS (Focal Fossa)",
+   "version-id" : "20.04"
+}
+
+GUEST_OS 123
++ for v in 100 120 121 122 123 124
++ printf '\nGUEST_OS %s\n' 123
++ timeout 10 qm guest cmd 123 get-osinfo
+{
+   "id" : "ubuntu",
+   "kernel-release" : "6.8.0-147-generic",
+   "kernel-version" : "#147-Ubuntu SMP PREEMPT_DYNAMIC Thu Sep 24 11:33:16 UTC 2026",
+   "machine" : "x86_64",
+   "name" : "Ubuntu",
+   "pretty-name" : "Ubuntu 24.04.4 LTS",
+   "version" : "24.04.4 LTS (Noble Numbat)",
+   "version-id" : "24.04"
+}
+
+GUEST_OS 124
++ for v in 100 120 121 122 123 124
++ printf '\nGUEST_OS %s\n' 124
++ timeout 10 qm guest cmd 124 get-osinfo
+{
+   "id" : "ubuntu",
+   "kernel-release" : "6.8.0-149-generic",
+   "kernel-version" : "#149-Ubuntu SMP PREEMPT_DYNAMIC Fri Oct 23 13:21:10 UTC 2026",
+   "machine" : "x86_64",
+   "name" : "Ubuntu",
+   "pretty-name" : "Ubuntu 24.04.4 LTS",
+   "version" : "24.04.4 LTS (Noble Numbat)",
+   "version-id" : "24.04"
+}
+
+GUEST_FILESYSTEMS 120
++ for v in 120 123
++ printf '\nGUEST_FILESYSTEMS %s\n' 120
++ timeout 10 qm guest cmd 120 get-fsinfo
+[
+   {
+      "disk" : [
+         {
+            "bus" : 0,
+            "bus-type" : "scsi",
+            "dev" : "/dev/sda2",
+            "pci-controller" : {
+               "bus" : 1,
+               "domain" : 0,
+               "function" : 0,
+               "slot" : 1
+            },
+            "serial" : "0QEMU_QEMU_HARDDISK_drive-scsi0",
+            "target" : 0,
+            "unit" : 0
+         }
+      ],
+      "mountpoint" : "/var/lib/docker/volumes/vault_vault_raft/_data",
+      "name" : "sda2",
+      "total-bytes" : 119281700864,
+      "type" : "ext4",
+      "used-bytes" : 44844007424
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/vault/2424",
+      "name" : "loop9",
+      "total-bytes" : 240779264,
+      "type" : "squashfs",
+      "used-bytes" : 240779264
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/snapd/17883",
+      "name" : "loop8",
+      "total-bytes" : 52035584,
+      "type" : "squashfs",
+      "used-bytes" : 52035584
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/lxd/24061",
+      "name" : "loop7",
+      "total-bytes" : 96337920,
+      "type" : "squashfs",
+      "used-bytes" : 96337920
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/core24/1055",
+      "name" : "loop6",
+      "total-bytes" : 70123520,
+      "type" : "squashfs",
+      "used-bytes" : 70123520
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/core20/1695",
+      "name" : "loop5",
+      "total-bytes" : 66322432,
+      "type" : "squashfs",
+      "used-bytes" : 66322432
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/core20/1634",
+      "name" : "loop4",
+      "total-bytes" : 66322432,
+      "type" : "squashfs",
+      "used-bytes" : 66322432
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/core18/2620",
+      "name" : "loop2",
+      "total-bytes" : 58327040,
+      "type" : "squashfs",
+      "used-bytes" : 58327040
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/core18/2632",
+      "name" : "loop3",
+      "total-bytes" : 58327040,
+      "type" : "squashfs",
+      "used-bytes" : 58327040
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/cmake/1204",
+      "name" : "loop1",
+      "total-bytes" : 141164544,
+      "type" : "squashfs",
+      "used-bytes" : 141164544
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/cmake/1186",
+      "name" : "loop0",
+      "total-bytes" : 139853824,
+      "type" : "squashfs",
+      "used-bytes" : 139853824
+   },
+   {
+      "disk" : [
+         {
+            "bus" : 0,
+            "bus-type" : "scsi",
+            "dev" : "/dev/sda2",
+            "pci-controller" : {
+               "bus" : 1,
+               "domain" : 0,
+               "function" : 0,
+               "slot" : 1
+            },
+            "serial" : "0QEMU_QEMU_HARDDISK_drive-scsi0",
+            "target" : 0,
+            "unit" : 0
+         }
+      ],
+      "mountpoint" : "/",
+      "name" : "sda2",
+      "total-bytes" : 119281700864,
+      "type" : "ext4",
+      "used-bytes" : 44844007424
+   }
+]
+
+GUEST_FILESYSTEMS 123
++ for v in 120 123
++ printf '\nGUEST_FILESYSTEMS %s\n' 123
++ timeout 10 qm guest cmd 123 get-fsinfo
+[
+   {
+      "disk" : [
+         {
+            "bus" : 0,
+            "bus-type" : "scsi",
+            "dev" : "/dev/sda2",
+            "pci-controller" : {
+               "bus" : 1,
+               "domain" : 0,
+               "function" : 0,
+               "slot" : 1
+            },
+            "serial" : "0QEMU_QEMU_HARDDISK_drive-scsi0",
+            "target" : 0,
+            "unit" : 0
+         }
+      ],
+      "mountpoint" : "/var/lib/docker/volumes/vault-2_vault_raft/_data",
+      "name" : "sda2",
+      "total-bytes" : 114214965248,
+      "type" : "ext4",
+      "used-bytes" : 77914189824
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/vault/2424",
+      "name" : "loop9",
+      "total-bytes" : 240779264,
+      "type" : "squashfs",
+      "used-bytes" : 240779264
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/snapd/17883",
+      "name" : "loop8",
+      "total-bytes" : 52035584,
+      "type" : "squashfs",
+      "used-bytes" : 52035584
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/lxd/24061",
+      "name" : "loop7",
+      "total-bytes" : 96337920,
+      "type" : "squashfs",
+      "used-bytes" : 96337920
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/core24/1055",
+      "name" : "loop6",
+      "total-bytes" : 70123520,
+      "type" : "squashfs",
+      "used-bytes" : 70123520
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/core20/1695",
+      "name" : "loop5",
+      "total-bytes" : 66322432,
+      "type" : "squashfs",
+      "used-bytes" : 66322432
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/core20/1634",
+      "name" : "loop4",
+      "total-bytes" : 66322432,
+      "type" : "squashfs",
+      "used-bytes" : 66322432
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/core18/2632",
+      "name" : "loop3",
+      "total-bytes" : 58327040,
+      "type" : "squashfs",
+      "used-bytes" : 58327040
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/core18/2620",
+      "name" : "loop2",
+      "total-bytes" : 58327040,
+      "type" : "squashfs",
+      "used-bytes" : 58327040
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/cmake/1204",
+      "name" : "loop1",
+      "total-bytes" : 141164544,
+      "type" : "squashfs",
+      "used-bytes" : 141164544
+   },
+   {
+      "disk" : [],
+      "mountpoint" : "/snap/cmake/1186",
+      "name" : "loop0",
+      "total-bytes" : 139853824,
+      "type" : "squashfs",
+      "used-bytes" : 139853824
+   },
+   {
+      "disk" : [
+         {
+            "bus" : 0,
+            "bus-type" : "scsi",
+            "dev" : "/dev/sda2",
+            "pci-controller" : {
+               "bus" : 1,
+               "domain" : 0,
+               "function" : 0,
+               "slot" : 1
+            },
+            "serial" : "0QEMU_QEMU_HARDDISK_drive-scsi0",
+            "target" : 0,
+            "unit" : 0
+         }
+      ],
+      "mountpoint" : "/",
+      "name" : "sda2",
+      "total-bytes" : 114214965248,
+      "type" : "ext4",
+      "used-bytes" : 77914189824
+   }
+]
+192.168.2.50 dev vmbr10 src 192.168.7.10 uid 0
+    cache
+
+NIC eno1
+	Speed: 1000Mb/s
+	Duplex: Full
+	Auto-negotiation: on
+	Link detected: yes
++ ip route get 192.168.2.50
++ for nic in eno1 eno2 ens1f0 ens1f1
++ printf '\nNIC %s\n' eno1
++ ethtool eno1
++ grep -E 'Speed:|Duplex:|Link detected:|Auto-negotiation:'
+
+NIC eno2
+	Speed: 1000Mb/s
+	Duplex: Full
+	Auto-negotiation: on
+	Link detected: yes
+
+NIC ens1f0
+	Speed: 10000Mb/s
+	Duplex: Full
+	Auto-negotiation: off
+	Link detected: yes
+
+NIC ens1f1
+	Speed: Unknown!
+	Duplex: Unknown! (255)
+	Auto-negotiation: off
+	Link detected: no
+3: ens1f0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP mode DEFAULT group default qlen 1000
+    link/ether 80:61:5f:11:c5:2a brd ff:ff:ff:ff:ff:ff
+    RX:      bytes    packets errors dropped  missed     mcast
+    12068004686366 9766967068      1  314990       0 153812230
+    TX:      bytes    packets errors dropped carrier   collsns
+     8236797544098 8804278322      0       0       0         0
+    altname enp4s0f0
+    altname enx80615f11c52a
++ for nic in eno1 eno2 ens1f0 ens1f1
++ printf '\nNIC %s\n' eno2
++ ethtool eno2
++ grep -E 'Speed:|Duplex:|Link detected:|Auto-negotiation:'
++ for nic in eno1 eno2 ens1f0 ens1f1
++ printf '\nNIC %s\n' ens1f0
++ ethtool ens1f0
++ grep -E 'Speed:|Duplex:|Link detected:|Auto-negotiation:'
++ for nic in eno1 eno2 ens1f0 ens1f1
++ printf '\nNIC %s\n' ens1f1
++ ethtool ens1f1
++ grep -E 'Speed:|Duplex:|Link detected:|Auto-negotiation:'
++ ip -s link show ens1f0
++ python3 -
+
+INTERFACES_INCLUDE sdn
+
+SSH_MATCH_BLOCKS
+sshd_config PermitRootLogin yes
+
+NOTIFICATION_PUBLIC_CONFIG
+ABSENT
++ systemctl is-active ceph.target ceph-mon.target ceph-osd.target docker containerd
+active
+active
+active
+inactive
+inactive
++ journalctl -u apt-daily.service -u apt-daily-upgrade.service -u pve-daily-update.service --since '7 days ago' --no-pager -n 50
+Nov 15 15:20:23 proxmox systemd[1]: apt-daily.service: Deactivated successfully.
+Nov 15 15:20:23 proxmox systemd[1]: Finished apt-daily.service - Daily apt download activities.
+Nov 15 23:01:22 proxmox systemd[1]: Starting apt-daily.service - Daily apt download activities...
+Nov 15 23:01:23 proxmox systemd[1]: apt-daily.service: Deactivated successfully.
+Nov 15 23:01:23 proxmox systemd[1]: Finished apt-daily.service - Daily apt download activities.
+Nov 16 05:42:58 proxmox systemd[1]: Starting pve-daily-update.service - Daily PVE download activities...
+Nov 16 05:43:01 proxmox pveupdate[1057255]: <root@pam> starting task UPID:proxmox:001021EE:16119C88:6AFAFA55:aptupdate::root@pam:
+Nov 16 05:43:04 proxmox pveupdate[1057262]: update new package list: /var/lib/pve-manager/pkgupdates
+Nov 16 05:43:09 proxmox pveupdate[1057255]: <root@pam> end task UPID:proxmox:001021EE:16119C88:6AFAFA55:aptupdate::root@pam: OK
+Nov 16 05:43:09 proxmox systemd[1]: pve-daily-update.service: Deactivated successfully.
+Nov 16 05:43:09 proxmox systemd[1]: Finished pve-daily-update.service - Daily PVE download activities.
+Nov 16 05:43:09 proxmox systemd[1]: pve-daily-update.service: Consumed 7.855s CPU time, 333.9M memory peak.
+Nov 16 06:26:22 proxmox systemd[1]: Starting apt-daily-upgrade.service - Daily apt upgrade and clean activities...
+Nov 16 06:26:23 proxmox systemd[1]: apt-daily-upgrade.service: Deactivated successfully.
+Nov 16 06:26:23 proxmox systemd[1]: Finished apt-daily-upgrade.service - Daily apt upgrade and clean activities.
+Nov 16 08:26:22 proxmox systemd[1]: Starting apt-daily.service - Daily apt download activities...
+Nov 16 08:26:23 proxmox systemd[1]: apt-daily.service: Deactivated successfully.
+Nov 16 08:26:23 proxmox systemd[1]: Finished apt-daily.service - Daily apt download activities.
+Nov 16 21:21:22 proxmox systemd[1]: Starting apt-daily.service - Daily apt download activities...
+Nov 16 21:21:23 proxmox systemd[1]: apt-daily.service: Deactivated successfully.
+Nov 16 21:21:23 proxmox systemd[1]: Finished apt-daily.service - Daily apt download activities.
+Nov 17 03:33:22 proxmox systemd[1]: Starting pve-daily-update.service - Daily PVE download activities...
+Nov 17 03:33:25 proxmox pveupdate[1468425]: <root@pam> starting task UPID:proxmox:0016681F:16899508:6AFC2D75:aptupdate::root@pam:
+Nov 17 03:33:28 proxmox pveupdate[1468447]: update new package list: /var/lib/pve-manager/pkgupdates
+Nov 17 03:33:33 proxmox pveupdate[1468425]: <root@pam> end task UPID:proxmox:0016681F:16899508:6AFC2D75:aptupdate::root@pam: OK
+Nov 17 03:33:33 proxmox systemd[1]: pve-daily-update.service: Deactivated successfully.
+Nov 17 03:33:33 proxmox systemd[1]: Finished pve-daily-update.service - Daily PVE download activities.
+Nov 17 03:33:33 proxmox systemd[1]: pve-daily-update.service: Consumed 8.215s CPU time, 331.8M memory peak.
+Nov 17 06:04:34 proxmox systemd[1]: Starting apt-daily-upgrade.service - Daily apt upgrade and clean activities...
+Nov 17 06:04:35 proxmox systemd[1]: apt-daily-upgrade.service: Deactivated successfully.
+Nov 17 06:04:35 proxmox systemd[1]: Finished apt-daily-upgrade.service - Daily apt upgrade and clean activities.
+Nov 17 09:52:22 proxmox systemd[1]: Starting apt-daily.service - Daily apt download activities...
+Nov 17 09:52:23 proxmox systemd[1]: apt-daily.service: Deactivated successfully.
+Nov 17 09:52:23 proxmox systemd[1]: Finished apt-daily.service - Daily apt download activities.
+Nov 17 20:41:29 proxmox systemd[1]: Starting apt-daily.service - Daily apt download activities...
+Nov 17 20:41:29 proxmox systemd[1]: apt-daily.service: Deactivated successfully.
+Nov 17 20:41:29 proxmox systemd[1]: Finished apt-daily.service - Daily apt download activities.
+Nov 18 01:54:22 proxmox systemd[1]: Starting pve-daily-update.service - Daily PVE download activities...
+Nov 18 01:54:25 proxmox pveupdate[1881309]: <root@pam> starting task UPID:proxmox:001CB4FA:17045ABD:6AFD67C1:aptupdate::root@pam:
+Nov 18 01:54:29 proxmox pveupdate[1881338]: update new package list: /var/lib/pve-manager/pkgupdates
+Nov 18 01:54:34 proxmox pveupdate[1881309]: <root@pam> end task UPID:proxmox:001CB4FA:17045ABD:6AFD67C1:aptupdate::root@pam: OK
+Nov 18 01:54:34 proxmox systemd[1]: pve-daily-update.service: Deactivated successfully.
+Nov 18 01:54:34 proxmox systemd[1]: Finished pve-daily-update.service - Daily PVE download activities.
+Nov 18 01:54:34 proxmox systemd[1]: pve-daily-update.service: Consumed 7.864s CPU time, 332.7M memory peak.
+Nov 18 06:07:22 proxmox systemd[1]: Starting apt-daily-upgrade.service - Daily apt upgrade and clean activities...
+Nov 18 06:07:23 proxmox systemd[1]: apt-daily-upgrade.service: Deactivated successfully.
+Nov 18 06:07:23 proxmox systemd[1]: Finished apt-daily-upgrade.service - Daily apt upgrade and clean activities.
+Nov 18 08:06:22 proxmox systemd[1]: Starting apt-daily.service - Daily apt download activities...
+Nov 18 08:06:22 proxmox systemd[1]: apt-daily.service: Deactivated successfully.
+Nov 18 08:06:22 proxmox systemd[1]: Finished apt-daily.service - Daily apt download activities.

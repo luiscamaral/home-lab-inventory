@@ -1,0 +1,52 @@
+collected_utc 2026-11-16T21:11:04+00:00
+samples (5m grid) with both: 1383
+loss>=10% samples: 1 ; loss>0 samples: 45 ; max loss 12.0%
+rf>100/s samples: 195, mean 1400B loss 0.36%, max 12.0%
+rf<1/s samples: 987, mean 1400B loss 0.00%, max 0.0%
+
+samples where loss>0:
+11-12 02:19Z loss 1% rf/s 392
+11-12 03:24Z loss 1% rf/s 620
+11-13 00:49Z loss 12% rf/s 122
+11-13 23:39Z loss 1% rf/s 18
+11-14 20:04Z loss 1% rf/s 658
+11-14 20:14Z loss 3% rf/s 713
+11-14 20:19Z loss 2% rf/s 744
+11-14 20:24Z loss 1% rf/s 670
+11-14 20:29Z loss 1% rf/s 698
+11-14 20:34Z loss 1% rf/s 760
+11-14 20:39Z loss 1% rf/s 741
+11-14 20:44Z loss 2% rf/s 712
+11-14 20:49Z loss 1% rf/s 671
+11-14 21:09Z loss 1% rf/s 616
+11-14 22:29Z loss 1% rf/s 228
+11-14 22:34Z loss 2% rf/s 607
+11-14 22:39Z loss 3% rf/s 680
+11-14 22:44Z loss 1% rf/s 707
+11-14 22:54Z loss 1% rf/s 683
+11-14 22:59Z loss 1% rf/s 634
+11-14 23:04Z loss 1% rf/s 666
+11-14 23:09Z loss 1% rf/s 741
+11-16 14:34Z loss 2% rf/s 1698
+11-16 14:39Z loss 1% rf/s 1546
+11-16 14:44Z loss 1% rf/s 1105
+11-16 14:49Z loss 2% rf/s 776
+11-16 14:54Z loss 1% rf/s 744
+11-16 14:59Z loss 3% rf/s 1456
+11-16 15:09Z loss 1% rf/s 1736
+11-16 15:14Z loss 2% rf/s 1718
+11-16 15:19Z loss 1% rf/s 1580
+11-16 15:24Z loss 1% rf/s 1262
+11-16 15:34Z loss 1% rf/s 1385
+11-16 15:39Z loss 2% rf/s 1385
+11-16 15:44Z loss 1% rf/s 1056
+11-16 15:54Z loss 1% rf/s 920
+11-16 16:19Z loss 1% rf/s 654
+11-16 16:59Z loss 1% rf/s 290
+11-16 18:44Z loss 1% rf/s 166
+11-16 19:49Z loss 1% rf/s 666
+11-16 20:09Z loss 1% rf/s 950
+11-16 20:19Z loss 2% rf/s 579
+11-16 20:54Z loss 2% rf/s 544
+11-16 20:59Z loss 2% rf/s 820
+11-16 21:09Z loss 1% rf/s 1214

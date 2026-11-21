@@ -1,0 +1,40 @@
+### collected 2026-11-16T21:35:41Z read-only MTU checks
+## pfSense MTU and oversize counters (2 samples, 60 s apart)
+21:35:41 oversized=13 rx_errs=24 rf=35875898
+21:36:41 oversized=13 rx_errs=24 rf=35935178
+usage: paste [-s] [-d delimiters] file ...
+## DF ping, 300 pkts each at 0.03s
+size_on_wire=1500 target=192.168.48.44: 300 packets transmitted, 298 packets received, 0.7% packet loss
+size_on_wire=1500 target=192.168.48.45: 300 packets transmitted, 297 packets received, 1.0% packet loss
+size_on_wire=1428 target=192.168.48.44: 300 packets transmitted, 296 packets received, 1.3% packet loss
+size_on_wire=1428 target=192.168.48.45: 300 packets transmitted, 298 packets received, 0.7% packet loss
+## oversize after pings: 13
+## switch jumbo and port MTU (SNMP ifMtu 25-28, Vlan1)
+ifIndex 49177 MTU 9216
+ifIndex 49178 MTU 9216
+ifIndex 49179 MTU 9216
+ifIndex 49180 MTU 9216
+## dockermaster interface MTUs
+ens19: mtu 1500
+server-net-shim@ens19: mtu 1500
+## proxmox interface MTUs
+eno1: mtu 1500
+ens1f0: mtu 1500
+eno2: mtu 1500
+eno3: mtu 1500
+eno4: mtu 1500
+ens1f1: mtu 1500
+vlan1@eno2: mtu 1500
+vmbr1: mtu 1500
+vlan28@ens1f0: mtu 1500
+vmbr28: mtu 1500
+vlan10@ens1f0: mtu 1500
+vmbr10: mtu 1500
+vmbr01: mtu 1500
+vlan205@ens1f0: mtu 1500
+vmbr205: mtu 1500
+vlan010@eno2: mtu 1500
+vmbr010: mtu 1500
+vmbr0: mtu 1500
+vmbr30: mtu 1500
+fwbr10000i0: mtu 1500

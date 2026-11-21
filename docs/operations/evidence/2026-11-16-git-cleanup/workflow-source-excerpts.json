@@ -1,0 +1,80 @@
+{
+  "collected_at": "2026-11-17T00:29:11.346691+00:00",
+  "records": [
+    {
+      "command": [
+        "git",
+        "show",
+        "origin/main:.github/workflows/security.yml"
+      ],
+      "excerpts": [
+        {
+          "end": 105,
+          "start": 40,
+          "text": "40:   REGISTRY: ghcr.io\n41:   IMAGE_PREFIX: ${{ github.repository_owner }}\n42: \n43: # Define job permissions for security scanning\n44: permissions:\n45:   contents: read\n46:   security-events: write\n47:   actions: read\n48:   pull-requests: write\n49:   packages: read\n50:   id-token: write\n51: \n52: jobs:\n53:   # Job 1: Secret Scanning with Gitleaks\n54:   secret-scan:\n55:     name: Secret Detection\n56:     runs-on: ubuntu-latest\n57:     steps:\n58:       - name: Checkout repository\n59:         uses: actions/checkout@v4\n60:         with:\n61:           # Fetch full history for comprehensive secret scanning\n62:           fetch-depth: 0\n63: \n64:       # Cache Gitleaks database for faster subsequent runs\n65:       - name: Cache Gitleaks database\n66:         uses: actions/cache@v4\n67:         with:\n68:           path: ~/.gitleaks\n69:           key: gitleaks-db-${{ runner.os }}-${{ hashFiles('**/*.toml', '.gitleaks.toml') }}\n70:           restore-keys: |\n71:             gitleaks-db-${{ runner.os }}-\n72: \n73:       - name: Run Gitleaks secret detection\n74:         uses: gitleaks/gitleaks-action@v2\n75:         env:\n76:           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n77:           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Optional: for enhanced features\n78:         with:\n79:           # Generate SARIF report for GitHub Security tab\n80:           format: sarif\n81:           output: gitleaks.sarif\n82:           config-path: .gitleaks.toml # Optional: custom config\n83: \n84:       - name: Upload Gitleaks SARIF report\n85:         # gitleaks-action only writes gitleaks.sarif when leaks are\n86:         # found. Don't try to upload a non-existent file (was producing\n87:         # \"Path does not exist: gitleaks.sarif\" failures on every run).\n88:         if: always() && hashFiles('gitleaks.sarif') != ''\n89:         uses: github/codeql-action/upload-sarif@v3\n90:         with:\n91:           sarif_file: gitleaks.sarif\n92:           category: secrets\n93: \n94:       - name: Archive secret scan results\n95:         if: always()\n96:         uses: actions/upload-artifact@v4\n97:         with:\n98:           name: gitleaks-results-${{ github.run_number }}\n99:           path: gitleaks.sarif\n100:           retention-days: 30\n101: \n102:   # Cleanup / summary job \u2014 was previously declared at workflow-level\n103:   # (top-level `cleanup:`), which actionlint flagged as a syntax error.\n104:   # Re-indented under `jobs:` where it belongs.\n105:   cleanup:"
+        },
+        {
+          "end": 785,
+          "start": 650,
+          "text": "650:                 repo: context.repo.repo,\n651:                 issue_number: context.issue.number,\n652:                 body: finalReport\n653:               });\n654:             }\n655: \n656:   # Job 8: Security Gate - Fail on Critical Issues\n657:   security-gate:\n658:     name: Security Gate\n659:     runs-on: ubuntu-latest\n660:     needs: [secret-scan, dockerfile-lint, container-scan, built-image-scan, security-report]\n661:     if: always()\n662:     steps:\n663:       - name: Checkout repository\n664:         uses: actions/checkout@v4\n665: \n666:       - name: Download scan results\n667:         uses: actions/download-artifact@v4\n668:         with:\n669:           path: scan-results\n670: \n671:       - name: Install jq for JSON processing\n672:         run: sudo apt-get update && sudo apt-get install -y jq\n673: \n674:       - name: Evaluate security findings\n675:         run: |\n676:           echo \"\ud83d\udd0d Evaluating security scan results...\"\n677:           EXIT_CODE=0\n678:           CRITICAL_ISSUES=0\n679:           HIGH_ISSUES=0\n680: \n681:           # Check for secrets (CRITICAL - always fail)\n682:           GITLEAKS_FILE=$(find scan-results -name \"gitleaks.sarif\" | head -1)\n683:           if [ -f \"$GITLEAKS_FILE\" ]; then\n684:             SECRET_COUNT=$(jq '.runs[0].results | length' \"$GITLEAKS_FILE\" 2>/dev/null || echo \"0\")\n685:             if [ \"$SECRET_COUNT\" -gt 0 ]; then\n686:               echo \"\u274c CRITICAL: $SECRET_COUNT potential secrets detected\"\n687:               CRITICAL_ISSUES=$((CRITICAL_ISSUES + SECRET_COUNT))\n688:               EXIT_CODE=1\n689:             fi\n690:           fi\n691: \n692:           # Check for critical Dockerfile issues\n693:           HADOLINT_FILE=$(find scan-results -name \"hadolint-merged.sarif\" | head -1)\n694:           if [ -f \"$HADOLINT_FILE\" ]; then\n695:             HADOLINT_CRITICAL=$(jq '[.runs[0].results[] | select(.level == \"error\")] | length' \"$HADOLINT_FILE\" 2>/dev/null || echo \"0\")\n696:             if [ \"$HADOLINT_CRITICAL\" -gt 0 ]; then\n697:               echo \"\u26a0\ufe0f HIGH: $HADOLINT_CRITICAL critical Dockerfile issues found\"\n698:               HIGH_ISSUES=$((HIGH_ISSUES + HADOLINT_CRITICAL))\n699:               # Uncomment to fail on critical Dockerfile issues\n700:               # EXIT_CODE=1\n701:             fi\n702:           fi\n703: \n704:           # Check for critical/high severity container issues\n705:           TRIVY_FILES=$(find scan-results -name \"trivy-*.sarif\" | grep -v merged)\n706:           if [ -n \"$TRIVY_FILES\" ]; then\n707:             TOTAL_HIGH_VULN=0\n708:             for trivy_file in $TRIVY_FILES; do\n709:               HIGH_VULN=$(jq '[.runs[0].results[] | select(.level == \"error\")] | length' \"$trivy_file\" 2>/dev/null || echo \"0\")\n710:               TOTAL_HIGH_VULN=$((TOTAL_HIGH_VULN + HIGH_VULN))\n711:             done\n712: \n713:             if [ \"$TOTAL_HIGH_VULN\" -gt 0 ]; then\n714:               echo \"\u26a0\ufe0f HIGH: $TOTAL_HIGH_VULN high-severity container vulnerabilities found\"\n715:               HIGH_ISSUES=$((HIGH_ISSUES + TOTAL_HIGH_VULN))\n716: \n717:               # Fail if more than 5 high-severity vulnerabilities\n718:               if [ \"$TOTAL_HIGH_VULN\" -gt 5 ]; then\n719:                 echo \"\u274c CRITICAL: Too many high-severity vulnerabilities ($TOTAL_HIGH_VULN > 5)\"\n720:                 EXIT_CODE=1\n721:               fi\n722:             fi\n723:           fi\n724: \n725:           # Check built image vulnerabilities\n726:           IMAGE_SCAN_FILES=$(find scan-results -path \"*built-image-scan-results*\" -name \"*.json\" 2>/dev/null || true)\n727:           if [ -n \"$IMAGE_SCAN_FILES\" ]; then\n728:             TOTAL_IMAGE_HIGH=0\n729:             for image_file in $IMAGE_SCAN_FILES; do\n730:               if [ -f \"$image_file\" ]; then\n731:                 HIGH_VULN=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == \"HIGH\" or .Severity == \"CRITICAL\")] | length' \"$image_file\" 2>/dev/null || echo \"0\")\n732:                 TOTAL_IMAGE_HIGH=$((TOTAL_IMAGE_HIGH + HIGH_VULN))\n733:               fi\n734:             done\n735: \n736:             if [ \"$TOTAL_IMAGE_HIGH\" -gt 0 ]; then\n737:               echo \"\u26a0\ufe0f HIGH: $TOTAL_IMAGE_HIGH high/critical vulnerabilities in built images\"\n738:               HIGH_ISSUES=$((HIGH_ISSUES + TOTAL_IMAGE_HIGH))\n739: \n740:               # Fail if more than 3 critical vulnerabilities in images\n741:               if [ \"$TOTAL_IMAGE_HIGH\" -gt 3 ]; then\n742:                 echo \"\u274c CRITICAL: Too many high/critical vulnerabilities in images ($TOTAL_IMAGE_HIGH > 3)\"\n743:                 EXIT_CODE=1\n744:               fi\n745:             fi\n746:           fi\n747: \n748:           # Summary\n749:           echo \"\\n\ud83d\udcca Security Gate Summary:\"\n750:           echo \"- Critical Issues: $CRITICAL_ISSUES\"\n751:           echo \"- High Issues: $HIGH_ISSUES\"\n752:           echo \"- Total Issues Evaluated: $((CRITICAL_ISSUES + HIGH_ISSUES))\"\n753: \n754:           if [ $EXIT_CODE -eq 0 ]; then\n755:             echo \"\\n\u2705 Security gate passed - no critical blocking issues found\"\n756:             if [ \"$HIGH_ISSUES\" -gt 0 ]; then\n757:               echo \"\u26a0\ufe0f  Note: $HIGH_ISSUES high-priority issues found but within acceptable limits\"\n758:             fi\n759:           else\n760:             echo \"\\n\u274c Security gate failed - critical security issues must be resolved before merge\"\n761:             echo \"\\nBlocking issues:\"\n762:             if [ \"$CRITICAL_ISSUES\" -gt 0 ]; then\n763:               echo \"- $CRITICAL_ISSUES critical issues (secrets, etc.)\"\n764:             fi\n765:             if [ $((HIGH_ISSUES)) -gt 10 ]; then  # Only show if excessive high issues\n766:               echo \"- Excessive high-priority vulnerabilities detected\"\n767:             fi\n768:           fi\n769: \n770:           exit $EXIT_CODE\n771: \n772:       - name: Upload security gate results\n773:         if: always()\n774:         uses: actions/upload-artifact@v4\n775:         with:\n776:           name: security-gate-results-${{ github.run_number }}\n777:           path: security-gate-summary.txt\n778:           retention-days: 90\n779: \n780:   # Job 9: Performance Monitoring and Cleanup\n781:   performance-monitoring:\n782:     name: Performance Monitoring\n783:     runs-on: ubuntu-latest\n784:     needs: [secret-scan, dockerfile-lint, container-scan, built-image-scan, security-gate]\n785:     if: always()"
+        }
+      ],
+      "exit_code": 0,
+      "path": ".github/workflows/security.yml"
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "origin/main:.github/workflows/pr-validation.yml"
+      ],
+      "excerpts": [
+        {
+          "end": 30,
+          "start": 15,
+          "text": "15:   group: pr-validation-${{ github.event.pull_request.number }}\n16:   cancel-in-progress: true\n17: \n18: # Environment variables\n19: env:\n20:   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n21:   # Bumped 18 -> 20 because markdownlint-cli@0.48.0 (pinned in\n22:   # .pre-commit-config.yaml) requires Node >=20 and EBADENGINEs on 18.\n23:   NODE_VERSION: \"20\"\n24:   PYTHON_VERSION: \"3.11\"\n25: \n26: # Define permissions for the workflow\n27: permissions:\n28:   contents: read\n29:   pull-requests: write\n30:   checks: write"
+        },
+        {
+          "end": 345,
+          "start": 290,
+          "text": "290:   # Job 3: Commit Message Validation\n291:   commit-validation:\n292:     name: Commit Message Validation\n293:     runs-on: ubuntu-latest\n294:     if: github.event.pull_request.draft == false\n295:     steps:\n296:       - name: Checkout repository\n297:         uses: actions/checkout@v4\n298:         with:\n299:           fetch-depth: 0\n300: \n301:       # No `cache: npm` \u2014 see comment in pre-commit job above.\n302:       - name: Set up Node.js\n303:         uses: actions/setup-node@v4\n304:         with:\n305:           node-version: ${{ env.NODE_VERSION }}\n306: \n307:       - name: Install dependencies\n308:         run: |\n309:           npm install -g @commitlint/cli @commitlint/config-conventional\n310: \n311:       - name: Cache commitlint\n312:         uses: actions/cache@v4\n313:         with:\n314:           path: ~/.npm/_cacache\n315:           key: commitlint-${{ runner.os }}-${{ hashFiles('**/.commitlintrc.json', '**/package.json') }}\n316:           restore-keys: |\n317:             commitlint-${{ runner.os }}-\n318: \n319:       - name: Validate commit messages\n320:         id: commitlint\n321:         run: |\n322:           echo \"Validating commit messages in PR...\"\n323: \n324:           # Get the base branch commit\n325:           BASE_SHA=\"${{ github.event.pull_request.base.sha }}\"\n326:           HEAD_SHA=\"${{ github.event.pull_request.head.sha }}\"\n327: \n328:           echo \"Checking commits from $BASE_SHA to $HEAD_SHA\"\n329: \n330:           # Get commit messages\n331:           COMMITS=$(git log --format=\"%H %s\" \"$BASE_SHA\"..\"$HEAD_SHA\")\n332: \n333:           if [ -z \"$COMMITS\" ]; then\n334:             echo \"No commits found to validate\"\n335:             echo \"result=skipped\" >> $GITHUB_OUTPUT\n336:             exit 0\n337:           fi\n338: \n339:           FAILED_COMMITS=\"\"\n340:           TOTAL_COMMITS=0\n341:           FAILED_COUNT=0\n342: \n343:           while IFS= read -r commit_line; do\n344:             if [ -n \"$commit_line\" ]; then\n345:               COMMIT_SHA=$(echo \"$commit_line\" | cut -d' ' -f1)"
+        }
+      ],
+      "exit_code": 0,
+      "path": ".github/workflows/pr-validation.yml"
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "origin/main:package.json"
+      ],
+      "excerpts": [
+        {
+          "end": 26,
+          "start": 10,
+          "text": "10:   },\n11:   \"description\": \"Home lab infrastructure inventory and management system\",\n12:   \"devDependencies\": {\n13:     \"@commitlint/cli\": \"^19.5.0\",\n14:     \"@commitlint/config-conventional\": \"^21.0.0\",\n15:     \"@commitlint/cz-commitlint\": \"^21.0.0\",\n16:     \"@commitlint/prompt-cli\": \"^21.0.0\",\n17:     \"commitizen\": \"^4.3.1\",\n18:     \"husky\": \"^9.1.6\"\n19:   },\n20:   \"engines\": {\n21:     \"node\": \">=18.0.0\",\n22:     \"npm\": \">=9.0.0\"\n23:   },\n24:   \"homepage\": \"https://github.com/luiscamaral/home-lab-inventory#readme\",\n25:   \"keywords\": [\n26:     \"home-lab\","
+        }
+      ],
+      "exit_code": 0,
+      "path": "package.json"
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "origin/main:terraform/portainer/stacks/github-runner.yml"
+      ],
+      "excerpts": [
+        {
+          "end": 37,
+          "start": 8,
+          "text": "8:   runner:\n9:     image: myoung34/github-runner:latest\n10:     container_name: github-runner-homelab\n11:     hostname: dockerserver-1-runner\n12:     networks:\n13:       docker-servers-net:\n14:         ipv4_address: 192.168.59.4\n15:     environment:\n16:       - RUNNER_NAME=dockerserver-1-runner\n17:       - RUNNER_WORKDIR=/tmp/runner/work\n18:       - RUNNER_GROUP=default\n19:       - LABELS=self-hosted,linux,x64,dockerserver-1,docker\n20:       - REPO_URL=https://github.com/luiscamaral/home-lab-inventory\n21:       - ACCESS_TOKEN=${GITHUB_TOKEN}\n22:       - EPHEMERAL=false\n23:       - DISABLE_AUTO_UPDATE=false\n24:     volumes:\n25:       - /var/run/docker.sock:/var/run/docker.sock\n26:       - /nfs/dockermaster/docker/github-runner/work:/tmp/runner/work\n27:       - /nfs/dockermaster/docker/github-runner/runner-data:/runner-data\n28:       - /nfs/dockermaster/docker:/deployment:ro\n29:     restart: unless-stopped\n30:     security_opt:\n31:       - apparmor:unconfined\n32:     labels:\n33:       com.centurylinklabs.watchtower.enable: \"true\"\n34:       com.docker.stack: \"ci-cd\"\n35:       com.docker.service: \"github-runner\"\n36:       portainer.autodeploy: \"false\"  # Prevent auto-deploy to avoid runner disruption\n37:     deploy:"
+        }
+      ],
+      "exit_code": 0,
+      "path": "terraform/portainer/stacks/github-runner.yml"
+    }
+  ],
+  "source": "refreshed origin/main tracked workflow source"
+}

@@ -1,0 +1,145 @@
+{
+  "actions": [
+    "Cancelled 6 queued Service Health Monitor runs (one May ghost run has no jobs and cannot be cancelled)",
+    "Removed 66 worktrees whose work is merged (61 plain, 5 with submodules via --force after checking the submodule commit is on the fork origin/main). Branches kept.",
+    "PR 153: health monitor labels + actionlint label list + docs",
+    "First real run 44364466319 failed: NFS path not visible in runner container; multi-line output breaks GITHUB_OUTPUT",
+    "PR 154: paused the 15 minute schedule",
+    "PR 155: parked-projects register + login portal record + recall note; PR 6 closed, branch custom-login-portal kept"
+  ],
+  "approvals": "User decisions 1-5 in session on 2026-11-18",
+  "collected_at": "2026-11-18T18:10:44.435254+00:00",
+  "health_monitor_runs": [
+    {
+      "conclusion": "failure",
+      "createdAt": "2026-11-18T17:58:00Z",
+      "databaseId": 44364466319,
+      "event": "workflow_dispatch",
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-11-18T11:38:27Z",
+      "databaseId": 44296526047,
+      "event": "schedule",
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-11-18T03:00:54Z",
+      "databaseId": 44227369165,
+      "event": "schedule",
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-11-17T21:22:03Z",
+      "databaseId": 44179055074,
+      "event": "schedule",
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-11-17T12:44:16Z",
+      "databaseId": 44085938161,
+      "event": "schedule",
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-11-17T03:51:15Z",
+      "databaseId": 44013079467,
+      "event": "schedule",
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-11-16T21:08:51Z",
+      "databaseId": 43957062518,
+      "event": "schedule",
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-11-16T11:19:24Z",
+      "databaseId": 43856709107,
+      "event": "schedule",
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-11-16T03:11:46Z",
+      "databaseId": 43796685093,
+      "event": "schedule",
+      "status": "completed"
+    },
+    {
+      "conclusion": "cancelled",
+      "createdAt": "2026-11-15T23:43:28Z",
+      "databaseId": 43776343825,
+      "event": "schedule",
+      "status": "completed"
+    }
+  ],
+  "local_branches": 158,
+  "prs": {
+    "153": {
+      "closedAt": "2026-11-18T17:57:55Z",
+      "mergeCommit": {
+        "oid": "14829ca259bdd1ef3017881417ef678b55b746b8"
+      },
+      "mergedAt": "2026-11-18T17:57:55Z",
+      "number": 153,
+      "state": "MERGED",
+      "title": "fix(ci): match health monitor jobs to the registered runner labels",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/153"
+    },
+    "154": {
+      "closedAt": "2026-11-18T18:05:36Z",
+      "mergeCommit": {
+        "oid": "5c1e7d3d9a474b940e15bf3891db10cd77f41ce9"
+      },
+      "mergedAt": "2026-11-18T18:05:36Z",
+      "number": 154,
+      "state": "MERGED",
+      "title": "fix(ci): pause the health monitor schedule until it is fixed",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/154"
+    },
+    "155": {
+      "closedAt": "2026-11-18T18:10:20Z",
+      "mergeCommit": {
+        "oid": "1c5112d6dbb7219bf44c893117d27379d8c7726b"
+      },
+      "mergedAt": "2026-11-18T18:10:20Z",
+      "number": 155,
+      "state": "MERGED",
+      "title": "docs(docs): park the login portal and add a parked-projects register",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/155"
+    },
+    "6": {
+      "closedAt": "2026-11-18T18:10:24Z",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 6,
+      "state": "CLOSED",
+      "title": "\u2728(portal): homelab login portal (sveltekit + keycloak)",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/6"
+    }
+  },
+  "queued_runs_now": [
+    {
+      "databaseId": 25906694839
+    }
+  ],
+  "remaining_worktrees": [
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory                                   6104e15 [fix/ds2-portainer-agent-ip-collision]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory-calibre-update                    fab1145 [fix/calibre-version-bump]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/network-resilience     cc31249 [fix/ix0-watchdog-safety]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/ops-ds1-logs           a3d6fb7 [fix/ops-ds1-log-rotation]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/ops-ds2-agent          af4d3fa [fix/ops-ds2-agent-ip]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/ops-runner             fe0f57d [fix/ops-github-runner]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/prometheus-thanos-plan 687b2f6 [feature/prometheus-thanos-plan]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/storage-policy         cb7b8bb [feat/storage-policy]"
+  ],
+  "source": "GitHub API and local git after execution"
+}

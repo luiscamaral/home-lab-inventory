@@ -1,0 +1,26 @@
+### collected 2026-11-16T21:54:40Z
+uid=1027(lamaral) gid=100(users) groups=100(users),101(administrators),65536(SSS_Administrator),65538(shared),65539(docker)
+-- eth4
+Error: either "dev" is duplicate, or "eth4.10" is a garbage.
+carrier=1 speed=2500 operstate=up mac=90:09:d0:71:27:11
+-- eth4 stats
+rx_packets=2899545423
+rx_errors=0
+rx_length_errors=0
+rx_over_errors=0
+rx_crc_errors=0
+rx_dropped=0
+tx_errors=0
+-- bond0 slaves
+MII Status: up
+Slave Interface: eth1
+MII Status: up
+Speed: 1000 Mbps
+Slave Interface: eth2
+MII Status: up
+Speed: 1000 Mbps
+Slave Interface: eth3
+MII Status: up
+Speed: 1000 Mbps
+-- messages readable?
+head: cannot open '/var/log/messages' for reading: Permission denied

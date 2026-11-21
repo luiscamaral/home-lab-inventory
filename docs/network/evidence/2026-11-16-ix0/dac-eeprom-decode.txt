@@ -1,0 +1,16 @@
+Decode of SFF-8472 A0h bytes 0-127 from `ifconfig -vvv ix0`, collected 2026-11-16T21:09Z (raw hex in pfsense-pcie-sfp-eeprom.txt)
+byte0 identifier        = 0x3 (0x03 = SFP/SFP+)
+byte2 connector         = 0x21 (0x21 = copper pigtail)
+byte8 (bit2=passive, bit3=active) = 0x4 -> PASSIVE cable
+byte12 nominal bitrate  = 10300 Mb/s
+byte18 copper length    = 1 m
+vendor name             = Cable Matters
+vendor OUI              = 00:02:c9 (00:02:c9 is the Mellanox OUI)
+vendor PN               = 104033-1m-VN
+vendor rev              = 03
+vendor SN               = URHDPSHL1
+date code               = 26051500
+byte92 diag monitoring  = 0x0 (0x00 = no digital diagnostics (DDM) on this cable)
+byte94 SFF-8472 compl.  = 0x0
+CC_BASE computed 0x81 stored 0x81 OK
+CC_EXT computed 0xe stored 0xe OK

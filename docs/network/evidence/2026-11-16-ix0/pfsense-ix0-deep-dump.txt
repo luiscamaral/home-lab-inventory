@@ -1,0 +1,483 @@
+##### collected 2026-11-16T20:58:37Z
+##### ifconfig -v ix0
+ix0: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 mtu 1500
+	options=4e138bb<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,JUMBO_MTU,VLAN_HWCSUM,WOL_UCAST,WOL_MCAST,WOL_MAGIC,VLAN_HWFILTER,RXCSUM_IPV6,TXCSUM_IPV6,HWSTATS,MEXTPG>
+	ether a8:b8:e0:03:70:35
+	inet6 fe80::aab8:e0ff:fe03:7035%ix0 prefixlen 64 scopeid 0x1
+	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>)
+	status: active
+	nd6 options=821<PERFORMNUD,AUTO_LINKLOCAL,STABLEADDR>
+	drivername: ix0
+	plugged: SFP/SFP+/SFP28 Unknown (Copper pigtail)
+	vendor: Cable Matters PN: 104033-1m-VN SN: URHDPSHL1 DATE: 2026-05-15
+##### ifconfig -m ix0 (media list)
+ix0: flags=1008843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST,LOWER_UP> metric 0 mtu 1500
+	options=4e138bb<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,JUMBO_MTU,VLAN_HWCSUM,WOL_UCAST,WOL_MCAST,WOL_MAGIC,VLAN_HWFILTER,RXCSUM_IPV6,TXCSUM_IPV6,HWSTATS,MEXTPG>
+	capabilities=4f53fbb<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,JUMBO_MTU,VLAN_HWCSUM,TSO4,TSO6,LRO,WOL_UCAST,WOL_MCAST,WOL_MAGIC,VLAN_HWFILTER,VLAN_HWTSO,NETMAP,RXCSUM_IPV6,TXCSUM_IPV6,HWSTATS,MEXTPG>
+	ether a8:b8:e0:03:70:35
+	inet6 fe80::aab8:e0ff:fe03:7035%ix0 prefixlen 64 scopeid 0x1
+	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>)
+	status: active
+	supported media:
+		media autoselect
+		media 1000Base-KX
+		media 10Gbase-Twinax
+	nd6 options=821<PERFORMNUD,AUTO_LINKLOCAL,STABLEADDR>
+##### ix1
+ix1: flags=8802<BROADCAST,SIMPLEX,MULTICAST> metric 0 mtu 1500
+	options=4e53fbb<RXCSUM,TXCSUM,VLAN_MTU,VLAN_HWTAGGING,JUMBO_MTU,VLAN_HWCSUM,TSO4,TSO6,LRO,WOL_UCAST,WOL_MCAST,WOL_MAGIC,VLAN_HWFILTER,VLAN_HWTSO,RXCSUM_IPV6,TXCSUM_IPV6,HWSTATS,MEXTPG>
+	ether a8:b8:e0:03:70:36
+	media: Ethernet autoselect
+	status: no carrier
+	nd6 options=821<PERFORMNUD,AUTO_LINKLOCAL,STABLEADDR>
+##### pciconf ix0
+hostb0@pci0:0:0:0:	class=0x060000 rev=0x00 hdr=0x00 vendor=0x8086 device=0x4617 subvendor=0x8086 subdevice=0x7270
+    vendor     = 'Intel Corporation'
+    class      = bridge
+    subclass   = HOST-PCI
+    cap 09[e0] = vendor (length 20) Intel cap 0 version 1
+##### dmesg.boot ix
+ix0: <Intel(R) X520 82599ES (SFI/SFP+)> port 0x3020-0x303f mem 0x81120000-0x8113ffff,0x81144000-0x81147fff at device 0.0 on pci1
+ix0: Using 2048 TX descriptors and 2048 RX descriptors
+ix0: Using 8 RX queues 8 TX queues
+ix0: Using MSI-X interrupts with 9 vectors
+ix0: allocated for 8 queues
+ix0: allocated for 8 rx queues
+ix0: Ethernet address: a8:b8:e0:03:70:35
+ix0: PCI Express Bus: Speed 5.0GT/s Width x4
+ix0: eTrack 0x800003de
+ix0: netmap queues/slots: TX 8/2048, RX 8/2048
+ix1: <Intel(R) X520 82599ES (SFI/SFP+)> port 0x3000-0x301f mem 0x81100000-0x8111ffff,0x81140000-0x81143fff at device 0.1 on pci1
+ix1: Using 2048 TX descriptors and 2048 RX descriptors
+ix1: Using 8 RX queues 8 TX queues
+ix1: Using MSI-X interrupts with 9 vectors
+ix1: allocated for 8 queues
+ix1: allocated for 8 rx queues
+ix1: Ethernet address: a8:b8:e0:03:70:36
+ix1: PCI Express Bus: Speed 5.0GT/s Width x4
+ix1: eTrack 0x800003de
+ix1: netmap queues/slots: TX 8/2048, RX 8/2048
+##### loader.conf*
+-- /boot/loader.conf
+opensolaris_load="YES"
+zfs_load="YES"
+kern.geom.label.disk_ident.enable="0"
+kern.geom.label.gptid.enable="0"
+kern.ipc.nmbclusters="1000000"
+kern.ipc.nmbjumbo9="524288"
+kern.ipc.nmbjumbop="524288"
+loader_conf_files="/boot/loader.conf.lua"
+boot_serial="NO"
+autoboot_delay="3"
+debug.ddb.capture.bufsize="524288"
+hw.e6000sw.default_disabled=1
+hw.hn.vf_transparent="0"
+hw.hn.use_if_start="1"
+hw.vtnet.altq_disable="0"
+net.link.ifqmaxlen="128"
+machdep.hwpstate_pkg_ctrl="1"
+net.pf.states_hashsize="1048576"
+-- /boot/loader.conf.local
+##### sysctl.conf*
+-- /etc/sysctl.conf
+-- /etc/sysctl.conf.local
+##### kenv hw.ix
+##### sysctl hw.ix / net.link.lagg
+hw.ix.enable_aim: 0
+hw.ix.enable_rss: 1
+hw.ix.enable_fdir: 0
+hw.ix.unsupported_sfp: 0
+hw.ix.enable_msix: 1
+hw.ix.advertise_speed: 0
+hw.ix.flow_control: 3
+hw.ix.max_interrupt_rate: 31250
+net.link.lagg.default_flowid_shift: 16
+net.link.lagg.default_use_numa: 1
+net.link.lagg.default_use_flowid: 0
+net.link.lagg.failover_rx_all: 0
+net.link.lagg.lacp.default_strict_mode: 1
+net.link.lagg.lacp.debug: 0
+##### sysctl dev.ix.0 (all)
+dev.ix.0.wake: 0
+dev.ix.0.tso_tcp_flags_mask_last_segment: 3967
+dev.ix.0.tso_tcp_flags_mask_middle_segment: 4086
+dev.ix.0.tso_tcp_flags_mask_first_segment: 4086
+dev.ix.0.fw_version: eTrack 0x800003de
+dev.ix.0.enable_aim: 0
+dev.ix.0.advertise_speed: 6
+dev.ix.0.fc: 3
+dev.ix.0.mac_stats.tx_frames_1024_1522: 457448138
+dev.ix.0.mac_stats.tx_frames_512_1023: 18667565
+dev.ix.0.mac_stats.tx_frames_256_511: 156511223
+dev.ix.0.mac_stats.tx_frames_128_255: 165831952
+dev.ix.0.mac_stats.tx_frames_65_127: 229636667
+dev.ix.0.mac_stats.tx_frames_64: 86501428
+dev.ix.0.mac_stats.management_pkts_txd: 0
+dev.ix.0.mac_stats.mcast_pkts_txd: 7550700
+dev.ix.0.mac_stats.bcast_pkts_txd: 120996
+dev.ix.0.mac_stats.good_pkts_txd: 1114368699
+dev.ix.0.mac_stats.total_pkts_txd: 1114608470
+dev.ix.0.mac_stats.good_octets_txd: 791065463053
+dev.ix.0.mac_stats.checksum_errs: 57279
+dev.ix.0.mac_stats.management_pkts_drpd: 0
+dev.ix.0.mac_stats.management_pkts_rcvd: 0
+dev.ix.0.mac_stats.recv_jabberd: 0
+dev.ix.0.mac_stats.recv_oversized: 13
+dev.ix.0.mac_stats.recv_fragmented: 0
+dev.ix.0.mac_stats.recv_undersized: 0
+dev.ix.0.mac_stats.rx_frames_1024_1522: 627994630
+dev.ix.0.mac_stats.rx_frames_512_1023: 29179701
+dev.ix.0.mac_stats.rx_frames_256_511: 148599947
+dev.ix.0.mac_stats.rx_frames_128_255: 164327541
+dev.ix.0.mac_stats.rx_frames_65_127: 266125477
+dev.ix.0.mac_stats.rx_frames_64: 9090870
+dev.ix.0.mac_stats.bcast_pkts_rcvd: 1238890
+dev.ix.0.mac_stats.mcast_pkts_rcvd: 22408000
+dev.ix.0.mac_stats.good_pkts_rcvd: 1245318166
+dev.ix.0.mac_stats.total_pkts_rcvd: 1245569989
+dev.ix.0.mac_stats.good_octets_rcvd: 1034372301130
+dev.ix.0.mac_stats.total_octets_rcvd: 1034400555162
+dev.ix.0.mac_stats.xoff_recvd: 0
+dev.ix.0.mac_stats.xoff_txd: 0
+dev.ix.0.mac_stats.xon_recvd: 0
+dev.ix.0.mac_stats.xon_txd: 0
+dev.ix.0.mac_stats.rx_missed_packets: 0
+dev.ix.0.mac_stats.rec_len_errs: 0
+dev.ix.0.mac_stats.remote_faults: 33509755
+dev.ix.0.mac_stats.local_faults: 2985
+dev.ix.0.mac_stats.short_discards: 0
+dev.ix.0.mac_stats.byte_errs: 0
+dev.ix.0.mac_stats.ill_errs: 0
+dev.ix.0.mac_stats.crc_errs: 9
+dev.ix.0.mac_stats.rx_errs: 22
+dev.ix.0.queue7.rx_discarded: 0
+dev.ix.0.queue7.rx_copies: 0
+dev.ix.0.queue7.rx_bytes: 125771647122
+dev.ix.0.queue7.rx_packets: 183996595
+dev.ix.0.queue7.rxd_tail: 178
+dev.ix.0.queue7.rxd_head: 179
+dev.ix.0.queue7.irqs: 281333132
+dev.ix.0.queue7.interrupt_rate: 31250
+dev.ix.0.queue7.tx_packets: 180289924
+dev.ix.0.queue7.tso_tx: 0
+dev.ix.0.queue7.txd_tail: 198
+dev.ix.0.queue7.txd_head: 198
+dev.ix.0.queue6.rx_discarded: 0
+dev.ix.0.queue6.rx_copies: 0
+dev.ix.0.queue6.rx_bytes: 106820544773
+dev.ix.0.queue6.rx_packets: 204885539
+dev.ix.0.queue6.rxd_tail: 1570
+dev.ix.0.queue6.rxd_head: 1571
+dev.ix.0.queue6.irqs: 290479144
+dev.ix.0.queue6.interrupt_rate: 31250
+dev.ix.0.queue6.tx_packets: 157777981
+dev.ix.0.queue6.tso_tx: 0
+dev.ix.0.queue6.txd_tail: 694
+dev.ix.0.queue6.txd_head: 697
+dev.ix.0.queue5.rx_discarded: 0
+dev.ix.0.queue5.rx_copies: 0
+dev.ix.0.queue5.rx_bytes: 183737292154
+dev.ix.0.queue5.rx_packets: 215666607
+dev.ix.0.queue5.rxd_tail: 1966
+dev.ix.0.queue5.rxd_head: 1967
+dev.ix.0.queue5.irqs: 256803782
+dev.ix.0.queue5.interrupt_rate: 31250
+dev.ix.0.queue5.tx_packets: 140208502
+dev.ix.0.queue5.tso_tx: 0
+dev.ix.0.queue5.txd_tail: 379
+dev.ix.0.queue5.txd_head: 379
+dev.ix.0.queue4.rx_discarded: 0
+dev.ix.0.queue4.rx_copies: 0
+dev.ix.0.queue4.rx_bytes: 84487736075
+dev.ix.0.queue4.rx_packets: 94084040
+dev.ix.0.queue4.rxd_tail: 967
+dev.ix.0.queue4.rxd_head: 968
+dev.ix.0.queue4.irqs: 174071840
+dev.ix.0.queue4.interrupt_rate: 31250
+dev.ix.0.queue4.tx_packets: 131130450
+dev.ix.0.queue4.tso_tx: 0
+dev.ix.0.queue4.txd_tail: 873
+dev.ix.0.queue4.txd_head: 873
+dev.ix.0.queue3.rx_discarded: 0
+dev.ix.0.queue3.rx_copies: 0
+dev.ix.0.queue3.rx_bytes: 94537459140
+dev.ix.0.queue3.rx_packets: 110300044
+dev.ix.0.queue3.rxd_tail: 907
+dev.ix.0.queue3.rxd_head: 908
+dev.ix.0.queue3.irqs: 148496234
+dev.ix.0.queue3.interrupt_rate: 31250
+dev.ix.0.queue3.tx_packets: 99012680
+dev.ix.0.queue3.tso_tx: 0
+dev.ix.0.queue3.txd_tail: 160
+dev.ix.0.queue3.txd_head: 160
+dev.ix.0.queue2.rx_discarded: 0
+dev.ix.0.queue2.rx_copies: 0
+dev.ix.0.queue2.rx_bytes: 119635255144
+dev.ix.0.queue2.rx_packets: 109755954
+dev.ix.0.queue2.rxd_tail: 1585
+dev.ix.0.queue2.rxd_head: 1586
+dev.ix.0.queue2.irqs: 160514381
+dev.ix.0.queue2.interrupt_rate: 31250
+dev.ix.0.queue2.tx_packets: 134126711
+dev.ix.0.queue2.tso_tx: 0
+dev.ix.0.queue2.txd_tail: 425
+dev.ix.0.queue2.txd_head: 425
+dev.ix.0.queue1.rx_discarded: 0
+dev.ix.0.queue1.rx_copies: 0
+dev.ix.0.queue1.rx_bytes: 170527442926
+dev.ix.0.queue1.rx_packets: 152479483
+dev.ix.0.queue1.rxd_tail: 1786
+dev.ix.0.queue1.rxd_head: 1787
+dev.ix.0.queue1.irqs: 133166861
+dev.ix.0.queue1.interrupt_rate: 31250
+dev.ix.0.queue1.tx_packets: 88344740
+dev.ix.0.queue1.tso_tx: 0
+dev.ix.0.queue1.txd_tail: 1793
+dev.ix.0.queue1.txd_head: 1793
+dev.ix.0.queue0.rx_discarded: 0
+dev.ix.0.queue0.rx_copies: 0
+dev.ix.0.queue0.rx_bytes: 138908211380
+dev.ix.0.queue0.rx_packets: 174149907
+dev.ix.0.queue0.rxd_tail: 274
+dev.ix.0.queue0.rxd_head: 275
+dev.ix.0.queue0.irqs: 192738316
+dev.ix.0.queue0.interrupt_rate: 31250
+dev.ix.0.queue0.tx_packets: 183719996
+dev.ix.0.queue0.tso_tx: 0
+dev.ix.0.queue0.txd_tail: 1067
+dev.ix.0.queue0.txd_head: 1067
+dev.ix.0.link_irq: 13226064
+dev.ix.0.watchdog_events: 0
+dev.ix.0.dropped: 0
+dev.ix.0.iflib.rxq7.rxq_fl0.buf_size: 2048
+dev.ix.0.iflib.rxq7.rxq_fl0.credits: 2047
+dev.ix.0.iflib.rxq7.rxq_fl0.cidx: 179
+dev.ix.0.iflib.rxq7.rxq_fl0.pidx: 178
+dev.ix.0.iflib.rxq7.cpu: 7
+dev.ix.0.iflib.rxq6.rxq_fl0.buf_size: 2048
+dev.ix.0.iflib.rxq6.rxq_fl0.credits: 2047
+dev.ix.0.iflib.rxq6.rxq_fl0.cidx: 1573
+dev.ix.0.iflib.rxq6.rxq_fl0.pidx: 1572
+dev.ix.0.iflib.rxq6.cpu: 6
+dev.ix.0.iflib.rxq5.rxq_fl0.buf_size: 2048
+dev.ix.0.iflib.rxq5.rxq_fl0.credits: 2047
+dev.ix.0.iflib.rxq5.rxq_fl0.cidx: 1968
+dev.ix.0.iflib.rxq5.rxq_fl0.pidx: 1968
+dev.ix.0.iflib.rxq5.cpu: 5
+dev.ix.0.iflib.rxq4.rxq_fl0.buf_size: 2048
+dev.ix.0.iflib.rxq4.rxq_fl0.credits: 2047
+dev.ix.0.iflib.rxq4.rxq_fl0.cidx: 968
+dev.ix.0.iflib.rxq4.rxq_fl0.pidx: 967
+dev.ix.0.iflib.rxq4.cpu: 4
+dev.ix.0.iflib.rxq3.rxq_fl0.buf_size: 2048
+dev.ix.0.iflib.rxq3.rxq_fl0.credits: 2047
+dev.ix.0.iflib.rxq3.rxq_fl0.cidx: 908
+dev.ix.0.iflib.rxq3.rxq_fl0.pidx: 907
+dev.ix.0.iflib.rxq3.cpu: 3
+dev.ix.0.iflib.rxq2.rxq_fl0.buf_size: 2048
+dev.ix.0.iflib.rxq2.rxq_fl0.credits: 2047
+dev.ix.0.iflib.rxq2.rxq_fl0.cidx: 1586
+dev.ix.0.iflib.rxq2.rxq_fl0.pidx: 1585
+dev.ix.0.iflib.rxq2.cpu: 2
+dev.ix.0.iflib.rxq1.rxq_fl0.buf_size: 2048
+dev.ix.0.iflib.rxq1.rxq_fl0.credits: 2047
+dev.ix.0.iflib.rxq1.rxq_fl0.cidx: 1787
+dev.ix.0.iflib.rxq1.rxq_fl0.pidx: 1786
+dev.ix.0.iflib.rxq1.cpu: 1
+dev.ix.0.iflib.rxq0.rxq_fl0.buf_size: 2048
+dev.ix.0.iflib.rxq0.rxq_fl0.credits: 2047
+dev.ix.0.iflib.rxq0.rxq_fl0.cidx: 275
+dev.ix.0.iflib.rxq0.rxq_fl0.pidx: 274
+dev.ix.0.iflib.rxq0.cpu: 0
+dev.ix.0.iflib.txq7.r_abdications: 0
+dev.ix.0.iflib.txq7.r_restarts: 0
+dev.ix.0.iflib.txq7.r_stalls: 0
+dev.ix.0.iflib.txq7.r_starts: 180215525
+dev.ix.0.iflib.txq7.r_drops: 0
+dev.ix.0.iflib.txq7.r_enqueues: 180764203
+dev.ix.0.iflib.txq7.ring_state: pidx_head: 1579 pidx_tail: 1579 cidx: 1579 state: IDLE
+dev.ix.0.iflib.txq7.txq_cleaned: 360634530
+dev.ix.0.iflib.txq7.txq_processed: 360634562
+dev.ix.0.iflib.txq7.txq_in_use: 36
+dev.ix.0.iflib.txq7.txq_cidx_processed: 194
+dev.ix.0.iflib.txq7.txq_cidx: 162
+dev.ix.0.iflib.txq7.txq_pidx: 198
+dev.ix.0.iflib.txq7.no_tx_dma_setup: 0
+dev.ix.0.iflib.txq7.txd_encap_efbig: 0
+dev.ix.0.iflib.txq7.tx_map_failed: 0
+dev.ix.0.iflib.txq7.no_desc_avail: 0
+dev.ix.0.iflib.txq7.mbuf_defrag_failed: 0
+dev.ix.0.iflib.txq7.m_pullups: 0
+dev.ix.0.iflib.txq7.mbuf_defrag: 0
+dev.ix.0.iflib.txq7.cpu: 7
+dev.ix.0.iflib.txq6.r_abdications: 0
+dev.ix.0.iflib.txq6.r_restarts: 0
+dev.ix.0.iflib.txq6.r_stalls: 0
+dev.ix.0.iflib.txq6.r_starts: 157770041
+dev.ix.0.iflib.txq6.r_drops: 0
+dev.ix.0.iflib.txq6.r_enqueues: 158140236
+dev.ix.0.iflib.txq6.ring_state: pidx_head: 1869 pidx_tail: 1869 cidx: 1869 state: IDLE
+dev.ix.0.iflib.txq6.txq_cleaned: 315689870
+dev.ix.0.iflib.txq6.txq_processed: 315689912
+dev.ix.0.iflib.txq6.txq_in_use: 34
+dev.ix.0.iflib.txq6.txq_cidx_processed: 952
+dev.ix.0.iflib.txq6.txq_cidx: 920
+dev.ix.0.iflib.txq6.txq_pidx: 959
+dev.ix.0.iflib.txq6.no_tx_dma_setup: 0
+dev.ix.0.iflib.txq6.txd_encap_efbig: 0
+dev.ix.0.iflib.txq6.tx_map_failed: 0
+dev.ix.0.iflib.txq6.no_desc_avail: 0
+dev.ix.0.iflib.txq6.mbuf_defrag_failed: 0
+dev.ix.0.iflib.txq6.m_pullups: 137888
+dev.ix.0.iflib.txq6.mbuf_defrag: 0
+dev.ix.0.iflib.txq6.cpu: 6
+dev.ix.0.iflib.txq5.r_abdications: 0
+dev.ix.0.iflib.txq5.r_restarts: 0
+dev.ix.0.iflib.txq5.r_stalls: 0
+dev.ix.0.iflib.txq5.r_starts: 140198829
+dev.ix.0.iflib.txq5.r_drops: 0
+dev.ix.0.iflib.txq5.r_enqueues: 140457343
+dev.ix.0.iflib.txq5.ring_state: pidx_head: 1407 pidx_tail: 1407 cidx: 1407 state: IDLE
+dev.ix.0.iflib.txq5.txq_cleaned: 280541533
+dev.ix.0.iflib.txq5.txq_processed: 280541565
+dev.ix.0.iflib.txq5.txq_in_use: 34
+dev.ix.0.iflib.txq5.txq_cidx_processed: 381
+dev.ix.0.iflib.txq5.txq_cidx: 349
+dev.ix.0.iflib.txq5.txq_pidx: 383
+dev.ix.0.iflib.txq5.no_tx_dma_setup: 0
+dev.ix.0.iflib.txq5.txd_encap_efbig: 0
+dev.ix.0.iflib.txq5.tx_map_failed: 0
+dev.ix.0.iflib.txq5.no_desc_avail: 0
+dev.ix.0.iflib.txq5.mbuf_defrag_failed: 0
+dev.ix.0.iflib.txq5.m_pullups: 1328
+dev.ix.0.iflib.txq5.mbuf_defrag: 0
+dev.ix.0.iflib.txq5.cpu: 5
+dev.ix.0.iflib.txq4.r_abdications: 0
+dev.ix.0.iflib.txq4.r_restarts: 0
+dev.ix.0.iflib.txq4.r_stalls: 0
+dev.ix.0.iflib.txq4.r_starts: 131132094
+dev.ix.0.iflib.txq4.r_drops: 0
+dev.ix.0.iflib.txq4.r_enqueues: 131525202
+dev.ix.0.iflib.txq4.ring_state: pidx_head: 0594 pidx_tail: 0594 cidx: 0594 state: IDLE
+dev.ix.0.iflib.txq4.txq_cleaned: 262339399
+dev.ix.0.iflib.txq4.txq_processed: 262339431
+dev.ix.0.iflib.txq4.txq_in_use: 34
+dev.ix.0.iflib.txq4.txq_cidx_processed: 871
+dev.ix.0.iflib.txq4.txq_cidx: 839
+dev.ix.0.iflib.txq4.txq_pidx: 873
+dev.ix.0.iflib.txq4.no_tx_dma_setup: 0
+dev.ix.0.iflib.txq4.txd_encap_efbig: 0
+dev.ix.0.iflib.txq4.tx_map_failed: 0
+dev.ix.0.iflib.txq4.no_desc_avail: 0
+dev.ix.0.iflib.txq4.mbuf_defrag_failed: 0
+dev.ix.0.iflib.txq4.m_pullups: 45
+dev.ix.0.iflib.txq4.mbuf_defrag: 0
+dev.ix.0.iflib.txq4.cpu: 4
+dev.ix.0.iflib.txq3.r_abdications: 0
+dev.ix.0.iflib.txq3.r_restarts: 0
+dev.ix.0.iflib.txq3.r_stalls: 0
+dev.ix.0.iflib.txq3.r_starts: 99013722
+dev.ix.0.iflib.txq3.r_drops: 0
+dev.ix.0.iflib.txq3.r_enqueues: 99135441
+dev.ix.0.iflib.txq3.ring_state: pidx_head: 2001 pidx_tail: 2001 cidx: 2001 state: IDLE
+dev.ix.0.iflib.txq3.txq_cleaned: 198076542
+dev.ix.0.iflib.txq3.txq_processed: 198076574
+dev.ix.0.iflib.txq3.txq_in_use: 34
+dev.ix.0.iflib.txq3.txq_cidx_processed: 158
+dev.ix.0.iflib.txq3.txq_cidx: 126
+dev.ix.0.iflib.txq3.txq_pidx: 160
+dev.ix.0.iflib.txq3.no_tx_dma_setup: 0
+dev.ix.0.iflib.txq3.txd_encap_efbig: 0
+dev.ix.0.iflib.txq3.tx_map_failed: 0
+dev.ix.0.iflib.txq3.no_desc_avail: 0
+dev.ix.0.iflib.txq3.mbuf_defrag_failed: 0
+dev.ix.0.iflib.txq3.m_pullups: 1436
+dev.ix.0.iflib.txq3.mbuf_defrag: 0
+dev.ix.0.iflib.txq3.cpu: 3
+dev.ix.0.iflib.txq2.r_abdications: 0
+dev.ix.0.iflib.txq2.r_restarts: 0
+dev.ix.0.iflib.txq2.r_stalls: 0
+dev.ix.0.iflib.txq2.r_starts: 134124446
+dev.ix.0.iflib.txq2.r_drops: 0
+dev.ix.0.iflib.txq2.r_enqueues: 134388726
+dev.ix.0.iflib.txq2.ring_state: pidx_head: 1014 pidx_tail: 1014 cidx: 1014 state: IDLE
+dev.ix.0.iflib.txq2.txq_cleaned: 268300679
+dev.ix.0.iflib.txq2.txq_processed: 268300711
+dev.ix.0.iflib.txq2.txq_in_use: 34
+dev.ix.0.iflib.txq2.txq_cidx_processed: 423
+dev.ix.0.iflib.txq2.txq_cidx: 391
+dev.ix.0.iflib.txq2.txq_pidx: 425
+dev.ix.0.iflib.txq2.no_tx_dma_setup: 0
+dev.ix.0.iflib.txq2.txd_encap_efbig: 0
+dev.ix.0.iflib.txq2.tx_map_failed: 0
+dev.ix.0.iflib.txq2.no_desc_avail: 0
+dev.ix.0.iflib.txq2.mbuf_defrag_failed: 0
+dev.ix.0.iflib.txq2.m_pullups: 0
+dev.ix.0.iflib.txq2.mbuf_defrag: 0
+dev.ix.0.iflib.txq2.cpu: 2
+dev.ix.0.iflib.txq1.r_abdications: 0
+dev.ix.0.iflib.txq1.r_restarts: 0
+dev.ix.0.iflib.txq1.r_stalls: 0
+dev.ix.0.iflib.txq1.r_starts: 88337539
+dev.ix.0.iflib.txq1.r_drops: 0
+dev.ix.0.iflib.txq1.r_enqueues: 88502538
+dev.ix.0.iflib.txq1.ring_state: pidx_head: 0266 pidx_tail: 0266 cidx: 0266 state: IDLE
+dev.ix.0.iflib.txq1.txq_cleaned: 176746205
+dev.ix.0.iflib.txq1.txq_processed: 176746237
+dev.ix.0.iflib.txq1.txq_in_use: 36
+dev.ix.0.iflib.txq1.txq_cidx_processed: 1789
+dev.ix.0.iflib.txq1.txq_cidx: 1757
+dev.ix.0.iflib.txq1.txq_pidx: 1793
+dev.ix.0.iflib.txq1.no_tx_dma_setup: 0
+dev.ix.0.iflib.txq1.txd_encap_efbig: 0
+dev.ix.0.iflib.txq1.tx_map_failed: 0
+dev.ix.0.iflib.txq1.no_desc_avail: 0
+dev.ix.0.iflib.txq1.mbuf_defrag_failed: 0
+dev.ix.0.iflib.txq1.m_pullups: 0
+dev.ix.0.iflib.txq1.mbuf_defrag: 0
+dev.ix.0.iflib.txq1.cpu: 1
+dev.ix.0.iflib.txq0.r_abdications: 0
+dev.ix.0.iflib.txq0.r_restarts: 0
+dev.ix.0.iflib.txq0.r_stalls: 0
+dev.ix.0.iflib.txq0.r_starts: 183706243
+dev.ix.0.iflib.txq0.r_drops: 0
+dev.ix.0.iflib.txq0.r_enqueues: 183789492
+dev.ix.0.iflib.txq0.ring_state: pidx_head: 1972 pidx_tail: 1972 cidx: 1972 state: IDLE
+dev.ix.0.iflib.txq0.txq_cleaned: 367600647
+dev.ix.0.iflib.txq0.txq_processed: 367600679
+dev.ix.0.iflib.txq0.txq_in_use: 36
+dev.ix.0.iflib.txq0.txq_cidx_processed: 1063
+dev.ix.0.iflib.txq0.txq_cidx: 1031
+dev.ix.0.iflib.txq0.txq_pidx: 1067
+dev.ix.0.iflib.txq0.no_tx_dma_setup: 0
+dev.ix.0.iflib.txq0.txd_encap_efbig: 0
+dev.ix.0.iflib.txq0.tx_map_failed: 0
+dev.ix.0.iflib.txq0.no_desc_avail: 0
+dev.ix.0.iflib.txq0.mbuf_defrag_failed: 0
+dev.ix.0.iflib.txq0.m_pullups: 600
+dev.ix.0.iflib.txq0.mbuf_defrag: 0
+dev.ix.0.iflib.txq0.cpu: 0
+dev.ix.0.iflib.tx_defer_mfree: 0
+dev.ix.0.iflib.tx_reclaim_ticks: 0
+dev.ix.0.iflib.tx_reclaim_thresh: 0
+dev.ix.0.iflib.override_nrxds: 0
+dev.ix.0.iflib.override_ntxds: 0
+dev.ix.0.iflib.allocated_msix_vectors: 9
+dev.ix.0.iflib.use_extra_msix_vectors: 0
+dev.ix.0.iflib.use_logical_cores: 0
+dev.ix.0.iflib.separate_txrx: 0
+dev.ix.0.iflib.core_offset: 0
+dev.ix.0.iflib.tx_abdicate: 0
+dev.ix.0.iflib.rx_budget: 0
+dev.ix.0.iflib.disable_msix: 0
+dev.ix.0.iflib.override_qs_enable: 0
+dev.ix.0.iflib.override_nrxqs: 0
+dev.ix.0.iflib.override_ntxqs: 0
+dev.ix.0.iflib.simple_tx: 0
+dev.ix.0.iflib.driver_version: 5.0.1-k
+dev.ix.0.%iommu: rid=0x100
+dev.ix.0.%parent: pci1
+dev.ix.0.%pnpinfo: vendor=0x8086 device=0x10fb subvendor=0xffff subdevice=0xffff class=0x020000
+dev.ix.0.%location: slot=0 function=0 dbsf=pci0:1:0:0 handle=\_SB_.PC00.RP01.PXSX
+dev.ix.0.%driver: ix
+dev.ix.0.%desc: Intel(R) X520 82599ES (SFI/SFP+)

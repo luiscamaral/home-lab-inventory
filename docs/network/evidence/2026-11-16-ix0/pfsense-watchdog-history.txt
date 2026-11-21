@@ -1,0 +1,234 @@
+##### collected 2026-11-16T21:06:44Z
+## watchdog log files
+-rw-------  1 root wheel 388420 Nov 11 15:39 /var/log/ix0-watchdog.log
+## watchdog log: events (non-routine) with dates
+2026-09-30 21:32:38 DISARMED — not bouncing; replace the optic (worst loss 26%)
+2026-09-30 23:38:16 degraded: mean 17% >= 10% (1/3 in last 5 probes) [192.168.48.44=6 192.168.48.45=29]
+2026-10-01 01:18:07 degraded: mean 21% >= 10% (1/3 in last 5 probes) [192.168.48.44=12 192.168.48.45=30]
+2026-10-01 01:19:13 degraded: mean 12% >= 10% (2/3 in last 5 probes) [192.168.48.44=17 192.168.48.45=8]
+2026-10-01 01:20:19 degraded: mean 28% >= 10% (3/3 in last 5 probes) [192.168.48.44=29 192.168.48.45=27]
+2026-10-01 01:20:19 DISARMED — not bouncing; replace the optic (worst loss 29%)
+2026-10-01 01:22:32 degraded: mean 17% >= 10% (1/3 in last 5 probes) [192.168.48.44=25 192.168.48.45=9]
+2026-10-04 10:10:15 degraded: mean 100% >= 10% (1/3 in last 5 probes) [192.168.48.44=100 192.168.48.45=100]
+2026-10-04 10:11:27 degraded: mean 100% >= 10% (2/3 in last 5 probes) [192.168.48.44=100 192.168.48.45=100]
+2026-10-04 10:12:39 degraded: mean 100% >= 10% (3/3 in last 5 probes) [192.168.48.44=100 192.168.48.45=100]
+2026-10-04 10:12:39 DISARMED — not bouncing; replace the optic (worst loss 100%)
+2026-10-04 10:13:51 degraded: mean 100% >= 10% (1/3 in last 5 probes) [192.168.48.44=100 192.168.48.45=100]
+2026-10-04 10:15:03 degraded: mean 100% >= 10% (2/3 in last 5 probes) [192.168.48.44=100 192.168.48.45=100]
+2026-10-04 10:16:15 degraded: mean 100% >= 10% (3/3 in last 5 probes) [192.168.48.44=100 192.168.48.45=100]
+2026-10-04 10:16:15 DISARMED — not bouncing; replace the optic (worst loss 100%)
+2026-10-04 10:17:27 degraded: mean 100% >= 10% (1/3 in last 5 probes) [192.168.48.44=100 192.168.48.45=100]
+2026-10-04 10:18:39 degraded: mean 100% >= 10% (2/3 in last 5 probes) [192.168.48.44=100 192.168.48.45=100]
+2026-10-04 10:19:51 degraded: mean 100% >= 10% (3/3 in last 5 probes) [192.168.48.44=100 192.168.48.45=100]
+2026-10-04 10:19:51 DISARMED — not bouncing; replace the optic (worst loss 100%)
+2026-10-10 19:19:18 recovered after 5 all-down probe(s)
+2026-10-14 19:21:30 degraded: mean 11% >= 10% (1/3 in last 5 probes) [192.168.48.44=5 192.168.48.45=18]
+2026-10-14 20:28:24 degraded: mean 10% >= 10% (1/3 in last 5 probes) [192.168.48.44=14 192.168.48.45=7]
+2026-10-17 04:34:16 degraded: mean 29% >= 10% (1/3 in last 5 probes) [192.168.48.44=46 192.168.48.45=12]
+2026-10-17 04:35:23 degraded: mean 35% >= 10% (2/3 in last 5 probes) [192.168.48.44=34 192.168.48.45=36]
+2026-10-17 23:57:33 degraded: mean 13% >= 10% (1/3 in last 5 probes) [192.168.48.44=5 192.168.48.45=21]
+2026-10-21 13:04:21 degraded: mean 19% >= 10% (1/3 in last 5 probes) [192.168.48.44=18 192.168.48.45=21]
+2026-10-21 15:33:36 degraded: mean 11% >= 10% (1/3 in last 5 probes) [192.168.48.44=18 192.168.48.45=5]
+2026-10-23 14:03:36 degraded: mean 11% >= 10% (1/3 in last 5 probes) [192.168.48.44=9 192.168.48.45=14]
+2026-10-24 22:34:49 degraded: mean 18% >= 10% (1/3 in last 5 probes) [192.168.48.44=9 192.168.48.45=27]
+2026-10-24 22:37:01 degraded: mean 12% >= 10% (2/3 in last 5 probes) [192.168.48.44=17 192.168.48.45=8]
+2026-10-24 22:38:08 degraded: mean 11% >= 10% (3/3 in last 5 probes) [192.168.48.44=12 192.168.48.45=11]
+2026-10-24 22:38:08 DISARMED — not bouncing; replace the optic (worst loss 12%)
+2026-10-24 23:41:48 TEST: manual testbounce requested (before: mean 0% [192.168.48.44=0 192.168.48.45=0])
+2026-10-24 23:41:48 ACTION: bouncing ix0 (reason=manual-test, link=up)
+2026-10-24 23:41:54 ACTION: ix0 bounced (reason=manual-test); cooldown 180s
+2026-10-24 23:44:51 ACTION: ix0 bounced (reason=blackout); cooldown 180s
+2026-10-24 23:45:04 TEST: testbounce FAILED — mean 0% -> 100% [192.168.48.44=100 192.168.48.45=100]
+2026-10-24 23:55:09 ACTION: ix0 bounced (reason=blackout); cooldown 180s
+2026-10-24 23:56:31 started (iface=ix0 blackout='6x30s' degraded='mean >=10% @1400B over >=2 targets, 3 of last 5 probes' min_gap=600s degraded_gap=28800s cap=8/day disarmed=1)
+2026-10-25 00:07:07 ACTION: ix0 bounced (reason=blackout); cooldown 180s
+2026-10-25 00:17:00 started (iface=ix0 blackout='6x30s' degraded='mean >=10% @1400B over >=2 targets, 3 of last 5 probes' min_gap=600s degraded_gap=28800s cap=8/day disarmed=1)
+2026-10-25 01:06:19 started (iface=ix0 blackout='6x30s' degraded='mean >=10% @1400B over >=2 targets, 3 of last 5 probes' min_gap=600s degraded_gap=28800s cap=8/day disarmed=1)
+2026-10-25 01:49:42 PAUSED by operator (ix0 degraded; awaiting DAC/port replacement (2026-10-25)) — metrics continue, no bounces
+2026-10-31 07:21:42 degraded: mean 11% >= 10% (1/3 in last 5 probes) [192.168.48.44=5 192.168.48.45=18]
+2026-10-31 14:28:19 degraded: mean 10% >= 10% (1/3 in last 5 probes) [192.168.48.44=9 192.168.48.45=11]
+2026-10-31 14:30:32 degraded: mean 18% >= 10% (2/3 in last 5 probes) [192.168.48.44=8 192.168.48.45=28]
+2026-10-31 14:31:39 degraded: mean 10% >= 10% (3/3 in last 5 probes) [192.168.48.44=11 192.168.48.45=10]
+2026-10-31 14:31:39 DISARMED — not bouncing; replace the optic (worst loss 11%)
+2026-10-31 14:32:45 degraded: mean 10% >= 10% (1/3 in last 5 probes) [192.168.48.44=6 192.168.48.45=14]
+2026-10-31 14:34:59 degraded: mean 14% >= 10% (2/3 in last 5 probes) [192.168.48.44=6 192.168.48.45=22]
+2026-10-31 14:36:05 degraded: mean 16% >= 10% (3/3 in last 5 probes) [192.168.48.44=11 192.168.48.45=21]
+2026-10-31 14:36:05 DISARMED — not bouncing; replace the optic (worst loss 21%)
+2026-10-31 14:37:11 degraded: mean 12% >= 10% (1/3 in last 5 probes) [192.168.48.44=13 192.168.48.45=12]
+2026-10-31 14:41:38 degraded: mean 17% >= 10% (2/3 in last 5 probes) [192.168.48.44=17 192.168.48.45=18]
+2026-11-02 11:57:17 degraded: mean 13% >= 10% (1/3 in last 5 probes) [192.168.48.44=5 192.168.48.45=21]
+2026-11-02 19:59:17 degraded: mean 19% >= 10% (1/3 in last 5 probes) [192.168.48.44=23 192.168.48.45=16]
+2026-11-02 20:13:30 degraded: mean 12% >= 10% (1/3 in last 5 probes) [192.168.48.44=19 192.168.48.45=5]
+2026-11-11 02:53:58 degraded: mean 12% >= 10% (1/3 in last 5 probes) [192.168.48.44=5 192.168.48.45=20]
+2026-11-11 15:38:50 started (iface=ix0 blackout='6x30s' degraded='mean >=10% @1400B over >=2 targets, 3 of last 5 probes' min_gap=600s degraded_gap=28800s cap=8/day disarmed=1)
+2026-11-11 15:39:24 recovered after 1 all-down probe(s)
+## uptime/boot
+kern.boottime: { sec = 1794436679, usec = 602445 } Wed Nov 11 15:37:59 2026
+## system.log link events ix0
+-rw-------  1 root wheel 1918561 Nov 16 14:06 /var/log/system.log
+-rw-------  1 root wheel 5121613 Nov 11 06:45 /var/log/system.log.0
+-rw-------  1 root wheel 5120945 Nov  9 23:58 /var/log/system.log.1
+-rw-------  1 root wheel  104317 Aug 21  2024 /var/log/system.log.10.gz
+-rw-------  1 root wheel   99002 Aug  5  2024 /var/log/system.log.11.gz
+-rw-------  1 root wheel   96078 Jul 28  2024 /var/log/system.log.12.gz
+-rw-------  1 root wheel   99873 Jul 27  2024 /var/log/system.log.13.gz
+-rw-------  1 root wheel  105324 Jul 19  2024 /var/log/system.log.14.gz
+-rw-------  1 root wheel   30877 Jul 18  2024 /var/log/system.log.15.gz
+-rw-------  1 root wheel   39419 Jul 18  2024 /var/log/system.log.16.gz
+-rw-------  1 root wheel   32620 Jul 18  2024 /var/log/system.log.17.gz
+-rw-------  1 root wheel   47218 Jul 18  2024 /var/log/system.log.18.gz
+-rw-------  1 root wheel   36365 Jul 18  2024 /var/log/system.log.19.gz
+-rw-------  1 root wheel 5119796 Nov  8 16:44 /var/log/system.log.2
+-rw-------  1 root wheel   37023 Jul 18  2024 /var/log/system.log.20.gz
+-rw-------  1 root wheel   37685 Jul 18  2024 /var/log/system.log.21.gz
+-rw-------  1 root wheel   31920 Jul 18  2024 /var/log/system.log.22.gz
+-rw-------  1 root wheel   28369 Jul 18  2024 /var/log/system.log.23.gz
+-rw-------  1 root wheel   25289 Jul 18  2024 /var/log/system.log.24.gz
+-rw-------  1 root wheel 5120126 Nov  7 09:30 /var/log/system.log.3
+-rw-------  1 root wheel 5120931 Nov  6 01:47 /var/log/system.log.4
+-rw-------  1 root wheel 5120525 Nov  4 18:23 /var/log/system.log.5
+-rw-------  1 root wheel  112639 Oct 28  2024 /var/log/system.log.7.gz
+-rw-------  1 root wheel  124344 Oct 14  2024 /var/log/system.log.8.gz
+-rw-------  1 root wheel  109052 Sep 12  2024 /var/log/system.log.9.gz
+Nov 11 15:38:17 pfsense kernel: ix0: Using MSI-X interrupts with 9 vectors
+Nov 11 15:38:17 pfsense kernel: ix0: allocated for 8 queues
+Nov 11 15:38:17 pfsense kernel: ix0: allocated for 8 rx queues
+Nov 11 15:38:17 pfsense kernel: ix0: Ethernet address: a8:b8:e0:03:70:35
+Nov 11 15:38:17 pfsense kernel: ix0: PCI Express Bus: Speed 5.0GT/s Width x4
+Nov 11 15:38:17 pfsense kernel: ix0: eTrack 0x800003de
+Nov 11 15:38:17 pfsense kernel: ix0: netmap queues/slots: TX 8/2048, RX 8/2048
+Nov 11 15:38:53 pfsense ix0-watchdog[68569]: all LAN targets unreachable (1/6, link=down)
+Nov 11 15:39:24 pfsense kernel: ix0: link state changed to UP
+Nov 11 15:39:24 pfsense kernel: ix0.205: link state changed to UP
+Nov 11 15:39:24 pfsense kernel: ix0.10: link state changed to UP
+Nov 11 15:39:24 pfsense kernel: ix0.28: link state changed to UP
+Nov 11 15:39:24 pfsense kernel: ix0.105: link state changed to UP
+Nov 11 15:39:28 pfsense node_exporter[10034]: time=2026-11-11T15:39:28.145-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 15:39:32 pfsense node_exporter[73716]: time=2026-11-11T15:39:32.372-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 15:39:43 pfsense node_exporter[40084]: time=2026-11-11T15:39:43.144-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 15:39:47 pfsense node_exporter[40084]: time=2026-11-11T15:39:47.371-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 15:39:58 pfsense node_exporter[40084]: time=2026-11-11T15:39:58.142-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 21:32:56 pfsense kernel: ix0: link state changed to DOWN
+Nov 11 21:32:56 pfsense kernel: ix0.205: link state changed to DOWN
+Nov 11 21:32:56 pfsense kernel: ix0.10: link state changed to DOWN
+Nov 11 21:32:56 pfsense kernel: ix0.28: link state changed to DOWN
+Nov 11 21:32:56 pfsense kernel: ix0.105: link state changed to DOWN
+Nov 11 21:32:56 pfsense kernel: ix0: link state changed to UP
+Nov 11 21:32:56 pfsense kernel: ix0.205: link state changed to UP
+Nov 11 21:32:56 pfsense kernel: ix0.10: link state changed to UP
+Nov 11 21:32:56 pfsense kernel: ix0.28: link state changed to UP
+Nov 11 21:32:56 pfsense kernel: ix0.105: link state changed to UP
+Nov 14 15:06:42 pfsense kernel: ix0: promiscuous mode enabled
+Nov 14 15:06:57 pfsense kernel: ix0: promiscuous mode disabled
+## rotated
+Nov 11 06:43:13 pfsense node_exporter[3624]: time=2026-11-11T06:43:13.145-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:43:17 pfsense node_exporter[3624]: time=2026-11-11T06:43:17.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:43:28 pfsense node_exporter[3624]: time=2026-11-11T06:43:28.144-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:43:32 pfsense node_exporter[3624]: time=2026-11-11T06:43:32.369-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:43:43 pfsense node_exporter[3624]: time=2026-11-11T06:43:43.145-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:43:47 pfsense node_exporter[3624]: time=2026-11-11T06:43:47.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:43:58 pfsense node_exporter[3624]: time=2026-11-11T06:43:58.144-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:44:02 pfsense node_exporter[3624]: time=2026-11-11T06:44:02.375-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:44:13 pfsense node_exporter[3624]: time=2026-11-11T06:44:13.143-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:44:17 pfsense node_exporter[3624]: time=2026-11-11T06:44:17.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:44:28 pfsense node_exporter[3624]: time=2026-11-11T06:44:28.146-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:44:32 pfsense node_exporter[3624]: time=2026-11-11T06:44:32.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:44:43 pfsense node_exporter[3624]: time=2026-11-11T06:44:43.144-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:44:47 pfsense node_exporter[3624]: time=2026-11-11T06:44:47.374-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov 11 06:44:58 pfsense node_exporter[3624]: time=2026-11-11T06:44:58.144-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:56:13 pfsense node_exporter[3624]: time=2026-11-09T23:56:13.144-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:56:17 pfsense node_exporter[3624]: time=2026-11-09T23:56:17.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:56:28 pfsense node_exporter[3624]: time=2026-11-09T23:56:28.143-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:56:32 pfsense node_exporter[3624]: time=2026-11-09T23:56:32.374-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:56:43 pfsense node_exporter[3624]: time=2026-11-09T23:56:43.143-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:56:47 pfsense node_exporter[3624]: time=2026-11-09T23:56:47.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:56:58 pfsense node_exporter[3624]: time=2026-11-09T23:56:58.144-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:57:02 pfsense node_exporter[3624]: time=2026-11-09T23:57:02.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:57:13 pfsense node_exporter[3624]: time=2026-11-09T23:57:13.143-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:57:17 pfsense node_exporter[3624]: time=2026-11-09T23:57:17.371-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:57:28 pfsense node_exporter[3624]: time=2026-11-09T23:57:28.143-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:57:32 pfsense node_exporter[3624]: time=2026-11-09T23:57:32.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:57:43 pfsense node_exporter[3624]: time=2026-11-09T23:57:43.144-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:57:47 pfsense node_exporter[3624]: time=2026-11-09T23:57:47.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  9 23:57:58 pfsense node_exporter[3624]: time=2026-11-09T23:57:58.143-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+<6>1 2024-07-18T12:03:21.872572-06:00 pfsense.admin.lcamaral.com kernel - - - ix0: link state changed to UP
+<6>1 2024-07-18T12:03:21.872579-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.205: link state changed to UP
+<6>1 2024-07-18T12:03:21.872585-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.10: link state changed to UP
+<6>1 2024-07-18T12:03:21.872590-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.28: link state changed to UP
+<6>1 2024-07-18T12:03:21.872596-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.105: link state changed to UP
+<6>1 2024-07-18T13:11:12.636807-06:00 pfsense.admin.lcamaral.com kernel - - - ix0: link state changed to DOWN
+<6>1 2024-07-18T13:11:12.636895-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.205: link state changed to DOWN
+<6>1 2024-07-18T13:11:12.636950-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.10: link state changed to DOWN
+<6>1 2024-07-18T13:11:12.636994-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.28: link state changed to DOWN
+<6>1 2024-07-18T13:11:12.637035-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.105: link state changed to DOWN
+<6>1 2024-07-18T13:13:00.568795-06:00 pfsense.admin.lcamaral.com kernel - - - ix0: link state changed to UP
+<6>1 2024-07-18T13:13:00.568858-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.205: link state changed to UP
+<6>1 2024-07-18T13:13:00.568907-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.10: link state changed to UP
+<6>1 2024-07-18T13:13:00.568950-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.28: link state changed to UP
+<6>1 2024-07-18T13:13:00.568990-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.105: link state changed to UP
+<2>1 2024-07-18T10:38:58.160449-06:00 pfsense.admin.lcamaral.com kernel - - - ix0: <Intel(R) X520 82599ES (SFI/SFP+)> port 0x3020-0x303f mem 0x81120000-0x8113ffff,0x81144000-0x81147fff at device 0.0 on pci1
+<6>1 2024-07-18T10:38:58.987310-06:00 pfsense.admin.lcamaral.com kernel - - - ix0: link state changed to UP
+<6>1 2024-07-18T10:38:58.987318-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.205: link state changed to UP
+<6>1 2024-07-18T10:38:58.987324-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.10: link state changed to UP
+<6>1 2024-07-18T10:38:58.987329-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.28: link state changed to UP
+<6>1 2024-07-18T10:38:58.987335-06:00 pfsense.admin.lcamaral.com kernel - - - ix0.105: link state changed to UP
+Nov  8 16:42:13 pfsense node_exporter[3624]: time=2026-11-08T16:42:13.140-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:42:17 pfsense node_exporter[3624]: time=2026-11-08T16:42:17.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:42:28 pfsense node_exporter[3624]: time=2026-11-08T16:42:28.141-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:42:32 pfsense node_exporter[3624]: time=2026-11-08T16:42:32.371-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:42:43 pfsense node_exporter[3624]: time=2026-11-08T16:42:43.140-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:42:47 pfsense node_exporter[3624]: time=2026-11-08T16:42:47.375-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:42:58 pfsense node_exporter[3624]: time=2026-11-08T16:42:58.139-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:43:02 pfsense node_exporter[3624]: time=2026-11-08T16:43:02.372-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:43:13 pfsense node_exporter[3624]: time=2026-11-08T16:43:13.142-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:43:17 pfsense node_exporter[3624]: time=2026-11-08T16:43:17.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:43:28 pfsense node_exporter[3624]: time=2026-11-08T16:43:28.139-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:43:32 pfsense node_exporter[3624]: time=2026-11-08T16:43:32.375-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:43:43 pfsense node_exporter[3624]: time=2026-11-08T16:43:43.139-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:43:47 pfsense node_exporter[3624]: time=2026-11-08T16:43:47.371-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  8 16:43:58 pfsense node_exporter[3624]: time=2026-11-08T16:43:58.140-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:28:13 pfsense node_exporter[3624]: time=2026-11-07T09:28:13.138-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:28:17 pfsense node_exporter[3624]: time=2026-11-07T09:28:17.372-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:28:28 pfsense node_exporter[3624]: time=2026-11-07T09:28:28.137-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:28:32 pfsense node_exporter[3624]: time=2026-11-07T09:28:32.372-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:28:43 pfsense node_exporter[3624]: time=2026-11-07T09:28:43.137-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:28:47 pfsense node_exporter[3624]: time=2026-11-07T09:28:47.371-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:28:58 pfsense node_exporter[3624]: time=2026-11-07T09:28:58.136-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:29:02 pfsense node_exporter[3624]: time=2026-11-07T09:29:02.372-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:29:13 pfsense node_exporter[3624]: time=2026-11-07T09:29:13.140-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:29:17 pfsense node_exporter[3624]: time=2026-11-07T09:29:17.372-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:29:28 pfsense node_exporter[3624]: time=2026-11-07T09:29:28.135-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:29:32 pfsense node_exporter[3624]: time=2026-11-07T09:29:32.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:29:43 pfsense node_exporter[3624]: time=2026-11-07T09:29:43.137-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:29:47 pfsense node_exporter[3624]: time=2026-11-07T09:29:47.371-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  7 09:29:58 pfsense node_exporter[3624]: time=2026-11-07T09:29:58.139-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:45:13 pfsense node_exporter[3624]: time=2026-11-06T01:45:13.138-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:45:17 pfsense node_exporter[3624]: time=2026-11-06T01:45:17.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:45:28 pfsense node_exporter[3624]: time=2026-11-06T01:45:28.139-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:45:32 pfsense node_exporter[3624]: time=2026-11-06T01:45:32.572-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:45:43 pfsense node_exporter[3624]: time=2026-11-06T01:45:43.141-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:45:47 pfsense node_exporter[3624]: time=2026-11-06T01:45:47.372-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:45:58 pfsense node_exporter[3624]: time=2026-11-06T01:45:58.139-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:46:02 pfsense node_exporter[3624]: time=2026-11-06T01:46:02.374-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:46:13 pfsense node_exporter[3624]: time=2026-11-06T01:46:13.139-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:46:17 pfsense node_exporter[3624]: time=2026-11-06T01:46:17.372-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:46:28 pfsense node_exporter[3624]: time=2026-11-06T01:46:28.140-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:46:32 pfsense node_exporter[3624]: time=2026-11-06T01:46:32.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:46:43 pfsense node_exporter[3624]: time=2026-11-06T01:46:43.139-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:46:47 pfsense node_exporter[3624]: time=2026-11-06T01:46:47.374-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  6 01:46:58 pfsense node_exporter[3624]: time=2026-11-06T01:46:58.139-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:21:13 pfsense node_exporter[3624]: time=2026-11-04T18:21:13.139-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:21:17 pfsense node_exporter[3624]: time=2026-11-04T18:21:17.372-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:21:28 pfsense node_exporter[3624]: time=2026-11-04T18:21:28.140-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:21:32 pfsense node_exporter[3624]: time=2026-11-04T18:21:32.372-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:21:43 pfsense node_exporter[3624]: time=2026-11-04T18:21:43.138-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:21:47 pfsense node_exporter[3624]: time=2026-11-04T18:21:47.373-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:21:58 pfsense node_exporter[3624]: time=2026-11-04T18:21:58.138-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:22:02 pfsense node_exporter[3624]: time=2026-11-04T18:22:02.372-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:22:13 pfsense node_exporter[3624]: time=2026-11-04T18:22:13.139-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:22:17 pfsense node_exporter[3624]: time=2026-11-04T18:22:17.372-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:22:28 pfsense node_exporter[3624]: time=2026-11-04T18:22:28.140-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:22:32 pfsense node_exporter[3624]: time=2026-11-04T18:22:32.372-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:22:43 pfsense node_exporter[3624]: time=2026-11-04T18:22:43.139-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:22:47 pfsense node_exporter[3624]: time=2026-11-04T18:22:47.374-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"
+Nov  4 18:22:58 pfsense node_exporter[3624]: time=2026-11-04T18:22:58.138-07:00 level=ERROR source=textfile.go:242 msg="failed to collect textfile data" collector=textfile file=ix0_link.prom err="failed to parse textfile data from \"/var/tmp/node_exporter/ix0_link.prom\": text format parsing error in line 7: invalid metric name"

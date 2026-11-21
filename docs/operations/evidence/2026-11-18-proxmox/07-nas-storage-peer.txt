@@ -1,0 +1,45 @@
+Collection started UTC: 2026-11-18T17:01:08.051363+00:00
+Collection ended UTC: 2026-11-18T17:01:09.313050+00:00
+Source: SSH nas; read-only, no sudo on NAS
+Scope: 07-nas-storage-peer
+Exit status: 0
+Commands:
+
+date -u +%Y-%m-%dT%H:%M:%SZ
+hostname
+id
+df -h /volume2 /volume2/shared /volume2/shared/80.Backups/pve
+stat -f /volume2 /volume2/shared /volume2/shared/80.Backups/pve
+
+
+OUTPUT:
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+2026-11-18T17:01:09Z
+nas
+uid=1027(lamaral) gid=100(users) groups=100(users),101(administrators),65536(SSS_Administrator),65538(shared),65539(docker)
++ date -u +%Y-%m-%dT%H:%M:%SZ
++ hostname
++ id
++ df -h /volume2 /volume2/shared /volume2/shared/80.Backups/pve
+Filesystem              Size  Used Avail Use% Mounted on
+/dev/mapper/cachedev_0   25T   20T  5.3T  79% /volume2
+-                        25T   20T  5.3T  79% /volume2/shared
+-                        25T   20T  5.3T  79% /volume2/shared
+  File: "/volume2"
+    ID: 7e9d059fa11df135 Namelen: 255     Type: btrfs
+Block size: 4096       Fundamental block size: 4096
+Blocks: Total: 6553180570 Free: 1418344045 Available: 1418344045
+Inodes: Total: 0          Free: 0
+  File: "/volume2/shared"
+    ID: 7e9d059fa11df133 Namelen: 255     Type: btrfs
+Block size: 4096       Fundamental block size: 4096
+Blocks: Total: 6553180570 Free: 1418344045 Available: 1418344045
+Inodes: Total: 0          Free: 0
+  File: "/volume2/shared/80.Backups/pve"
+    ID: 7e9d059fa11df133 Namelen: 255     Type: btrfs
+Block size: 4096       Fundamental block size: 4096
+Blocks: Total: 6553180570 Free: 1418344045 Available: 1418344045
+Inodes: Total: 0          Free: 0
++ stat -f /volume2 /volume2/shared /volume2/shared/80.Backups/pve

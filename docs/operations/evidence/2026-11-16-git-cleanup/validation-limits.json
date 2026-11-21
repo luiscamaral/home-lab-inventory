@@ -1,0 +1,7 @@
+{
+  "collected_at": "2026-11-17T00:33:31.907735+00:00",
+  "command": "gitleaks dir docs/operations/evidence/2026-11-16-git-cleanup --redact=100 --no-banner --report-format=json --report-path=/tmp/inventory-git-cleanup-gitleaks.json",
+  "exit_code": 1,
+  "result": "Scan did not run. Mise shim has no configured gitleaks version. No installation or global tool change attempted. Evidence was limited to metadata and selected non-secret source text.",
+  "source": "local tool invocation"
+}
