@@ -56,7 +56,12 @@ TMP="$(mktemp "$DIR/ix0_link.XXXXXX")" || exit 1
 trap 'rm -f "$TMP"' EXIT HUP INT TERM
 
 if ifconfig "$IFACE" 2>/dev/null | grep -q "status: active"; then UP=1; else UP=0; fi
-FLAPS=$(grep -c "$IFACE: link state changed to UP" "$LOG" 2>/dev/null || echo 0)
+# grep -c prints the count (0 included) but exits 1 on zero matches, so an
+# "|| echo 0" fallback appends a second "0" line. That stray line made the whole
+# .prom file unparseable (node_textfile_scrape_error=1), dropping every ix0
+# link/fault series from Prometheus. Default only when grep printed nothing.
+FLAPS=$(grep -c "$IFACE: link state changed to UP" "$LOG" 2>/dev/null)
+FLAPS=${FLAPS:-0}
 
 last_evt() { grep "$IFACE: link state changed to $1" "$LOG" 2>/dev/null | tail -1 | awk '{print $1, $2, $3}'; }
 to_epoch() { [ -n "$1" ] && date -j -f "%b %d %H:%M:%S" "$1 $(date +%H:%M:%S)" +%s 2>/dev/null; }
