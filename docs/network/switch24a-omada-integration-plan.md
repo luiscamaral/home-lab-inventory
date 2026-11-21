@@ -147,7 +147,7 @@ silently dropped. **Tier-1 fixes applied and verified (no outage):**
 | IGMP snooping | enabled on Home / Servers / GuestWifi / IoT networks |
 | NTP | controller VM 100 `systemd-timesyncd` → **pfSense `192.168.32.33`** (public fallback kept). The switch gets pfSense time via the controller — Omada SDN has no per-device NTP UI. |
 | SNMP | SNMPv1/v2c enabled; community in Vault `secret/homelab/switch24a` field `snmp_community` — feeds the homelab `snmp_exporter` |
-| Syslog | remote log → **`192.168.1.50:514`** |
+| Syslog | Omada site setting `remoteLog` → `192.168.1.50:514` is on, **but it does not carry switch logs**. The NAS has received nothing from the switch since the adoption (last row 2026-06-18 23:07). Omada lists "Syslog Server N/A" for controller-managed devices. Use SNMP alerts instead (`terraform/portainer/locals.tf`, group `switch24a`). Evidence: `docs/network/evidence/2026-11-21-switch-syslog-to-nas.md` |
 | LLDP | enabled (topology) |
 
 API notes for next time: networks/profiles PATCH need the **minimal create-style body** (full GET
