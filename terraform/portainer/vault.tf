@@ -98,6 +98,11 @@ data "vault_kv_secret_v2" "registry" {
   name  = "homelab/registry"
 }
 
+data "vault_kv_secret_v2" "zot" {
+  mount = "secret"
+  name  = "homelab/zot"
+}
+
 data "vault_kv_secret_v2" "smtp" {
   mount = "secret"
   name  = "homelab/smtp"
@@ -130,6 +135,29 @@ data "vault_kv_secret_v2" "thanos" {
 data "vault_kv_secret_v2" "alertmanager_smtp" {
   mount = "secret"
   name  = "homelab/alertmanager/smtp"
+}
+
+# Telegram push alerting (2026-06-30). Bot created via @BotFather; the bot is
+# added to a private group/channel and `chat_id` is that conversation's id
+# (negative for groups, -100… for channels/supergroups). Alertmanager's
+# telegram_configs reach out to api.telegram.org directly (AM sits on
+# docker-servers-net, which has internet egress). Fields: bot_token, chat_id.
+#
+# SECURITY NOTE: bot_token is rendered into the alertmanager stack via docker
+# `configs:` (baked into the compose body Portainer stores), same tradeoff as
+# ha_metrics_token / minio_metrics_jwt above. Acceptable for the homelab
+# blast-radius; rotate by re-issuing the token in BotFather and `vault kv put`.
+data "vault_kv_secret_v2" "telegram" {
+  mount = "secret"
+  name  = "homelab/telegram/alertmanager"
+}
+
+# switch24a (TP-Link TL-SG3428X) SNMP v2c read community for the
+# snmp-exporter `switch24a_v2` auth. Field used: snmp_community. Passed to
+# the snmp-exporter stack as env, not baked into the compose body.
+data "vault_kv_secret_v2" "switch24a" {
+  mount = "secret"
+  name  = "homelab/switch24a"
 }
 
 # Proxmox API token for pve-exporter (Phase 3c). The exporter uses an
@@ -170,4 +198,11 @@ data "vault_kv_secret_v2" "ha_metrics_token" {
 data "vault_kv_secret_v2" "minio_metrics_jwt" {
   mount = "secret"
   name  = "homelab/minio/metrics_jwt"
+}
+
+# Project NOMAD (ds-2). Fields: app_key, db_password, mysql_root_password,
+# cli_proxy_api_key, antigravity_auth_json (subscription OAuth via CLIProxyAPI).
+data "vault_kv_secret_v2" "nomad" {
+  mount = "secret"
+  name  = "homelab/nomad"
 }

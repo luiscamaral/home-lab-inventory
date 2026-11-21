@@ -1,0 +1,69 @@
+name: snmp-exporter
+
+# snmp-exporter on ds-1 — generic SNMP metrics gateway used by the Prometheus
+# `snmp_exporter` job pattern (relabel __address__ to the SNMP target, point
+# Prometheus at this service, exporter walks the device).
+#
+# Decoupled from the legacy prometheus stack. Currently scrapes pfSense via
+# the pfsense module (defined in snmp.yml).
+#
+# Config note: the generated snmp.yml is ~17k lines and tool-produced — too
+# large to inline via configs:. We bind-mount it from a stable path on the
+# ds-1 NFS share at /nfs/dockermaster/docker/snmp-exporter/snmp.yml. This
+# file was regenerated from the legacy v0.20-era snmp.yml by wrapping
+# modules under `modules:` and extracting per-module `auth:`/`version:`
+# blocks into a top-level `auths:` map (v0.30 schema, see
+# https://github.com/prometheus/snmp_exporter/blob/main/auth-split-migration.md).
+# `auths.public_v2.community` carries the pfSense community string so the
+# default (no `auth_module` param) prometheus scrape just works.
+#
+# switch24a (2026-11-16): a second config file holds the `switch24a`
+# module and `switch24a_v2` auth. Terraform renders it from
+# dockermaster/docker/snmp-exporter/snmp-switch24a.yml into the
+# `configs:` block below. Its community is the Compose variable
+# SWITCH24A_SNMP_COMMUNITY. Terraform sets it in the stack env from
+# Vault secret/homelab/switch24a, so the secret is not in this file.
+
+configs:
+  snmp_switch24a_yml:
+    content: |
+      ${indent(6, switch24a_config)}
+
+networks:
+  servers-net:
+    name: docker-servers-net
+    external: true
+
+services:
+  snmp-exporter:
+    image: quay.io/prometheus/snmp-exporter:v0.30.1
+    hostname: snmp-exporter
+    networks:
+      servers-net:
+        # IP picked from 192.168.59.0/26 free pool (see stacks.tf header)
+        ipv4_address: 192.168.59.29
+    command:
+      - '--config.file=/etc/snmp_exporter/snmp.yml'
+      - '--config.file=/etc/snmp_exporter/snmp-switch24a.yml'
+      - '--web.listen-address=:9116'
+    volumes:
+      - /nfs/dockermaster/docker/snmp-exporter/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
+    configs:
+      - source: snmp_switch24a_yml
+        target: /etc/snmp_exporter/snmp-switch24a.yml
+        mode: 0444
+    expose:
+      - "9116"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9116/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "snmp-exporter"
+      com.docker.service: "snmp-exporter"
+      portainer.autodeploy: "false"

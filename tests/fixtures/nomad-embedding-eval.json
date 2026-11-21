@@ -1,0 +1,194 @@
+{
+  "description": "Synthetic smoke corpus with short English technical and survival chunks and English/Portuguese relevance-labelled queries. NOT proof of real production gain. Labels are handcrafted, not independently adjudicated.",
+  "documents": [
+    {
+      "id": "water-treatment",
+      "text": "Emergency drinking water: strain cloudy water through a clean cloth, then bring it to a rolling boil for one minute, or three minutes above 2000 metres. Boiling kills pathogens but does not remove dissolved chemicals or salt."
+    },
+    {
+      "id": "water-storage",
+      "text": "Store emergency drinking water in clean food-grade sealed containers, protected from heat and sunlight. Label the filling date and rotate supplies. Keep treated water separate from untreated sources to prevent recontamination."
+    },
+    {
+      "id": "hypothermia",
+      "text": "Hypothermia can develop in cold rain. Move the person out of wind, replace wet clothes with dry layers, insulate from the ground, and warm the torso gently. Confusion and reduced shivering are warning signs requiring urgent medical help."
+    },
+    {
+      "id": "heat-illness",
+      "text": "Heat stroke is an emergency: confusion or collapse during hot weather requires urgent medical care and immediate cooling. Move to shade, remove excess clothing, and cool the body with water while help is coming."
+    },
+    {
+      "id": "navigation",
+      "text": "For wilderness navigation, use a topographic map and compass. Adjust for local magnetic declination. Identify landmarks and take bearings before moving; GPS batteries may fail, so keep a paper map as backup."
+    },
+    {
+      "id": "shelter",
+      "text": "Choose a wilderness shelter site away from dead branches, flash-flood channels, and exposed ridges. Use a waterproof cover and insulation underneath. Never run a fuel-burning stove inside a sealed shelter because carbon monoxide can accumulate."
+    },
+    {
+      "id": "bleeding",
+      "text": "For severe external bleeding, call emergency services and apply firm direct pressure with a clean dressing. Keep pressure on the wound. Life-threatening limb bleeding may require a commercial tourniquet used according to training."
+    },
+    {
+      "id": "radio",
+      "text": "During a communications outage, a battery-powered radio can receive public emergency broadcasts. Conserve battery power with scheduled listening. Two-way radio range depends on terrain, antenna placement, frequency, and permitted transmit power."
+    },
+    {
+      "id": "dns",
+      "text": "DNS maps hostnames to IP addresses. When a service works by IP but not by name, query the configured resolver, inspect cached records and TTL, and compare authoritative answers. A DNS failure is different from a refused TCP connection."
+    },
+    {
+      "id": "backups",
+      "text": "A resilient backup strategy keeps multiple copies on different media, including an offline or immutable off-site copy. Test restoration regularly and record recovery time. RAID improves disk availability but is not a substitute for backups."
+    },
+    {
+      "id": "battery",
+      "text": "Estimate battery runtime from usable watt-hours divided by average load in watts, accounting for inverter losses and temperature. A UPS provides temporary power during an outage; test safe shutdown before the battery is exhausted."
+    },
+    {
+      "id": "solar",
+      "text": "An off-grid solar charge controller regulates energy from photovoltaic panels into a battery. Match battery chemistry and voltage, use correctly rated fuses, and size cables for current and voltage drop. An MPPT controller tracks the panel maximum power point."
+    },
+    {
+      "id": "containers",
+      "text": "Container health checks test application readiness rather than only process existence. Inspect service logs and network connectivity when a container is unhealthy. Persistent data belongs in volumes; recreating a container must not erase its database."
+    },
+    {
+      "id": "embeddings",
+      "text": "Dense text embeddings map documents and queries into numeric vectors. Cosine similarity ranks vectors by angle. Query and document vectors must use the same embedding model and dimension; switching models requires rebuilding the search index."
+    }
+  ],
+  "queries": [
+    {
+      "id": "water-en",
+      "language": "en",
+      "relevant": [
+        "water-treatment"
+      ],
+      "text": "How do I make cloudy stream water safe from microbes?"
+    },
+    {
+      "id": "water-pt",
+      "language": "pt",
+      "relevant": [
+        "water-treatment"
+      ],
+      "text": "Como tornar a \u00e1gua turva de um riacho segura contra micr\u00f3bios?"
+    },
+    {
+      "id": "cold-en",
+      "language": "en",
+      "relevant": [
+        "hypothermia"
+      ],
+      "text": "Someone is confused and soaked after walking in cold rain. What should we do?"
+    },
+    {
+      "id": "cold-pt",
+      "language": "pt",
+      "relevant": [
+        "hypothermia"
+      ],
+      "text": "Uma pessoa est\u00e1 confusa e encharcada depois de caminhar na chuva fria. O que fazer?"
+    },
+    {
+      "id": "map-en",
+      "language": "en",
+      "relevant": [
+        "navigation"
+      ],
+      "text": "How can I navigate when my GPS battery dies?"
+    },
+    {
+      "id": "map-pt",
+      "language": "pt",
+      "relevant": [
+        "navigation"
+      ],
+      "text": "Como me orientar na mata quando a bateria do GPS acaba?"
+    },
+    {
+      "id": "dns-en",
+      "language": "en",
+      "relevant": [
+        "dns"
+      ],
+      "text": "My server is reachable by IP address but its hostname does not resolve. What should I check?"
+    },
+    {
+      "id": "dns-pt",
+      "language": "pt",
+      "relevant": [
+        "dns"
+      ],
+      "text": "Consigo acessar o servidor pelo endere\u00e7o IP, mas o nome n\u00e3o resolve. O que verificar?"
+    },
+    {
+      "id": "backup-en",
+      "language": "en",
+      "relevant": [
+        "backups"
+      ],
+      "text": "Does RAID replace offline backups and restore testing?"
+    },
+    {
+      "id": "backup-pt",
+      "language": "pt",
+      "relevant": [
+        "backups"
+      ],
+      "text": "RAID substitui c\u00f3pias de seguran\u00e7a offline e testes de restaura\u00e7\u00e3o?"
+    },
+    {
+      "id": "power-en",
+      "language": "en",
+      "relevant": [
+        "battery",
+        "solar"
+      ],
+      "text": "How should I plan battery capacity and solar charging for off-grid emergency power?"
+    },
+    {
+      "id": "power-pt",
+      "language": "pt",
+      "relevant": [
+        "battery",
+        "solar"
+      ],
+      "text": "Como planejar a capacidade da bateria e a recarga solar para energia de emerg\u00eancia fora da rede?"
+    },
+    {
+      "id": "embedding-en",
+      "language": "en",
+      "relevant": [
+        "embeddings"
+      ],
+      "text": "Can I mix query vectors from a new model with an existing document index?"
+    },
+    {
+      "id": "embedding-pt",
+      "language": "pt",
+      "relevant": [
+        "embeddings"
+      ],
+      "text": "Posso misturar vetores de consulta de um modelo novo com um \u00edndice de documentos antigo?"
+    },
+    {
+      "id": "shelter-en",
+      "language": "en",
+      "relevant": [
+        "shelter"
+      ],
+      "text": "Where should I pitch an emergency shelter and why must I avoid using a stove inside?"
+    },
+    {
+      "id": "shelter-pt",
+      "language": "pt",
+      "relevant": [
+        "shelter"
+      ],
+      "text": "Onde devo montar um abrigo de emerg\u00eancia e por que n\u00e3o devo usar um fogareiro dentro?"
+    }
+  ],
+  "synthetic_smoke_corpus": true
+}

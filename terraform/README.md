@@ -31,25 +31,34 @@ Terraform configurations for managing the homelab infrastructure.
 
 ```text
 terraform/
-  cloudflare/              # Cloudflare zone, DNS, tunnels + DreamHost delegation
+  cloudflare/              # Cloudflare zone, DNS, tunnels + DreamHost *.cf.lcamaral.com delegation
+  circunflexo/             # circunflexo.com DNS on DreamHost (independent domain, Google Workspace mail)
   portainer/               # Portainer stacks, settings, registries
     stacks/                # Compose files referenced by Portainer stack resources
   vault/                   # Vault secret engines, policies, auth methods
   modules/
     cf-service/            # Reusable module: DNS record for *.cf.lcamaral.com
+  lab-network/             # ⚠️ script-managed FRR-on-Debian lab router — NOT a Terraform root
 ```
 
-Each directory is an **independent Terraform root** with its own state, providers,
+Each **Terraform root** directory is independent, with its own state, providers,
 and `terraform apply`. This isolation prevents failures in one domain from blocking
 changes in another.
+
+> **Exception — `lab-network/` is not a Terraform root.** It provisions the FRR-on-Debian
+> inter-segment router via `bootstrap-lab-router.sh` + cloud-init (no `.tf`, no state, no
+> `terraform apply`) because `bpg/proxmox` needs root-level SSH the host disallows. Do not run
+> `terraform init/apply` there. See `lab-network/README.md`.
 
 ## Quick Reference
 
 | Directory | Providers | What it manages |
 |-----------|-----------|-----------------|
-| `cloudflare/` | Cloudflare, DreamHost | Zone, DNS, tunnel, ingress, wildcard CNAME |
+| `cloudflare/` | Cloudflare, DreamHost | Zone, DNS, tunnel, ingress, `*.cf.lcamaral.com` wildcard CNAME |
+| `circunflexo/` | DreamHost | circunflexo.com SPF + DKIM (no Cloudflare dependency) |
 | `portainer/` | Portainer, Vault | Docker stacks, settings, users |
 | `vault/` | HashiCorp Vault | Secret engines, policies |
+| `lab-network/` | _none — script-managed_ | FRR-on-Debian lab router (NOT a Terraform root) |
 
 ## Prerequisites
 
@@ -99,6 +108,20 @@ terraform plan
 terraform apply
 ```
 
+### Provider lock files
+
+Every root commits its `.terraform.lock.hcl` (hashes for `darwin_arm64` and
+`linux_amd64`). All checkouts and worktrees share the same local state files, so they
+must all use the same provider versions. An older provider can't decode attributes a
+newer one wrote (for example portainer `source_id`, or the keycloak client schema v1).
+
+- After pulling or creating a worktree, run `terraform init`. It installs exactly the
+  locked versions. Never run `init -upgrade` outside a PR.
+- To upgrade a provider, do it in a PR: bump the constraint if needed, then run
+  `terraform init -upgrade` and
+  `terraform providers lock -platform=darwin_arm64 -platform=linux_amd64`. Commit the
+  lock file, and re-init every checkout after the PR merges.
+
 ### Adding a New Service Behind Cloudflare Tunnel
 
 1. **Cloudflare DNS** -- add a `cf-service` module call in `cloudflare/main.tf`:
@@ -124,8 +147,13 @@ terraform apply
    },
    ```
 
-3. **Nginx vhost** -- create `myservice.cf.lcamaral.com.conf` on dockermaster
-   at `/nfs/dockermaster/docker/nginx-rproxy/config/vhost.d/`
+3. **Nginx vhost** -- add `myservice.cf.lcamaral.com.conf` to the repo at
+   `dockermaster/docker/compose/nginx-rproxy/vhost.d/`, or add the `.cf` name to an
+   existing vhost's `server_name`. Terraform renders that directory into the three
+   rproxy stacks as Compose `configs:`. Never copy vhosts to the host. After
+   `terraform apply`, run `scripts/portainer-redeploy.py` on `reverse-proxy-3`, then
+   `reverse-proxy-2`, then `reverse-proxy`, one at a time. The provider doesn't
+   recreate containers on `configs:`-only changes.
 
 4. **Portainer stack** -- add a `portainer_stack` resource in `portainer/stacks.tf`
    with the compose file in `portainer/stacks/`
@@ -141,7 +169,9 @@ terraform apply
    }
    ```
 
-6. Apply both directories:
+6. Apply both directories, Cloudflare first. Use `-target` for the resources you
+   changed (see `cloudflare/README.md` for known drift and the token IP-filter
+   gotcha):
 
    ```bash
    cd terraform/cloudflare && terraform apply

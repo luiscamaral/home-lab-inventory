@@ -1,13 +1,46 @@
 name: calibre
 
+# Calibre desktop (Selkies) + calibre-web reader on dockerserver-1.
+#
+# Desktop access is HTTPS-ONLY. linuxserver/calibre moved its remote-desktop
+# layer from KasmVNC to Selkies; Selkies needs a browser secure context, so
+# plain http://192.168.59.7:8080 now loads the sidebar and then fails with
+# "This application requires a secure connection (HTTPS)". Use:
+#   https://calibre.d.lcamaral.com     (nginx-rproxy → https://192.168.59.7:8181)
+#   https://192.168.59.7:8181          (direct, self-signed cert)
+#
+# Image is pinned (not :latest + Watchtower). The KasmVNC→Selkies swap
+# arrived silently via Watchtower and broke the documented access URL;
+# pinning makes base-image changes a reviewed diff. First pinned at
+# v9.11.0-ls413 (the digest then running, sha256:150db5b3…); bumped
+# 2026-10-17 to v9.16.0-ls427 (same ports 8080/8181, HOME=/config, still
+# Selkies; only the encoder list grew), then 2026-10-30 to v9.17.0-ls430
+# (image config byte-identical to ls427). Bump deliberately and verify the
+# UI over HTTPS, not just a status code.
+#
+# 10-keyboard.conf is delivered via Compose `configs:` instead of a host
+# bind-mount. The previous bind source on the NFS share
+# (/nfs/dockermaster/docker/calibre-server/10-keyboard.conf) was silently
+# replaced by an empty directory on 2026-05-11, breaking the file→file mount
+# and putting the container into Exited (127) for ~2 weeks. The original
+# content lives in `_archive/calibre-server/10-keyboard.conf` (US intl
+# layout); inlining it here removes the host filesystem coupling per the
+# project's IaC-first principle.
+
 networks:
   servers-net:
     name: docker-servers-net
     external: true
 
+configs:
+  keyboard_conf:
+    content: |
+      XKBLayout="us"
+      XKBVARIANT="intl"
+
 services:
   calibre:
-    image: linuxserver/calibre:latest
+    image: linuxserver/calibre:v9.17.0-ls430
     hostname: calibre
     container_name: calibre
     shm_size: '2gb'
@@ -21,8 +54,11 @@ services:
       - /nfs/calibre/config:/config
       - /nfs/calibre/upload:/upload
       - /nfs/calibre/plugins:/plugins
-      - /nfs/dockermaster/docker/calibre-server/10-keyboard.conf:/etc/X11/xorg.conf.d/10-keyboard.conf
       - /dev/dri:/dev/dri
+    configs:
+      - source: keyboard_conf
+        target: /etc/X11/xorg.conf.d/10-keyboard.conf
+        mode: 0644
     security_opt:
       - seccomp:unconfined
     environment:
@@ -35,13 +71,15 @@ services:
       LANG: en_US.UTF-8
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "curl -s --max-time 5 -o /dev/null -w '%{http_code}' http://localhost:8080/ | grep -qE '^(200|401)$'"]
+      # Probe the HTTPS listener (8181) — the only path Selkies supports.
+      # 401 = basic-auth prompt, i.e. the web front is serving.
+      test: ["CMD-SHELL", "curl -sk --max-time 5 -o /dev/null -w '%{http_code}' https://localhost:8181/ | grep -qE '^(200|401)$'"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
     labels:
-      com.centurylinklabs.watchtower.enable: "true"
+      com.centurylinklabs.watchtower.enable: "false"  # pinned — see header
       com.docker.stack: "calibre"
       com.docker.service: "calibre"
       portainer.autodeploy: "false"
@@ -60,7 +98,19 @@ services:
       - DOCKER_MODS=linuxserver/mods:universal-calibre
       - OAUTHLIB_RELAX_TOKEN_SCOPE=1
     volumes:
-      - /nfs/calibre/calibre-web/config:/config
+      # /config holds calibre-web's SQLite app.db and MUST stay on local disk.
+      # It previously lived on /nfs/calibre/calibre-web/config, an NFS4 export
+      # mounted `soft,local_lock=none`. SQLite cannot survive that: a transient
+      # NFS stall returns an I/O error instead of retrying, and there is no file
+      # locking. On 2026-08-24 ~22:56 MDT that produced a burst of
+      # `sqlite3.OperationalError: disk I/O error` + `OSError: [Errno 5]` on
+      # /login, immediately after the nightly Rundeck `calibre-replication` job
+      # (22:10 MDT) rsync'd into this same directory while the DB was open.
+      # That job also carries a stale desktop-side app.db (Apr 2025) which `rsync
+      # -a` would copy over the live one — moving /config off the NFS path
+      # removes it from the rsync target and closes that clobber hole too.
+      # Library/books stays on NFS: large, read-mostly, no SQLite writers.
+      - /opt/calibre-web/config:/config
       - /nfs/calibre/calibre-web/Library:/books
     restart: unless-stopped
     healthcheck:

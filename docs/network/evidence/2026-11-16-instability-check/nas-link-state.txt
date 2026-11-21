@@ -1,0 +1,54 @@
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+Mon Nov 16 17:07:01 MST 2026
+ 17:07:01 up 15 days,  8:26,  0 users,  load average: 1.79, 1.18, 0.73 [IO: 0.76, 0.45, 0.28 CPU: 1.03, 0.73, 0.43]
+eth0 oper=up carrier=1 speed=1000 mtu=1500 carrier_changes=10
+eth1 oper=up carrier=1 speed=1000 mtu=1500 carrier_changes=10
+eth2 oper=up carrier=1 speed=1000 mtu=1500 carrier_changes=10
+eth3 oper=up carrier=1 speed=1000 mtu=1500 carrier_changes=10
+eth4 oper=up carrier=1 speed=2500 mtu=9000 carrier_changes=11
+eth4.10 oper=up carrier=1 speed=2500 mtu=9000 carrier_changes=11
+bond0 oper=up carrier=1 speed=3000 mtu=1500 carrier_changes=8
+bond0.1 oper=up carrier=1 speed=3000 mtu=1500 carrier_changes=5
+bond0.10 oper=up carrier=1 speed=3000 mtu=1500 carrier_changes=5
+cat: /sys/class/net/bonding_masters/operstate: Not a directory
+cat: /sys/class/net/bonding_masters/mtu: Not a directory
+bonding_masters oper= carrier= speed= mtu= carrier_changes=
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+sit0@NONE        DOWN
+eth2             UP
+eth1             UP
+eth0             UP             192.168.0.50/20
+eth3             UP
+eth4             UP
+bond0            UP
+bond0.1@bond0    UP             192.168.32.50/26
+bond0.10@bond0   UP             192.168.1.50/20
+eth4.10@eth4     UP             192.168.2.50/20
+== kernel log link events
+[1318451.897498] r8168: eth2: link up 1 Gbps
+[1318451.963086] bond0: link status up for interface eth2, enabling it in 100 ms
+[1318452.070132] bond0: link status definitely up for interface eth2, 1000 Mbps full duplex
+[1318453.021545] r8168: eth3: link up 1 Gbps
+[1318453.087125] bond0: link status up for interface eth3, enabling it in 100 ms
+[1318453.194127] bond0: link status definitely up for interface eth3, 1000 Mbps full duplex
+[1325084.659920] r8168: eth2: link down
+[1325084.701942] bond0: link status definitely down for interface eth2, disabling it
+[1325084.923946] r8168: eth3: link down
+[1325085.008945] bond0: link status definitely down for interface eth3, disabling it
+[1325085.334290] r8168: eth1: link down
+[1325085.369508] r8168: eth0: link down
+[1325085.415961] bond0: link status definitely down for interface eth1, disabling it
+[1325085.423453] bond0: now running without any active interface!
+[1325203.638372] r8168: eth1: link up 1 Gbps
+[1325203.642421] bond0: link status up for interface eth1, enabling it in 0 ms
+[1325203.665114] r8168: eth0: link up 1 Gbps
+[1325203.674845] bond0: link status definitely up for interface eth1, 0 Mbps full duplex
+[1325203.682695] bond0: first active interface up!
+[1325203.965381] r8168: eth2: link up 1 Gbps
+[1325203.986984] bond0: link status up for interface eth2, enabling it in 100 ms
+[1325204.093977] bond0: link status definitely up for interface eth2, 1000 Mbps full duplex
+[1325204.227396] r8168: eth3: link up 1 Gbps
+[1325204.302991] bond0: link status up for interface eth3, enabling it in 100 ms
+[1325204.410255] bond0: link status definitely up for interface eth3, 1000 Mbps full duplex

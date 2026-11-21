@@ -39,9 +39,9 @@ graph TD
 
 | Workflow | Purpose | Triggers | Duration |
 |----------|---------|----------|----------|
-| `dockermaster-deployment.yml` | Main deployment pipeline | Manual, post-build | 10-15 min |
-| `service-health-monitor.yml` | Continuous health monitoring | Schedule (15 min), manual | 2-5 min |
-| `emergency-rollback.yml` | Emergency rollback procedures | Manual only | 5-8 min |
+| `portainer-deploy.yml` | Redeploy stacks through the Portainer API | Manual, dry-run default | 1-2 min |
+| `service-health-monitor.yml` | Health monitoring from Thanos | Schedule (15 min), manual | 2-5 min |
+| `portainer-rollback.yml` | Emergency restart of stacks through Portainer | Manual, dry-run default | 1-2 min |
 
 ### Supporting Workflows
 
@@ -54,7 +54,11 @@ graph TD
 
 ## 🚀 Deployment Pipeline
 
-### Main Deployment Workflow: `dockermaster-deployment.yml`
+> Superseded: `portainer-deploy.yml` replaced the Docker Compose pipeline below on 2026-11-18. It
+> redeploys Portainer stacks through the Portainer API (`scripts/ci/portainer-cli.sh`). The sections
+> below are kept for history.
+
+### Main Deployment Workflow: `portainer-deploy.yml`
 
 #### Stage 1: Pre-deployment Validation
 
@@ -136,7 +140,7 @@ The pipeline automatically discovers services based on:
 
 #### Monitoring Schedule
 
-- **Frequency**: Every 15 minutes (configurable)
+- **Frequency**: Paused on 2026-11-18. Manual runs only. See the comment at the top of the workflow.
 - **Coverage**: All active dockermaster services
 - **Alerting**: Automatic issue creation for failures
 
@@ -186,7 +190,11 @@ github-runner       ⚠️ degraded   1/1          unhealthy    healthy    22.1
 
 ## 🔄 Emergency Rollback System
 
-### Emergency Rollback Workflow: `emergency-rollback.yml`
+> Superseded: `portainer-rollback.yml` replaced the compose-based rollback below on 2026-11-18. It
+> emergency-restarts stacks through the Portainer API. A true version rollback stays a git revert +
+> `terraform apply` from the Mac (rule #1).
+
+### Emergency Rollback Workflow: `portainer-rollback.yml`
 
 #### Rollback Targets
 
@@ -227,6 +235,33 @@ gh workflow run emergency-rollback.yml \
   -f git_commit="abc123def456" \
   -f reason="Revert to stable release"
 ```
+
+## 🏷️ Runner Labels
+
+The self-hosted runner registers two kinds of label. Use the specific label when a job needs one host.
+Use the whole-fleet label when any Docker runner will do.
+
+| Label | Scope | Use it for |
+| --- | --- | --- |
+| `self-hosted` | GitHub built-in | Every self-hosted job |
+| `docker` | Whole fleet | Jobs that need only a Docker runner, such as GitHub API calls |
+| `dockerserver-1` | One host | Jobs that need the ds-1 Docker socket or NFS mount |
+
+The labels come from `LABELS` in `terraform/portainer/stacks/github-runner.yml`. A job whose labels match no
+runner waits in the queue forever. There is no `dockermaster` label.
+
+Current use:
+
+| Workflow | Job | Labels |
+| --- | --- | --- |
+| `service-health-monitor.yml` | Service Health Assessment | `self-hosted`, `dockerserver-1` |
+| `service-health-monitor.yml` | Alert Management, Status Reporting | `self-hosted`, `docker` |
+| `portainer-deploy.yml` | Redeploy stacks | `self-hosted`, `docker` |
+| `portainer-rollback.yml` | Emergency restart stacks | `self-hosted`, `docker` |
+
+The deploy and rollback workflows call the Portainer API (not the Docker socket), so they only need the
+fleet-wide `docker` label. They authenticate to Portainer through a Vault AppRole (`github-runner`) that can
+read only `secret/homelab/portainer`.
 
 ## 🔐 Vault Integration
 

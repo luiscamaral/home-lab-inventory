@@ -79,6 +79,31 @@ locals {
             labels: { instance: dockermaster }
           - targets: [192.168.0.50:9100]
             labels: { instance: nas }
+          - targets: [192.168.4.1:9100]
+            labels: { instance: pfsense }
+
+      # ── wifi-probe — ESP32-C5 per-room WiFi probes via OTLP collector ──
+      # Probes PUSH OTLP/HTTP to the otel-collector (192.168.59.46:4318); it
+      # caches each series for 30m (metric_expiration) and serves them on :8889.
+      # Scraping the collector instead of the probes directly bridges the
+      # band-switch dark windows — the radio is single-band, so a direct
+      # :9100 scrape misses whichever band is off-air at scrape time (the
+      # success-matrix gaps). honor_labels keeps the collector's
+      # room/instance/job labels (mapped from the OTLP resource attrs:
+      # service.name=wifi-probe, room=<location>). See otelcol_config below.
+      - job_name: wifi-probe
+        scrape_interval: 30s
+        scrape_timeout: 15s
+        metrics_path: /metrics
+        honor_labels: true
+        static_configs:
+          - targets: [192.168.59.46:8889]
+
+      # ── otel-collector — self-telemetry for the wifi-probe push pipeline ──
+      - job_name: otel-collector
+        static_configs:
+          - targets: [192.168.59.46:8888]
+            labels: { instance: otel-collector }
 
       # ── cadvisor — container metrics ────────────────────────────────
       - job_name: cadvisor
@@ -100,8 +125,14 @@ locals {
       # Original target `pfsense1.srv.lcamaral.com` was NXDOMAIN —
       # switched to IP to avoid DNS dependency inside the container.
       - job_name: snmp-pfsense
-        scrape_interval: 15s
-        scrape_timeout: 10s
+        # 2026-05-27: bumped scrape_timeout 10s → 30s after Thanos
+        # anomaly scan showed 36 short flaps over 12 h. pfSense's
+        # bsnmpd is slow under real scrape pressure (single-threaded,
+        # FreeBSD-base implementation; not net-snmp). Scrape walks
+        # all of mibII + pf MIB + IF-MIB; 10 s was tight at the 95th
+        # percentile.
+        scrape_interval: 60s
+        scrape_timeout: 30s
         metrics_path: /snmp
         params:
           module: [pfsense]
@@ -111,6 +142,31 @@ locals {
               - 192.168.48.1
             labels:
               instance: pfsense
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - target_label: __address__
+            replacement: 192.168.59.29:9116
+
+      # ── snmp_exporter — switch24a (TL-SG3428X core switch) ─────────
+      # Added 2026-11-16 to track receive errors on Te1/0/25 (AP-2.5G
+      # switch) and Te1/0/27 (pfSense ix0). IF-MIB only; RMON and
+      # EtherLike are not supported by this switch. The `switch24a_v2`
+      # auth lives in the second snmp-exporter config file. The path to
+      # 192.168.32.39 (ADMIN) is routed through pfSense, so an ix0
+      # outage also shows up here as a scrape gap.
+      - job_name: snmp-switch24a
+        scrape_interval: 30s
+        scrape_timeout: 20s
+        metrics_path: /snmp
+        params:
+          module: [switch24a]
+          auth: [switch24a_v2]
+        static_configs:
+          - targets:
+              - 192.168.32.39
+            labels:
+              instance: switch24a
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
@@ -146,6 +202,17 @@ locals {
             labels: { instance: alertmanager-1 }
           - targets: [192.168.4.238:9093]
             labels: { instance: alertmanager-2 }
+
+      # ── karma — Alertmanager dashboard UI (prymitive/karma) ─────────
+      # Exposes `karma_alertmanager_up{}`, `karma_alertmanager_errors_total{}`,
+      # `karma_collect_cycles_total{}`, `karma_collected_alerts_count{}` —
+      # tells us if karma can talk to AM and how many alerts/groups it
+      # sees. Useful as an indirect AM-API healthcheck.
+      - job_name: karma
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.47:8080]
+            labels: { instance: karma }
 
       # ── Phase 3a: Vault (3-node Raft cluster) ───────────────────────
       # Listener is plain HTTP on the macvlan IP (TLS terminates at
@@ -231,6 +298,21 @@ locals {
           - targets: [192.168.59.16:5001]
             labels: { instance: registry-1 }
 
+      # Zot registry (successor to registry:2). /metrics is on the main
+      # listener; anonymous read is allowed for metrics in zot-config.json.
+      - job_name: zot
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.5:5000]
+            labels: { instance: zot-1 }
+
+      # zot-meta-backup sidecar (shares zot's network namespace): last backup time, size, txid.
+      - job_name: zot-meta-backup
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.5:9199]
+            labels: { instance: zot-1 }
+
       # ── Phase 3a: Watchtower (HTTP API on :8080) ────────────────────
       # WATCHTOWER_HTTP_API_METRICS=true (already set) exposes /v1/metrics
       # behind the same bearer token as the update-trigger API. Two
@@ -265,6 +347,27 @@ locals {
           module: [http_2xx]
         file_sd_configs:
           - files: ['/etc/prometheus/blackbox-targets/http-targets.json']
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: 192.168.59.45:9115
+
+      # 2026-05-27: probe every nginx-rproxy upstream so 502/503/504
+      # (upstream-unreachable) and TLS-handshake failures surface within
+      # one scrape interval. Target list auto-derived from vhost.d/
+      # via fileset() in locals.tf — adding a new vhost auto-creates a
+      # probe. The http_rproxy_alive module accepts 200/30x/401/403 as
+      # "healthy" (service responded; may need auth).
+      - job_name: blackbox-rproxy
+        scrape_interval: 30s
+        metrics_path: /probe
+        params:
+          module: [http_rproxy_alive]
+        file_sd_configs:
+          - files: ['/etc/prometheus/blackbox-targets/rproxy-targets.json']
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
@@ -494,6 +597,31 @@ locals {
             labels: { instance: dockermaster }
           - targets: [192.168.0.50:9100]
             labels: { instance: nas }
+          - targets: [192.168.4.1:9100]
+            labels: { instance: pfsense }
+
+      # ── wifi-probe — ESP32-C5 per-room WiFi probes via OTLP collector ──
+      # Probes PUSH OTLP/HTTP to the otel-collector (192.168.59.46:4318); it
+      # caches each series for 30m (metric_expiration) and serves them on :8889.
+      # Scraping the collector instead of the probes directly bridges the
+      # band-switch dark windows — the radio is single-band, so a direct
+      # :9100 scrape misses whichever band is off-air at scrape time (the
+      # success-matrix gaps). honor_labels keeps the collector's
+      # room/instance/job labels (mapped from the OTLP resource attrs:
+      # service.name=wifi-probe, room=<location>). See otelcol_config below.
+      - job_name: wifi-probe
+        scrape_interval: 30s
+        scrape_timeout: 15s
+        metrics_path: /metrics
+        honor_labels: true
+        static_configs:
+          - targets: [192.168.59.46:8889]
+
+      # ── otel-collector — self-telemetry for the wifi-probe push pipeline ──
+      - job_name: otel-collector
+        static_configs:
+          - targets: [192.168.59.46:8888]
+            labels: { instance: otel-collector }
 
       - job_name: cadvisor
         static_configs:
@@ -507,8 +635,14 @@ locals {
             labels: { instance: nas }
 
       - job_name: snmp-pfsense
-        scrape_interval: 15s
-        scrape_timeout: 10s
+        # 2026-05-27: bumped scrape_timeout 10s → 30s after Thanos
+        # anomaly scan showed 36 short flaps over 12 h. pfSense's
+        # bsnmpd is slow under real scrape pressure (single-threaded,
+        # FreeBSD-base implementation; not net-snmp). Scrape walks
+        # all of mibII + pf MIB + IF-MIB; 10 s was tight at the 95th
+        # percentile.
+        scrape_interval: 60s
+        scrape_timeout: 30s
         metrics_path: /snmp
         params:
           module: [pfsense]
@@ -518,6 +652,24 @@ locals {
               - 192.168.48.1
             labels:
               instance: pfsense
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - target_label: __address__
+            replacement: 192.168.59.29:9116
+
+      - job_name: snmp-switch24a
+        scrape_interval: 30s
+        scrape_timeout: 20s
+        metrics_path: /snmp
+        params:
+          module: [switch24a]
+          auth: [switch24a_v2]
+        static_configs:
+          - targets:
+              - 192.168.32.39
+            labels:
+              instance: switch24a
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
@@ -544,6 +696,17 @@ locals {
             labels: { instance: alertmanager-1 }
           - targets: [192.168.4.238:9093]
             labels: { instance: alertmanager-2 }
+
+      # ── karma — Alertmanager dashboard UI (prymitive/karma) ─────────
+      # Exposes `karma_alertmanager_up{}`, `karma_alertmanager_errors_total{}`,
+      # `karma_collect_cycles_total{}`, `karma_collected_alerts_count{}` —
+      # tells us if karma can talk to AM and how many alerts/groups it
+      # sees. Useful as an indirect AM-API healthcheck.
+      - job_name: karma
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.47:8080]
+            labels: { instance: karma }
 
       # ── Phase 3a: Vault (3-node Raft cluster) ───────────────────────
       # Mirror of replica-A job. See replica-A comment for context.
@@ -599,6 +762,20 @@ locals {
           - targets: [192.168.59.16:5001]
             labels: { instance: registry-1 }
 
+      # Zot registry — see replica-A comment.
+      - job_name: zot
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.5:5000]
+            labels: { instance: zot-1 }
+
+      # zot-meta-backup sidecar (shares zot's network namespace): last backup time, size, txid.
+      - job_name: zot-meta-backup
+        metrics_path: /metrics
+        static_configs:
+          - targets: [192.168.59.5:9199]
+            labels: { instance: zot-1 }
+
       # ── Phase 3a: Watchtower (HTTP API on :8080) ────────────────────
       # TODO: bearer token wiring — see replica-A comment.
       - job_name: watchtower
@@ -619,6 +796,27 @@ locals {
           module: [http_2xx]
         file_sd_configs:
           - files: ['/etc/prometheus/blackbox-targets/http-targets.json']
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: 192.168.59.45:9115
+
+      # 2026-05-27: probe every nginx-rproxy upstream so 502/503/504
+      # (upstream-unreachable) and TLS-handshake failures surface within
+      # one scrape interval. Target list auto-derived from vhost.d/
+      # via fileset() in locals.tf — adding a new vhost auto-creates a
+      # probe. The http_rproxy_alive module accepts 200/30x/401/403 as
+      # "healthy" (service responded; may need auth).
+      - job_name: blackbox-rproxy
+        scrape_interval: 30s
+        metrics_path: /probe
+        params:
+          module: [http_rproxy_alive]
+        file_sd_configs:
+          - files: ['/etc/prometheus/blackbox-targets/rproxy-targets.json']
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
@@ -765,9 +963,11 @@ locals {
   # ──────────────────────────────────────────────
   # alertmanager.yml — routing tree from 06-dashboards-and-alerting.md
   #
-  # All severities → email luiscamaral+homelab@gmail.com via the existing
-  # postfix-relay (no auth, internal only). `info` is a black-hole so rule
-  # files can use `severity=info` for debugging without spamming.
+  # critical + warning → BOTH email (luiscamaral+homelab@gmail.com via the
+  # internal postfix-relay, no auth) AND Telegram (bot_token/chat_id from
+  # Vault secret/homelab/telegram/alertmanager; AM reaches api.telegram.org
+  # over its docker-servers-net egress). `info` is a black-hole (log-only) so
+  # rule files can use `severity=info` for debugging without spamming.
   # ──────────────────────────────────────────────
   alertmanager_config = <<-EOT
     global:
@@ -804,6 +1004,16 @@ locals {
             send_resolved: true
             headers:
               Subject: '[ALERT] {{ .CommonLabels.alertname }} on {{ .CommonLabels.instance }}'
+        telegram_configs:
+          - bot_token: '${data.vault_kv_secret_v2.telegram.data["bot_token"]}'
+            chat_id: ${data.vault_kv_secret_v2.telegram.data["chat_id"]}
+            api_url: 'https://api.telegram.org'
+            parse_mode: ''
+            send_resolved: true
+            message: |-
+              [{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}
+              {{ range .Alerts }}- {{ .Annotations.summary }}
+              {{ end }}
 
       - name: email-critical
         email_configs:
@@ -811,6 +1021,16 @@ locals {
             send_resolved: true
             headers:
               Subject: '[CRIT] {{ .CommonLabels.alertname }}'
+        telegram_configs:
+          - bot_token: '${data.vault_kv_secret_v2.telegram.data["bot_token"]}'
+            chat_id: ${data.vault_kv_secret_v2.telegram.data["chat_id"]}
+            api_url: 'https://api.telegram.org'
+            parse_mode: ''
+            send_resolved: true
+            message: |-
+              🔴 [CRIT] {{ .CommonLabels.alertname }}
+              {{ range .Alerts }}- {{ .Annotations.summary }}
+              {{ end }}
 
       - name: email-warning
         email_configs:
@@ -818,6 +1038,16 @@ locals {
             send_resolved: true
             headers:
               Subject: '[WARN] {{ .CommonLabels.alertname }}'
+        telegram_configs:
+          - bot_token: '${data.vault_kv_secret_v2.telegram.data["bot_token"]}'
+            chat_id: ${data.vault_kv_secret_v2.telegram.data["chat_id"]}
+            api_url: 'https://api.telegram.org'
+            parse_mode: ''
+            send_resolved: true
+            message: |-
+              🟡 [WARN] {{ .CommonLabels.alertname }}
+              {{ range .Alerts }}- {{ .Annotations.summary }}
+              {{ end }}
 
       - name: log-only
   EOT
@@ -833,6 +1063,7 @@ locals {
   #   icmp             — raw-socket ping (requires NET_RAW on container)
   #   tcp_connect      — TCP handshake only
   #   ssl_expiry       — TCP+TLS handshake; emits probe_ssl_earliest_cert_expiry
+  #   ssl_expiry_auth_cf — same, with SNI auth.cf.lcamaral.com (probed against the rproxy IPs)
   #   dns_lcamaral     — DNS A query for vault.d.lcamaral.com (resolver health)
   # ──────────────────────────────────────────────
   blackbox_config = <<-EOT
@@ -851,6 +1082,37 @@ locals {
         http:
           preferred_ip_protocol: ip4
           valid_status_codes: [200]
+      # 2026-05-27: probes for all nginx-rproxy upstreams. Treats
+      # "service responding, may need auth" as healthy (200, 30x, 401,
+      # 403) and "upstream broken" as failure (502/503/504/timeout).
+      # This is what would have caught the calibre 502 from the
+      # ds-1 shim IP collision in under 60 s.
+      http_rproxy_alive:
+        prober: http
+        timeout: 10s
+        http:
+          preferred_ip_protocol: ip4
+          valid_status_codes: [200, 201, 204, 301, 302, 303, 307, 308, 401, 403]
+          tls_config:
+            insecure_skip_verify: true
+          fail_if_ssl: false
+          fail_if_not_ssl: true
+      # Registry-mirror vhosts (hub.d -> zot): "/" is a 404 and "/v2/" is a
+      # static Nginx 200, so neither proves the upstream answers. Probe a
+      # repo that never exists: only zot's registry API returns 404 with a
+      # NAME_UNKNOWN body (tags/list never triggers an upstream sync). zot
+      # down => Nginx 502 HTML => no body match => probe fails.
+      http_registry_api:
+        prober: http
+        timeout: 10s
+        http:
+          preferred_ip_protocol: ip4
+          valid_status_codes: [404]
+          fail_if_body_not_matches_regexp: ['"code":"NAME_UNKNOWN"']
+          tls_config:
+            insecure_skip_verify: true
+          fail_if_ssl: false
+          fail_if_not_ssl: true
       icmp:
         prober: icmp
         timeout: 5s
@@ -866,6 +1128,17 @@ locals {
           tls: true
           tls_config:
             insecure_skip_verify: true
+      # Same probe, but it sends the SNI of the cf certificate: used against the rproxy IPs
+      # (blackbox-ssl targets 192.168.59.28/.48/.49 with __param_module) to watch the cert
+      # that zot sees when it reaches Keycloak at auth.cf.lcamaral.com over the LAN.
+      ssl_expiry_auth_cf:
+        prober: tcp
+        timeout: 10s
+        tcp:
+          tls: true
+          tls_config:
+            insecure_skip_verify: true
+            server_name: auth.cf.lcamaral.com
       dns_lcamaral:
         prober: dns
         timeout: 5s
@@ -873,6 +1146,43 @@ locals {
           query_name: vault.d.lcamaral.com
           query_type: A
           preferred_ip_protocol: ip4
+  EOT
+
+  # ──────────────────────────────────────────────
+  # OTel Collector — OTLP/HTTP receiver → prometheus exporter
+  #
+  # Caching layer for the ESP32 wifi probes (otel-collector stack). The
+  # probes PUSH OTLP/HTTP on :4318; the prometheus exporter holds each
+  # series for 30m (metric_expiration) and serves them on :8889 for both
+  # Prometheus replicas to scrape — bridging the band-switch dark windows.
+  # resource_to_telemetry_conversion turns OTLP resource attributes
+  # (room/instance) into Prometheus labels; enable_open_metrics keeps the
+  # exposition format consistent. Collector self-telemetry on :8888.
+  # ──────────────────────────────────────────────
+  otelcol_config = <<-EOT
+    receivers:
+      otlp:
+        protocols:
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch: {}
+    exporters:
+      prometheus:
+        endpoint: 0.0.0.0:8889
+        metric_expiration: 30m
+        resource_to_telemetry_conversion:
+          enabled: true
+        enable_open_metrics: true
+    service:
+      telemetry:
+        metrics:
+          address: 0.0.0.0:8888
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [prometheus]
   EOT
 
   # ──────────────────────────────────────────────
@@ -889,17 +1199,65 @@ locals {
   # structure is needed (per-target labels, env grouping), split into
   # multiple objects in the same file.
   # ──────────────────────────────────────────────
+  # ──────────────────────────────────────────────
+  # nginx-rproxy upstream probes — derived from vhost.d/ via fileset().
+  # Adding a new vhost.d/<host>.conf auto-creates a probe on next
+  # terraform apply. Filters out *.cf.lcamaral.com because those
+  # resolve to Cloudflare-edge IPs from inside servers-net and
+  # SNI-reject probes from this vantage (per 2026-05-27 anomaly
+  # scan). External-reachability for those endpoints belongs to a
+  # 3rd-party uptime monitor.
+  # ──────────────────────────────────────────────
+  rproxy_probe_hosts = [
+    for f in fileset("${path.module}/../../dockermaster/docker/compose/nginx-rproxy/vhost.d", "*.conf") :
+    trimsuffix(f, ".conf")
+    if !can(regex("\\.cf\\.lcamaral\\.com$", trimsuffix(f, ".conf")))
+  ]
+
+  # Per-vhost probe overrides for hosts whose "/" is not a meaningful health
+  # check. The per-target __param_module label overrides the job's default
+  # module (http_rproxy_alive), so these stay in job="blackbox-rproxy" and
+  # are covered by the same RProxyEndpointDown/Slow alerts.
+  rproxy_probe_overrides = {
+    "hub.d.lcamaral.com" = {
+      path   = "/v2/library/zz-blackbox-canary/tags/list"
+      module = "http_registry_api"
+    }
+  }
+  blackbox_rproxy_targets = jsonencode(concat(
+    [{
+      targets = [
+        for h in local.rproxy_probe_hosts : "https://${h}"
+        if !contains(keys(local.rproxy_probe_overrides), h)
+      ]
+    }],
+    [
+      for h, o in local.rproxy_probe_overrides : {
+        targets = ["https://${h}${o.path}"]
+        labels  = { __param_module = o.module }
+      } if contains(local.rproxy_probe_hosts, h)
+    ]
+  ))
+
   blackbox_http_targets = jsonencode([
     {
       targets = [
         "https://vault.d.lcamaral.com",
         "https://keycloak.d.lcamaral.com",
         "https://prometheus.d.lcamaral.com",
-        "https://s3.d.lcamaral.com",
         "https://portainer.d.lcamaral.com",
-        "https://registry.cf.lcamaral.com",
-        "https://login.cf.lcamaral.com",
-        "https://auth.cf.lcamaral.com",
+        # Removed 2026-05-27 after Thanos 12h anomaly scan showed they
+        # failed 100% of the window:
+        #   - s3.d.lcamaral.com returns 403 (probe expects 2xx);
+        #     MinIO console at the URL works but anonymous access is
+        #     denied. Re-add with auth or probe an unauthenticated
+        #     endpoint if needed.
+        #   - registry.cf / login.cf / auth.cf all fast-fail TLS from
+        #     inside docker-servers-net because they resolve to
+        #     Cloudflare-edge IPs that SNI-reject internal probers.
+        #     External-reachability validation belongs to a 3rd-party
+        #     uptime monitor (see Phase 3.5 in
+        #     docs/network/monitoring-plan-2026-05-26.md).
       ]
     }
   ])
@@ -923,11 +1281,23 @@ locals {
       targets = [
         "vault.d.lcamaral.com:443",
         "keycloak.d.lcamaral.com:443",
-        "registry.cf.lcamaral.com:443",
-        "login.cf.lcamaral.com:443",
-        "auth.cf.lcamaral.com:443",
         "ha.home.lcamaral.com:443",
+        # Removed 2026-05-27: the three *.cf.lcamaral.com SSL probes
+        # fast-fail TLS handshake from inside servers-net because
+        # they resolve to Cloudflare-edge IPs that SNI-reject this
+        # vantage. Cert-expiry for those endpoints is covered by
+        # the wildcard *.d.lcamaral.com cert probed via
+        # vault.d / keycloak.d above (same ACME issuer).
       ]
+    },
+    # The cf.lcamaral.com certificate (SAN auth.cf.lcamaral.com, ...) that the three
+    # rproxies present for the *.cf names. zot reaches Keycloak at auth.cf.lcamaral.com over
+    # the LAN (extra_hosts -> these IPs) and panics at startup if that handshake fails, so
+    # each replica's cert is probed directly by IP with the auth.cf SNI. The CertExpiringSoon /
+    # CertExpired / CertProbeFailed rules cover these targets like any other blackbox-ssl one.
+    {
+      targets = ["192.168.59.28:443", "192.168.59.48:443", "192.168.59.49:443"]
+      labels  = { __param_module = "ssl_expiry_auth_cf", sni = "auth.cf.lcamaral.com" }
     }
   ])
 
@@ -950,8 +1320,6 @@ locals {
   blackbox_tcp_targets = jsonencode([
     {
       targets = [
-        # FreeSWITCH SIP signalling (Phase 3f — native ESL exporter deferred)
-        "freeswitch.d.lcamaral.com:5060",
         # RustDesk hbbs (NAT type test, ID server, TCP hole-punching)
         "hbbs.d.lcamaral.com:21115",
         "hbbs.d.lcamaral.com:21116",
@@ -959,6 +1327,12 @@ locals {
         # RustDesk hbbr (relay)
         "hbbr.d.lcamaral.com:21117",
         "hbbr.d.lcamaral.com:21119",
+        # Removed 2026-05-27: freeswitch.d.lcamaral.com:5060 — SIP
+        # signalling port is firewalled off the server-net VLAN
+        # (intentional; only specific phones/PBX peers allowed).
+        # Probe was failing 100% of the window. ESL exporter (Phase
+        # 3f) will give us real FreeSWITCH-level health when it
+        # lands.
       ]
     }
   ])
@@ -1023,5 +1397,537 @@ locals {
                 blackbox_exporter cannot establish a TLS handshake to
                 {{ $$labels.instance }} for the past 15 minutes. Either the
                 target is down or the listening cert/cipher set is broken.
+
+      # 2026-05-27: alerts on nginx-rproxy upstream health. The
+      # http_rproxy_alive module marks 5xx/timeout as failures,
+      # treats 2xx/30x/401/403 as healthy. Probe fires every 30s,
+      # alert at 2m gives 4 consecutive failed scrapes — enough to
+      # filter momentary blips without missing real outages.
+      - name: rproxy-endpoints
+        interval: 1m
+        rules:
+          - alert: RProxyEndpointDown
+            expr: probe_success{job="blackbox-rproxy"} == 0
+            for: 2m
+            labels:
+              severity: warning
+              category: rproxy
+            annotations:
+              summary: "rproxy upstream {{ $$labels.instance }} not responding"
+              description: |
+                blackbox-exporter probe to {{ $$labels.instance }} has been
+                failing for at least 2 minutes (5xx, timeout, or TLS error).
+                The reverse-proxy vhost exists but its upstream is unreachable.
+                Common causes: macvlan IP collision with a shim, container
+                exited, upstream port wrong, cert mismatch. Check the rproxy
+                vhost file under
+                dockermaster/docker/compose/nginx-rproxy/vhost.d/
+                and compare its `proxy_pass` upstream to the actual
+                container `docker inspect` IP/port.
+          - alert: RProxyEndpointSlow
+            expr: probe_duration_seconds{job="blackbox-rproxy"} > 5
+            for: 5m
+            labels:
+              severity: info
+              category: rproxy
+            annotations:
+              summary: "rproxy upstream {{ $$labels.instance }} slow (>5s)"
+              description: |
+                Probe to {{ $$labels.instance }} has been taking over 5s for
+                5 minutes. Upstream is responding but slowly — could be DB
+                load, NFS contention, or downstream service degradation.
+
+      # 2026-11-12: zot error visibility. On 2026-11-11 22:41 MST an NFS stall left zot's
+      # meta.db returning EIO: the OIDC callback answered 500 and nothing alerted, because pulls
+      # and the blackbox probe of zot.d kept working. zot exports
+      # zot_http_requests_total{code}; a 5xx series only appears after the first error, so the
+      # rule compares the sum with its value 15m ago (`or vector(0)` covers the new series).
+      # It stays firing for ~15m after an error, which is also what email/Telegram dedup wants.
+      - name: zot
+        interval: 1m
+        rules:
+          - alert: ZotServerErrors
+            expr: sum(zot_http_requests_total{job="zot",code=~"5.."}) - (sum(zot_http_requests_total{job="zot",code=~"5.."} offset 15m) or vector(0)) > 0
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "zot answered HTTP 5xx in the last 15 minutes"
+              description: |
+                zot returned a 5xx. On the registry this is mostly a storage or
+                metadata error (e.g. `input/output error` on meta.db after an NFS
+                stall, or a failed on-demand sync). Check
+                `docker logs zot | grep '"level":"error"'` on dockermaster. Since
+                the metadata DB moved to the local `zot-meta` volume, an EIO there
+                means a local-disk problem. `docker restart zot` clears a wedged DB handle.
+          - alert: ZotGCErrors
+            expr: sum(zot_gc_runs_total{job="zot",error="true"}) - (sum(zot_gc_runs_total{job="zot",error="true"} offset 1h) or vector(0)) > 0
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "zot garbage collection failed in the last hour"
+              description: |
+                A zot GC run finished with error="true". Check the zot log
+                (`docker logs zot | grep -i gc`) for the store it failed on.
+          - alert: ZotMetricsDown
+            expr: up{job="zot"} == 0
+            for: 5m
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "Prometheus cannot scrape zot (/metrics) for 5 minutes"
+              description: |
+                zot's /metrics endpoint is not answering. If the blackbox probe of
+                https://zot.d.lcamaral.com is also failing, zot is down; if not, only
+                the metrics listener or the macvlan path (192.168.59.5:5000) is broken.
+          - alert: ZotMetaBackupStale
+            expr: time() - zot_meta_backup_last_success_timestamp_seconds{job="zot-meta-backup"} > 129600
+            for: 30m
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "zot meta.db has no successful backup for more than 36 hours"
+              description: |
+                The zot-meta-backup sidecar (dockermaster) copies meta.db to
+                /nfs/dockermaster/docker/zot/backup every night and keeps 7 days. Check
+                `docker logs zot-meta-backup` (a busy zot can reject copies for a few attempts; it
+                logs ERROR when a whole run fails) and that the NAS mount is writable. A value of 0
+                means no backup has succeeded since the sidecar was created.
+          - alert: ZotMetaBackupDown
+            expr: up{job="zot-meta-backup"} == 0
+            for: 15m
+            labels:
+              severity: warning
+              category: registry
+            annotations:
+              summary: "Prometheus cannot scrape the zot-meta-backup sidecar for 15 minutes"
+              description: |
+                The sidecar shares zot's network namespace, so this also fires when zot is
+                recreated and the sidecar did not follow. `docker ps` on dockermaster should show
+                zot-meta-backup healthy; redeploy the zot stack if it is not.
+
+      # 2026-06-10: ESP32-C5 wifi-probe fleet health. Motivated by the
+      # internet_https outage (05:53-08:33) that no rule caught: failures
+      # rendered as near-zero latency on dashboards and status-code froze
+      # at 204. blackbox-exporter also emits probe_success, so every rule
+      # here MUST filter job="wifi-probe".
+      # 2026-11-08: the collector serves a dead probe's LAST push for 30m, so
+      # state alerts (InternetDown / ProbeFailing / HeapLow) are gated on
+      # the probe still pushing (uptime advanced within 10m). A dead probe
+      # then raises only WifiProbeNoData, not stale-value noise.
+      - name: wifi-probes
+        interval: 1m
+        rules:
+          - alert: OtelCollectorDown
+            expr: up{job="otel-collector"} == 0
+            for: 5m
+            labels:
+              severity: critical
+              category: wifi-probe
+            annotations:
+              summary: "otel-collector down — wifi-probe push pipeline blind"
+              description: |
+                Prometheus cannot scrape the OTLP collector
+                (192.168.59.46:8888) for 5m. ALL rooms stop reporting (probes
+                push to it; Prometheus scrapes its :8889 cache). Check the
+                otel-collector Portainer stack on dockermaster.
+          - alert: WifiProbeNoData
+            # Every probe seen in 24h whose uptime hasn't advanced in 10m. The
+            # old `changes(...[10m]) == 0` needs the series to exist, so it
+            # silently RESOLVED ~10m after the collector expired a dead probe
+            # (30m) — garage 2026-11-08: firing 12:11, resolved 12:30, still
+            # dead until 12:40. Retiring/renaming a probe => silence for 24h.
+            expr: >-
+              max by (room, instance) (last_over_time(wifi_probe_uptime_seconds{job="wifi-probe"}[24h]))
+              unless on (instance) changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) > 0
+            for: 10m
+            labels:
+              severity: critical
+              category: wifi-probe
+            annotations:
+              summary: "wifi-probe {{ $$labels.room }} stopped pushing"
+              description: |
+                No fresh OTLP push from {{ $$labels.instance }}
+                ({{ $$labels.room }}) for 10m — uptime stopped advancing. Keeps
+                firing after the collector expires the series (30m), for up to
+                24h of silence. Device crashed, lost WiFi, can't reach the
+                collector :4318, or its push is wedged. Try
+                http://{{ $$labels.instance }}/status then POST /reboot (token).
+          - alert: WifiProbeInternetDown
+            expr: >-
+              max by (room) (probe_success{job="wifi-probe", probe="internet_https"}
+              and on (instance) changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) > 0) == 0
+            for: 10m
+            labels:
+              severity: critical
+              category: wifi-probe
+            annotations:
+              summary: "internet_https failing on ALL bands in {{ $$labels.room }}"
+              description: |
+                The HTTPS canary (google generate_204) is failing on every
+                band of the {{ $$labels.room }} probe for 10m. If
+                internet_ip/lan_dns are still green this is a TLS/path
+                issue, not WiFi. Check probe_last_error_stage to see the
+                failing stage (1=dns 2=tcp 3=tls 4=http 5=timeout).
+          - alert: WifiProbeProbeFailing
+            expr: >-
+              probe_success{job="wifi-probe"} == 0
+              and on (instance) changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) > 0
+            for: 20m
+            labels:
+              severity: warning
+              category: wifi-probe
+            annotations:
+              summary: "{{ $$labels.probe }} failing on {{ $$labels.room }}/{{ $$labels.band }}"
+              description: |
+                Probe {{ $$labels.probe }} ({{ $$labels.target }}) on
+                {{ $$labels.room }} band {{ $$labels.band }} has failed
+                every round for 20m. Single band/probe — likely local
+                (AP band health, DNS, or target-specific).
+          - alert: WifiProbeStale
+            expr: probe_last_success_age_seconds{job="wifi-probe"} > 1800
+            for: 5m
+            labels:
+              severity: warning
+              category: wifi-probe
+            annotations:
+              summary: "{{ $$labels.probe }} on {{ $$labels.room }}/{{ $$labels.band }} stale {{ printf \"%.0f\" $$value }}s"
+              description: |
+                No successful {{ $$labels.probe }} probe on
+                {{ $$labels.room }}/{{ $$labels.band }} for 30m. Catches a
+                frozen probe engine or a band that never reconnects even
+                when probe_success still reads 1 from a stale gauge.
+          - alert: WifiProbeFrequentReboots
+            # fw >= 0.12.0: NVS boot counter (survives power loss, unaffected by
+            # the collector cache). 0.11.1 rebooted ~1.5x per 6 h from the heap
+            # watchdog; 3+ in 6 h means a reboot loop or a regression.
+            expr: >-
+              (max by (room) (wifi_probe_boot_count{job="wifi-probe"})
+              - max by (room) (wifi_probe_boot_count{job="wifi-probe"} offset 6h)) >= 3
+            for: 5m
+            labels:
+              severity: warning
+              category: wifi-probe
+            annotations:
+              summary: "wifi-probe {{ $$labels.room }} rebooted {{ $$value }} times in 6 h"
+              description: |
+                The {{ $$labels.room }} probe booted {{ $$value }} times in the
+                last 6 h. Check the cause of the current boot
+                (wifi_probe_boot_info restart_cause: heap_wd = fragmentation,
+                stall/no_link = liveness supervisor, unplanned = crash or
+                power) on the WiFi Probes dashboard (Device Health).
+          - alert: WifiProbeHeapLow
+            expr: >-
+              wifi_probe_heap_largest_free_block_bytes{job="wifi-probe"} < 32768
+              and on (instance) changes(wifi_probe_uptime_seconds{job="wifi-probe"}[10m]) > 0
+            for: 15m
+            labels:
+              severity: critical
+              category: wifi-probe
+            annotations:
+              summary: "wifi-probe {{ $$labels.room }} heap fragmenting ({{ $$value }} B largest block)"
+              description: |
+                Largest contiguous free block under 32 KiB for 15m. OTA
+                needs ~16 KiB contiguous for TLS — below that the device
+                can only be recovered via /reboot or power-cycle. This is
+                the phase-12 fragmentation regression guard.
+
+      # 2026-06-27: pihole-exporter (amonacoos/pihole6_exporter) leaks one
+      # socket FD per failed scrape and never exits. exporter-1 spin-looped
+      # a full core for ~10d after reaching the 1024 nofile ceiling, and
+      # nothing caught it: restart:unless-stopped never fires (the process
+      # spins, it doesn't crash), the distroless image has no healthcheck,
+      # and up==0 never tripped because it kept serving stale scrapes.
+      # CpuRunaway is the detector that would have fired — it watches
+      # cAdvisor CPU, not liveness. Stacks now cap cpus=0.5 so a wedge sits
+      # at the cap; this rule still catches it before the nightly Rundeck
+      # reset runs.
+      - name: pihole-exporters
+        interval: 1m
+        rules:
+          - alert: PiholeExporterCpuRunaway
+            expr: rate(container_cpu_usage_seconds_total{name=~"pihole-exporter-.*"}[5m]) > 0.4
+            for: 15m
+            labels:
+              severity: warning
+              category: pihole
+            annotations:
+              summary: "pihole-exporter {{ $$labels.name }} burning CPU ({{ printf \"%.2f\" $$value }} cores)"
+              description: |
+                {{ $$labels.name }} has sustained >0.4 cores for 15m. This
+                exporter leaks a socket FD on every failed scrape; a hot spin
+                means it is approaching (or capped at) its nofile ceiling and
+                can no longer open new connections. Restart resets its FD
+                table (docker restart {{ $$labels.name }}); the nightly
+                pihole-exporter-restart Rundeck job does this automatically.
+                Root trigger is usually a flapping path to the scrape target.
+          - alert: PiholeExporterDown
+            expr: up{job="pihole"} == 0
+            for: 10m
+            labels:
+              severity: warning
+              category: pihole
+            annotations:
+              summary: "pihole-exporter for {{ $$labels.instance }} not scrapeable"
+              description: |
+                Prometheus cannot scrape the pihole-exporter for
+                {{ $$labels.instance }} for 10m. When the exporter exhausts
+                its FDs it can no longer accept the scrape connection, so this
+                fires alongside PiholeExporterCpuRunaway in a full wedge. Also
+                fires if the container is stopped or the Pi-hole itself is
+                unreachable. Check the matching pihole-exporter-N Portainer
+                stack and the path to the Pi-hole.
+
+      # 2026-06-30: pfSense ix0 10G SFP+ LAN-trunk optic health. A marginal
+      # optic on the ix0 <-> switch24a Te1/0/27 run corrupts the pfSense-TX
+      # strand; when every LAN host behind the switch goes unreachable the
+      # ix0-watchdog bounces the trunk (down/up), blipping EVERY LAN VLAN +
+      # internet for ~30-50s. These fire off the node_exporter textfile
+      # metrics from /usr/local/bin/ix0_link_metrics.sh (instance="pfsense").
+      # Runbook: docs/network/2026-06-28-ix0-optic-flap-handoff.md
+      - name: pfsense-network
+        interval: 1m
+        rules:
+          - alert: Ix0LinkFlapping
+            expr: increase(pfsense_link_flaps_total{device="ix0"}[15m]) > 0
+            for: 0m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 LAN trunk flapped ({{ printf \"%.0f\" $$value }}x in 15m)"
+              description: |
+                The ix0 10G SFP+ trunk to switch24a Te1/0/27 bounced
+                {{ printf "%.0f" $$value }} time(s) in the last 15m — every LAN
+                VLAN + internet blipped ~30-50s per flap. Root cause is a
+                marginal optic/fiber on the ix0<->Te1/0/27 run (pfSense-TX ->
+                switch-RX strand). Clean+reseat both LC endfaces, then swap the
+                pfSense ix0 optic (most-likely part). Hardware runbook:
+                docs/network/2026-06-28-ix0-optic-flap-handoff.md
+          - alert: Ix0FlapStorm
+            expr: increase(pfsense_link_flaps_total{device="ix0"}[1h]) >= 3
+            for: 0m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "pfSense ix0 LAN trunk flap storm ({{ printf \"%.0f\" $$value }}x in 1h)"
+              description: |
+                ix0 bounced {{ printf "%.0f" $$value }} times in the last hour
+                — the optic is actively failing and the watchdog is fighting it.
+                Expect repeated whole-LAN + internet outages until the hardware
+                is swapped. Escalate now: read DDM at the rack (Omada
+                http://192.168.32.55:8088 -> switch24a -> Port 27) and walk the
+                hardware action list in
+                docs/network/2026-06-28-ix0-optic-flap-handoff.md.
+          - alert: Ix0LinkDown
+            expr: pfsense_link_up{device="ix0"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "pfSense ix0 LAN trunk DOWN"
+              description: |
+                ix0 (10G LAN trunk to switch24a Te1/0/27) has reported link
+                down for 1m. Either the ix0-watchdog already bounced it
+                (recovers in ~30-50s) or it cannot — while down, ALL LAN VLANs
+                (HOME/IoT/SVR/GUEST) + internet are offline. Check the optic and
+                STP state on switch24a Port 27.
+
+          # ---- 2026-08-17: optic degradation early-warning + auto-bounce
+          # outcome. Added after this failure mode ran undetected through three
+          # incidents (2026-08-05, -08-13, -08-16). remote_faults is the switch
+          # telling us it cannot cleanly receive our TX; it is the EARLIEST
+          # signal we get and it climbs for days before humans notice slowness.
+          # Thresholds from measured history: healthy-after-bounce 0.03/s,
+          # degrading 3-13/s, fully faulted 60/s. NOTE the rate is NOT
+          # proportional to loss (60/s gave 3-6%; 13.3/s gave 24%) — treat it as
+          # "the optic is drifting", and use the loss alerts below for impact.
+          - alert: Ix0OpticDegrading
+            expr: rate(pfsense_ix0_remote_faults_total{device="ix0"}[15m]) > 0.5
+            for: 15m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 optic degrading ({{ printf \"%.1f\" $$value }} remote faults/s)"
+              description: |
+                switch24a Te1/0/27 is signalling Remote Fault at
+                {{ printf "%.1f" $$value }}/s — it cannot cleanly receive
+                pfSense's TX on the ix0 10Gbase-SR run. This climbs for DAYS
+                before bulk TCP visibly collapses, so act now rather than
+                waiting for "the internet is slow".
+                Confirm the direction is still TX-only (local_faults and
+                crc_errs should stay flat):
+                  ssh pfsense 'sysctl dev.ix.0.mac_stats | grep faults'
+                The real fix is hardware — replace the pfSense-side OEM optic:
+                docs/network/2026-06-28-ix0-optic-flap-handoff.md
+          - alert: Ix0OpticFaultStorm
+            expr: rate(pfsense_ix0_remote_faults_total{device="ix0"}[5m]) > 10
+            for: 5m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "pfSense ix0 optic faulting hard ({{ printf \"%.1f\" $$value }}/s)"
+              description: |
+                Remote Fault rate {{ printf "%.1f" $$value }}/s on ix0. At this
+                level large-frame loss has historically been 10-25%, which
+                collapses every LAN client's throughput to single-digit Mbps
+                (Mathis: ~1.22*MSS/(RTT*sqrt(loss))) while the router's own WAN
+                path stays fast — so it will NOT look like an outage.
+                Replace the optic: docs/network/2026-06-28-ix0-optic-flap-handoff.md
+
+          # ---- Measured impact. This is what actually decides the auto-bounce,
+          # and it MUST be measured with large frames: loss here is bit-error
+          # driven, so 56 B probes read ~0% while 1400 B reads 20%.
+          - alert: Ix0LargeFrameLoss
+            expr: pfsense_ix0_large_frame_loss_percent{device="ix0"} >= 5
+            for: 5m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 dropping {{ printf \"%.0f\" $$value }}% of large frames to {{ $$labels.target }}"
+              description: |
+                {{ printf "%.0f" $$value }}% loss at 1400B toward
+                {{ $$labels.target }} across the ix0 trunk. Small-packet probes
+                (ping, dpinger, DNS) may still look perfectly clean — this only
+                bites bulk TCP until it gets much worse.
+          - alert: Ix0LargeFrameLossCritical
+            expr: pfsense_ix0_large_frame_loss_percent{device="ix0"} >= 15
+            for: 5m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "pfSense ix0 dropping {{ printf \"%.0f\" $$value }}% of large frames to {{ $$labels.target }}"
+              description: |
+                Severe large-frame loss ({{ printf "%.0f" $$value }}%) toward
+                {{ $$labels.target }}. Every LAN client is effectively at a few
+                Mbps. Small packets are now affected too at this level, so DNS,
+                dpinger, Prometheus scrapes and NFS heartbeats are exposed —
+                expect second-order failures that do not look network-related.
+
+          # ---- Auto-bounce outcome. The watchdog verifies its own work: after
+          # a degraded-triggered bounce it settles 180s and re-measures. A FAILED
+          # bounce is the signal that deferring the hardware swap has stopped
+          # being viable — bouncing used to restore 0.0% loss (2026-08-13) and
+          # by 2026-08-17 only reached 8.3%.
+          - alert: Ix0AutoBounceFailed
+            expr: pfsense_ix0_watchdog_last_bounce_succeeded{device="ix0"} == 0
+            for: 0m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "pfSense ix0 auto-bounce did NOT restore the link"
+              description: |
+                ix0-watchdog bounced the trunk (costing a ~30-50s whole-LAN
+                outage) and large-frame loss did NOT drop below the success
+                threshold afterwards. The retrain workaround is wearing out.
+                Schedule the optic replacement now — every further bounce is an
+                outage that buys nothing:
+                docs/network/2026-06-28-ix0-optic-flap-handoff.md
+          - alert: Ix0WatchdogDisarmed
+            expr: pfsense_ix0_watchdog_disarmed{device="ix0"} == 1
+            for: 0m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "pfSense ix0 auto-bounce has DISARMED itself"
+              description: |
+                ix0-watchdog hit its consecutive-failure limit and disabled
+                auto-bouncing, because bouncing no longer restores the link.
+                The LAN will now stay degraded until the hardware is fixed —
+                nothing is going to rescue it automatically.
+                Replace the pfSense-side optic (SN CS101O32050), then re-arm:
+                  ssh pfsense '/usr/local/sbin/ix0-watchdog.sh reset'
+                Runbook: docs/network/2026-06-28-ix0-optic-flap-handoff.md
+          - alert: Ix0AutoBounceOccurred
+            expr: increase(pfsense_ix0_watchdog_bounces_total{device="ix0",reason="degraded"}[15m]) > 0
+            for: 0m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 auto-bounced due to large-frame loss"
+              description: |
+                ix0-watchdog detected sustained large-frame loss and bounced the
+                trunk, blipping every LAN VLAN + internet for ~30-50s. This is
+                the automation working as designed — but it is a workaround for
+                a failing optic, not a fix.
+
+          # ---- Staleness. The collector silently stopped updating for days at
+          # a time before 2026-08-17 (a falsy last command suppressed the atomic
+          # `mv`), which would have made every alert above quietly useless. Alert
+          # on the heartbeat, and on the metric vanishing entirely.
+          - alert: Ix0MetricsStale
+            expr: time() - pfsense_link_metrics_last_run_timestamp_seconds{device="ix0"} > 600
+            for: 5m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 link metrics are stale ({{ printf \"%.0f\" $$value }}s old)"
+              description: |
+                /usr/local/bin/ix0_link_metrics.sh has not published for over
+                10 minutes, so every ix0 optic alert is flying blind. Check the
+                cron entry (pfsense/cron-jobs.yml) and run it by hand.
+          - alert: Ix0WatchdogNotRunning
+            expr: absent(pfsense_ix0_watchdog_up{device="ix0"}) == 1 or time() - pfsense_ix0_watchdog_last_run_timestamp_seconds{device="ix0"} > 600
+            for: 10m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0-watchdog is not reporting"
+              description: |
+                The ix0-watchdog daemon has stopped publishing its heartbeat, so
+                nothing is watching for the degraded (large-frame-loss) failure
+                mode and nothing will auto-bounce.
+                  ssh pfsense '/usr/local/sbin/ix0-watchdog.sh status'
+                A per-minute keepalive cron should restart it; if it does not,
+                the daemon is crash-looping.
+
+          # ---- Optic DDM. Listed as an open follow-up in the 2026-06-28
+          # runbook and never built. RX power reads the switch->pfSense
+          # direction (still pristine at -3.0 dBm, which is what exonerates the
+          # switch); TX bias rising is the classic dying-laser signature.
+          - alert: Ix0OpticRxPowerLow
+            expr: pfsense_sfp_rx_power_dbm{device="ix0"} < -12
+            for: 10m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 optic RX power low ({{ printf \"%.2f\" $$value }} dBm)"
+              description: |
+                RX power {{ printf "%.2f" $$value }} dBm on the ix0 optic
+                (10G-SR healthy range -3..-10, marginal below about -12, loss of
+                signal near -17). This measures the switch->pfSense direction.
+                It degrading would be a NEW fault: through the 2026 optic saga
+                this direction stayed clean at -3.0 dBm. Suspect a dirty or bent
+                LC endface, or the switch-side transmitter.
+          - alert: Ix0OpticTxBiasHigh
+            expr: pfsense_sfp_tx_bias_ma{device="ix0"} > 10
+            for: 10m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "pfSense ix0 optic TX bias climbing ({{ printf \"%.2f\" $$value }} mA)"
+              description: |
+                Laser TX bias {{ printf "%.2f" $$value }} mA (baseline 6.86 mA).
+                A rising bias current means the laser is being driven harder to
+                hold output power — the classic signature of a dying
+                transmitter, and this module's TX strand is already the
+                suspected fault. Replace it:
+                docs/network/2026-06-28-ix0-optic-flap-handoff.md
   EOT
 }

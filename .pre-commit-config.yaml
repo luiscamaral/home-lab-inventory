@@ -43,13 +43,15 @@ repos:
   # `mcp/` and `generated/` hold AI-tooling artifacts (PRDs, plans,
   # captured snapshots) that pre-date strict markdownlint adoption;
   # excluded so they don't gate commits. Audit/clean-up tracked separately.
+  # Saved evidence records and the 2026-11 evidence-first reports keep their
+  # collected text verbatim, so they are excluded too (same set as CI).
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.48.0
     hooks:
       - id: markdownlint
         args: [--config=.markdownlint.json]
         types: [markdown]
-        exclude: ^(.history/|CHANGELOG\.md|\.github/ISSUE_TEMPLATE/|\.github/PULL_REQUEST_TEMPLATE\.md|mcp/|generated/|\.devin/)
+        exclude: ^(.history/|CHANGELOG\.md|\.github/ISSUE_TEMPLATE/|\.github/PULL_REQUEST_TEMPLATE\.md|mcp/|generated/|\.devin/|docs/evidence/|docs/[a-z]+/evidence/|docs/(network|operations)/2026-11-)
 
   # Dockerfile linting with hadolint
   - repo: https://github.com/hadolint/hadolint
@@ -91,6 +93,14 @@ repos:
   # Docker Compose validation
   - repo: local
     hooks:
+      - id: nomad-regression-tests
+        name: NOMAD observability and embedding evaluation tests
+        entry: python -m unittest discover -s tests -p 'test_nomad*.py'
+        language: python
+        additional_dependencies: [PyYAML==6.0.3]
+        pass_filenames: false
+        files: '^(scripts/nomad-embedding-eval\.py|tests/test_nomad.*\.py|tests/fixtures/nomad-embedding-eval\.json|dockermaster/docker/compose/nomad/|dockermaster/docker/compose/nginx-rproxy/vhost\.d/nomad\.d\.lcamaral\.com\.conf)'
+
       - id: docker-compose-check
         name: Docker Compose Check
         entry: bash -c 'for file in "$@"; do docker compose -f "$file" config --quiet || exit 1; done'
@@ -106,6 +116,19 @@ repos:
         entry: bash -c 'command -v actionlint >/dev/null 2>&1 && actionlint "$@" || echo "actionlint not installed, skipping GitHub Actions validation"'
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
+        require_serial: false
+
+  # Block unpinned Docker image tags (`:latest`, `:edge`, `:stable`, ...
+  # or no tag at all) in Compose files and Terraform templates.
+  # Allowlist for images that intentionally float (watchtower-managed, internal registry
+  # rebuilds) lives in scripts/check-image-pins.sh.
+  - repo: local
+    hooks:
+      - id: check-image-pins
+        name: Check Docker image tag pins
+        entry: scripts/check-image-pins.sh
+        language: script
+        files: '(docker-compose\.ya?ml|\.yml\.tftpl|/stacks/.*\.ya?ml)$'
         require_serial: false
 
 # Global configuration

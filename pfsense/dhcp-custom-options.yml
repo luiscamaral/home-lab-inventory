@@ -1,0 +1,59 @@
+# pfSense DHCP custom (numbered) options managed by this repo.
+#
+# Reconciled against pfSense's <dhcpd><optN><numberoptions><item> entries in
+# /cf/conf/config.xml by scripts/sync-pfsense-dhcp-options.py.
+#   Read:  SSH to pfSense, awk the <dhcpd> block out of config.xml.
+#   Write: REST API /api/v2/services/dhcp_server/custom_option.
+#   Auth:  macOS Keychain `pfsense-api-token`.
+#
+# We read over SSH rather than REST for the same reason as
+# sync-pfsense-dhcp-static-mappings.py: the DHCP list endpoints return 504
+# through HAProxy on this build, because the HOME scope holds ~256 static
+# mappings and serialising them exceeds the 30 s gateway timeout.
+#
+# NOTE ON ENCODING: pfSense stores each option's <value> base64-encoded in
+# config.xml. The values below are the PLAIN text form; the sync script decodes
+# what it reads from config.xml before comparing, so this file stays readable.
+#
+# Options NOT listed here are left untouched.
+
+options:
+  # ---------------------------------------------------------------------------
+  # HOME (opt2) -- RFC 3442 Classless Static Routes.
+  #
+  # WHY THIS EXISTS, AND WHY IT MUST CONTAIN THE DEFAULT ROUTE:
+  #
+  # RFC 3442 is explicit: "If the DHCP server returns both a Classless Static
+  # Routes option and a Router option, the DHCP client MUST ignore the Router
+  # option." That is a MUST, not a SHOULD.
+  #
+  # This scope also sets `option routers 192.168.4.1`, but any RFC-3442-
+  # compliant client (modern Linux/NetworkManager, Windows, Android) discards
+  # it the moment option 121 is present. Before 2026-08-21 this option carried
+  # ONLY the 192.168.100.0/24 route, so those clients ended up with NO default
+  # gateway at all -- reachable on-link, able to resolve DNS (192.168.4.1 is
+  # on-link), but "Network is unreachable" for anything off-subnet.
+  #
+  # It went unnoticed for a long time because macOS and iOS ignore option 121
+  # and therefore keep `option routers`. It surfaced when a new Arch/Omarchy
+  # workstation (192.168.0.8) joined and had no internet.
+  #
+  # ENCODING (RFC 3442): each route is
+  #     <prefix-len> <significant destination octets> <4-byte gateway>
+  # A default route has prefix length 0, so it needs ZERO destination octets:
+  #     00 c0:a8:04:01                -> 0.0.0.0/0        via 192.168.4.1
+  #     18 c0:a8:64 c0:a8:07:0a       -> 192.168.100.0/24 via 192.168.7.10
+  #
+  # The 192.168.100.0/24 route is load-bearing and must NOT be dropped:
+  # 192.168.100.254 is pihole-1, the FIRST DNS server this scope hands out,
+  # and it is only reachable via 192.168.7.10.
+  # ---------------------------------------------------------------------------
+  - interface: opt2
+    number: 121
+    type: string
+    value: "00:c0:a8:04:01:18:c0:a8:64:c0:a8:07:0a"
+    description: >-
+      Classless static routes for HOME: default via 192.168.4.1 (pfSense) plus
+      192.168.100.0/24 via 192.168.7.10 (reaches pihole-1 at .100.254).
+      The default route entry is REQUIRED -- without it RFC-3442 clients
+      discard `option routers` and end up with no gateway.

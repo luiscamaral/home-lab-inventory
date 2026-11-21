@@ -1,0 +1,114 @@
+{
+  "collected_at": "2026-11-17T00:28:32.504923+00:00",
+  "records": [
+    {
+      "command": [
+        "git",
+        "grep",
+        "-n",
+        "-E",
+        "NODE_VERSION|node-version|runner|labels|image:",
+        "origin/main",
+        "--",
+        ".github/workflows/pr-validation.yml",
+        "terraform/portainer/stacks/github-runner.yml"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "origin/main:.github/workflows/pr-validation.yml:23:  NODE_VERSION: \"20\"\norigin/main:.github/workflows/pr-validation.yml:69:          key: lint-tools-${{ runner.os }}-${{ matrix.linter }}-${{ hashFiles('**/.markdownlint.json', '**/.yamllint.yml') }}\norigin/main:.github/workflows/pr-validation.yml:71:            lint-tools-${{ runner.os }}-${{ matrix.linter }}-\norigin/main:.github/workflows/pr-validation.yml:89:          node-version: ${{ env.NODE_VERSION }}\norigin/main:.github/workflows/pr-validation.yml:229:          node-version: ${{ env.NODE_VERSION }}\norigin/main:.github/workflows/pr-validation.yml:236:          key: pre-commit-${{ runner.os }}-${{ hashFiles('**/.pre-commit-config.yaml') }}\norigin/main:.github/workflows/pr-validation.yml:238:            pre-commit-${{ runner.os }}-\norigin/main:.github/workflows/pr-validation.yml:305:          node-version: ${{ env.NODE_VERSION }}\norigin/main:.github/workflows/pr-validation.yml:315:          key: commitlint-${{ runner.os }}-${{ hashFiles('**/.commitlintrc.json', '**/package.json') }}\norigin/main:.github/workflows/pr-validation.yml:317:            commitlint-${{ runner.os }}-\norigin/main:.github/workflows/pr-validation.yml:431:          key: docker-validation-${{ runner.os }}-${{ github.sha }}\norigin/main:.github/workflows/pr-validation.yml:433:            docker-validation-${{ runner.os }}-\norigin/main:terraform/portainer/stacks/github-runner.yml:1:name: github-runner\norigin/main:terraform/portainer/stacks/github-runner.yml:8:  runner:\norigin/main:terraform/portainer/stacks/github-runner.yml:9:    image: myoung34/github-runner:latest\norigin/main:terraform/portainer/stacks/github-runner.yml:10:    container_name: github-runner-homelab\norigin/main:terraform/portainer/stacks/github-runner.yml:11:    hostname: dockerserver-1-runner\norigin/main:terraform/portainer/stacks/github-runner.yml:16:      - RUNNER_NAME=dockerserver-1-runner\norigin/main:terraform/portainer/stacks/github-runner.yml:17:      - RUNNER_WORKDIR=/tmp/runner/work\norigin/main:terraform/portainer/stacks/github-runner.yml:26:      - /nfs/dockermaster/docker/github-runner/work:/tmp/runner/work\norigin/main:terraform/portainer/stacks/github-runner.yml:27:      - /nfs/dockermaster/docker/github-runner/runner-data:/runner-data\norigin/main:terraform/portainer/stacks/github-runner.yml:32:    labels:\norigin/main:terraform/portainer/stacks/github-runner.yml:35:      com.docker.service: \"github-runner\"\norigin/main:terraform/portainer/stacks/github-runner.yml:36:      portainer.autodeploy: \"false\"  # Prevent auto-deploy to avoid runner disruption\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "origin/main",
+        "fix/ops-ds2-agent-ip",
+        "--",
+        "dockerserver-2/docker/compose/portainer-agent/docker-compose.yml"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "diff --git a/dockerserver-2/docker/compose/portainer-agent/docker-compose.yml b/dockerserver-2/docker/compose/portainer-agent/docker-compose.yml\nindex 2b67a68..5ab5abb 100644\n--- a/dockerserver-2/docker/compose/portainer-agent/docker-compose.yml\n+++ b/dockerserver-2/docker/compose/portainer-agent/docker-compose.yml\n@@ -3,8 +3,7 @@\n # Declarative source for the agent container. It was previously started with\n # `docker run` (no compose project). Applied with `docker compose` on ds-2.\n # Version must match the Portainer server (2.45.3); the server reaches the agent\n-# at tcp://192.168.59.59:9001. Moved off .42 on 2026-11-05: pihole-exporter-2 (ds-1) is pinned to .42 too, and\n-# Portainer's ARP cache picked the exporter (\"connection refused\").\n+# at tcp://192.168.59.59:9001.\n #\n # Rollback: image portainer/agent:2.39.1 (kept locally) with the same settings.\n \n"
+    },
+    {
+      "command": [
+        "git",
+        "log",
+        "--format=%h %s",
+        "origin/main",
+        "--",
+        "terraform/circunflexo",
+        "scripts/sync-pfsense-dhcp-options.py",
+        "terraform/portainer/stacks/freeswitch.yml"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "55f4ea9 feat(monitoring): alert on zot 5xx, GC errors and a dead metrics endpoint (#119)\nc752137 fix(network): declare HOME DHCP option 121 with a default route\n846cdb0 fix(containers): restore freeswitch healthcheck after esl password rotation\n381bc4a \u2728(infra): Complete IaC migration - 18 Portainer stacks, Keycloak IdP, security hardening (#5)\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "origin/main",
+        "fix/freeswitch-pin-dhcp-write-path",
+        "--",
+        "terraform/portainer/stacks/freeswitch.yml"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "diff --git a/terraform/portainer/stacks/freeswitch.yml b/terraform/portainer/stacks/freeswitch.yml\nindex df5ac26..9086367 100644\n--- a/terraform/portainer/stacks/freeswitch.yml\n+++ b/terraform/portainer/stacks/freeswitch.yml\n@@ -7,7 +7,10 @@ networks:\n \n services:\n   freeswitch:\n-    image: ghcr.io/patrickbaus/freeswitch-docker\n+    # Pinned to the digest that was running before the 2026-10-31 log-cap\n+    # recreate. Unpinned :latest had moved to a different digest upstream, so a\n+    # recreate would have silently upgraded FreeSWITCH. Bump deliberately.\n+    image: ghcr.io/patrickbaus/freeswitch-docker@sha256:9fae8124caa79d3436e3622ad572f25f9091196949a90c3468af662a0755bfcc\n     container_name: freeswitch\n     hostname: freeswitch\n     networks:\n@@ -28,6 +31,13 @@ services:\n       CC_PASSWORD: ${CC_PASSWORD}\n       CC_DID: ${CC_DID}\n     restart: unless-stopped\n+    # Log cap. Docker json-file has no default size limit: a SQLite core-DB error\n+    # loop grew this container's log to 68 GB and filled the ds-2 disk (2026-10-30).\n+    logging:\n+      driver: json-file\n+      options:\n+        max-size: \"50m\"\n+        max-file: \"3\"\n     # The upstream image bakes in a HEALTHCHECK that runs\n     # `fs_cli -x status` with no password flag (defaults to ClueCon).\n     # This homelab uses a rotated ESL password, so the baked-in probe\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "origin/main",
+        "feat/storage-policy",
+        "--",
+        ".pre-commit-config.yaml",
+        "docs/architecture/storage-policy.md"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "diff --git a/.pre-commit-config.yaml b/.pre-commit-config.yaml\nindex 1f0e768..5aa9afe 100644\n--- a/.pre-commit-config.yaml\n+++ b/.pre-commit-config.yaml\n@@ -91,14 +91,6 @@ repos:\n   # Docker Compose validation\n   - repo: local\n     hooks:\n-      - id: nomad-regression-tests\n-        name: NOMAD observability and embedding evaluation tests\n-        entry: python -m unittest discover -s tests -p 'test_nomad*.py'\n-        language: python\n-        additional_dependencies: [PyYAML==6.0.3]\n-        pass_filenames: false\n-        files: '^(scripts/nomad-embedding-eval\\.py|tests/test_nomad.*\\.py|tests/fixtures/nomad-embedding-eval\\.json|dockermaster/docker/compose/nomad/|dockermaster/docker/compose/nginx-rproxy/vhost\\.d/nomad\\.d\\.lcamaral\\.com\\.conf)'\n-\n       - id: docker-compose-check\n         name: Docker Compose Check\n         entry: bash -c 'for file in \"$@\"; do docker compose -f \"$file\" config --quiet || exit 1; done'\n@@ -116,9 +108,10 @@ repos:\n         files: ^\\.github/workflows/.*\\.ya?ml$\n         require_serial: false\n \n-  # Block unpinned Docker image tags (`:latest`, `:edge`, `:stable`, ...\n-  # or no tag at all) in Compose files and Terraform templates.\n-  # Allowlist for images that intentionally float (watchtower-managed, internal registry\n+  # Block unpinned Docker image tags (`:latest`, no tag at all, or\n+  # generic floating majors like `postgres:17` written with no minor)\n+  # in Compose files and Terraform templates. Allowlist for images\n+  # that intentionally float (watchtower-managed, internal registry\n   # rebuilds) lives in scripts/check-image-pins.sh.\n   - repo: local\n     hooks:\n@@ -129,6 +122,21 @@ repos:\n         files: '(docker-compose\\.ya?ml|\\.yml\\.tftpl|/stacks/.*\\.ya?ml)$'\n         require_serial: false\n \n+  # Storage placement guard: every local persistent mount (bind outside /nfs/\n+  # or a named volume not on NAS) needs a register entry with a documented\n+  # reason. Undocumented local storage fails the commit.\n+  # Policy: docs/architecture/storage-policy.md. Register: docs/architecture/storage-register.yml.\n+  - repo: local\n+    hooks:\n+      - id: check-storage-placement\n+        name: Check storage placement (NAS default)\n+        entry: scripts/check-storage-placement.py\n+        language: python\n+        additional_dependencies: ['pyyaml>=6']\n+        files: '(docker-compose\\.ya?ml|/stacks/.*\\.ya?ml|dockermaster/docker/.*\\.ya?ml|dockerserver-[12]/.*\\.ya?ml|nas/docker/.*\\.ya?ml|storage-register\\.yml)$'\n+        pass_filenames: true\n+        require_serial: false\n+\n # Global configuration\n default_stages: [pre-commit]\n fail_fast: false\ndiff --git a/docs/architecture/storage-policy.md b/docs/architecture/storage-policy.md\nnew file mode 100644\nindex 0000000..0fe933a\n--- /dev/null\n+++ b/docs/architecture/storage-policy.md\n@@ -0,0 +1,118 @@\n+# Storage Placement Policy\n+\n+Status: **active** (adopted 2026-11-05). Enforced by `scripts/check-storage-placement.py`\n+(pre-commit) and audited live with `scripts/check-storage-placement.py --live`.\n+Register of every exception and violation: `docs/architecture/storage-register.yml`.\n+\n+## 1. Principle\n+\n+All application data lives on the NAS, so any container can run on any host and a host\n+loss does not lose state.\n+\n+- **Default:** persistent data is bind-mounted from a NAS export under `/nfs/`\n+  (`/nfs/dockermaster/docker/<service>/` for dockermaster-group services).\n+- **Same path everywhere:** an export that more than one host uses is mounted at the\n+  **same path on every host**. Hosts must not see different paths for the same data.\n+  The live audit checks container mounts, not host mounts yet (see section 8).\n+- `/volume2/...` on the NAS host is NAS storage by definition.\n+\n+## 2. What counts as persistent data\n+\n+Anything that must survive a container recreate or a host loss:\n+\n+- databases, consensus stores, search or time-series indexes\n+- application state and uploads, runtime-written config (for example an app's own settings\n+  database), keys and certificates generated at runtime\n+- audit or retention logs\n+\n+Not persistent data, so not covered (the scanner ignores these):\n+\n+- host runtime plumbing: `/var/run/docker.sock`, `/proc`, `/sys`, `/dev`, `/etc/localtime`,\n+  `/etc/hosts`, cAdvisor's `/var/lib/docker`, node-exporter textfile collector\n+- repo-relative config files bind-mounted read-only (`./file` in the compose file; config\n+  as code)\n+- rebuildable caches and scratch, **only** when declared in the register (section 4)\n+\n+## 3. Violations (default)\n+\n+**Any local persistent data without a register entry is a violation.** This includes data\n+that is undocumented, or that a reviewer has not explicitly accepted. The guard fails a\n+commit that adds one. A register entry with `class: violation` (status `open` or `planned`)\n+is recorded debt: allowed to exist, but tracked until it is moved or decided.\n+\n+## 4. Exception classes (documented reasoning)\n+\n+An exception needs one of these classes, a reason of at least 40 characters, and a source\n+document. \"Undocumented\" never qualifies.\n+\n+| Class | Use for | Why local (reasoning) | Source |\n+|---|---|---|---|\n+| `postgres` | PostgreSQL data directories, especially repmgr HA pairs | NFS fsync and locking behaviour is a known footgun, and a shared PGDATA across two instances is worse than split-brain | `docs/ha-architecture.md`, `docs/architecture/storage-pattern-audit-2026-05-27.md` |\n+| `raft` | Vault Raft and other consensus stores | NFS latency breaks heartbeats; durability comes from replication across nodes | storage audit |\n+| `tsdb` | Prometheus and other time-series write paths | Constant small writes are latency-sensitive over NFS; durability via remote-write or object storage | storage audit |\n+| `sqlite` | SQLite or BoltDB files (app DBs) | NFS soft mounts and missing locks caused corruption and I/O errors (calibre-web, 2026-08-24) | `terraform/portainer/stacks/calibre.yml` |\n+| `cache` | Rebuildable caches | Loss costs only warm-up time | register reason |\n+| `scratch` | Rebuildable working dirs (compactor, rule WAL) | Rebuilt from object storage on restart | storage audit |\n+| `other` | Anything else | Discouraged. Needs explicit approval and a specific reason | \u2014 |\n+\n+Every exception must also state the **recovery plan**: HA replication, a backup, or a\n+rebuild path. \"Local\" is not a backup.\n+\n+## 5. Consistency rules\n+\n+- Multi-site MinIO: each site keeps independent storage, so one NAS failure cannot take out\n+  both sites. **Open decision** (section 9): this conflicts with \"all on NAS\" for minio-2.\n+- Migrating data between local and NAS is a change: it needs a backup, a maintenance window,\n+  and approval (`operating-rules.md` section 2).\n+\n+## 6. Decision checklist (run it for every change, new feature or new service)\n+\n+1. Where does this service's state live? List every path it writes.\n+2. Default: a NAS path under `/nfs/`. Use it unless section 4 applies.\n+3. If local: which class, what is the reason, what is the recovery plan. Get approval if\n+   the class is `other`.\n+4. Add or update the register entry (`docs/architecture/storage-register.yml`).\n+5. Run `scripts/check-storage-placement.py --report`. It must show 0 unregistered.\n+6. After a deploy, run `scripts/check-storage-placement.py --live` and confirm the live\n+   container matches the register.\n+\n+## 7. Enforcement\n+\n+- **Commit time:** `check-storage-placement` pre-commit hook. Fails on unregistered local\n+  storage, invalid register entries, and stale entries (file, service or mount gone).\n+- **Live:** `--live` inspects every host over read-only SSH (`docker ps`, `docker inspect`,\n+  `docker volume inspect`). Run it before infrastructure changes and after deploys.\n+- **Agents:** `.claude/skills/storage-placement/SKILL.md` and `.claude/operating-rules.md`\n+  section 6 require the checklist for any change that adds or moves data.\n+\n+## 8. Known gaps (be explicit about them)\n+\n+- Writable-layer data is not a mount, so the scanner cannot see it. Record it as a manual\n+  register entry (`manual: true`). Example: FreeSWITCH's SQLite DB.\n+- Repo-scan covers compose files in `terraform/portainer/stacks`, `dockermaster/docker`,\n+  `dockerserver-1`, `dockerserver-2` and `nas/docker`. Live containers that have no repo\n+  file are covered by `--live` only.\n+- `--live` does not yet check that a shared export is mounted at the same path on every\n+  host. Add this check before claiming full coverage.\n+- The repo can say NAS while a live container runs local (minio-2 today). Only `--live`\n+  catches this, so run it, not just the repo scan.\n+\n+## 9. Open decisions (each is a register entry until decided)\n+\n+1. **MinIO sites:** keep minio-2 local for site independence, or move it to NAS (and accept\n+   a shared NAS failure domain)?\n+2. **Portainer BoltDB:** NAS, or a `sqlite` exception?\n+3. **FreeSWITCH SQLite core DB:** `sqlite` exception, or a NAS volume?\n+4. **Rundeck Postgres:** `postgres` exception with a reason, or move to NAS?\n+5. **Logs** (Vault, Rundeck, Puppet): does a `scratch` class for logs exist, or do logs\n+   default to NAS?\n+6. **Legacy files:** DECIDED and removed 2026-11-05 (not deployed on any host).\n+   Orphaned NAS volume `vault_vault-data` kept, pending owner decision.\n+7. **Postfix DKIM keys:** move to Vault, which the secrets rule already requires.\n+8. **Keycloak HA:** local PGDATA stays (`postgres`), but split-brain fencing or a witness is\n+   a separate design task. NAS does not fix it.\n+\n+## 10. Change log\n+\n+- 2026-11-05: policy created. Register seeded from `--report` and `--live`\n+  (16 exceptions, 22 violations). Default-undocumented rule adopted.\n"
+    },
+    {
+      "command": [
+        "git",
+        "ls-tree",
+        "-r",
+        "--name-only",
+        "origin/main",
+        "rundeck"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "rundeck/README.md\nrundeck/jobs/calibre-replication.yaml\nrundeck/jobs/calibre-restart.yaml\nrundeck/jobs/pihole-auth-check.yaml\nrundeck/jobs/pihole-exporter-restart.yaml\nrundeck/jobs/ps.yaml\nrundeck/jobs/rundeck-token-check.yaml\nrundeck/jobs/sync-ssl-certificates.yaml\nrundeck/jobs/ubuntu-auto-update.yaml\nrundeck/jobs/vms-backup.yaml\n"
+    },
+    {
+      "command": [
+        "git",
+        "stash",
+        "show",
+        "--stat",
+        "stash@{0}"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": " docs/network/switch24a-omada-integration-plan.md | 45 +++++++++++++-----------\n 1 file changed, 24 insertions(+), 21 deletions(-)\n"
+    },
+    {
+      "command": [
+        "git",
+        "stash",
+        "show",
+        "--stat",
+        "stash@{1}"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": " .pre-commit-config.yaml | 14 ++++++++++++++\n 1 file changed, 14 insertions(+)\n"
+    }
+  ],
+  "source": "tracked sources only, not local secrets or live hosts"
+}

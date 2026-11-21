@@ -1,0 +1,2128 @@
+{
+  "collected_at": "2026-11-17T00:24:16.904989+00:00",
+  "command": [
+    "gh",
+    "pr",
+    "list",
+    "--repo",
+    "luiscamaral/home-lab-inventory",
+    "--state",
+    "all",
+    "--limit",
+    "500",
+    "--json",
+    "number,title,url,state,headRefName,baseRefName,mergedAt,closedAt,updatedAt,headRefOid,mergeCommit"
+  ],
+  "data": [
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-17T00:20:41Z",
+      "headRefName": "fix/dhcp-static-php-writer",
+      "headRefOid": "172d719f9b346d0d427c5555c19575037ddbd63e",
+      "mergeCommit": {
+        "oid": "18786b56395a9c43003022965ee224a748bee6dd"
+      },
+      "mergedAt": "2026-11-17T00:20:41Z",
+      "number": 147,
+      "state": "MERGED",
+      "title": "fix(network): write DHCP reservations through pfSense PHP, not the REST API",
+      "updatedAt": "2026-11-17T00:22:32Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/147"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-17T00:08:19Z",
+      "headRefName": "fix/dhcp-sync-safe-writes",
+      "headRefOid": "08f3d3a4c35be3d1fb3c6b43cba57cda6fb71da4",
+      "mergeCommit": {
+        "oid": "560874226e4bab291a3417a66dabf747a2201d21"
+      },
+      "mergedAt": "2026-11-17T00:08:18Z",
+      "number": 146,
+      "state": "MERGED",
+      "title": "fix(network): send DHCP reservation writes once, past the gateway timeout",
+      "updatedAt": "2026-11-17T00:12:34Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/146"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-16T23:53:03Z",
+      "headRefName": "docs/keychain-credential-backup",
+      "headRefOid": "571da87a2a042c5754d924226d02cfaf772851a3",
+      "mergeCommit": {
+        "oid": "82566409eda5d9e2f0acc17550e8ce3d9693c12b"
+      },
+      "mergedAt": "2026-11-16T23:53:03Z",
+      "number": 145,
+      "state": "MERGED",
+      "title": "docs(network): document Keychain backup of Omada and switch credentials",
+      "updatedAt": "2026-11-16T23:53:03Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/145"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-16T22:41:06Z",
+      "headRefName": "fix/omada-admin-reservation",
+      "headRefOid": "364a8114d1863226b555b746eeffd96d501d09b8",
+      "mergeCommit": {
+        "oid": "2815ecc410189d4d22a3aa23ddd94d98e92dd44f"
+      },
+      "mergedAt": "2026-11-16T22:41:06Z",
+      "number": 144,
+      "state": "MERGED",
+      "title": "fix(network): reserve Omada ADMIN address",
+      "updatedAt": "2026-11-16T22:44:46Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/144"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-15T20:48:18Z",
+      "headRefName": "docs/nfs-storage-rule",
+      "headRefOid": "0745c07b927928120b326bba05c56dd6ced568c2",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 143,
+      "state": "CLOSED",
+      "title": "docs: NFS is fixed storage, never propose relocating",
+      "updatedAt": "2026-11-15T20:49:06Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/143"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-15T20:41:03Z",
+      "headRefName": "docs/nfs-storage-rule",
+      "headRefOid": "cbba593e24b7c6d57b669526edaf4f8185ffc39b",
+      "mergeCommit": {
+        "oid": "091e018899cef091a4e4ad93d86258df3bba9629"
+      },
+      "mergedAt": "2026-11-15T20:41:03Z",
+      "number": 142,
+      "state": "MERGED",
+      "title": "docs: NFS is fixed storage \u2014 never propose moving off it",
+      "updatedAt": "2026-11-15T20:41:03Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/142"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-15T17:34:11Z",
+      "headRefName": "fix/nomad-macvlan",
+      "headRefOid": "313eb7fe634d714b6553b9ed380005d077ed1995",
+      "mergeCommit": {
+        "oid": "2e562e6721adc88f01b9cc084693314294e985fa"
+      },
+      "mergedAt": "2026-11-15T17:34:11Z",
+      "number": 141,
+      "state": "MERGED",
+      "title": "feat(docker): expose NOMAD children via direct macvlan, drop edge gateway",
+      "updatedAt": "2026-11-15T17:51:27Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/141"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-15T08:30:12Z",
+      "headRefName": "fix/nomad-private-children",
+      "headRefOid": "1824b31697364c6d280d8c564bfba7afc3c16301",
+      "mergeCommit": {
+        "oid": "ed65a662d38f234dc2a40bd418dffd40e165db93"
+      },
+      "mergedAt": "2026-11-15T08:30:12Z",
+      "number": 140,
+      "state": "MERGED",
+      "title": "fix(docker): route NOMAD children through private proxy",
+      "updatedAt": "2026-11-15T08:30:12Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/140"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-15T07:32:43Z",
+      "headRefName": "fix/nomad-qdrant-timeout",
+      "headRefOid": "c037e91cb92a2de196191a00b4ff3976d28fb59f",
+      "mergeCommit": {
+        "oid": "a3d06319e1c79b426967b1a7cc121cb7aa30dd6d"
+      },
+      "mergedAt": "2026-11-15T07:32:43Z",
+      "number": 139,
+      "state": "MERGED",
+      "title": "fix(docker): configure NOMAD Qdrant timeout to 30 minutes",
+      "updatedAt": "2026-11-15T07:45:40Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/139"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-15T05:05:33Z",
+      "headRefName": "feat/nomad-gemma-deploy",
+      "headRefOid": "aea4d6de4044bf50a7d1ab0fb1e637efd87b8786",
+      "mergeCommit": {
+        "oid": "094ceb134ca5ff4441f018c368a3c3220046e2f4"
+      },
+      "mergedAt": "2026-11-15T05:05:33Z",
+      "number": 138,
+      "state": "MERGED",
+      "title": "feat(docker): switch NOMAD embeddings to embeddinggemma-2 via a custom fork",
+      "updatedAt": "2026-11-15T05:05:33Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/138"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-15T02:30:41Z",
+      "headRefName": "feat/nomad-embed-ollama-10cpu",
+      "headRefOid": "a98859c9fea7361fefba2e23f06fbd567aaa05bc",
+      "mergeCommit": {
+        "oid": "3f111afaa27928a699c68695c33540e6e1b4eddc"
+      },
+      "mergedAt": "2026-11-15T02:30:41Z",
+      "number": 137,
+      "state": "MERGED",
+      "title": "feat(docker): allow 10 CPUs for the NOMAD embedding ollama",
+      "updatedAt": "2026-11-15T02:30:41Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/137"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-15T01:24:50Z",
+      "headRefName": "feat/nomad-embedding-gemma2",
+      "headRefOid": "0cac5fb641d1d70656eb699a6b45a0edba95bdfb",
+      "mergeCommit": {
+        "oid": "3ba85beb618a7f3babefaa964c8771ba9911e19d"
+      },
+      "mergedAt": "2026-11-15T01:24:50Z",
+      "number": 136,
+      "state": "MERGED",
+      "title": "feat(docker): benchmark embeddinggemma-2:270m",
+      "updatedAt": "2026-11-15T01:24:50Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/136"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-15T00:51:38Z",
+      "headRefName": "feat/nomad-embedding-qwen3-4b",
+      "headRefOid": "77807524fd0389a6c186af79d20e5678a63583a2",
+      "mergeCommit": {
+        "oid": "5ba430ba5e3ff7020a6c24da3b90c4afd249b7a5"
+      },
+      "mergedAt": "2026-11-15T00:51:38Z",
+      "number": 135,
+      "state": "MERGED",
+      "title": "feat(docker): benchmark qwen3-embedding:4b",
+      "updatedAt": "2026-11-15T00:51:38Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/135"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-15T00:21:44Z",
+      "headRefName": "feat/nomad-embedding-qwen3-reranker",
+      "headRefOid": "a1bc46860920af78f0ef0079f38a923cebd6da58",
+      "mergeCommit": {
+        "oid": "11169a190b12ff997b692be62fe08dcd29e2efd5"
+      },
+      "mergedAt": "2026-11-15T00:21:44Z",
+      "number": 134,
+      "state": "MERGED",
+      "title": "fix(docker): make the reranker optional so the embedding benchmark always runs",
+      "updatedAt": "2026-11-15T00:21:44Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/134"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-15T00:07:07Z",
+      "headRefName": "feat/nomad-embedding-qwen3-reranker",
+      "headRefOid": "a0bf08907364123dbe031976c152fba59e161bda",
+      "mergeCommit": {
+        "oid": "9389992d95f8f625f68002b7f9145a9119f56f28"
+      },
+      "mergedAt": "2026-11-15T00:07:07Z",
+      "number": 133,
+      "state": "MERGED",
+      "title": "fix(docker): use bge-reranker-v2-m3 until TEI supports Qwen3 rerankers",
+      "updatedAt": "2026-11-15T00:07:07Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/133"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-14T23:44:23Z",
+      "headRefName": "feat/nomad-embedding-qwen3-reranker",
+      "headRefOid": "4b45bcdd6feeeeefba6d59ca03ca5a483e459bf5",
+      "mergeCommit": {
+        "oid": "21b40f4fc11ad716aab37c38cbddacbe7ad40243"
+      },
+      "mergedAt": "2026-11-14T23:44:23Z",
+      "number": 132,
+      "state": "MERGED",
+      "title": "feat(docker): benchmark qwen3-8b embedding and a cross-encoder reranker",
+      "updatedAt": "2026-11-14T23:44:23Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/132"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-14T21:48:47Z",
+      "headRefName": "fix/nomad-eval-config-compat",
+      "headRefOid": "d2dbc614dd6bdb068bd8019c2f07e95d978a10c0",
+      "mergeCommit": {
+        "oid": "1622227ae4b9af1eebb3146bd4e6a066a4f5d5c3"
+      },
+      "mergedAt": "2026-11-14T21:48:47Z",
+      "number": 131,
+      "state": "MERGED",
+      "title": "fix(docker): allow Portainer to mount evaluation configs",
+      "updatedAt": "2026-11-14T21:51:45Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/131"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-14T20:51:20Z",
+      "headRefName": "fix/nomad-socket-proxy-ipv4",
+      "headRefOid": "28eddfd7e4a398001a1766959ffd2f9f28aff51e",
+      "mergeCommit": {
+        "oid": "6234c81ca0c8d6896ce38d4192230ffd53a2ee23"
+      },
+      "mergedAt": "2026-11-14T20:51:20Z",
+      "number": 130,
+      "state": "MERGED",
+      "title": "fix(docker): bind NOMAD socket proxy on IPv4-only host",
+      "updatedAt": "2026-11-14T20:54:42Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/130"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-14T20:36:46Z",
+      "headRefName": "fix/nomad-observability-bge-eval",
+      "headRefOid": "2b96337e446b6e7c6c23d4171520756930b306e5",
+      "mergeCommit": {
+        "oid": "f946a2a983663d3fe2c900535e46cb6f579eb120"
+      },
+      "mergedAt": "2026-11-14T20:36:46Z",
+      "number": 129,
+      "state": "MERGED",
+      "title": "fix(docker): restore NOMAD logs and add isolated embedding evaluation",
+      "updatedAt": "2026-11-14T21:51:44Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/129"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-14T19:35:15Z",
+      "headRefName": "feat/nomad-iac-remote-ai",
+      "headRefOid": "b7365a330054d27063a398eaec003d07a35f1867",
+      "mergeCommit": {
+        "oid": "114c5fc4ea950f34fad33ea25ee17f17c0604b31"
+      },
+      "mergedAt": "2026-11-14T19:35:15Z",
+      "number": 128,
+      "state": "MERGED",
+      "title": "feat(docker): persist nomad remote AI LiteLLM URL via IaC init container",
+      "updatedAt": "2026-11-14T19:43:06Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/128"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-14T18:59:27Z",
+      "headRefName": "feat/nomad-agy-models",
+      "headRefOid": "3c46baa017ff652fc5e21fac9ee984c8b7a0f275",
+      "mergeCommit": {
+        "oid": "6b17b77b44bbf973aa0be43dbb7a23022f1cf3b8"
+      },
+      "mergedAt": "2026-11-14T18:59:27Z",
+      "number": 127,
+      "state": "MERGED",
+      "title": "feat(docker): expose all available Antigravity chat models in nomad LiteLLM",
+      "updatedAt": "2026-11-14T19:02:27Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/127"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-14T18:42:49Z",
+      "headRefName": "feat/nomad-gemini-subscription",
+      "headRefOid": "e5188c6efe3eae35d6ddafd951157ebb1954e132",
+      "mergeCommit": {
+        "oid": "cfaa9d574635664fb385f0d94804aa6b4e8f098a"
+      },
+      "mergedAt": "2026-11-14T18:42:49Z",
+      "number": 126,
+      "state": "MERGED",
+      "title": "feat(docker): route nomad chat through CLIProxyAPI Gemini subscription OAuth",
+      "updatedAt": "2026-11-14T18:46:05Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/126"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-14T06:21:17Z",
+      "headRefName": "fix/nomad-litellm-boot",
+      "headRefOid": "36dcac883d781330e1199277641aefb6a9fe2cf5",
+      "mergeCommit": {
+        "oid": "7fc657d7554546401bcd5e627f0cca859d784bf6"
+      },
+      "mergedAt": "2026-11-14T06:21:17Z",
+      "number": 125,
+      "state": "MERGED",
+      "title": "fix(docker): allow unset master key on isolated nomad LiteLLM proxy",
+      "updatedAt": "2026-11-14T06:25:21Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/125"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-14T06:08:15Z",
+      "headRefName": "feat/project-nomad",
+      "headRefOid": "14722d580fcdd7b2fbb1b188e1001eaa20d7e842",
+      "mergeCommit": {
+        "oid": "3312ec4f38b4fe64d1809137e24d89883e0ac81b"
+      },
+      "mergedAt": "2026-11-14T06:08:15Z",
+      "number": 124,
+      "state": "MERGED",
+      "title": "feat(docker): add Project NOMAD stack on ds-2 with embeddings Ollama and LiteLLM router",
+      "updatedAt": "2026-11-14T06:25:19Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/124"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-12T09:05:03Z",
+      "headRefName": "docs/nas-drive-versioning-applied",
+      "headRefOid": "83e2d8ea126f95809dac913d6f8e49b8e6ea5b0f",
+      "mergeCommit": {
+        "oid": "d603586ef5a8e948e11aba4c116acbf002cb8243"
+      },
+      "mergedAt": "2026-11-12T09:05:03Z",
+      "number": 123,
+      "state": "MERGED",
+      "title": "docs(nas): record the Drive versioning applied by hand",
+      "updatedAt": "2026-11-12T09:05:03Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/123"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-12T07:13:44Z",
+      "headRefName": "fix/zot-meta-backup-readonly",
+      "headRefOid": "06d2bd6eb57e468cd1816f541c22686465d4e749",
+      "mergeCommit": {
+        "oid": "82f3ce88f6e1166d7807da62da2cb962fa330d2b"
+      },
+      "mergedAt": "2026-11-12T07:13:44Z",
+      "number": 122,
+      "state": "MERGED",
+      "title": "fix(docker): drop read_only from the zot meta.db backup sidecar",
+      "updatedAt": "2026-11-12T07:23:59Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/122"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-12T07:08:46Z",
+      "headRefName": "feat/zot-meta-backup",
+      "headRefOid": "114a14c0d815165954d70aa0f7ecc0ab2ecba5eb",
+      "mergeCommit": {
+        "oid": "314b96ed5314a2165b4fb6afb066668dd92feeed"
+      },
+      "mergedAt": "2026-11-12T07:08:46Z",
+      "number": 121,
+      "state": "MERGED",
+      "title": "feat(docker): add the zot meta.db backup sidecar, its alerts and docs",
+      "updatedAt": "2026-11-12T07:23:58Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/121"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-12T06:56:04Z",
+      "headRefName": "feat/zot-error-alerts",
+      "headRefOid": "f89782a82672a5b0e02c83e3ffb6a1a3d58fdce3",
+      "mergeCommit": {
+        "oid": "4dc56665827bbd6d67e2b29d8735e2a23ae58317"
+      },
+      "mergedAt": "2026-11-12T06:56:04Z",
+      "number": 120,
+      "state": "MERGED",
+      "title": "feat(monitoring): alert on zot 5xx, GC errors and a dead metrics endpoint",
+      "updatedAt": "2026-11-12T07:00:33Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/120"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-12T06:51:08Z",
+      "headRefName": "fix/ds2-portainer-agent-ip-collision",
+      "headRefOid": "9dcd4e2c93dae47ec8d89296632a019e3599bfcf",
+      "mergeCommit": {
+        "oid": "55f4ea9975219933570de2c6fdefc45cd84b2f0d"
+      },
+      "mergedAt": "2026-11-12T06:51:08Z",
+      "number": 119,
+      "state": "MERGED",
+      "title": "feat(monitoring): alert on zot 5xx, GC errors and a dead metrics endpoint",
+      "updatedAt": "2026-11-12T06:54:26Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/119"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-12T06:43:39Z",
+      "headRefName": "feat/zot-local-metadb",
+      "headRefOid": "4a1f2df82c6f7005ea2b60850ffd4347cfd7e789",
+      "mergeCommit": {
+        "oid": "cc6b7a76fff2934f362ba9d03dca33c5b81f204e"
+      },
+      "mergedAt": "2026-11-12T06:43:39Z",
+      "number": 118,
+      "state": "MERGED",
+      "title": "feat(docker): keep zot's metadata DB on the local disk, images on NFS substores",
+      "updatedAt": "2026-11-12T06:48:48Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/118"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-12T02:08:25Z",
+      "headRefName": "fix/keycloak-reset-flow-priority",
+      "headRefOid": "a9ff81f909877c810d28a0270d3c47d78aa85303",
+      "mergeCommit": {
+        "oid": "92aec2f058b287887ca816c0c90207c357edcd25"
+      },
+      "mergedAt": "2026-11-12T02:08:25Z",
+      "number": 117,
+      "state": "MERGED",
+      "title": "fix(security): give the reset flow executions explicit priorities",
+      "updatedAt": "2026-11-12T02:14:42Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/117"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-12T01:57:11Z",
+      "headRefName": "fix/kc-test-totp-secret",
+      "headRefOid": "d1aafdd0b84bb2c6563139297f72ec79a0c4ef84",
+      "mergeCommit": {
+        "oid": "305198842b188bdfe7f24f9c255b0f1822d185a9"
+      },
+      "mergedAt": "2026-11-12T01:57:11Z",
+      "number": 116,
+      "state": "MERGED",
+      "title": "fix(security): read the TOTP secret from the setup form in the test",
+      "updatedAt": "2026-11-12T01:57:11Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/116"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-12T01:53:40Z",
+      "headRefName": "feat/keycloak-k3b-reset-flow",
+      "headRefOid": "293897cc6284bfc5614c6158962e12200a626774",
+      "mergeCommit": {
+        "oid": "877030c642829c954db54528b46a1c85707ea383"
+      },
+      "mergedAt": "2026-11-12T01:53:40Z",
+      "number": 115,
+      "state": "MERGED",
+      "title": "feat(security): forgot password only for users with OTP in the homelab realm",
+      "updatedAt": "2026-11-12T02:14:41Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/115"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T22:12:02Z",
+      "headRefName": "feat/keycloak-k-tests",
+      "headRefOid": "14675dc165531a01c5a141fa31cc6f1584beea6a",
+      "mergeCommit": {
+        "oid": "1bd3b5940b246e4a8f4eab9fd6d156632775c31e"
+      },
+      "mergedAt": "2026-11-11T22:12:01Z",
+      "number": 114,
+      "state": "MERGED",
+      "title": "feat(security): add Keycloak hardening tests with disposable users",
+      "updatedAt": "2026-11-11T22:12:02Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/114"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T22:13:24Z",
+      "headRefName": "feat/keycloak-k3a-mail-path",
+      "headRefOid": "7e32b148a26c487952c33de9efc4a0dd041a3c90",
+      "mergeCommit": {
+        "oid": "e35a4e2d648066ded3244c3c6b975e054bf49862"
+      },
+      "mergedAt": "2026-11-11T22:13:24Z",
+      "number": 113,
+      "state": "MERGED",
+      "title": "feat(containers): give postfix-relay a LAN address and DNS name",
+      "updatedAt": "2026-11-12T01:43:30Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/113"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T22:13:06Z",
+      "headRefName": "feat/keycloak-k2-brute-force",
+      "headRefOid": "9357ebf9c6e1675315054637832e82d59812a036",
+      "mergeCommit": {
+        "oid": "fb35fb999494a2648d3c4ed9592a053ae1cf48e6"
+      },
+      "mergedAt": "2026-11-11T22:13:06Z",
+      "number": 112,
+      "state": "MERGED",
+      "title": "feat(security): lock users out after 3 failed logins in both Keycloak realms",
+      "updatedAt": "2026-11-11T22:15:49Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/112"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T22:12:46Z",
+      "headRefName": "feat/keycloak-k4-events",
+      "headRefOid": "26bd1e69e298148bb2aee04094a4f579285b693e",
+      "mergeCommit": {
+        "oid": "720cb29d6a6923d02ee19e013a4216d2ac8e3552"
+      },
+      "mergedAt": "2026-11-11T22:12:46Z",
+      "number": 111,
+      "state": "MERGED",
+      "title": "feat(security): keep 90 days of login and admin events in both Keycloak realms",
+      "updatedAt": "2026-11-11T22:15:41Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/111"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T21:43:44Z",
+      "headRefName": "fix/zot-e2e-jwks-evidence",
+      "headRefOid": "5e2642e22f622f303dbf88a63cb707d90673fd22",
+      "mergeCommit": {
+        "oid": "5df64dd56f18378f151a053fc27a2a13408f69a8"
+      },
+      "mergedAt": "2026-11-11T21:43:44Z",
+      "number": 110,
+      "state": "MERGED",
+      "title": "fix(security): look for jwks since zot started in the e2e test",
+      "updatedAt": "2026-11-11T21:43:45Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/110"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T21:57:06Z",
+      "headRefName": "feat/keycloak-master-frontend-url",
+      "headRefOid": "450c94819b9cbc0095a504cabbe2ad9a97b65ccc",
+      "mergeCommit": {
+        "oid": "10a583648f0dc1514bf1b3d121d539f497464764"
+      },
+      "mergedAt": "2026-11-11T21:57:06Z",
+      "number": 109,
+      "state": "MERGED",
+      "title": "feat(security): serve the master realm on keycloak.d (frontendUrl)",
+      "updatedAt": "2026-11-11T21:58:13Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/109"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T21:37:44Z",
+      "headRefName": "fix/zot-e2e-session-header",
+      "headRefOid": "199d70fabd00908cead96addc1d76f32c47283ee",
+      "mergeCommit": {
+        "oid": "35e2eb0d5e08052fa690c4502aeb2c77480c45d8"
+      },
+      "mergedAt": "2026-11-11T21:37:44Z",
+      "number": 108,
+      "state": "MERGED",
+      "title": "fix(security): send X-ZOT-API-CLIENT with the zot session cookie",
+      "updatedAt": "2026-11-11T21:37:44Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/108"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T21:32:02Z",
+      "headRefName": "fix/zot-e2e-email-username",
+      "headRefOid": "3cb1c54def75a18526ed604266a50412924ba9ce",
+      "mergeCommit": {
+        "oid": "1a1254a2d0351f49231cda0d79ecffc3da9b7f3b"
+      },
+      "mergedAt": "2026-11-11T21:32:02Z",
+      "number": 107,
+      "state": "MERGED",
+      "title": "fix(security): zot e2e test uses the email-as-username login",
+      "updatedAt": "2026-11-11T21:32:02Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/107"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T21:22:32Z",
+      "headRefName": "feat/keycloak-registration-off",
+      "headRefOid": "54629fb753e2a7269aaa534a074a9e5636f1eb14",
+      "mergeCommit": {
+        "oid": "7373b9f847f840df8450c937659933eca4780f98"
+      },
+      "mergedAt": "2026-11-11T21:22:32Z",
+      "number": 106,
+      "state": "MERGED",
+      "title": "feat(security): turn off self-registration in the homelab realm",
+      "updatedAt": "2026-11-11T21:23:52Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/106"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T21:49:46Z",
+      "headRefName": "feat/keycloak-hostname-admin",
+      "headRefOid": "a51fe6410b8b79d46e7a843ea1c227f1a785599e",
+      "mergeCommit": {
+        "oid": "f4b04ca3ae6bedbdfaea37c18380d184215fdce8"
+      },
+      "mergedAt": "2026-11-11T21:49:46Z",
+      "number": 105,
+      "state": "MERGED",
+      "title": "feat(security): serve the Keycloak admin console on keycloak.d (hostname-admin)",
+      "updatedAt": "2026-11-11T21:58:12Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/105"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T22:00:31Z",
+      "headRefName": "feat/keycloak-edge-lockdown",
+      "headRefOid": "ad6cd9e7f7907ffe96a2833d4e7fa15084c05f61",
+      "mergeCommit": {
+        "oid": "1e257ee521c31d18053ef99c37aaced451a84484"
+      },
+      "mergedAt": "2026-11-11T22:00:31Z",
+      "number": 104,
+      "state": "MERGED",
+      "title": "feat(security): block the Keycloak admin console, master realm and registration on the public names",
+      "updatedAt": "2026-11-11T22:05:58Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/104"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T21:19:30Z",
+      "headRefName": "feat/keycloak-realm-import",
+      "headRefOid": "12bfeba4e9e0d7cbc9b32cd7947bee7599d1aeb2",
+      "mergeCommit": {
+        "oid": "f7bb5f95308c7bd38740b57964fc623e83a70a19"
+      },
+      "mergedAt": "2026-11-11T21:19:30Z",
+      "number": 103,
+      "state": "MERGED",
+      "title": "feat(security): import the homelab and master Keycloak realms into Terraform",
+      "updatedAt": "2026-11-11T21:19:58Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/103"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T21:26:12Z",
+      "headRefName": "feat/zot-e2e-test",
+      "headRefOid": "9981e2e5cf552346e0d52fa1299bc7bac8274eb7",
+      "mergeCommit": {
+        "oid": "cd64b8d78f11e15fbfca8e13a124355a4ba3386a"
+      },
+      "mergedAt": "2026-11-11T21:26:12Z",
+      "number": 102,
+      "state": "MERGED",
+      "title": "feat(security): add scripted zot SSO end-to-end test",
+      "updatedAt": "2026-11-11T21:46:12Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/102"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T17:07:08Z",
+      "headRefName": "feat/blackbox-auth-cf-probe",
+      "headRefOid": "fd4fc019a07803e8b2569c6373fd93264aa160c4",
+      "mergeCommit": {
+        "oid": "3b6d192b7b092289321545728a998c5d4bdf7267"
+      },
+      "mergedAt": "2026-11-11T17:07:08Z",
+      "number": 101,
+      "state": "MERGED",
+      "title": "feat(monitoring): probe the cf certificate the rproxies present for auth.cf",
+      "updatedAt": "2026-11-11T17:16:13Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/101"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T16:48:25Z",
+      "headRefName": "feat/rproxy-cf-cert",
+      "headRefOid": "7d64e92ee6d3f4b6908c43181627928197f04979",
+      "mergeCommit": {
+        "oid": "a094d26b2073370b52ca0c7ddcb8cf2488ec5368"
+      },
+      "mergedAt": "2026-11-11T16:48:25Z",
+      "number": 100,
+      "state": "MERGED",
+      "title": "feat(network): serve the cf names on the cf certificate and keep the default server explicit",
+      "updatedAt": "2026-11-11T16:54:06Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/100"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T16:42:52Z",
+      "headRefName": "fix/acme-poller-stale-log",
+      "headRefOid": "ff069af07437874a3a8b37edbb4f8012ebfb41e0",
+      "mergeCommit": {
+        "oid": "35db6149643208a71b934c63156d45a20a8f66b7"
+      },
+      "mergedAt": "2026-11-11T16:42:52Z",
+      "number": 99,
+      "state": "MERGED",
+      "title": "fix(network): ignore stale acme log content when watching an issuance",
+      "updatedAt": "2026-11-11T16:42:52Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/99"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T10:00:08Z",
+      "headRefName": "fix/acme-issue-polling",
+      "headRefOid": "5bfaa4d549064806ebaf2d75f9654aa0bb1ff773",
+      "mergeCommit": {
+        "oid": "abe5c931c7e7d7dc4c9cc68870efa4a30d129a26"
+      },
+      "mergedAt": "2026-11-11T10:00:08Z",
+      "number": 98,
+      "state": "MERGED",
+      "title": "fix(network): poll the ACME issuance on the box and raise the actions-script timeout",
+      "updatedAt": "2026-11-11T10:00:08Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/98"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T09:18:11Z",
+      "headRefName": "feat/acme-cf-explicit-sans",
+      "headRefOid": "848743f505ae524b7f842886a6f69761bba0babb",
+      "mergeCommit": {
+        "oid": "8347fb3f83c1e4ef1ad074965a5d1405f48b264e"
+      },
+      "mergedAt": "2026-11-11T09:18:11Z",
+      "number": 97,
+      "state": "MERGED",
+      "title": "fix(network): list the cf vhost names explicitly in the cf ACME certificate",
+      "updatedAt": "2026-11-11T16:54:07Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/97"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T09:12:53Z",
+      "headRefName": "fix/acme-cert-create-name",
+      "headRefOid": "b04e32a50865bda6bce7f4547a88e6314d171e02",
+      "mergeCommit": {
+        "oid": "f80430d283f575131cc344610fdfc11a57f16833"
+      },
+      "mergedAt": "2026-11-11T09:12:53Z",
+      "number": 96,
+      "state": "MERGED",
+      "title": "fix(network): send the cert name when creating an ACME certificate",
+      "updatedAt": "2026-11-11T09:12:54Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/96"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T09:07:57Z",
+      "headRefName": "feat/acme-cf-cert",
+      "headRefOid": "9c879ef62dbe5695c316cee6c7baf0d81fa62dff",
+      "mergeCommit": {
+        "oid": "72b6b8388ef7ebea4ffc5085c7cb7819c1223b44"
+      },
+      "mergedAt": "2026-11-11T09:07:57Z",
+      "number": 95,
+      "state": "MERGED",
+      "title": "feat(network): add the cf.lcamaral.com wildcard ACME certificate",
+      "updatedAt": "2026-11-11T09:07:57Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/95"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T09:04:28Z",
+      "headRefName": "feat/acme-cert-iac",
+      "headRefOid": "18cd82bdbd4852968408f05e2fcbc020bf3b5a88",
+      "mergeCommit": {
+        "oid": "f641399e3a4d7da67ccbf06937ca204dc3eb3d19"
+      },
+      "mergedAt": "2026-11-11T09:04:27Z",
+      "number": 94,
+      "state": "MERGED",
+      "title": "feat(network): reconcile pfSense ACME certificate definitions via the REST API",
+      "updatedAt": "2026-11-11T09:04:28Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/94"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T17:01:07Z",
+      "headRefName": "feat/zot-oidc-lan-hosts",
+      "headRefOid": "bf0a4cc9253bcadd0a4902082b4604d416f1f579",
+      "mergeCommit": {
+        "oid": "6f359a0efb623fc13648814f26d594115ec7aaa4"
+      },
+      "mergedAt": "2026-11-11T17:01:07Z",
+      "number": 93,
+      "state": "MERGED",
+      "title": "feat(security): zot resolves auth.cf to the LAN rproxies, not Cloudflare",
+      "updatedAt": "2026-11-11T17:03:34Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/93"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T07:12:40Z",
+      "headRefName": "fix/ix0-watchdog-posthoc",
+      "headRefOid": "0806b9ba923cbe2404aa724ea3eeec0cfadf568c",
+      "mergeCommit": {
+        "oid": "6531420cfb6129b3bcae6e8159e4108c58fae167"
+      },
+      "mergedAt": "2026-11-11T07:12:39Z",
+      "number": 92,
+      "state": "MERGED",
+      "title": "fix(network): ix0 watchdog coordination + single-instance guard (post-hoc \u2014 live since 2026-10-25)",
+      "updatedAt": "2026-11-11T07:13:07Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/92"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T06:57:47Z",
+      "headRefName": "docs/pfsense-sync-2026-11-10",
+      "headRefOid": "5fbd8f819f2bb271c1119648ea5a44e190135eaa",
+      "mergeCommit": {
+        "oid": "1661601b00c35d9ddf348cba2bd71869b40c8843"
+      },
+      "mergedAt": "2026-11-11T06:57:47Z",
+      "number": 91,
+      "state": "MERGED",
+      "title": "docs(network): sync pfSense docs with live state after the 2026-11-10 changes",
+      "updatedAt": "2026-11-11T06:57:47Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/91"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-12T07:37:14Z",
+      "headRefName": "docs/nas-drive-versioning-record",
+      "headRefOid": "b174abfa14f25eb0d1081ef2e8d8ea8a13ff40cd",
+      "mergeCommit": {
+        "oid": "d82c92b0eba28ef40af30f891fcf56fc16d856d0"
+      },
+      "mergedAt": "2026-11-12T07:37:14Z",
+      "number": 90,
+      "state": "MERGED",
+      "title": "docs(nas): record Synology Drive versioning desired state; ignore .pi/",
+      "updatedAt": "2026-11-12T07:37:14Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/90"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-11T06:07:38Z",
+      "headRefName": "feat/acme-unbound-dot-restart",
+      "headRefOid": "cad32dd1c66e92adfb82a7c156095e182812ff03",
+      "mergeCommit": {
+        "oid": "b275904dcbe8e245b38f40610d06248504e3f591"
+      },
+      "mergedAt": "2026-11-11T06:07:38Z",
+      "number": 89,
+      "state": "MERGED",
+      "title": "feat(network): restart Unbound after the pfsense ACME cert renews (DoT) + RESTAPI reinstall record (post-hoc)",
+      "updatedAt": "2026-11-11T06:12:14Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/89"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-10T20:59:27Z",
+      "headRefName": "docs/cloudflare-grafana-docs-sync",
+      "headRefOid": "80b2d4e459b6a72115f97d58f6154842c8b6b966",
+      "mergeCommit": {
+        "oid": "2dba6878ae2c7ea41c76060fbd58d1c560181206"
+      },
+      "mergedAt": "2026-11-10T20:59:27Z",
+      "number": 88,
+      "state": "MERGED",
+      "title": "docs(network): sync Cloudflare/Grafana docs with live state and record the token IP-filter gotcha",
+      "updatedAt": "2026-11-10T20:59:27Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/88"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-10T19:52:39Z",
+      "headRefName": "feat/grafana-public-url",
+      "headRefOid": "a3db4fa8e05cb3b840dafb21b224f7ca56dfa26c",
+      "mergeCommit": {
+        "oid": "57aa6d59173af25a0e66c800de13a6eb5ba6a352"
+      },
+      "mergedAt": "2026-11-10T19:52:39Z",
+      "number": 87,
+      "state": "MERGED",
+      "title": "feat(monitoring): publish Grafana at grafana.cf.lcamaral.com via Cloudflare tunnel",
+      "updatedAt": "2026-11-10T20:17:15Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/87"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-10T21:50:29Z",
+      "headRefName": "chore/wifi-probe-fw-0.14.1",
+      "headRefOid": "a63e2ad5c1cbf94e6b698253aad5bc4eb055b20a",
+      "mergeCommit": {
+        "oid": "ff98a02b6e6fd799c01e15b72c725163ce0ecf63"
+      },
+      "mergedAt": "2026-11-10T21:50:29Z",
+      "number": 86,
+      "state": "MERGED",
+      "title": "chore(monitoring): wifi-probe fw 0.14.1 \u2014 heap leak fixed (ESP-IDF v6.0.3)",
+      "updatedAt": "2026-11-10T21:50:29Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/86"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-09T05:21:46Z",
+      "headRefName": "chore/wifi-probe-fw-0.14.0",
+      "headRefOid": "a48cb809a5004e7f30e75c043c6890d6122bbcb1",
+      "mergeCommit": {
+        "oid": "c076a10d5cc506d4e769be397a39af24277db923"
+      },
+      "mergedAt": "2026-11-09T05:21:46Z",
+      "number": 85,
+      "state": "MERGED",
+      "title": "chore(monitoring): wifi-probe fw 0.14.0 \u2014 submodule bump + fleet status",
+      "updatedAt": "2026-11-10T21:50:32Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/85"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-09T05:03:02Z",
+      "headRefName": "fix/s3-firmware-plain-http",
+      "headRefOid": "d4445dd2b1d23058f31a673291f0650484ac90c5",
+      "mergeCommit": {
+        "oid": "ad5b1480edd60d903a4c25aab130f9908e9c2446"
+      },
+      "mergedAt": "2026-11-09T05:03:02Z",
+      "number": 84,
+      "state": "MERGED",
+      "title": "fix(network): serve s3.d /firmware/ over plain HTTP on port 80 (WiFi-probe OTA rescue)",
+      "updatedAt": "2026-11-09T05:06:45Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/84"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-09T02:47:21Z",
+      "headRefName": "docs/wifi-probe-f7",
+      "headRefOid": "7d2eaaf910d0d49015ca9a42c65b8cc3c5098e30",
+      "mergeCommit": {
+        "oid": "15f49c2b2aaa8bd835e03e7c3b4435261f4f4696"
+      },
+      "mergedAt": "2026-11-09T02:47:21Z",
+      "number": 83,
+      "state": "MERGED",
+      "title": "docs(monitoring): wifi-probe F7 \u2014 agent docs, design-spec status, Vault paths, grafana IP comment",
+      "updatedAt": "2026-11-09T02:48:04Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/83"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-09T00:32:12Z",
+      "headRefName": "feat/wifi-probe-fw-0.12.0",
+      "headRefOid": "e9eb282f5be825448cc1bbc5bd383967666d5c30",
+      "mergeCommit": {
+        "oid": "8af669ca62277dffd0fe3ff809a5368b5152a239"
+      },
+      "mergedAt": "2026-11-09T00:32:12Z",
+      "number": 82,
+      "state": "MERGED",
+      "title": "feat(monitoring): wifi-probe fw 0.12.0 \u2014 reboot visibility + FrequentReboots alert",
+      "updatedAt": "2026-11-09T00:40:53Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/82"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T23:58:52Z",
+      "headRefName": "chore/wifi-probe-submodule-0.11.1",
+      "headRefOid": "e72eca76e0d3eeddbee246a3fc27e4f6cf2b337a",
+      "mergeCommit": {
+        "oid": "397684d34dac117fab04dbf7c7563c8edd357e19"
+      },
+      "mergedAt": "2026-11-08T23:58:52Z",
+      "number": 81,
+      "state": "MERGED",
+      "title": "chore(monitoring): bump wifi-probe submodule to fw 0.11.1 + refresh probe doc",
+      "updatedAt": "2026-11-08T23:58:52Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/81"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T22:44:53Z",
+      "headRefName": "fix/hub-mirror-probe-path",
+      "headRefOid": "aa71bc3d1902196ad7582e24d8a611bda88e6a95",
+      "mergeCommit": {
+        "oid": "47a34045ed99a0ec5c02e3039230186746eafb5a"
+      },
+      "mergedAt": "2026-11-08T22:44:53Z",
+      "number": 80,
+      "state": "MERGED",
+      "title": "fix(monitoring): probe hub.d through to zot (registry API check) instead of static / and /v2/",
+      "updatedAt": "2026-11-08T22:53:33Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/80"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T20:59:14Z",
+      "headRefName": "fix/wifi-probes-liveness-gaps",
+      "headRefOid": "df2088e89f6b88372f654aa21845a1f0e021f1a4",
+      "mergeCommit": {
+        "oid": "c14b7c42790616e81decc36fd309d3543f5a09c3"
+      },
+      "mergedAt": "2026-11-08T20:59:14Z",
+      "number": 79,
+      "state": "MERGED",
+      "title": "fix(monitoring): wifi-probe tri-state matrices, durable NoData/annotation, link-detail roam fix",
+      "updatedAt": "2026-11-08T22:53:35Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/79"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T20:43:48Z",
+      "headRefName": "chore/terraform-commit-lock-files",
+      "headRefOid": "eed0c67b9aef33bd4c965d1818edc75f4bfe2fbc",
+      "mergeCommit": {
+        "oid": "720d04718bf31dc2f073cafccb4cb169ffb9f9f3"
+      },
+      "mergedAt": "2026-11-08T20:43:48Z",
+      "number": 78,
+      "state": "MERGED",
+      "title": "fix(deploy): commit Terraform provider lock files and pin portainer/keycloak",
+      "updatedAt": "2026-11-08T20:48:53Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/78"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T20:28:07Z",
+      "headRefName": "fix/hub-mirror-ping",
+      "headRefOid": "f01dea83b7383effb83f77baa38a271a0041099c",
+      "mergeCommit": {
+        "oid": "adb8004a4b436cd5e04733c45a734b2222b8f72d"
+      },
+      "mergedAt": "2026-11-08T20:28:07Z",
+      "number": 77,
+      "state": "MERGED",
+      "title": "fix(docker): answer GET /v2/ on hub.d in Nginx so classic dockerd accepts the mirror",
+      "updatedAt": "2026-11-08T20:34:53Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/77"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T20:38:19Z",
+      "headRefName": "feat/docker-registry-mirror",
+      "headRefOid": "f53fc447e7c70ac1ffb314563c9dfc799f90aade",
+      "mergeCommit": {
+        "oid": "3fddae6c45afcb87c5b618441e9c48e01529a2cf"
+      },
+      "mergedAt": "2026-11-08T20:38:19Z",
+      "number": 76,
+      "state": "MERGED",
+      "title": "feat(docker): point the docker hosts at the hub.d registry mirror",
+      "updatedAt": "2026-11-08T21:08:54Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/76"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T20:03:54Z",
+      "headRefName": "fix/hub-mirror-set-order",
+      "headRefOid": "0002170da193644710c93742ef39a91e7f06cdb0",
+      "mergeCommit": {
+        "oid": "96d8a3836a212c38b133ac4da331165ccecd4602"
+      },
+      "mergedAt": "2026-11-08T20:03:54Z",
+      "number": 75,
+      "state": "MERGED",
+      "title": "fix(docker): set the hub vhost upstream before rewrite break",
+      "updatedAt": "2026-11-08T20:10:02Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/75"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T19:59:21Z",
+      "headRefName": "feat/zot-sso",
+      "headRefOid": "c19869e4822d7edb7ddbe946ceb4f7995e7f1676",
+      "mergeCommit": {
+        "oid": "8efb4a1c3eb8beb0327819724bec990c38de8c1f"
+      },
+      "mergedAt": "2026-11-08T19:59:21Z",
+      "number": 74,
+      "state": "MERGED",
+      "title": "feat(security): zot SSO via Keycloak OIDC with zot-admins group",
+      "updatedAt": "2026-11-08T20:14:14Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/74"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T19:44:00Z",
+      "headRefName": "feat/hub-mirror-vhost",
+      "headRefOid": "57b57f9459b74895c58eaadd128665a5055ee751",
+      "mergeCommit": {
+        "oid": "5856a8be4fb68036c8e2794d288ab8daab577d40"
+      },
+      "mergedAt": "2026-11-08T19:44:00Z",
+      "number": 73,
+      "state": "MERGED",
+      "title": "feat(docker): add hub.d.lcamaral.com pull-only Docker Hub mirror vhost",
+      "updatedAt": "2026-11-08T20:10:00Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/73"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T19:39:34Z",
+      "headRefName": "feat/rundeck-from-zot",
+      "headRefOid": "7979a3817f16b235225e22e1d047378834e23cb6",
+      "mergeCommit": {
+        "oid": "1b169abfcfc13ca02ea0ddaa6d82e38bb6a37de6"
+      },
+      "mergedAt": "2026-11-08T19:39:34Z",
+      "number": 72,
+      "state": "MERGED",
+      "title": "feat(containers): rundeck pulls from zot, pin postgres by digest",
+      "updatedAt": "2026-11-08T19:46:04Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/72"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T19:31:56Z",
+      "headRefName": "feat/wifi-probes-dashboard-liveness",
+      "headRefOid": "230871338b330fc3882034060c77d8af8ae164a0",
+      "mergeCommit": {
+        "oid": "c565eaa311489e62e4baea8ab93f4a5fb26245db"
+      },
+      "mergedAt": "2026-11-08T19:31:56Z",
+      "number": 71,
+      "state": "MERGED",
+      "title": "feat(monitoring): wifi-probes per-room liveness, room repeat, gated alerts",
+      "updatedAt": "2026-11-08T19:44:30Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/71"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T19:28:50Z",
+      "headRefName": "fix/rundeck-reconcile-live",
+      "headRefOid": "14d70fb18bc270f53e28c74598b8785c77eff89f",
+      "mergeCommit": {
+        "oid": "df61254752ef517815341a0a5e394fc5109870d5"
+      },
+      "mergedAt": "2026-11-08T19:28:49Z",
+      "number": 70,
+      "state": "MERGED",
+      "title": "fix(containers): reconcile rundeck stack with live, fix image-pin guard",
+      "updatedAt": "2026-11-08T19:29:05Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/70"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T19:35:36Z",
+      "headRefName": "feat/docker-daemon-iac",
+      "headRefOid": "5a97708d6809468f9cdb63c8fa68295d898f14e0",
+      "mergeCommit": {
+        "oid": "e8c2b8f2843242b229d0b4321de09d7aecea609d"
+      },
+      "mergedAt": "2026-11-08T19:35:36Z",
+      "number": 69,
+      "state": "MERGED",
+      "title": "feat(docker): manage daemon.json via scripts/sync-docker-daemon.py",
+      "updatedAt": "2026-11-08T19:35:48Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/69"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T18:07:24Z",
+      "headRefName": "docs/pr-merge-apply-rule",
+      "headRefOid": "f838d1865557b4be672df04b68393bf2916ed847",
+      "mergeCommit": {
+        "oid": "b987acd245cf3774ea8710c5a84b526a37dd7868"
+      },
+      "mergedAt": "2026-11-08T18:07:23Z",
+      "number": 68,
+      "state": "MERGED",
+      "title": "docs(security): make PR, merge, then apply from main rule #1",
+      "updatedAt": "2026-11-08T18:07:24Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/68"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-08T18:12:09Z",
+      "headRefName": "feat/zot-registry",
+      "headRefOid": "7a337073139d7e842fc478e5ddac0f374620eb91",
+      "mergeCommit": {
+        "oid": "ea8c6e055c47d9fdc5554b0ddd353b66a8609bec"
+      },
+      "mergedAt": "2026-11-08T18:12:09Z",
+      "number": 67,
+      "state": "MERGED",
+      "title": "feat(docker): add zot registry with pull-through cache",
+      "updatedAt": "2026-11-08T18:14:49Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/67"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-06T19:52:15Z",
+      "headRefName": "chore/remove-ollama",
+      "headRefOid": "c6fd78fe5cb21a0b8e21066ecd850d82ae423c74",
+      "mergeCommit": {
+        "oid": "7f6c3ba15da0483df256b512f406d0af98a9a046"
+      },
+      "mergedAt": "2026-11-06T19:52:15Z",
+      "number": 66,
+      "state": "MERGED",
+      "title": "chore(docker): remove ollama stack, compose and DNS record",
+      "updatedAt": "2026-11-06T19:52:15Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/66"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-04T06:09:38Z",
+      "headRefName": "feat/nas-kernel-tuning-iac",
+      "headRefOid": "c7d05a7f1f91f0ac28674c4e92ae47d657d1d8ca",
+      "mergeCommit": {
+        "oid": "5f059aebe89aa74609ce8b98394a10c6b3e29a8a"
+      },
+      "mergedAt": "2026-11-04T06:09:38Z",
+      "number": 65,
+      "state": "MERGED",
+      "title": "feat(nas): manage kernel writeback tuning as code",
+      "updatedAt": "2026-11-04T06:09:38Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/65"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-11-01T19:04:23Z",
+      "headRefName": "fix/calibre-selkies-pin",
+      "headRefOid": "779dc1c2245908840dc02862e8a45377fd71e25f",
+      "mergeCommit": {
+        "oid": "0e235951ceff8c72a0dd8602f695140bc2ad32e8"
+      },
+      "mergedAt": "2026-11-01T19:04:23Z",
+      "number": 64,
+      "state": "MERGED",
+      "title": "fix(containers): roll up calibre pin, Docker upgrades and network IaC",
+      "updatedAt": "2026-11-01T19:04:23Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/64"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": null,
+      "headRefName": "dependabot/npm_and_yarn/commitlint/cli-21.2.1",
+      "headRefOid": "f28e75dc0d27af1906fd6332a4e2b591da2649e1",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 63,
+      "state": "OPEN",
+      "title": "chore: bump @commitlint/cli from 19.8.1 to 21.2.1",
+      "updatedAt": "2026-07-13T12:10:35Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/63"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-07-13T12:08:48Z",
+      "headRefName": "dependabot/npm_and_yarn/commitlint/cli-21.2.0",
+      "headRefOid": "ab0665cffd3b030232793176220a3a4ca84d72bf",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 62,
+      "state": "CLOSED",
+      "title": "chore: bump @commitlint/cli from 19.8.1 to 21.2.0",
+      "updatedAt": "2026-07-13T12:08:50Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/62"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-07-06T12:07:40Z",
+      "headRefName": "dependabot/npm_and_yarn/commitlint/cli-21.1.0",
+      "headRefOid": "bd3e219256db624abe066ab015bb864f86806c9a",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 61,
+      "state": "CLOSED",
+      "title": "chore: bump @commitlint/cli from 19.8.1 to 21.1.0",
+      "updatedAt": "2026-07-06T12:07:42Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/61"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-06-29T12:08:25Z",
+      "headRefName": "dependabot/npm_and_yarn/commitlint/cli-21.0.2",
+      "headRefOid": "6b88ca95606a7a5fce869b3332a252ac0c31c171",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 60,
+      "state": "CLOSED",
+      "title": "chore: bump @commitlint/cli from 19.8.1 to 21.0.2",
+      "updatedAt": "2026-06-29T12:08:27Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/60"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-25T18:03:16Z",
+      "headRefName": "dependabot/npm_and_yarn/commitlint-5e088794ee",
+      "headRefOid": "974272a1b44303885d5627949b2e8a8a8d846501",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 59,
+      "state": "CLOSED",
+      "title": "chore: bump @commitlint/cli from 19.8.1 to 21.0.1 in the commitlint group",
+      "updatedAt": "2026-05-25T18:03:18Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/59"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": null,
+      "headRefName": "dependabot/github_actions/github/codeql-action-4",
+      "headRefOid": "89c998f41efdfe2e9c8cf01f13bbee76d0a5366a",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 58,
+      "state": "OPEN",
+      "title": "chore: bump github/codeql-action from 3 to 4",
+      "updatedAt": "2026-05-11T19:17:35Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/58"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": null,
+      "headRefName": "dependabot/github_actions/actions/github-script-9",
+      "headRefOid": "221657c9f5c272d65bf015fae1e1271245b39006",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 57,
+      "state": "OPEN",
+      "title": "chore: bump actions/github-script from 7 to 9",
+      "updatedAt": "2026-05-11T19:17:45Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/57"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": null,
+      "headRefName": "dependabot/github_actions/actions/checkout-6",
+      "headRefOid": "245a9a51d4f46881bd04f8825da08a0e17cd960a",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 56,
+      "state": "OPEN",
+      "title": "chore: bump actions/checkout from 4 to 6",
+      "updatedAt": "2026-05-11T19:17:32Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/56"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": null,
+      "headRefName": "dependabot/github_actions/actions/download-artifact-8",
+      "headRefOid": "2affce6e89d81a8aee5ff0c5185183972362df58",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 55,
+      "state": "OPEN",
+      "title": "chore: bump actions/download-artifact from 4 to 8",
+      "updatedAt": "2026-05-11T19:17:05Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/55"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": null,
+      "headRefName": "dependabot/github_actions/actions/upload-artifact-7",
+      "headRefOid": "da3ccfdc6aaf10dc544c4f1e7e9df92396818063",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 54,
+      "state": "OPEN",
+      "title": "chore: bump actions/upload-artifact from 4 to 7",
+      "updatedAt": "2026-05-11T19:16:58Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/54"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-18T21:48:06Z",
+      "headRefName": "dependabot/npm_and_yarn/commitlint/cli-21.0.0",
+      "headRefOid": "2a8209fca1a23e11bc438cb21323d2f6d9c28329",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 53,
+      "state": "CLOSED",
+      "title": "chore: bump @commitlint/cli from 19.8.1 to 21.0.0",
+      "updatedAt": "2026-05-18T21:48:08Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/53"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-11T06:24:26Z",
+      "headRefName": "feat/grafana-thanos-prom-dashboard",
+      "headRefOid": "006b11c5a27d53ef7b156f9e681e281b35670637",
+      "mergeCommit": {
+        "oid": "3b9a49eb1a09c81e673779f5a8587c61a6f3da20"
+      },
+      "mergedAt": "2026-05-11T06:24:26Z",
+      "number": 52,
+      "state": "MERGED",
+      "title": "feat(monitoring): grafana dashboard for thanos & prometheus stack health",
+      "updatedAt": "2026-05-11T06:24:26Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/52"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T19:05:09Z",
+      "headRefName": "fix/thanos-rule-query-endpoint",
+      "headRefOid": "2a859b6d78cd00881002a3d3f289580ac731419f",
+      "mergeCommit": {
+        "oid": "245478f33a86aef352ea5f5b2cf01cd225afc8a0"
+      },
+      "mergedAt": "2026-05-10T19:05:09Z",
+      "number": 51,
+      "state": "MERGED",
+      "title": "fix(monitoring): point thanos-rule --query at macvlan IP, not DNS alias",
+      "updatedAt": "2026-05-10T19:06:39Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/51"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T19:03:19Z",
+      "headRefName": "fix/thanos-rule-dollar-escape",
+      "headRefOid": "79bf862e72a7e9f65267ee6b87fbba4a0d7cc4ee",
+      "mergeCommit": {
+        "oid": "63eb6f13752301c229b153f014577bffca49f1bf"
+      },
+      "mergedAt": "2026-05-10T19:03:19Z",
+      "number": 50,
+      "state": "MERGED",
+      "title": "fix(monitoring): escape $ in thanos rules content for Compose substitution",
+      "updatedAt": "2026-05-10T19:03:19Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/50"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T18:57:24Z",
+      "headRefName": "feat/thanos-rule-starter-rules",
+      "headRefOid": "9706972c5369673d99d60bca6352df8f8b32c242",
+      "mergeCommit": {
+        "oid": "775609514573b90fa16b2cab594e7f2c8c96abf7"
+      },
+      "mergedAt": "2026-05-10T18:57:24Z",
+      "number": 49,
+      "state": "MERGED",
+      "title": "feat(monitoring): 5 starter long-window rules for thanos-ruler",
+      "updatedAt": "2026-05-10T18:57:25Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/49"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T12:34:44Z",
+      "headRefName": "fix/nginx-stub-acl-macvlan",
+      "headRefOid": "9f3d165b772f817839e5f3704cb961c0353b0f6f",
+      "mergeCommit": {
+        "oid": "71600f9019a24b5ba2c0c6000cdc5abfde3c8c27"
+      },
+      "mergedAt": "2026-05-10T12:34:44Z",
+      "number": 48,
+      "state": "MERGED",
+      "title": "fix(monitoring): allow macvlan range in nginx_status ACL",
+      "updatedAt": "2026-05-10T12:34:45Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/48"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T12:27:07Z",
+      "headRefName": "feat/exporters-batch2-nginx",
+      "headRefOid": "cfeebc3c48ab3cb4fd30ec4a14331c2ef50b14c7",
+      "mergeCommit": {
+        "oid": "f3381055253b3d435ffd4babaf5d8c0cb585bb4d"
+      },
+      "mergedAt": "2026-05-10T12:27:07Z",
+      "number": 47,
+      "state": "MERGED",
+      "title": "feat(monitoring): nginx-prometheus-exporter sidecar to rproxy",
+      "updatedAt": "2026-05-10T12:27:07Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/47"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T12:13:06Z",
+      "headRefName": "feat/exporters-batch1",
+      "headRefOid": "71be7e1a203f9a6b7b8cfbb78bc964c66f66d939",
+      "mergeCommit": {
+        "oid": "e749d84938036624f3e0a84f41b5398b017730dc"
+      },
+      "mergedAt": "2026-05-10T12:13:06Z",
+      "number": 46,
+      "state": "MERGED",
+      "title": "feat(monitoring): postgres_exporter for keycloak-db pair + postgres-rundeck",
+      "updatedAt": "2026-05-10T12:13:06Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/46"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T06:23:36Z",
+      "headRefName": "feat/thanos-compactor-ruler",
+      "headRefOid": "b14b2fe641802cce7814302f997e31d51391aa57",
+      "mergeCommit": {
+        "oid": "2a2bcbd066a9d4d6622fdb0c006d66ade0eb34b8"
+      },
+      "mergedAt": "2026-05-10T06:23:36Z",
+      "number": 45,
+      "state": "MERGED",
+      "title": "feat(monitoring): stand up thanos-compactor + thanos-ruler on ds-2",
+      "updatedAt": "2026-05-10T06:23:36Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/45"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T06:11:06Z",
+      "headRefName": "fix/thanos-sidecar-2-uid",
+      "headRefOid": "d32aef058049eddf3687a388dfc22c48f25468d4",
+      "mergeCommit": {
+        "oid": "8cb12218f7f7d465fb0f23e19eefe3f550bc0f96"
+      },
+      "mergedAt": "2026-05-10T06:11:06Z",
+      "number": 44,
+      "state": "MERGED",
+      "title": "fix(monitoring): also pin thanos-sidecar-2 to nobody UID",
+      "updatedAt": "2026-05-10T06:11:06Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/44"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T06:05:15Z",
+      "headRefName": "fix/thanos-sidecar-2-mount",
+      "headRefOid": "bc7b0451ed34ec0c50b43a4e4e5866dbcca6b97f",
+      "mergeCommit": {
+        "oid": "769c73ae04e45d7ec04b3dc996ee6cfa121a7cce"
+      },
+      "mergedAt": "2026-05-10T06:05:15Z",
+      "number": 43,
+      "state": "MERGED",
+      "title": "fix(monitoring): flip thanos-sidecar-2 mount RO->RW so it can ship",
+      "updatedAt": "2026-05-10T06:05:15Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/43"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T05:52:53Z",
+      "headRefName": "fix/thanos-sidecar-uid",
+      "headRefOid": "0b35ef9ca0ba0532f6845a5868168bf92d5eb876",
+      "mergeCommit": {
+        "oid": "00cd26a0d976f5b8cad5166e906abf2edf6f467b"
+      },
+      "mergedAt": "2026-05-10T05:52:53Z",
+      "number": 42,
+      "state": "MERGED",
+      "title": "fix(monitoring): run thanos-sidecar-1 as nobody:nobody to ship blocks",
+      "updatedAt": "2026-05-10T05:52:53Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/42"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T05:45:25Z",
+      "headRefName": "fix/portainer-redeploy-wrapper",
+      "headRefOid": "dac656c62efe2facbf2ac0aee26d9714ce15a486",
+      "mergeCommit": {
+        "oid": "76140d50a57b5a5c3a311572d9f3e864a4d0cbb5"
+      },
+      "mergedAt": "2026-05-10T05:45:25Z",
+      "number": 41,
+      "state": "MERGED",
+      "title": "fix(ci): add portainer-redeploy.py wrapper for stack drift (closes #18)",
+      "updatedAt": "2026-05-10T05:45:29Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/41"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T05:05:26Z",
+      "headRefName": "dependabot/npm_and_yarn/commitlint/prompt-cli-21.0.0",
+      "headRefOid": "16dc34e6f9e3ff895abca8d2532c0ce551a4cb26",
+      "mergeCommit": {
+        "oid": "6f8e6d87cbaa5f7145b3bfb87e7324eb3c532f4f"
+      },
+      "mergedAt": "2026-05-10T05:05:26Z",
+      "number": 40,
+      "state": "MERGED",
+      "title": "chore: bump @commitlint/prompt-cli from 19.8.1 to 21.0.0",
+      "updatedAt": "2026-05-10T05:05:28Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/40"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T05:36:41Z",
+      "headRefName": "dependabot/npm_and_yarn/commitlint/cz-commitlint-21.0.0",
+      "headRefOid": "2e895a2428bd8fe710445b39dbbd552d283998ac",
+      "mergeCommit": {
+        "oid": "32abff0868e80cd7821fe982c1c4f4108b3c560c"
+      },
+      "mergedAt": "2026-05-10T05:36:41Z",
+      "number": 39,
+      "state": "MERGED",
+      "title": "chore: bump @commitlint/cz-commitlint from 19.8.1 to 21.0.0",
+      "updatedAt": "2026-05-10T05:36:43Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/39"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T05:05:18Z",
+      "headRefName": "dependabot/npm_and_yarn/commitlint/config-conventional-21.0.0",
+      "headRefOid": "f1c62f3f737828dcd336747d6d0caa67e39fc776",
+      "mergeCommit": {
+        "oid": "6d1e7f05ea1846d88ed46a9f6f96959c8e6399cb"
+      },
+      "mergedAt": "2026-05-10T05:05:18Z",
+      "number": 38,
+      "state": "MERGED",
+      "title": "chore: bump @commitlint/config-conventional from 19.8.1 to 21.0.0",
+      "updatedAt": "2026-05-10T05:05:19Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/38"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T04:51:40Z",
+      "headRefName": "chore/dependabot-drop-scope",
+      "headRefOid": "061b7d5a7c2add30b95f6b05ce99919c23cf929e",
+      "mergeCommit": {
+        "oid": "79336a5a9f70a45d54752af1e892075309ed1551"
+      },
+      "mergedAt": "2026-05-10T04:51:40Z",
+      "number": 37,
+      "state": "MERGED",
+      "title": "chore(ci): drop dependabot include:scope to satisfy commitlint",
+      "updatedAt": "2026-05-10T04:51:40Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/37"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T02:16:15Z",
+      "headRefName": "chore/allow-dependabot-scopes",
+      "headRefOid": "7397a9347d1271dbc67328831277abbcaf9d56ee",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 36,
+      "state": "CLOSED",
+      "title": "chore(ci): allow deps and deps-dev commit scopes",
+      "updatedAt": "2026-05-10T02:16:20Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/36"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-09T05:08:17Z",
+      "headRefName": "feat/snmp-pfsense-regen",
+      "headRefOid": "2e03727f5040589fe47b502b1332f623d59a7909",
+      "mergeCommit": {
+        "oid": "08a99e8b8d84418112668903b6f45519fb60c64e"
+      },
+      "mergedAt": "2026-05-09T05:08:17Z",
+      "number": 35,
+      "state": "MERGED",
+      "title": "feat(monitoring): regen pfSense SNMP module with HOST-RESOURCES + tighter PF MIB walks",
+      "updatedAt": "2026-05-09T05:08:18Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/35"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-08T04:32:36Z",
+      "headRefName": "chore/ci-fix-pr-validation",
+      "headRefOid": "c08dc44029e4403103b1681e1e088b10d1f85225",
+      "mergeCommit": {
+        "oid": "8201b96d42cb0677f41ba6e6fb39569ebec28eb7"
+      },
+      "mergedAt": "2026-05-08T04:32:36Z",
+      "number": 34,
+      "state": "MERGED",
+      "title": "chore(ci): unblock PR Validation pipeline (broken since 2026-04-11)",
+      "updatedAt": "2026-05-08T04:32:37Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/34"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-08T05:00:47Z",
+      "headRefName": "feat/monitoring-phase-a-alertmanager-sidecar2",
+      "headRefOid": "ef610195abba662e09aa7398c50a0ae957969517",
+      "mergeCommit": {
+        "oid": "5ff4b7908ecc7d1678abeb2c9d3ebc0a5b456dd7"
+      },
+      "mergedAt": "2026-05-08T05:00:47Z",
+      "number": 33,
+      "state": "MERGED",
+      "title": "feat(monitoring): Phase A \u2014 scrape alertmanager + thanos-sidecar-2",
+      "updatedAt": "2026-05-08T05:00:47Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/33"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-30T16:20:37Z",
+      "headRefName": "fix/audit-final-items",
+      "headRefOid": "ad61330f630d22345004fe15b06168d54bde0d19",
+      "mergeCommit": {
+        "oid": "7b7cae78be3085f21442335950d48a20690a7997"
+      },
+      "mergedAt": "2026-04-30T16:20:37Z",
+      "number": 31,
+      "state": "MERGED",
+      "title": "fix: close final audit items (I2, I4, N3-N6) \u2014 15/16 resolved",
+      "updatedAt": "2026-04-30T16:20:37Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/31"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T05:05:12Z",
+      "headRefName": "dependabot/github_actions/docker/setup-buildx-action-4",
+      "headRefOid": "f256a6e01d834bdaa6b71b8e8eb8625bfe886195",
+      "mergeCommit": {
+        "oid": "bcc1fa049db01c0d418d1d07b3be72be45cd5409"
+      },
+      "mergedAt": "2026-05-10T05:05:12Z",
+      "number": 30,
+      "state": "MERGED",
+      "title": "chore: bump docker/setup-buildx-action from 3 to 4",
+      "updatedAt": "2026-05-10T05:05:14Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/30"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T05:05:06Z",
+      "headRefName": "dependabot/github_actions/docker/setup-qemu-action-4",
+      "headRefOid": "d84c7e44fba2c2629a119bc6843796ba3acca71f",
+      "mergeCommit": {
+        "oid": "e3b195a58fbc292f07038839e06243f7133974f0"
+      },
+      "mergedAt": "2026-05-10T05:05:06Z",
+      "number": 29,
+      "state": "MERGED",
+      "title": "chore: bump docker/setup-qemu-action from 3 to 4",
+      "updatedAt": "2026-05-10T05:05:08Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/29"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T05:05:01Z",
+      "headRefName": "dependabot/github_actions/actions/setup-python-6",
+      "headRefOid": "083dd8c0ba62337de2bc96f2376ad8ff64c24b00",
+      "mergeCommit": {
+        "oid": "853a67fc1cb71771e7f204d7fc52aa7ab6afedd4"
+      },
+      "mergedAt": "2026-05-10T05:05:01Z",
+      "number": 28,
+      "state": "MERGED",
+      "title": "chore: bump actions/setup-python from 5 to 6",
+      "updatedAt": "2026-05-10T05:05:03Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/28"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T05:04:55Z",
+      "headRefName": "dependabot/github_actions/docker/metadata-action-6",
+      "headRefOid": "a5c51067ce2bcd4890a8c19cb423ed21de172ad5",
+      "mergeCommit": {
+        "oid": "8dde3340939f3ff110bb6b144ae1361bec74b9a1"
+      },
+      "mergedAt": "2026-05-10T05:04:55Z",
+      "number": 27,
+      "state": "MERGED",
+      "title": "chore: bump docker/metadata-action from 5 to 6",
+      "updatedAt": "2026-05-10T05:04:57Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/27"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T05:04:50Z",
+      "headRefName": "dependabot/github_actions/docker/build-push-action-7",
+      "headRefOid": "ef42bc1040d8d54d1bab39edcb8ca3d265e17e4d",
+      "mergeCommit": {
+        "oid": "d80c5551b9d9266486f1d90294f0a6e67785a808"
+      },
+      "mergedAt": "2026-05-10T05:04:50Z",
+      "number": 26,
+      "state": "MERGED",
+      "title": "chore: bump docker/build-push-action from 5 to 7",
+      "updatedAt": "2026-05-10T05:04:52Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/26"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T05:04:45Z",
+      "headRefName": "dependabot/github_actions/gha-minor-patch-a8937717ac",
+      "headRefOid": "9f4b0faa466e892e452270de3a9f4e385d18223f",
+      "mergeCommit": {
+        "oid": "3e472992def061d4a0c459880c558e3701851a8a"
+      },
+      "mergedAt": "2026-05-10T05:04:45Z",
+      "number": 25,
+      "state": "MERGED",
+      "title": "chore: bump appleboy/ssh-action from 1.0.0 to 1.2.5 in the gha-minor-patch group across 1 directory",
+      "updatedAt": "2026-05-10T05:04:47Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/25"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T04:53:08Z",
+      "headRefName": "dependabot/npm_and_yarn/commitlint/prompt-cli-20.5.3",
+      "headRefOid": "626b7757cd4bd0c411ffa33787821b51ba433d09",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 24,
+      "state": "CLOSED",
+      "title": "chore: bump @commitlint/prompt-cli from 19.8.1 to 21.0.0",
+      "updatedAt": "2026-05-10T04:56:04Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/24"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T04:52:52Z",
+      "headRefName": "dependabot/npm_and_yarn/commitlint/config-conventional-20.5.3",
+      "headRefOid": "d734257b2d5701f30ff2c4b38e66a8df2a928adf",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 23,
+      "state": "CLOSED",
+      "title": "chore: bump @commitlint/config-conventional from 19.8.1 to 21.0.0",
+      "updatedAt": "2026-05-10T04:55:55Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/23"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-05-10T04:52:58Z",
+      "headRefName": "dependabot/npm_and_yarn/commitlint/cz-commitlint-20.5.3",
+      "headRefOid": "6c5dc44d6b500e3f777f1120b27e150f52055ff5",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 22,
+      "state": "CLOSED",
+      "title": "chore: bump @commitlint/cz-commitlint from 19.8.1 to 21.0.0",
+      "updatedAt": "2026-05-10T04:55:56Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/22"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-30T16:04:11Z",
+      "headRefName": "fix/audit-remaining-items",
+      "headRefOid": "a2c7f1959fbc22b4b4add7c393cb48fbd9097d94",
+      "mergeCommit": {
+        "oid": "8e8c859360229a5a127415e258f5b699adea4585"
+      },
+      "mergedAt": "2026-04-30T16:04:11Z",
+      "number": 21,
+      "state": "MERGED",
+      "title": "fix: close remaining IaC audit items (I1, I3, I5-I7, N1-N2)",
+      "updatedAt": "2026-04-30T16:04:11Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/21"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-30T15:48:38Z",
+      "headRefName": "fix/iac-followups",
+      "headRefOid": "44a20cb4826b3d27ce9ed725b52876f6559ae8a8",
+      "mergeCommit": {
+        "oid": "247394e5d0c62a28bc9991a995ac0c3ce7789b2e"
+      },
+      "mergedAt": "2026-04-30T15:48:38Z",
+      "number": 17,
+      "state": "MERGED",
+      "title": "fix: post-IaC-gaps follow-ups (synology-search, multi-file LXC sync, grafana HA)",
+      "updatedAt": "2026-04-30T15:48:38Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/17"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-30T15:44:08Z",
+      "headRefName": "fix/iac-gaps-batch1",
+      "headRefOid": "5a02f57b958f1c985ea3ae9eb5e2200aa3b0659a",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 16,
+      "state": "CLOSED",
+      "title": "fix: close 5 of 6 IaC gaps (vhost.d, pihole-1, keycloak, ACME hooks)",
+      "updatedAt": "2026-04-30T15:44:09Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/16"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-29T19:58:30Z",
+      "headRefName": "refactor/grafana-dashboards-iac",
+      "headRefOid": "fc772f2f60feb45388ae6cbcc73624f137ed82be",
+      "mergeCommit": {
+        "oid": "07e883115e6ec19c040f9a2695cdbf79127e3347"
+      },
+      "mergedAt": "2026-04-29T19:58:30Z",
+      "number": 15,
+      "state": "MERGED",
+      "title": "refactor(monitoring): grafana dashboards fully IaC via configs blocks",
+      "updatedAt": "2026-04-29T19:58:31Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/15"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-29T18:05:30Z",
+      "headRefName": "feat/grafana",
+      "headRefOid": "10b6c28769b4c5bd2936a361bedc70a02b7a1500",
+      "mergeCommit": {
+        "oid": "51ac47d42c320de575b1d1033bdb2dc69c7d77bb"
+      },
+      "mergedAt": "2026-04-29T18:05:30Z",
+      "number": 14,
+      "state": "MERGED",
+      "title": "feat(monitoring): Phase 4 \u2014 Grafana 13.0.1 with Thanos + Keycloak SSO",
+      "updatedAt": "2026-04-29T18:05:30Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/14"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-29T17:15:10Z",
+      "headRefName": "fix/ha-cert-renewal-and-alerts",
+      "headRefOid": "e006e71b58adc91c3ad110d91d8cd48913ee3000",
+      "mergeCommit": {
+        "oid": "d72972be18e3bd8b13ed2421c801d5051dda2c93"
+      },
+      "mergedAt": "2026-04-29T17:15:10Z",
+      "number": 13,
+      "state": "MERGED",
+      "title": "fix(monitoring): ha.home.lcamaral.com cert + cert-expiry alerts",
+      "updatedAt": "2026-04-29T17:15:11Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/13"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-29T15:20:30Z",
+      "headRefName": "feat/pihole6-exporter-swap",
+      "headRefOid": "84093b8454e43225679daefc2e15b9217b3eb2bf",
+      "mergeCommit": {
+        "oid": "b98d7e9a525866bf890d79074f229dc315716aba"
+      },
+      "mergedAt": "2026-04-29T15:20:30Z",
+      "number": 12,
+      "state": "MERGED",
+      "title": "feat(containers): pihole-exporter v6 swap \u2014 ekofr \u2192 amonacoos/pihole6_exporter",
+      "updatedAt": "2026-04-29T15:20:30Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/12"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-29T04:45:12Z",
+      "headRefName": "fix/macvlan-routing",
+      "headRefOid": "57a487914176521d9a53bc0c05f2f0c0a95442c5",
+      "mergeCommit": {
+        "oid": "5d6fada63430afd2349ea648caf6b2bc41727f6c"
+      },
+      "mergedAt": "2026-04-29T04:45:12Z",
+      "number": 11,
+      "state": "MERGED",
+      "title": "docs(monitoring): macvlan flakiness was pihole v5/v6 exporter mismatch",
+      "updatedAt": "2026-04-29T04:45:12Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/11"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-29T04:34:45Z",
+      "headRefName": "feat/rundeck-maintenance-jobs",
+      "headRefOid": "b9b49f1aa212d17533ea79f2641610bf3f133c47",
+      "mergeCommit": {
+        "oid": "55830155874eba3e7c90455250d132eff83f32ef"
+      },
+      "mergedAt": "2026-04-29T04:34:45Z",
+      "number": 10,
+      "state": "MERGED",
+      "title": "feat(monitoring): rundeck-based maintenance jobs (pihole + token)",
+      "updatedAt": "2026-04-29T04:34:45Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/10"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-29T04:09:03Z",
+      "headRefName": "fix/rundeck-iac-password",
+      "headRefOid": "f06107de5486cdc2bca49ee9025ed406d10645fa",
+      "mergeCommit": {
+        "oid": "107ffe7bc3f1783f0aa0518e51ac93b17c10ed26"
+      },
+      "mergedAt": "2026-04-29T04:09:03Z",
+      "number": 9,
+      "state": "MERGED",
+      "title": "fix(containers): manage rundeck admin password via IaC + drop broken metrics scrape",
+      "updatedAt": "2026-04-29T04:09:03Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/9"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-28T04:22:58Z",
+      "headRefName": "nas-docker-server",
+      "headRefOid": "44e7c24fddbd5b385f076768690d532733b4737c",
+      "mergeCommit": {
+        "oid": "f9820d296008d9ff0950d14a2f45e9064c3ea2fb"
+      },
+      "mergedAt": "2026-04-28T04:22:58Z",
+      "number": 8,
+      "state": "MERGED",
+      "title": "Multi-host HA infrastructure: 3-host edge + NAS endpoint + network IaC + Phase 3 monitoring",
+      "updatedAt": "2026-04-28T04:22:58Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/8"
+    },
+    {
+      "baseRefName": "nas-docker-server",
+      "closedAt": "2026-04-27T22:09:43Z",
+      "headRefName": "feature/prometheus-thanos-plan",
+      "headRefOid": "687b2f6df0535cbd380a97f0f9bc826835b3beb6",
+      "mergeCommit": {
+        "oid": "ae2c3682805a753eb0f6d086447ba492ef4e046b"
+      },
+      "mergedAt": "2026-04-27T22:09:43Z",
+      "number": 7,
+      "state": "MERGED",
+      "title": "feat(monitoring): Phase 3 \u2014 Prometheus + Thanos exporters end-to-end",
+      "updatedAt": "2026-04-27T22:09:43Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/7"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": null,
+      "headRefName": "custom-login-portal",
+      "headRefOid": "a1ca9c81ce29d5828ae989d49c28814034d45a2b",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 6,
+      "state": "OPEN",
+      "title": "\u2728(portal): homelab login portal (sveltekit + keycloak)",
+      "updatedAt": "2026-04-11T07:17:44Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/6"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-10T01:45:05Z",
+      "headRefName": "cloudflare-terraform",
+      "headRefOid": "0922020a7090e0f466e15faca90564fdd017aa9d",
+      "mergeCommit": {
+        "oid": "381bc4a6a611081ca06bd04083c8be750ab6659f"
+      },
+      "mergedAt": "2026-04-10T01:45:05Z",
+      "number": 5,
+      "state": "MERGED",
+      "title": "\u2728(infra): Complete IaC migration - 18 Portainer stacks, Keycloak IdP, security hardening",
+      "updatedAt": "2026-04-10T01:45:05Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/5"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2026-04-30T15:52:49Z",
+      "headRefName": "dockermaster-config",
+      "headRefOid": "9f30e61cd2f02a23795dcef3e37aa10e3c0f5087",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 4,
+      "state": "CLOSED",
+      "title": "Dockermaster config",
+      "updatedAt": "2026-04-30T15:52:49Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/4"
+    },
+    {
+      "baseRefName": "dockermaster-config",
+      "closedAt": "2025-08-26T04:08:09Z",
+      "headRefName": "github-runner-cicd",
+      "headRefOid": "92e0e03b8dd53180198c614b039328785a83a5ee",
+      "mergeCommit": {
+        "oid": "9f30e61cd2f02a23795dcef3e37aa10e3c0f5087"
+      },
+      "mergedAt": "2025-08-26T04:08:09Z",
+      "number": 3,
+      "state": "MERGED",
+      "title": "feat(ci): complete GitHub Actions runner implementation with fixes",
+      "updatedAt": "2025-08-26T04:08:09Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/3"
+    },
+    {
+      "baseRefName": "dockermaster-config",
+      "closedAt": "2025-08-22T01:50:13Z",
+      "headRefName": "github-runner-cicd",
+      "headRefOid": "67fd5c8cfcb744aa5f2a6353d5e6aa2e6005e356",
+      "mergeCommit": {
+        "oid": "455d7df8f8900abed7bd0891063c46d93025e424"
+      },
+      "mergedAt": "2025-08-22T01:50:13Z",
+      "number": 2,
+      "state": "MERGED",
+      "title": "feat(ci): add self-hosted GitHub Actions runner on dockermaster",
+      "updatedAt": "2025-08-22T01:50:13Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/2"
+    },
+    {
+      "baseRefName": "main",
+      "closedAt": "2025-08-22T01:01:26Z",
+      "headRefName": "dockermaster-config",
+      "headRefOid": "ecfe37c5e4c1a2f5951feff3b16f4da2db3466ed",
+      "mergeCommit": {
+        "oid": "c884e198986ebaec701735b88ff91b7a93be7cf0"
+      },
+      "mergedAt": "2025-08-22T01:01:26Z",
+      "number": 1,
+      "state": "MERGED",
+      "title": "Add Docker Master server configuration documentation",
+      "updatedAt": "2025-08-22T01:01:26Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/1"
+    }
+  ],
+  "exit_code": 0,
+  "source": "GitHub API via gh",
+  "stderr": ""
+}

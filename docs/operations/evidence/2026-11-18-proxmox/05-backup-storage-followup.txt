@@ -1,0 +1,408 @@
+Collection started UTC: 2026-11-18T17:01:08.048640+00:00
+Collection ended UTC: 2026-11-18T17:01:17.460615+00:00
+Source: SSH proxmox; read-only, no sudo on NAS
+Scope: 05-backup-storage-followup
+Exit status: 0
+Commands:
+
+date -u +%Y-%m-%dT%H:%M:%SZ
+python3 - <<'P'
+from pathlib import Path
+import subprocess,json,datetime
+for p in sorted(Path('/var/log/vzdump').glob('*.log')):
+ if p.name not in ['qemu-100.log','qemu-120.log','qemu-121.log','qemu-122.log','qemu-123.log','qemu-124.log','lxc-10000.log']: continue
+ print('\nBACKUP_LOG',p.name)
+ lines=p.read_text(errors='replace').splitlines()
+ selected={i for i,x in enumerate(lines) if any(s in x.lower() for s in ['error','warning','finished backup','backup is sparse','archive file size','creating vzdump archive','backup failed'])}
+ selected.update(range(max(0,len(lines)-10),len(lines)))
+ for i in sorted(selected): print(lines[i])
+p=subprocess.run(['pvesh','get','/nodes/proxmox/tasks','--typefilter','vzdump','--limit','25','--output-format','json'],capture_output=True,text=True)
+if p.returncode==0:
+ jobs=json.loads(p.stdout)
+ print('\nBACKUP_HISTORY_UTC')
+ for job in jobs:
+  print(datetime.datetime.fromtimestamp(job['starttime'],datetime.timezone.utc).isoformat(),job.get('status'))
+ if jobs:
+  upid=jobs[0]['upid']
+  p=subprocess.run(['pvesh','get',f'/nodes/proxmox/tasks/{upid}/log','--limit','5000','--output-format','json'],capture_output=True,text=True)
+  print('\nLATEST_BACKUP_JOB_SELECTED_LOG')
+  if p.returncode==0:
+   lines=[x['t'] for x in json.loads(p.stdout)]
+   for x in lines:
+    if any(s in x.lower() for s in ['error','warning','finished backup','starting backup','archive file size','backup failed','task error']): print(x)
+  else: print(p.stderr)
+p=subprocess.run(['pvesm','list','pve-backups','--content','backup'],capture_output=True,text=True,timeout=30)
+print('\nBACKUP_ARCHIVE_LIST',p.returncode); print(p.stdout); print(p.stderr)
+P
+for c in ssacli hpssacli hpacucli hpasmcli ipmitool ethtool iostat; do command -v "$c" || true; done
+if command -v ssacli >/dev/null; then ssacli ctrl all show status; ssacli ctrl all show config | grep -v -Ei 'serial|unique|wwid'; ssacli ctrl all show detail | grep -Ei 'status|model|firmware|cache|battery|capacitor|temperature|rebuild|raid|mode|slot'; fi
+for d in /dev/sda /dev/sdb; do smartctl -H "$d" | grep -v -Ei 'serial|wwn|copyright'; done
+dpkg-query -W -f='${Package}\t${Version}\n' 'ssacli' 'hp*' 'prometheus*' 'intel-microcode' 'unattended-upgrades' 'needrestart' 2>/dev/null
+ls /var/lib/apt/lists/partial
+python3 - <<'P'
+from pathlib import Path
+print('\nLOADED_MICROCODE')
+for line in Path('/proc/cpuinfo').read_text().splitlines():
+ if line.startswith('microcode'): print(line); break
+print('\nREBOOT_REQUIRED',Path('/var/run/reboot-required').exists())
+print('\nUPGRADE_COUNT_FROM_CACHED_LIST')
+import subprocess
+s=subprocess.run(['apt','list','--upgradable'],capture_output=True,text=True).stdout
+print(sum('[upgradable from:' in line for line in s.splitlines()))
+print('\nRECENT_APT_HISTORY')
+p=Path('/var/log/apt/history.log')
+if p.exists():
+ for block in p.read_text().split('\n\n')[-6:]:
+  for line in block.splitlines():
+   if line.startswith(('Start-Date:','End-Date:','Commandline:','Requested-By:')): print(line)
+P
+
+
+OUTPUT:
++ date -u +%Y-%m-%dT%H:%M:%SZ
+2026-11-18T17:01:08Z
++ python3 -
+
+BACKUP_LOG lxc-10000.log
+2026-11-16 01:24:20 INFO: CT Name: pihole
+2026-11-16 01:24:20 INFO: including mount point rootfs ('/') in backup
+2026-11-16 01:24:21 INFO: backup mode: snapshot
+2026-11-16 01:24:21 INFO: ionice priority: 7
+2026-11-16 01:24:21 INFO: create storage snapshot 'vzdump'
+2026-11-16 01:24:23 INFO: creating vzdump archive '/mnt/pve/pve-backups/dump/vzdump-lxc-10000-2026_11_16-01_24_20.tar.zst'
+2026-11-16 01:24:23 INFO: tar: /mnt/pve/pve-backups/dump/vzdump-lxc-10000-2026_11_16-01_24_20.tmp: Cannot open: Permission denied
+2026-11-16 01:24:23 INFO: tar: Error is not recoverable: exiting now
+2026-11-16 01:24:23 INFO: cleanup temporary 'vzdump' snapshot
+2026-11-16 01:24:24 ERROR: Backup of VM 10000 failed - command 'set -o pipefail && lxc-usernsexec -m u:0:100000:65536 -m g:0:100000:65536 -- tar cpf - --totals --one-file-system -p --sparse --numeric-owner --acls --xattrs '--xattrs-include=user.*' '--xattrs-include=security.capability' '--warning=no-file-ignored' '--warning=no-xattr-write' --one-file-system '--warning=no-file-ignored' '--directory=/mnt/pve/pve-backups/dump/vzdump-lxc-10000-2026_11_16-01_24_20.tmp' ./etc/vzdump/pct.conf ./etc/vzdump/pct.fw '--directory=/mnt/vzsnap0' --no-anchored '--exclude=lost+found' --anchored '--exclude=./tmp/?*' '--exclude=./var/tmp/?*' '--exclude=./var/run/?*.pid' ./ | zstd '--threads=1' >/mnt/pve/pve-backups/dump/vzdump-lxc-10000-2026_11_16-01_24_20.tar.dat' failed: exit code 2
+
+BACKUP_LOG qemu-100.log
+2026-11-16 00:00:05 INFO: creating vzdump archive '/mnt/pve/pve-backups/dump/vzdump-qemu-100-2026_11_16-00_00_05.vma.zst'
+2026-11-16 00:03:31 INFO:  99% (29.7 GiB of 30.0 GiB) in 3m 25s, read: 72.5 MiB/s, write: 72.4 MiB/s
+2026-11-16 00:03:35 INFO: 100% (30.0 GiB of 30.0 GiB) in 3m 29s, read: 76.6 MiB/s, write: 75.1 MiB/s
+2026-11-16 00:03:35 INFO: backup is sparse: 7.92 GiB (26%) total zero data
+2026-11-16 00:03:35 INFO: transferred 30.00 GiB in 209 seconds (147.0 MiB/s)
+2026-11-16 00:04:49 INFO: archive file size: 8.95GB
+2026-11-16 00:04:49 INFO: adding notes to backup
+2026-11-16 00:04:49 INFO: prune older backups with retention: keep-daily=1, keep-weekly=1
+2026-11-16 00:04:52 INFO: removing backup 'pve-backups:backup/vzdump-qemu-100-2026_11_05-00_00_05.vma.zst'
+2026-11-16 00:04:52 INFO: pruned 1 backup(s) not covered by keep-retention policy
+2026-11-16 00:04:52 INFO: Finished Backup of VM 100 (00:04:47)
+
+BACKUP_LOG qemu-120.log
+2026-11-16 00:04:53 INFO: creating vzdump archive '/mnt/pve/pve-backups/dump/vzdump-qemu-120-2026_11_16-00_04_52.vma.zst'
+2026-11-16 00:26:20 INFO:  99% (118.9 GiB of 120.0 GiB) in 21m 27s, read: 124.3 MiB/s, write: 119.8 MiB/s
+2026-11-16 00:26:30 INFO: 100% (120.0 GiB of 120.0 GiB) in 21m 37s, read: 111.6 MiB/s, write: 110.7 MiB/s
+2026-11-16 00:26:30 INFO: backup is sparse: 2.33 GiB (1%) total zero data
+2026-11-16 00:26:30 INFO: transferred 120.00 GiB in 1297 seconds (94.7 MiB/s)
+2026-11-16 00:27:16 INFO: archive file size: 44.94GB
+2026-11-16 00:27:16 INFO: adding notes to backup
+2026-11-16 00:27:16 INFO: prune older backups with retention: keep-daily=1, keep-weekly=1
+2026-11-16 00:27:23 INFO: removing backup 'pve-backups:backup/vzdump-qemu-120-2026_11_05-00_03_38.vma.zst'
+2026-11-16 00:27:23 INFO: pruned 1 backup(s) not covered by keep-retention policy
+2026-11-16 00:27:23 INFO: Finished Backup of VM 120 (00:22:31)
+
+BACKUP_LOG qemu-121.log
+2026-11-16 00:27:23 INFO: creating vzdump archive '/mnt/pve/pve-backups/dump/vzdump-qemu-121-2026_11_16-00_27_23.vma.zst'
+2026-11-16 00:36:25 INFO:  99% (63.5 GiB of 64.0 GiB) in 8m 24s, read: 145.9 MiB/s, write: 145.9 MiB/s
+2026-11-16 00:36:28 INFO: 100% (64.0 GiB of 64.0 GiB) in 8m 27s, read: 186.0 MiB/s, write: 185.2 MiB/s
+2026-11-16 00:36:28 INFO: backup is sparse: 5.70 GiB (8%) total zero data
+2026-11-16 00:36:28 INFO: transferred 64.00 GiB in 507 seconds (129.3 MiB/s)
+2026-11-16 00:38:55 INFO: archive file size: 30.83GB
+2026-11-16 00:38:55 INFO: adding notes to backup
+2026-11-16 00:38:55 INFO: prune older backups with retention: keep-daily=1, keep-weekly=1
+2026-11-16 00:39:01 INFO: removing backup 'pve-backups:backup/vzdump-qemu-121-2026_11_05-00_23_36.vma.zst'
+2026-11-16 00:39:01 INFO: pruned 1 backup(s) not covered by keep-retention policy
+2026-11-16 00:39:01 INFO: Finished Backup of VM 121 (00:11:38)
+
+BACKUP_LOG qemu-122.log
+2026-11-16 00:39:02 INFO: creating vzdump archive '/mnt/pve/pve-backups/dump/vzdump-qemu-122-2026_11_16-00_39_01.vma.zst'
+2026-11-16 00:46:45 INFO:  97% (124.5 GiB of 128.0 GiB) in 7m 42s, read: 2.0 GiB/s, write: 4.0 KiB/s
+2026-11-16 00:46:47 INFO: 100% (128.0 GiB of 128.0 GiB) in 7m 44s, read: 1.7 GiB/s, write: 8.0 KiB/s
+2026-11-16 00:46:47 INFO: backup is sparse: 80.88 GiB (63%) total zero data
+2026-11-16 00:46:47 INFO: transferred 128.00 GiB in 464 seconds (282.5 MiB/s)
+2026-11-16 00:48:00 INFO: archive file size: 24.23GB
+2026-11-16 00:48:00 INFO: adding notes to backup
+2026-11-16 00:48:00 INFO: prune older backups with retention: keep-daily=1, keep-weekly=1
+2026-11-16 00:48:08 INFO: removing backup 'pve-backups:backup/vzdump-qemu-122-2026_11_05-00_34_27.vma.zst'
+2026-11-16 00:48:08 INFO: pruned 1 backup(s) not covered by keep-retention policy
+2026-11-16 00:48:08 INFO: Finished Backup of VM 122 (00:09:07)
+
+BACKUP_LOG qemu-123.log
+2026-11-16 00:48:08 INFO: creating vzdump archive '/mnt/pve/pve-backups/dump/vzdump-qemu-123-2026_11_16-00_48_08.vma.zst'
+2026-11-16 01:06:46 INFO:  99% (118.9 GiB of 120.0 GiB) in 18m 37s, read: 113.4 MiB/s, write: 110.6 MiB/s
+2026-11-16 01:06:58 INFO: 100% (120.0 GiB of 120.0 GiB) in 18m 49s, read: 96.0 MiB/s, write: 95.2 MiB/s
+2026-11-16 01:06:58 INFO: backup is sparse: 3.24 GiB (2%) total zero data
+2026-11-16 01:06:58 INFO: transferred 120.00 GiB in 1129 seconds (108.8 MiB/s)
+2026-11-16 01:07:10 INFO: archive file size: 39.23GB
+2026-11-16 01:07:10 INFO: adding notes to backup
+2026-11-16 01:07:10 INFO: prune older backups with retention: keep-daily=1, keep-weekly=1
+2026-11-16 01:07:16 INFO: removing backup 'pve-backups:backup/vzdump-qemu-123-2026_11_05-00_41_26.vma.zst'
+2026-11-16 01:07:17 INFO: pruned 1 backup(s) not covered by keep-retention policy
+2026-11-16 01:07:17 INFO: Finished Backup of VM 123 (00:19:09)
+
+BACKUP_LOG qemu-124.log
+2026-11-16 01:07:17 INFO: creating vzdump archive '/mnt/pve/pve-backups/dump/vzdump-qemu-124-2026_11_16-01_07_17.vma.zst'
+2026-11-16 01:23:57 INFO:  99% (118.9 GiB of 120.0 GiB) in 16m 39s, read: 105.0 MiB/s, write: 102.4 MiB/s
+2026-11-16 01:24:08 INFO: 100% (120.0 GiB of 120.0 GiB) in 16m 50s, read: 101.1 MiB/s, write: 100.3 MiB/s
+2026-11-16 01:24:08 INFO: backup is sparse: 4.16 GiB (3%) total zero data
+2026-11-16 01:24:08 INFO: transferred 120.00 GiB in 1010 seconds (121.7 MiB/s)
+2026-11-16 01:24:12 INFO: archive file size: 36.69GB
+2026-11-16 01:24:12 INFO: adding notes to backup
+2026-11-16 01:24:12 INFO: prune older backups with retention: keep-daily=1, keep-weekly=1
+2026-11-16 01:24:20 INFO: removing backup 'pve-backups:backup/vzdump-qemu-124-2026_11_05-01_00_05.vma.zst'
+2026-11-16 01:24:20 INFO: pruned 1 backup(s) not covered by keep-retention policy
+2026-11-16 01:24:20 INFO: Finished Backup of VM 124 (00:17:03)
+
+BACKUP_HISTORY_UTC
+2026-11-16T07:00:05+00:00 job errors
+2026-11-12T07:00:10+00:00 job errors
+2026-11-09T07:00:04+00:00 job errors
+2026-11-05T07:00:02+00:00 job errors
+2026-11-02T07:00:01+00:00 job errors
+2026-10-29T06:00:01+00:00 job errors
+2026-10-26T06:00:00+00:00 job errors
+2026-10-22T06:00:03+00:00 job errors
+2026-10-19T06:00:10+00:00 job errors
+2026-10-15T06:00:00+00:00 job errors
+2026-10-12T06:00:05+00:00 job errors
+2026-10-08T06:00:02+00:00 job errors
+2026-10-05T06:00:05+00:00 job errors
+2026-10-01T06:00:14+00:00 job errors
+2026-09-28T06:00:05+00:00 job errors
+2026-09-24T06:00:11+00:00 job errors
+2026-09-21T06:00:07+00:00 job errors
+2026-09-17T06:00:05+00:00 job errors
+2026-09-14T06:00:05+00:00 job errors
+2026-09-10T06:00:04+00:00 job errors
+2026-09-07T06:00:02+00:00 job errors
+2026-09-03T06:00:11+00:00 job errors
+2026-08-31T06:00:04+00:00 job errors
+2026-08-27T06:00:03+00:00 job errors
+2026-08-24T06:00:05+00:00 job errors
+
+LATEST_BACKUP_JOB_SELECTED_LOG
+INFO: Starting Backup of VM 100 (qemu)
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+INFO: archive file size: 8.95GB
+INFO: Finished Backup of VM 100 (00:04:47)
+INFO: Starting Backup of VM 120 (qemu)
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+INFO: archive file size: 44.94GB
+INFO: Finished Backup of VM 120 (00:22:31)
+INFO: Starting Backup of VM 121 (qemu)
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+INFO: archive file size: 30.83GB
+INFO: Finished Backup of VM 121 (00:11:38)
+INFO: Starting Backup of VM 122 (qemu)
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+INFO: archive file size: 24.23GB
+INFO: Finished Backup of VM 122 (00:09:07)
+INFO: Starting Backup of VM 123 (qemu)
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+INFO: archive file size: 39.23GB
+INFO: Finished Backup of VM 123 (00:19:09)
+INFO: Starting Backup of VM 124 (qemu)
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+INFO: archive file size: 36.69GB
+INFO: Finished Backup of VM 124 (00:17:03)
+INFO: Starting Backup of VM 10000 (lxc)
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: You have not turned on protection against thin pools running out of space.
+  WARNING: Set activation/thin_pool_autoextend_threshold below 100 to trigger automatic extension of thin pools before they get full.
+  WARNING: Sum of all thin volume sizes (<1.82 TiB) exceeds the size of thin pool ssd_vg/thin-pool and the size of whole volume group (<1.77 TiB).
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+INFO: tar: Error is not recoverable: exiting now
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+ERROR: Backup of VM 10000 failed - command 'set -o pipefail && lxc-usernsexec -m u:0:100000:65536 -m g:0:100000:65536 -- tar cpf - --totals --one-file-system -p --sparse --numeric-owner --acls --xattrs '--xattrs-include=user.*' '--xattrs-include=security.capability' '--warning=no-file-ignored' '--warning=no-xattr-write' --one-file-system '--warning=no-file-ignored' '--directory=/mnt/pve/pve-backups/dump/vzdump-lxc-10000-2026_11_16-01_24_20.tmp' ./etc/vzdump/pct.conf ./etc/vzdump/pct.fw '--directory=/mnt/vzsnap0' --no-anchored '--exclude=lost+found' --anchored '--exclude=./tmp/?*' '--exclude=./var/tmp/?*' '--exclude=./var/run/?*.pid' ./ | zstd '--threads=1' >/mnt/pve/pve-backups/dump/vzdump-lxc-10000-2026_11_16-01_24_20.tar.dat' failed: exit code 2
+INFO: Backup job finished with errors
+TASK ERROR: job errors
+
+BACKUP_ARCHIVE_LIST 0
+Volid                                                           Format  Type             Size VMID
+pve-backups:backup/vzdump-qemu-100-2026_11_12-00_00_11.vma.zst  vma.zst backup     9626233230 100
+pve-backups:backup/vzdump-qemu-100-2026_11_16-00_00_05.vma.zst  vma.zst backup     9614455137 100
+pve-backups:backup/vzdump-qemu-10001-2025_11_15-05_12_20.vma.gz vma.gz  backup     6970771735 10001
+pve-backups:backup/vzdump-qemu-101-2025_03_24-15_26_37.vma.zst  vma.zst backup        5467651 101
+pve-backups:backup/vzdump-qemu-110-2025_11_15-05_50_12.vma.gz   vma.gz  backup    30563176272 110
+pve-backups:backup/vzdump-qemu-111-2025_11_15-06_43_11.vma.gz   vma.gz  backup    10055420223 111
+pve-backups:backup/vzdump-qemu-120-2026_11_12-00_03_47.vma.zst  vma.zst backup    48633868439 120
+pve-backups:backup/vzdump-qemu-120-2026_11_16-00_04_52.vma.zst  vma.zst backup    48251623126 120
+pve-backups:backup/vzdump-qemu-121-2026_11_12-00_23_58.vma.zst  vma.zst backup    32558903293 121
+pve-backups:backup/vzdump-qemu-121-2026_11_16-00_27_23.vma.zst  vma.zst backup    33107239044 121
+pve-backups:backup/vzdump-qemu-122-2026_11_12-00_33_32.vma.zst  vma.zst backup    26005921301 122
+pve-backups:backup/vzdump-qemu-122-2026_11_16-00_39_01.vma.zst  vma.zst backup    26014539619 122
+pve-backups:backup/vzdump-qemu-123-2026_11_12-00_40_38.vma.zst  vma.zst backup    41747266785 123
+pve-backups:backup/vzdump-qemu-123-2026_11_16-00_48_08.vma.zst  vma.zst backup    42126491130 123
+pve-backups:backup/vzdump-qemu-124-2026_11_12-00_58_59.vma.zst  vma.zst backup    23243414942 124
+pve-backups:backup/vzdump-qemu-124-2026_11_16-01_07_17.vma.zst  vma.zst backup    39393503972 124
+pve-backups:backup/vzdump-qemu-240-2025_11_15-11_39_19.vma.gz   vma.gz  backup     7135845817 240
+pve-backups:backup/vzdump-qemu-241-2025_11_15-11_55_52.vma.gz   vma.gz  backup     7256936253 241
+
+
+/usr/sbin/ssacli
+/usr/sbin/ethtool
++ for c in ssacli hpssacli hpacucli hpasmcli ipmitool ethtool iostat
++ command -v ssacli
++ for c in ssacli hpssacli hpacucli hpasmcli ipmitool ethtool iostat
++ command -v hpssacli
++ true
++ for c in ssacli hpssacli hpacucli hpasmcli ipmitool ethtool iostat
++ command -v hpacucli
++ true
++ for c in ssacli hpssacli hpacucli hpasmcli ipmitool ethtool iostat
++ command -v hpasmcli
++ true
++ for c in ssacli hpssacli hpacucli hpasmcli ipmitool ethtool iostat
++ command -v ipmitool
++ true
++ for c in ssacli hpssacli hpacucli hpasmcli ipmitool ethtool iostat
++ command -v ethtool
++ for c in ssacli hpssacli hpacucli hpasmcli ipmitool ethtool iostat
++ command -v iostat
++ true
++ command -v ssacli
++ ssacli ctrl all show status
+
+Smart Array P420i in Slot 0 (Embedded)
+   Controller Status: OK
+   Cache Status: OK
+   Battery/Capacitor Status: Failed (Replace Batteries/Capacitors)
+
+
++ ssacli ctrl all show config
++ grep -v -Ei 'serial|unique|wwid'
+
+Smart Array P420i in Slot 0 (Embedded)    (sn: 0014380260495F0)
+
+
+
+   Internal Drive Cage at Port 1I, Box 1, OK
+
+
+
+   Internal Drive Cage at Port 2I, Box 1, OK
+
+
+   Port Name: 1I
+
+   Port Name: 2I
+
+   Array A (Solid State SATA, Unused Space: 0  MB)
+
+      logicaldrive 1 (1.86 TB, RAID 5, OK)
+
+      physicaldrive 1I:1:1 (port 1I:box 1:bay 1, SATA SSD, 1 TB, OK)
+      physicaldrive 1I:1:2 (port 1I:box 1:bay 2, SATA SSD, 1 TB, OK)
+      physicaldrive 1I:1:3 (port 1I:box 1:bay 3, SATA SSD, 1 TB, OK)
+
+
+   Array B (SAS, Unused Space: 0  MB)
+
+      logicaldrive 2 (1.09 TB, RAID 5, OK)
+
+      physicaldrive 2I:1:5 (port 2I:box 1:bay 5, SAS HDD, 600 GB, OK)
+      physicaldrive 2I:1:6 (port 2I:box 1:bay 6, SAS HDD, 600 GB, OK)
+      physicaldrive 2I:1:7 (port 2I:box 1:bay 7, SAS HDD, 600 GB, OK)
+      physicaldrive 2I:1:8 (port 2I:box 1:bay 8, SAS HDD, 600 GB, OK, spare)
+
+   Unassigned
+
+      physicaldrive 1I:1:4 (port 1I:box 1:bay 4, SAS HDD, 600 GB, OK)
+
+
++ ssacli ctrl all show detail
++ grep -Ei 'status|model|firmware|cache|battery|capacitor|temperature|rebuild|raid|mode|slot'
+Smart Array P420i in Slot 0 (Embedded)
+   Slot: 0
+   Cache Serial Number: PBKUA0BRH3U50X
+   RAID 6 Status: Enabled
+   Controller Status: OK
+   Firmware Version: 8.32
+   Firmware Supports Online Firmware Activation: False
+   Rebuild Priority: Low
+   Surface Scan Mode: Idle
+   Wait for Cache Room: Disabled
+   Cache Board Present: True
+   Cache Status: OK
+   Cache Ratio: 25% Read / 75% Write
+   Drive Write Cache: Enabled
+   Total Cache Size: 0.5
+   Total Cache Memory Available: 0.3
+   Battery Backed Cache Size: 0.3
+   No-Battery Write Cache: Enabled
+   Cache Backup Power Source: Capacitors
+   Battery/Capacitor Count: 1
+   Battery/Capacitor Status: Failed (Replace Batteries)
+   Spare Activation Mode: Activate on physical drive failure (default)
+   Controller Temperature (C): 64
+   Cache Module Temperature (C): 39
+   Capacitor Temperature  (C): 32
+   SPDM Supports Get Slot Certificate Chain: no
+   SPDM Supports Get Slot Info             : no
+   SPDM Supports Set Invalidate Slot       : no
++ for d in /dev/sda /dev/sdb
++ smartctl -H /dev/sda
++ grep -v -Ei 'serial|wwn|copyright'
+smartctl 7.4 2024-10-15 r5620 [x86_64-linux-6.17.13-2-pve] (local build)
+
+/dev/sda: requires option '-d cciss,N'
+Please specify device type with the -d option.
+
+Use smartctl -h to get a usage summary
+
++ for d in /dev/sda /dev/sdb
++ smartctl -H /dev/sdb
++ grep -v -Ei 'serial|wwn|copyright'
+smartctl 7.4 2024-10-15 r5620 [x86_64-linux-6.17.13-2-pve] (local build)
+
+/dev/sdb: requires option '-d cciss,N'
+Please specify device type with the -d option.
+
+Use smartctl -h to get a usage summary
+
++ dpkg-query -W '-f=${Package}\t${Version}\n' ssacli 'hp*' 'prometheus*' intel-microcode unattended-upgrades needrestart
+hponcfg	6.0.0-0
+ssacli	6.15-11.0
++ ls /var/lib/apt/lists/partial
++ python3 -
+
+LOADED_MICROCODE
+microcode	: 0x42e
+
+REBOOT_REQUIRED False
+
+UPGRADE_COUNT_FROM_CACHED_LIST
+275
+
+RECENT_APT_HISTORY

@@ -1,0 +1,19 @@
+{
+  "created_utc": "2026-11-18T17:11:39.114460+00:00",
+  "files": {
+    "01-system.txt": "2a3582a43adb25fe10f2ff6a1219d5165a7c17fd9bbcfc7fce4b7032f173f1b2",
+    "02-storage.txt": "7a462ff9193b656c5375521ddbba9d66aed014b75db12028cfdc6be6f483d119",
+    "03-guests-backups.txt": "551711d2fc5b9c4dad045b026423406748af7229f46d239b7c3060cbc4e91ab2",
+    "04-network-security-updates.txt": "9f0f3f474f35c61af6e7b788c56750ab920f307478d00d682926f0b7aec9ec70",
+    "05-backup-storage-followup.txt": "83db51645d4f76ddbd42d043caeba1d1aab60b1305c2680e01626237c7185e12",
+    "06-guests-network-followup.txt": "9f2df3b535053f4f655547babc88cf5995c1c084b47f8845ab0b0d46d63a0fb9",
+    "07-nas-storage-peer.txt": "6e888fab6815c2ffc28708b2101470fa1175d50e71432315486401a2de7b0f1a",
+    "08-upstream-sources.txt": "c21995597c9c2bc7e68e617a70cc860138bb906215e911cd481da6dc8a497ae7",
+    "09-upgrade-preflight.txt": "dd94e4247f30e523c64f6279d35161079d11fec470f852cd7c194acc263a975c",
+    "10-monitoring.json": "402995e9561e2868629b2e22fa15e23689a5a7f798a019119901c8f91d21b325",
+    "11-nas-export-permissions.txt": "9232710ddeba5a3827f1641a51ac72a147e4ed20fd8cafb52ded5219f38b5eeb",
+    "12-runtime-details.txt": "9a469825f8cce1cb82d76bc76d2587f8fdeb77d3a9c26fc7725711c7a9df802b",
+    "13-repo-records.txt": "c989e3d66d65088b3e2f137525787b8adf2fa20dfa05bb3c04d2923c24c9d04e"
+  },
+  "scope": "Collected evidence file integrity. Hashes do not validate host health."
+}

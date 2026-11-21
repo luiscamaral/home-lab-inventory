@@ -26,7 +26,12 @@ services:
       MINIO_IDENTITY_OPENID_REDIRECT_URI_DYNAMIC: "on"
       MINIO_IDENTITY_OPENID_SCOPES: openid,email
     volumes:
-      - /var/lib/minio-data:/data
+      # Bind-mount from the NAS NFS share (same pattern as minio-1).
+      # Migrated 2026-05-27 from /var/lib/minio-data on the ds-2 local
+      # root disk after the data outgrew local capacity. minio-1's
+      # equivalent path on the share is `minio-data/` (singular —
+      # historical).
+      - /nfs/dockermaster/docker/MinIO/minio-2-data:/data
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:9000/minio/health/ready"]
       interval: 10s

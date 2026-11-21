@@ -1,0 +1,9 @@
+### 2026-11-16 17:17:36 MST parallel 150-pkt pings (0.2s, 56B) from pfSense; rf before: 854651
+192.168.7.11 150 packets transmitted, 150 packets received, 0.0% packet loss
+192.168.1.50 150 packets transmitted, 150 packets received, 0.0% packet loss
+192.168.2.50 150 packets transmitted, 147 packets received, 2.0% packet loss
+192.168.0.50 150 packets transmitted, 149 packets received, 0.7% packet loss
+192.168.4.237 150 packets transmitted, 148 packets received, 1.3% packet loss
+192.168.4.236 150 packets transmitted, 147 packets received, 2.0% packet loss
+192.168.48.44 150 packets transmitted, 146 packets received, 2.7% packet loss
+rf after: 919785 at 17:18:07

@@ -1,0 +1,66 @@
+{
+  "collected_at": "2026-11-17T00:30:09.758221+00:00",
+  "records": [
+    {
+      "command": [
+        "git",
+        "worktree",
+        "prune",
+        "--dry-run",
+        "--verbose"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "stash@{1}^1",
+        "stash@{1}",
+        "--",
+        ".pre-commit-config.yaml"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "diff --git a/.pre-commit-config.yaml b/.pre-commit-config.yaml\nindex 693b0bd..cdfd91e 100644\n--- a/.pre-commit-config.yaml\n+++ b/.pre-commit-config.yaml\n@@ -89,6 +89,20 @@ repos:\n         files: ^\\.github/workflows/.*\\.ya?ml$\n         require_serial: false\n \n+  # Block unpinned Docker image tags (`:latest`, no tag at all, or\n+  # generic floating majors like `postgres:17` written with no minor)\n+  # in Compose files and Terraform templates. Allowlist for images\n+  # that intentionally float (watchtower-managed, internal registry\n+  # rebuilds) lives in scripts/check-image-pins.sh.\n+  - repo: local\n+    hooks:\n+      - id: check-image-pins\n+        name: Check Docker image tag pins\n+        entry: scripts/check-image-pins.sh\n+        language: script\n+        files: '(docker-compose\\.ya?ml|\\.yml\\.tftpl|/stacks/.*\\.ya?ml)$'\n+        require_serial: false\n+\n # Global configuration\n default_stages: [pre-commit]\n fail_fast: false\n"
+    },
+    {
+      "command": [
+        "git",
+        "ls-tree",
+        "-r",
+        "--name-only",
+        "stash@{2}^3"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "dockermaster/docker/compose/litellm/README.md\ndockermaster/docker/compose/litellm/config.yaml\ndockermaster/docker/compose/litellm/docker-compose.test.yml\ndockermaster/docker/compose/litellm/k6-test.js\ndockermaster/docker/compose/litellm/litellm-config-ollama.yaml\ndockermaster/docker/compose/litellm/prometheus.yml\ndockermaster/docker/compose/litellm/test-health.sh\ndockermaster/docker/compose/litellm/test-local.sh\ndockermaster/docker/compose/litellm/validate-config.sh\ndockermaster/docker/compose/ollama/bin/ollama\ndocs/governance-model.md\ndocs/ip-allocation.md\ndocs/recent-session-handoff.md\nproject-improvement-plan.md\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--stat",
+        "HEAD",
+        "origin/main"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": " .agents/skills/cloudflare-api                      |    1 +\n .claude/agents/esp32c5-firmware-dev.md             |    2 +-\n .claude/agents/esp32c5-test-orchestrator.md        |    2 +-\n .claude/operating-rules.md                         |   69 +-\n .claude/skills/cloudflare-api                      |    1 +\n .devin/skills/cloudflare-api/SKILL.md              |   25 +-\n .gitignore                                         |    3 +\n .gitmodules                                        |    3 +\n .pre-commit-config.yaml                            |   15 +-\n AGENTS.md                                          |   19 +\n CLAUDE.md                                          |   41 +-\n dockermaster/README.md                             |    2 -\n .../nginx-rproxy/vhost.d/auth.cf.lcamaral.com.conf |   96 +-\n .../vhost.d/grafana.d.lcamaral.com.conf            |   56 +-\n .../nginx-rproxy/vhost.d/hub.d.lcamaral.com.conf   |  107 ++\n .../nginx-rproxy/vhost.d/kiwix.d.lcamaral.com.conf |   25 +\n .../vhost.d/kolibri.d.lcamaral.com.conf            |   43 +\n .../vhost.d/login.cf.lcamaral.com.conf             |    6 +-\n .../nginx-rproxy/vhost.d/nomad.d.lcamaral.com.conf |   78 +\n .../vhost.d/portainer.d.lcamaral.com.conf          |   48 +-\n .../vhost.d/registry.cf.lcamaral.com.conf          |    6 +-\n .../nginx-rproxy/vhost.d/s3.d.lcamaral.com.conf    |  127 +-\n .../nginx-rproxy/vhost.d/zot.d.lcamaral.com.conf   |   55 +\n dockermaster/docker/compose/nomad/AGENTS.md        |   30 +\n .../compose/nomad/cli-proxy-config.yaml.tftpl      |   16 +\n .../docker/compose/nomad/docker-compose.yml.tftpl  |  393 +++++\n .../docker/compose/nomad/embedding-eval.yml.tftpl  |  124 ++\n .../docker/compose/nomad/litellm-config.yaml       |   74 +\n .../docker/compose/ollama/docker-compose.yml       |   38 -\n .../docker/compose/ollama/docker-compose.yml.tftpl |   45 -\n dockermaster/templates/README.md                   |    2 +\n docs/ha-architecture.md                            |    3 +-\n docs/keycloak-security.md                          |  147 ++\n .../2026-06-26-internal-ecmp-multipath-design.md   |    4 +\n docs/network/2026-10-24-lan-resilience-redesign.md |  239 +++\n docs/network/esp32-c5-wifi-probe-dashboard.md      |   54 +-\n docs/network/esp32-c5-wifi-probe.md                |   76 +-\n docs/network/keychain-credential-backup.md         |   51 +\n docs/network/omada-controller-upgrade-deferred.md  |   46 +\n docs/network/pfsense-api.md                        |   98 +-\n docs/network/pfsense.md                            |   99 +-\n docs/network/rproxy-certificates.md                |   56 +\n docs/network/switch24a-omada-integration-plan.md   |    1 +\n docs/nomad-observability-and-embedding-eval.md     |  117 ++\n docs/nomad-private-network.md                      |   52 +\n .../plans/2026-11-13-project-nomad-deployment.md   |  137 ++\n .../specs/2026-06-06-esp32-c5-wifi-probe-design.md |    6 +-\n .../2026-06-15-k8s-talos-proxmox-iac-design.md     |    4 +-\n .../2026-11-13-project-nomad-deployment-design.md  |  354 +++++\n docs/zot-registry.md                               |  412 +++++\n hosts/README.md                                    |   25 +\n .../dockermaster}/etc/docker/daemon.json           |    5 +-\n hosts/dockerserver-1/etc/docker/daemon.json        |   11 +\n hosts/dockerserver-2/etc/docker/daemon.json        |   11 +\n hosts/nas/drive-versioning.md                      |   60 +\n inventory/commands-available.md                    |   15 +-\n inventory/docker-containers.md                     |   92 +-\n inventory/servers.md                               |    9 +-\n inventory/virtual-machines.md                      |    4 +-\n monitoring/esp32-c5-wifi-probe                     |    2 +-\n pfsense/acme-actions.yml                           |   16 +\n pfsense/acme-certificates.yml                      |   88 ++\n pfsense/dhcp-static-mappings.yml                   |   18 +-\n pfsense/host-overrides.yml                         |    8 +\n pfsense/scripts/ix0-watchdog.sh                    |  242 ++-\n pihole/dnsmasq.d/04-d-lcamaral-com.conf            |   23 +-\n pihole/dnsmasq.d/06-host-overrides.conf            |    2 +\n scripts/check-image-pins.sh                        |   38 +-\n scripts/grafana/build_wifi_probes_overview.py      |  324 +++-\n scripts/keycloak-hardening-test.py                 |  364 +++++\n scripts/nomad-embedding-eval.py                    |  474 ++++++\n scripts/sync-docker-daemon.py                      |  380 +++++\n scripts/sync-pfsense-acme-actions.py               |   14 +-\n scripts/sync-pfsense-acme-certificates.py          |  454 ++++++\n scripts/sync-pfsense-dhcp-static-mappings.py       |  310 +++-\n scripts/zot-e2e.py                                 |  454 ++++++\n scripts/zot-meta-backup.py                         |  231 +++\n terraform/README.md                                |   27 +-\n terraform/cloudflare/.gitignore                    |    1 -\n terraform/cloudflare/.terraform.lock.hcl           |   44 +\n terraform/cloudflare/README.md                     |   67 +-\n terraform/cloudflare/main.tf                       |   17 +\n terraform/minio/.gitignore                         |    1 -\n terraform/minio/.terraform.lock.hcl                |   45 +\n terraform/portainer/.gitignore                     |    1 -\n terraform/portainer/.terraform.lock.hcl            |   69 +\n terraform/portainer/keycloak.tf                    |  104 +-\n terraform/portainer/keycloak_realms.tf             |  335 ++++\n terraform/portainer/keycloak_reset_flow.tf         |  138 ++\n terraform/portainer/locals.tf                      |  215 ++-\n terraform/portainer/provider.tf                    |    7 +-\n terraform/portainer/registries.tf                  |   18 +-\n terraform/portainer/stacks.tf                      |   92 +-\n .../grafana-dashboards/wifi-probes-overview.json   | 1662 ++++++++++++--------\n terraform/portainer/stacks/grafana.yml.tftpl       |   22 +-\n terraform/portainer/stacks/homelab-portal-2.yml    |    2 +-\n terraform/portainer/stacks/homelab-portal.yml      |    2 +-\n terraform/portainer/stacks/keycloak-2.yml          |    4 +\n terraform/portainer/stacks/keycloak.yml            |    4 +\n terraform/portainer/stacks/postfix-relay.yml       |   11 +-\n terraform/portainer/stacks/rundeck.yml.tftpl       |   13 +-\n terraform/portainer/stacks/zot-config.json         |  318 ++++\n terraform/portainer/stacks/zot.yml.tftpl           |  181 +++\n terraform/portainer/vault.tf                       |   12 +\n terraform/vault/.gitignore                         |    1 -\n terraform/vault/.terraform.lock.hcl                |   23 +\n tests/fixtures/nomad-embedding-eval.json           |  194 +++\n tests/pfsense/test_ix0_watchdog.sh                 |  199 +++\n tests/test_check_image_pins.py                     |   59 +\n tests/test_nomad_embedding_eval.py                 |  366 +++++\n tests/test_nomad_observability.py                  |  104 ++\n tests/test_sync_pfsense_dhcp_static_mappings.py    |  133 ++\n tests/test_zot_meta_backup.py                      |  101 ++\n third_party/project-nomad                          |    1 +\n 114 files changed, 10650 insertions(+), 1125 deletions(-)\n"
+    },
+    {
+      "command": [
+        "git",
+        "status",
+        "--short",
+        "--branch"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "## fix/ds2-portainer-agent-ip-collision...origin/fix/ds2-portainer-agent-ip-collision [behind 54]\n?? .pi/\n?? docs/network/2026-11-16-ix0-live-evidence.md\n?? docs/network/2026-11-16-ix0-rca.md\n?? docs/network/2026-11-16-ix0-switch-evidence.md\n?? docs/network/2026-11-16-network-instability-check.md\n?? docs/network/evidence/\n?? docs/operations/evidence/\n?? hosts/nas/drive-versioning.md\n"
+    }
+  ],
+  "source": "local Git metadata and stash hook source"
+}

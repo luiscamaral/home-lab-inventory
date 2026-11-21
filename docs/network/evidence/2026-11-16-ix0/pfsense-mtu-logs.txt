@@ -1,0 +1,15 @@
+### collected 2026-11-16T21:57:15Z pfSense MTU-related evidence
+## system.log (current + .0) MTU/fragment/oversize lines, excluding arp
+## ICMP stats (dest unreach frag needed)
+		destination unreachable: 530
+		destination unreachable: 224180
+## IP fragmentation stats
+	0 fragments received
+	0 fragments dropped (dup or out of space)
+	0 fragments dropped after timeout
+	64765 output packets dropped due to no bufs, etc.
+	70342 output datagrams fragmented
+	140684 fragments created
+	0 datagrams that can't be fragmented
+## MSS clamp in config
+## ix0 pf scrub/MTU of rules

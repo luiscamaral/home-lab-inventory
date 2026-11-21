@@ -15,8 +15,24 @@
       method: shellcommand
       status: active
 
+- cert: cf.lcamaral.com
+  actions:
+    - command: /root/sync-certs-to-rproxy.sh cf.lcamaral.com
+      method: shellcommand
+      status: active
+
 - cert: home.lcamaral.com
   actions:
     - command: /root/sync-certs-to-rproxy.sh home.lcamaral.com
+      method: shellcommand
+      status: active
+
+# `pfsense` (*.home.lcamaral.com) is also the DNS Resolver's DNS-over-TLS cert
+# (Services > DNS Resolver > SSL/TLS Certificate; :853 on HOME + ADMIN).
+# Unbound loads the cert only at start, so restart it after each renewal.
+# The pre-existing webgui + haproxy restart hooks on this cert are untouched.
+- cert: pfsense
+  actions:
+    - command: /usr/local/sbin/pfSsh.php playback svc restart unbound
       method: shellcommand
       status: active

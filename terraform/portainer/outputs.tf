@@ -63,6 +63,7 @@ output "stacks" {
     snmp_exporter       = portainer_stack.snmp_exporter.name
     pve_exporter        = portainer_stack.pve_exporter.name
     blackbox_exporter   = portainer_stack.blackbox_exporter.name
+    otel_collector      = portainer_stack.otel_collector.name
     pihole_exporter_1   = portainer_stack.pihole_exporter_1.name
     pihole_exporter_2   = portainer_stack.pihole_exporter_2.name
     pihole_exporter_3   = portainer_stack.pihole_exporter_3.name

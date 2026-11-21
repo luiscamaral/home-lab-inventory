@@ -70,6 +70,8 @@ This directory contains templates for creating new services in the dockermaster 
 - **Reserved**:
   - 192.168.59.1: host
   - 192.168.59.2: portainer
+  - 192.168.59.3: kolibri (NOMAD-managed child, ds-2)
+  - 192.168.59.8: kiwix (NOMAD-managed child, ds-2)
 
 ### Current Assignments
 

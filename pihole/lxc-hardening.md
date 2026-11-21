@@ -86,3 +86,21 @@ can be added in Phase 3e once pihole-2 is deployed (and even then,
 do not make pihole-2 the upstream of pihole-1 — that is circular;
 add pfSense directly on a second VIP or add a non-homelab resolver
 as a fallback).
+
+## Reverse DNS (bogusPriv)
+
+Pi-hole v6 defaults `dns.bogusPriv = true`, which answers NXDOMAIN for
+private-range reverse (PTR) lookups instead of forwarding them upstream.
+That breaks reverse resolution of static DHCP mappings: pfSense Unbound
+registers their PTRs, but pihole never asks it. Because the only upstream
+here is our own authoritative Unbound (not a public resolver), forwarding
+private reverse is safe and wanted:
+
+```bash
+pihole-FTL --config dns.bogusPriv false
+systemctl restart pihole-FTL
+```
+
+pihole-2/-3 set the same via `FTLCONF_dns_bogusPriv: "false"` in their
+stack templates. See
+[`../docs/network/reverse-dns-static-hosts-2026-06-12.md`](../docs/network/reverse-dns-static-hosts-2026-06-12.md).

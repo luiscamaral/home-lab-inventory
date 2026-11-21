@@ -1,0 +1,17 @@
+### collected 2026-11-16T21:52:43Z switch RMON etherStats (breaks ifInErrors into types) and ifMtu
+## RMON etherStatsDataSource (index -> ifIndex)
+.1.3.6.1.2.1.16.1.1.1.2 = No Such Instance currently exists at this OID
+## RMON columns: 7 undersize,8 oversize,9 fragments,10 jabbers,11 crcalign,12 collisions
+# col 7
+.1.3.6.1.2.1.16.1.1.1.7 = No Such Instance currently exists at this OID
+# col 8
+.1.3.6.1.2.1.16.1.1.1.8 = No Such Instance currently exists at this OID
+# col 9
+.1.3.6.1.2.1.16.1.1.1.9 = No Such Instance currently exists at this OID
+# col 10
+.1.3.6.1.2.1.16.1.1.1.10 = No Such Instance currently exists at this OID
+# col 11
+.1.3.6.1.2.1.16.1.1.1.11 = No Such Instance currently exists at this OID
+## ifMtu all ports
+   1 1500
+  29 9216

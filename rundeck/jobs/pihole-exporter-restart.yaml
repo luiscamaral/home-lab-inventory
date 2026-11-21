@@ -1,0 +1,81 @@
+- defaultTab: nodes
+  description: Nightly FD-reset restart of pihole-exporter-1 (socket-leak failsafe)
+  executionEnabled: true
+  group: maintenance
+  id: pihole-exporter-restart-nightly
+  loglevel: INFO
+  name: pihole-exporter-restart
+  nodeFilterEditable: false
+  nodefilters:
+    dispatch:
+      excludePrecedence: true
+      keepgoing: false
+      rankOrder: ascending
+      successOnEmptyNodeFilter: false
+      threadcount: '1'
+    filter: 'name: Dockermaster.local '
+  nodesSelectedByDefault: true
+  plugins:
+    ExecutionLifecycle: {}
+  schedule:
+    month: '*'
+    time:
+      hour: '04'
+      minute: '17'
+      seconds: '0'
+    weekday:
+      day: '*'
+    year: '*'
+  scheduleEnabled: true
+  sequence:
+    commands:
+    - autoSecureInput: 'false'
+      description: Restart pihole-exporter-1 to reset its leaked socket FDs
+      passSecureInput: 'false'
+      script: |+
+        #!/bin/bash
+
+        # Rundeck Job: pihole-exporter-restart
+        # Description: Nightly restart of pihole-exporter-1 to reset its FD table.
+        # Author: Luis Amaral
+        # Date: 2026-06-27
+        # Environment: Production
+        #
+        # amonacoos/pihole6_exporter leaks one socket FD per failed scrape and
+        # never exits, so it slowly climbs toward its nofile ceiling and then
+        # spin-loops a full core (incident 2026-06-27). The stack now caps cpus
+        # and raises nofile to 65536, but this nightly restart guarantees the
+        # FD table is reset long before any ceiling is reached. exporter-1 is
+        # the only leaker — it is the only instance with a routed/flaky target
+        # (pihole-1 at 192.168.100.254); exporter-2/3 scrape same-subnet
+        # targets and are protected by the caps + alerts alone.
+
+        set -euo pipefail
+
+        log() { echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"; }
+
+        CONTAINER="pihole-exporter-1-pihole-exporter-1"
+
+        log "Restarting ${CONTAINER} to reset its socket FD table..."
+        docker restart "${CONTAINER}"
+        sleep 5
+
+        RUNNING="$(docker inspect -f '{{.State.Running}}' "${CONTAINER}")"
+        if [ "${RUNNING}" != "true" ]; then
+            log "ERROR: ${CONTAINER} is not running after restart."
+            exit 1
+        fi
+
+        # Best-effort FD readout (requires root to read a root-owned /proc;
+        # informational only, never gates the job).
+        PID="$(docker inspect -f '{{.State.Pid}}' "${CONTAINER}")"
+        FDS="$(ls "/proc/${PID}/fd" 2>/dev/null | wc -l || true)"
+        log "${CONTAINER} running again (pid ${PID}, open FDs: ${FDS:-unknown})."
+
+        log "Rundeck job completed successfully."
+
+    keepgoing: false
+    strategy: node-first
+  timeZone: America/Denver
+  user: admin
+  uuid: pihole-exporter-restart-nightly

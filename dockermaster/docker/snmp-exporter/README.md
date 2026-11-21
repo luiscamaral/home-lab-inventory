@@ -14,18 +14,59 @@ scratch, plus the generator output itself.
 | `Dockerfile.generator` | Builds a generator image preloaded with the IETF/IANA standard MIB tree (via Debian's `snmp-mibs-downloader`) plus the BEGEMOT MIBs. |
 | `regen.sh` | One-shot regen: build the helper image, run the generator, produce `snmp.yml`. |
 | `snmp.yml` | Generator output. Committed to git so we can audit changes. **Community string is the placeholder `public`** — real value is injected at deploy. |
+| `generator-switch24a.yml` | Walk list and auth for the switch24a module (IF-MIB only). |
+| `snmp-switch24a.yml` | Generator output for switch24a. Terraform deploys it. The community is the Compose variable `${SWITCH24A_SNMP_COMMUNITY}`, not a secret. |
+
+## Module: `switch24a`
+
+Added 2026-11-16. It scrapes the core switch (TP-Link TL-SG3428X,
+`192.168.32.39`) for per-port IF-MIB counters: status, last change,
+errors, discards, and 64-bit traffic counters. The switch does not
+support RMON `etherStats` or EtherLike `dot3Stats`, so IF-MIB is the
+only error source.
+
+Deploy path (IaC, no manual copy):
+
+1. `regen.sh` writes `snmp-switch24a.yml`.
+2. `terraform/portainer/stacks.tf` reads the file into the
+   snmp-exporter stack `configs:` block. The exporter loads it as a
+   second `--config.file`.
+3. Terraform sets the stack env `SWITCH24A_SNMP_COMMUNITY` from Vault
+   `secret/homelab/switch24a` (field `snmp_community`). Compose fills the
+   variable when the stack deploys.
+4. Prometheus job `snmp-switch24a` (both replicas, `locals.tf`) scrapes
+   it with `module=switch24a` and `auth=switch24a_v2`.
+
+The scrape path to the switch (ADMIN VLAN) is routed through pfSense.
+An `ix0` outage therefore also shows up as a switch scrape gap.
 
 ## Module: `pfsense`
 
-Walks what FreeBSD `bsnmpd` (with `mibII`, `pf`, `hostres` modules
-loaded — already enabled on pfSense.home.lcamaral.com) actually exposes:
+Walks what FreeBSD `bsnmpd` on pfSense actually exposes. Only the
+`mibII` and `pf` modules are loaded in `<snmpd><modules>` on
+`pfsense.home.lcamaral.com`. The `hostres` module is **not** loaded
+(confirmed 2026-05-26: walks of `1.3.6.1.2.1.25.*` hung every scrape
+until those OIDs were removed from `generator.yml`).
 
 | MIB / subtree | What we get |
 | --- | --- |
 | **`SNMPv2-MIB`** sys{UpTime,Name,Descr,Contact,Location} | basic identity |
 | **`IF-MIB`** ifTable + ifXTable | per-interface counters (incl. 64-bit HC variants) with `ifName` / `ifAlias` lookups |
-| **`HOST-RESOURCES-MIB`** hrSystem*, hrMemorySize, hrStorage*, hrDevice*, hrProcessorLoad | uptime, RAM, per-mount disk usage, per-CPU load |
 | **`BEGEMOT-PF-MIB`** pfStatus, pfCounter, pfStateTable, pfLimits, pfTimeouts, pfLogInterface, pfInterfaces, pfTablesTbl{Number,Table} | PF firewall daemon health, packet counters, state-table churn, capacity limits, timeouts, per-iface block/pass counters, per-pf-table summaries |
+
+**Host-level metrics on pfSense come from the `node` Prometheus job,
+not SNMP.** `node_exporter` runs on pfSense at `192.168.4.1:9100`
+(installed via `pfSense-pkg-node_exporter`) and exposes
+`node_cpu_seconds_total`, `node_memory_*`, `node_filesystem_*`,
+`node_network_*` (per VLAN sub-interface, including `ix0.10`,
+`ix0.205`, etc.), `node_nf_conntrack_entries`, and the textfile
+collectors at `/var/tmp/node_exporter/` — richer FreeBSD-native
+data than `HOST-RESOURCES-MIB` could give us through bsnmpd anyway.
+
+If you ever need to re-enable the `hostres` module on pfSense (e.g.
+to dual-source storage metrics): Services → SNMP → Modules →
+HostRes ☑ → save. Then add the hr* names back to `generator.yml`,
+re-run `regen.sh`, and the runtime walk will start including them.
 
 **Deliberately skipped** (would explode scrape size or are noise):
 
@@ -34,13 +75,11 @@ loaded — already enabled on pfSense.home.lcamaral.com) actually exposes:
 - `pfSrcNodes` — per-source-IP, can also explode under load
 - `pfAltq` — Altq queues (deprecated on pfSense, all 0)
 - `pfLabels` — per-PF-rule label counters (niche)
-- `hrSWRun*` — full process table (~128 entries, hex-encoded names from bsnmpd quirk)
 - `UCD-SNMP-MIB` (laTable / systemStats / memory / dskTable) — not in
   `bsnmpd`, only in `net-snmp`
 
-Result: ~145 walks producing ~7,700 metric lines per scrape (was a
-17,500-line snmp.yml producing ~850 metric lines plus 36k+ of
-pfTablesAddr noise on a full walk).
+Result: walk completes in ~70 ms (was timing out at 10 s when the
+hr* OIDs were in the walk list against a bsnmpd without `hostres`).
 
 ## Regenerating
 
@@ -55,6 +94,13 @@ from `mibs/`), then runs `snmp_exporter generator generate` against
 `generator.yml` and writes `snmp.yml`.
 
 If you change the walk list, edit `generator.yml` and re-run `regen.sh`.
+
+> ℹ️ **Note on the current committed `snmp.yml`:** the walk/get OID
+> lists are in sync with `generator.yml` (hand-edited 2026-05-26 to
+> match the live slim on ds-1 after the hostres incident). Orphaned
+> metric definitions for the dropped `hr*` names remain in the file
+> — they are harmless (no OID walks them) and will be cleaned up
+> when `regen.sh` is next run.
 
 ## Deploying (current state)
 

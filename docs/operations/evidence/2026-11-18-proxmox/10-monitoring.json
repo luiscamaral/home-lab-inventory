@@ -1,0 +1,89 @@
+[
+  {
+    "collected_utc": "2026-11-18T17:03:09.722557+00:00",
+    "result": {
+      "data": {
+        "result": [
+          {
+            "metric": {
+              "__name__": "up",
+              "instance": "192.168.7.11",
+              "job": "pve"
+            },
+            "value": [
+              1795021389.78,
+              "1"
+            ]
+          }
+        ],
+        "resultType": "vector"
+      },
+      "status": "success"
+    },
+    "scope": "read-only instant PromQL query",
+    "source": "http://192.168.59.19:9090/api/v1/query?query=up%7Bjob%3D%22pve%22%7D"
+  },
+  {
+    "collected_utc": "2026-11-18T17:03:09.722816+00:00",
+    "result": {
+      "data": {
+        "result": [
+          {
+            "metric": {
+              "__name__": "pve_version_info",
+              "instance": "192.168.7.11",
+              "job": "pve",
+              "release": "9.1",
+              "repoid": "16b139a017452f16",
+              "version": "9.1.7"
+            },
+            "value": [
+              1795021389.779,
+              "1"
+            ]
+          }
+        ],
+        "resultType": "vector"
+      },
+      "status": "success"
+    },
+    "scope": "read-only instant PromQL query",
+    "source": "http://192.168.59.19:9090/api/v1/query?query=pve_version_info"
+  },
+  {
+    "collected_utc": "2026-11-18T17:03:09.722897+00:00",
+    "result": {
+      "data": {
+        "result": [],
+        "resultType": "vector"
+      },
+      "status": "success"
+    },
+    "scope": "read-only instant PromQL query",
+    "source": "http://192.168.59.19:9090/api/v1/query?query=ALERTS%7Balertstate%3D%22firing%22%2Cinstance%3D~%22.%2A%28192.168.7.11%7Cproxmox%29.%2A%22%7D"
+  },
+  {
+    "collected_utc": "2026-11-18T17:03:09.722968+00:00",
+    "result": {
+      "error": "<urlopen error [Errno 65] No route to host>"
+    },
+    "scope": "read-only instant PromQL query",
+    "source": "http://192.168.4.237:9090/api/v1/query?query=up%7Bjob%3D%22pve%22%7D"
+  },
+  {
+    "collected_utc": "2026-11-18T17:03:09.723033+00:00",
+    "result": {
+      "error": "<urlopen error [Errno 65] No route to host>"
+    },
+    "scope": "read-only instant PromQL query",
+    "source": "http://192.168.4.237:9090/api/v1/query?query=pve_version_info"
+  },
+  {
+    "collected_utc": "2026-11-18T17:03:09.723084+00:00",
+    "result": {
+      "error": "<urlopen error [Errno 65] No route to host>"
+    },
+    "scope": "read-only instant PromQL query",
+    "source": "http://192.168.4.237:9090/api/v1/query?query=ALERTS%7Balertstate%3D%22firing%22%2Cinstance%3D~%22.%2A%28192.168.7.11%7Cproxmox%29.%2A%22%7D"
+  }
+]

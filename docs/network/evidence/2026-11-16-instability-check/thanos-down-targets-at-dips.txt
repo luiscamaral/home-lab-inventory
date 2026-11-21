@@ -1,0 +1,86 @@
+# collected 2026-11-16 17:06:30 MST from Thanos query http://192.168.59.26:10902
+### query at 16:58:22: up==0
+{"instance":"cloudflare-tunnel-1","job":"cloudflared"}  0
+{"instance":"cloudflare-tunnel-2","job":"cloudflared"}  0
+{"instance":"dockermaster","job":"cadvisor"}  0
+{"instance":"dockermaster","job":"node"}  0
+{"instance":"ds-1","job":"node"}  0
+{"instance":"ds-2","job":"cadvisor"}  0
+{"instance":"ds-2","job":"node"}  0
+{"instance":"hbbs.d.lcamaral.com:21116","job":"blackbox-tcp"}  0
+{"instance":"https://calibre.d.lcamaral.com","job":"blackbox-rproxy"}  0
+{"instance":"https://hub.d.lcamaral.com/v2/library/zz-blackbox-canary/tags/list","job":"blackbox-rproxy"}  0
+{"instance":"https://karma.d.lcamaral.com","job":"blackbox-rproxy"}  0
+{"instance":"https://keycloak.d.lcamaral.com","job":"blackbox-http"}  0
+{"instance":"https://rundeck.d.lcamaral.com","job":"blackbox-rproxy"}  0
+{"instance":"keycloak-2","job":"keycloak"}  0
+{"instance":"keycloak-db-0","job":"postgres"}  0
+{"instance":"minio-1","job":"minio"}  0
+{"instance":"minio-2","job":"minio"}  0
+{"instance":"nginx-rproxy","job":"nginx"}  0
+{"instance":"otel-collector","job":"otel-collector"}  0
+{"instance":"pihole-3","job":"pihole"}  0
+{"instance":"postgres-rundeck","job":"postgres"}  0
+{"instance":"prometheus-2","job":"prometheus"}  0
+{"instance":"registry-1","job":"registry"}  0
+{"instance":"thanos-query","job":"thanos"}  0
+{"instance":"thanos-sidecar-1","job":"thanos"}  0
+{"instance":"thanos-sidecar-2","job":"thanos"}  0
+{"instance":"vault-3","job":"vault"}  0
+{"instance":"watchtower-dm","job":"watchtower"}  0
+{"instance":"watchtower-ds1","job":"watchtower"}  0
+{"instance":"zot-1","job":"zot-meta-backup"}  0
+
+### query at 17:03:30: up==0
+{"instance":"192.168.100.254:53","job":"blackbox-dns"}  0
+{"instance":"192.168.16.2","job":"blackbox-icmp"}  0
+{"instance":"192.168.4.1:53","job":"blackbox-dns"}  0
+{"instance":"192.168.4.1","job":"blackbox-icmp"}  0
+{"instance":"192.168.4.236:53","job":"blackbox-dns"}  0
+{"instance":"192.168.48.44","job":"blackbox-icmp"}  0
+{"instance":"192.168.48.45","job":"blackbox-icmp"}  0
+{"instance":"192.168.59.49:443","job":"blackbox-ssl","sni":"auth.cf.lcamaral.com"}  0
+{"instance":"cloudflare-tunnel-1","job":"cloudflared"}  0
+{"instance":"cloudflare-tunnel-2","job":"cloudflared"}  0
+{"instance":"dockermaster","job":"cadvisor"}  0
+{"instance":"ds-2","job":"cadvisor"}  0
+{"instance":"ha.home.lcamaral.com:443","job":"blackbox-ssl"}  0
+{"instance":"hbbr.d.lcamaral.com:21119","job":"blackbox-tcp"}  0
+{"instance":"hbbs.d.lcamaral.com:21118","job":"blackbox-tcp"}  0
+{"instance":"home-assistant","job":"home-assistant"}  0
+{"instance":"https://calibre.d.lcamaral.com","job":"blackbox-rproxy"}  0
+{"instance":"https://grafana.d.lcamaral.com","job":"blackbox-rproxy"}  0
+{"instance":"https://hub.d.lcamaral.com/v2/library/zz-blackbox-canary/tags/list","job":"blackbox-rproxy"}  0
+{"instance":"https://karma.d.lcamaral.com","job":"blackbox-rproxy"}  0
+{"instance":"https://keycloak.d.lcamaral.com","job":"blackbox-http"}  0
+{"instance":"https://keycloak.d.lcamaral.com","job":"blackbox-rproxy"}  0
+{"instance":"https://portainer.d.lcamaral.com","job":"blackbox-rproxy"}  0
+{"instance":"https://rustdesk-relay.home.lcamaral.com","job":"blackbox-rproxy"}  0
+{"instance":"https://s3.d.lcamaral.com","job":"blackbox-rproxy"}  0
+{"instance":"https://vault.d.lcamaral.com","job":"blackbox-http"}  0
+{"instance":"keycloak-1","job":"keycloak"}  0
+{"instance":"keycloak-2","job":"keycloak"}  0
+{"instance":"keycloak-db-0","job":"postgres"}  0
+{"instance":"minio-1","job":"minio"}  0
+{"instance":"minio-2","job":"minio"}  0
+{"instance":"nginx-rproxy","job":"nginx"}  0
+{"instance":"otel-collector","job":"otel-collector"}  0
+{"instance":"pihole-1","job":"pihole"}  0
+{"instance":"pihole-2","job":"pihole"}  0
+{"instance":"postgres-rundeck","job":"postgres"}  0
+{"instance":"prometheus-1","job":"prometheus"}  0
+{"instance":"registry-1","job":"registry"}  0
+{"instance":"thanos-query","job":"thanos"}  0
+{"instance":"thanos-sidecar-2","job":"thanos"}  0
+{"instance":"thanos-store-gw","job":"thanos"}  0
+{"instance":"vault-2","job":"vault"}  0
+{"instance":"vault-3","job":"vault"}  0
+{"instance":"watchtower-dm","job":"watchtower"}  0
+{"instance":"watchtower-ds1","job":"watchtower"}  0
+{"instance":"zot-1","job":"zot-meta-backup"}  0
+
+### query at 17:03:30: count by (replica,prometheus) (up)
+{}  87
+
+### query at 16:55:00: count by (replica,prometheus) (up)
+{}  87

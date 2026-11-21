@@ -1,0 +1,8 @@
+== 2026-11-16 17:08:51 MST Mac (192.168.0.7, HOME) -> targets, 60 pkts, 0.2s, 56B
+192.168.4.1     60 packets transmitted, 58 packets received, 3.3% packet loss round-trip min/avg/max/stddev = 2.762/13.278/93.083/22.638 ms
+192.168.2.50    --- 192.168.2.50 ping statistics --- 60 packets transmitted, 0 packets received, 100.0% packet loss
+192.168.1.50    --- 192.168.1.50 ping statistics --- 60 packets transmitted, 0 packets received, 100.0% packet loss
+192.168.0.50    --- 192.168.0.50 ping statistics --- 60 packets transmitted, 0 packets received, 100.0% packet loss
+192.168.4.237   --- 192.168.4.237 ping statistics --- 60 packets transmitted, 0 packets received, 100.0% packet loss
+192.168.59.25   60 packets transmitted, 60 packets received, 0.0% packet loss round-trip min/avg/max/stddev = 2.872/12.709/115.883/21.723 ms
+1.1.1.1         60 packets transmitted, 58 packets received, 3.3% packet loss round-trip min/avg/max/stddev = 3.048/18.408/120.294/28.754 ms

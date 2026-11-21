@@ -329,15 +329,24 @@ def push_pihole_lxc_file(filename: str, content: str) -> None:
 
 
 def reload_pihole_ftl_lxc() -> None:
-    """Reload pihole-FTL inside the LXC; falls back to restart if reload fails."""
-    reload_cmd = f"{PROXMOX_SUDO} pct exec {PIHOLE_LXC_VMID} -- systemctl reload pihole-FTL"
-    result = subprocess.run(["ssh", "proxmox", reload_cmd], capture_output=True, text=True, check=False)
-    if result.returncode == 0:
-        return
-    restart_cmd = f"{PROXMOX_SUDO} pct exec {PIHOLE_LXC_VMID} -- systemctl restart pihole-FTL"
-    result = subprocess.run(["ssh", "proxmox", restart_cmd], capture_output=True, text=True, check=False)
+    """Restart pihole-FTL inside the LXC.
+
+    History (2026-05-26): we used `systemctl reload` here with a restart
+    fallback. The reload returns 0 cleanly, but on this pihole-FTL
+    build, reload only re-reads its own config — it does NOT pick up
+    new files dropped into /etc/dnsmasq.d/. Symptom: sync-host-overrides
+    reports "applied" yet `dig @192.168.100.254 <new>.d.lcamaral.com`
+    still returns NXDOMAIN until something else (random pkg update,
+    next host reboot) restarts pihole-FTL.
+
+    Cost of restart vs reload: ~1-2 s of DNS downtime on pihole-1 only.
+    The HA trio still has pihole-2 and pihole-3 serving during that
+    window, so user-visible impact is zero.
+    """
+    cmd = f"{PROXMOX_SUDO} pct exec {PIHOLE_LXC_VMID} -- systemctl restart pihole-FTL"
+    result = subprocess.run(["ssh", "proxmox", cmd], capture_output=True, text=True, check=False)
     if result.returncode != 0:
-        sys.exit(f"error: pihole-FTL reload+restart both failed: {result.stderr or result.stdout}")
+        sys.exit(f"error: pihole-FTL restart failed: {result.stderr or result.stdout}")
 
 
 def sync_pihole_lxc(rendered_06: str, apply: bool) -> None:

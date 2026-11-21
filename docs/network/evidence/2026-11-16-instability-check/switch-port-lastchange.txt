@@ -1,0 +1,6 @@
+### 2026-11-16 17:17:20 MST switch24a: sysUpTime, then ports with lastChange > 180s after boot or nonzero inErr/outDisc. Cols: ifName oper lastChange(ticks) inErr outDisc alias
+0:0:32:38.30
+gigabitEthernet 1/0/23	up	128071	0	0	Port23
+ten-gigabitEthernet 1/0/25	up	10378	67808	0	Port25
+ten-gigabitEthernet 1/0/26	up	10401	49	0	Port26
+ten-gigabitEthernet 1/0/27	up	185679	783	0	Port27

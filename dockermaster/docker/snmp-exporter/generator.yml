@@ -29,13 +29,19 @@ auths:
 modules:
   pfsense:
     # Walk only what pfSense's bsnmpd actually exposes:
-    # - mibII   → SNMPv2-MIB (sysUpTime, sysName, sysDescr) + IF-MIB
-    # - pf      → BEGEMOT-PF-MIB (pfStateTable*, pfStatus*, pfInterfacesIf*)
-    # - hostres → HOST-RESOURCES-MIB (hrSystem*, hrStorage*, hrProcessorLoad)
+    # - mibII → SNMPv2-MIB (sysUpTime, sysName, sysDescr) + IF-MIB
+    # - pf    → BEGEMOT-PF-MIB (pfStateTable*, pfStatus*, pfInterfacesIf*)
     #
-    # Modules NOT enabled on pfSense bsnmpd (would time out):
-    # - UCD-SNMP-MIB (laTable / systemStats / memory / dskTable) — not in bsnmpd
-    # - net-snmp specific modules — bsnmpd, not net-snmp
+    # Modules NOT enabled on pfSense bsnmpd (would hang the walk):
+    # - hostres → HOST-RESOURCES-MIB. Not loaded by pfSense's bsnmpd
+    #   (only `<mibii>` and `<pf>` are in <snmpd><modules>). Walking
+    #   1.3.6.1.2.1.25.* causes scrape canceled timeouts. Host CPU /
+    #   memory / filesystem metrics are collected via node_exporter on
+    #   pfSense (192.168.4.1:9100) instead — covered by the `node` job
+    #   in terraform/portainer/locals.tf.
+    # - UCD-SNMP-MIB (laTable / systemStats / memory / dskTable) — not
+    #   in bsnmpd; only in net-snmp.
+    # - net-snmp specific modules — bsnmpd, not net-snmp.
     walk:
       # SNMP v2 MIB basics
       - sysUpTime
@@ -106,28 +112,11 @@ modules:
       - 1.3.6.1.4.1.12325.1.200.1.9.1  # pfTablesTblNumber
       - 1.3.6.1.4.1.12325.1.200.1.9.2  # pfTablesTblTable (per-table summary)
 
-      # HOST-RESOURCES-MIB — system-level metrics from hostres module
-      - hrSystemUptime
-      - hrSystemDate
-      - hrSystemNumUsers
-      - hrSystemProcesses
-      - hrSystemMaxProcesses
-      - hrMemorySize
-      - hrStorageType
-      - hrStorageDescr
-      - hrStorageAllocationUnits
-      - hrStorageSize
-      - hrStorageUsed
-      - hrStorageAllocationFailures
-      - hrDeviceType
-      - hrDeviceDescr
-      - hrDeviceStatus
-      - hrDeviceErrors
-      - hrProcessorLoad
-      # hrSWRun*  — skipped: returns the full process table (~128
-      #             entries with hex-encoded names from bsnmpd's
-      #             FreeBSD-quirky output); not useful as long-term
-      #             time-series, drop to keep scrape size manageable.
+      # HOST-RESOURCES-MIB intentionally omitted — `bsnmpd` on pfSense
+      # has no `hostres` module loaded (see comment above). hrSystem/
+      # hrStorage/hrDevice/hrProcessorLoad metrics come from the
+      # node_exporter scrape of pfSense (job `node`, instance
+      # `pfsense`), which gives richer FreeBSD-native data anyway.
 
     lookups:
       # Annotate interface metrics with ifName and ifAlias so dashboards
@@ -138,12 +127,6 @@ modules:
         lookup: ifDescr
       - source_indexes: [ifIndex]
         lookup: ifName
-      # Annotate hrStorage metrics with the mount-point description.
-      - source_indexes: [hrStorageIndex]
-        lookup: hrStorageDescr
-      # Annotate hrProcessor metrics with the device descr (CPU model).
-      - source_indexes: [hrDeviceIndex]
-        lookup: hrDeviceDescr
 
     overrides:
       # ifAlias → string (DisplayString) keeps the textual interface
@@ -151,10 +134,6 @@ modules:
       ifAlias:
         type: DisplayString
       ifName:
-        type: DisplayString
-      hrStorageDescr:
-        type: DisplayString
-      hrDeviceDescr:
         type: DisplayString
       sysName:
         type: DisplayString

@@ -25,6 +25,10 @@ services:
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME: https://${KC_HOSTNAME}
+      # The admin console, the Admin REST API's console URLs and the master realm login are
+      # served on the LAN name, so the public name (auth.cf, Cloudflare) never has to expose
+      # them. The frontend hostname above stays fixed: tokens keep iss=https://auth.cf.../realms/<realm>.
+      KC_HOSTNAME_ADMIN: https://keycloak.d.lcamaral.com
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://192.168.59.44:5432,192.168.59.54:5432/keycloak?targetServerType=primary&loadBalanceHosts=false
       KC_DB_USERNAME: keycloak

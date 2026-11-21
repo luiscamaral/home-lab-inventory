@@ -1,0 +1,1569 @@
+[
+  {
+    "decimals": 0,
+    "desc": "Worst-replica count of HA connections cloudflared holds to the Cloudflare edge; 4 is healthy, 0 means the bologna tunnel is down and all *.cf.lcamaral.com is offline.",
+    "h": 4,
+    "hints": {},
+    "priority": "P0",
+    "row": "Cloudflare Tunnel / Edge",
+    "row_key": "cloudflare",
+    "steps": [
+      {
+        "color": "red",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 2
+      },
+      {
+        "color": "green",
+        "value": 4
+      }
+    ],
+    "targets": [
+      {
+        "expr": "min(cloudflared_tunnel_ha_connections)",
+        "instant": false,
+        "legend": "min HA conns"
+      }
+    ],
+    "title": "\ud83d\udfe7 Tunnel edge connections (min HA)",
+    "type": "stat",
+    "unit": "none",
+    "w": 4
+  },
+  {
+    "decimals": 0,
+    "desc": "Number of cloudflared daemon replicas (of 3) currently scraping/alive; distinct from HA connections since a daemon can be up but disconnected from the edge.",
+    "h": 4,
+    "hints": {},
+    "priority": "P0",
+    "row": "Cloudflare Tunnel / Edge",
+    "row_key": "cloudflare",
+    "steps": [
+      {
+        "color": "red",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 2
+      },
+      {
+        "color": "green",
+        "value": 3
+      }
+    ],
+    "targets": [
+      {
+        "expr": "sum(up{job=\"cloudflared\"})",
+        "instant": false,
+        "legend": "replicas up"
+      }
+    ],
+    "title": "Cloudflared replicas up",
+    "type": "stat",
+    "unit": "none",
+    "w": 4
+  },
+  {
+    "decimals": 2,
+    "desc": "Real inbound Cloudflare traffic broken into status classes (collapsing 16 distinct codes); a sustained 5xx rate is origin errors through the tunnel that synthetic blackbox probes may miss, and total QPS doubles as the public-traffic-volume view.",
+    "h": 8,
+    "hints": {},
+    "priority": "P0",
+    "row": "Cloudflare Tunnel / Edge",
+    "row_key": "cloudflare",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      }
+    ],
+    "targets": [
+      {
+        "expr": "sum(rate(cloudflared_tunnel_response_by_code{status_code=~\"2..\"}[$__rate_interval]))",
+        "instant": false,
+        "legend": "2xx"
+      },
+      {
+        "expr": "sum(rate(cloudflared_tunnel_response_by_code{status_code=~\"3..\"}[$__rate_interval]))",
+        "instant": false,
+        "legend": "3xx"
+      },
+      {
+        "expr": "sum(rate(cloudflared_tunnel_response_by_code{status_code=~\"4..\"}[$__rate_interval]))",
+        "instant": false,
+        "legend": "4xx"
+      },
+      {
+        "expr": "sum(rate(cloudflared_tunnel_response_by_code{status_code=~\"5..\"}[$__rate_interval]))",
+        "instant": false,
+        "legend": "5xx"
+      }
+    ],
+    "title": "Edge responses by HTTP status class (/s)",
+    "type": "timeseries",
+    "unit": "reqps",
+    "w": 12
+  },
+  {
+    "decimals": 2,
+    "desc": "Fraction of tunnel requests cloudflared failed to proxy to the origin; clamp_min keeps it numeric during idle windows and catches a degraded-but-up ingress (edge connected, rproxy flaky).",
+    "h": 4,
+    "hints": {},
+    "priority": "P1",
+    "row": "Cloudflare Tunnel / Edge",
+    "row_key": "cloudflare",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 1
+      },
+      {
+        "color": "red",
+        "value": 5
+      }
+    ],
+    "targets": [
+      {
+        "expr": "sum(rate(cloudflared_tunnel_request_errors[$__rate_interval])) / clamp_min(sum(rate(cloudflared_tunnel_total_requests[$__rate_interval])), 0.0001) * 100",
+        "instant": false,
+        "legend": "error %"
+      }
+    ],
+    "title": "Tunnel error ratio %",
+    "type": "stat",
+    "unit": "percent",
+    "w": 4
+  },
+  {
+    "decimals": 0,
+    "desc": "Per-replica HA connection count over time so a single flapping connector can be distinguished from a full-tunnel edge outage and correlated with WAN/failover events.",
+    "h": 8,
+    "hints": {},
+    "priority": "P1",
+    "row": "Cloudflare Tunnel / Edge",
+    "row_key": "cloudflare",
+    "steps": [
+      {
+        "color": "red",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 1
+      },
+      {
+        "color": "green",
+        "value": 4
+      }
+    ],
+    "targets": [
+      {
+        "expr": "cloudflared_tunnel_ha_connections",
+        "instant": false,
+        "legend": "{{instance}}"
+      }
+    ],
+    "title": "Tunnel HA connections per replica",
+    "type": "timeseries",
+    "unit": "none",
+    "w": 12
+  },
+  {
+    "decimals": 1,
+    "desc": "Per-replica tunnel-path latency to the Cloudflare edge over QUIC (values already in ms, do NOT scale); rising QUIC RTT with healthy WAN RTT points to an edge-path/ISP-peering problem the gateway RTT cannot see.",
+    "h": 8,
+    "hints": {},
+    "priority": "P2",
+    "row": "Cloudflare Tunnel / Edge",
+    "row_key": "cloudflare",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 30
+      },
+      {
+        "color": "red",
+        "value": 80
+      }
+    ],
+    "targets": [
+      {
+        "expr": "avg by (instance) (quic_client_smoothed_rtt)",
+        "instant": false,
+        "legend": "{{instance}} smoothed"
+      },
+      {
+        "expr": "max by (instance) (quic_client_latest_rtt)",
+        "instant": false,
+        "legend": "{{instance}} latest(max)"
+      }
+    ],
+    "title": "QUIC RTT to Cloudflare edge (ms)",
+    "type": "timeseries",
+    "unit": "ms",
+    "w": 12
+  },
+  {
+    "decimals": 2,
+    "desc": "Edge-path packet loss summed across the 4 QUIC conns per replica (collapsing the timeout/reordering reason label); captures congestion on the tunnel's UDP/443 route that the pfSense gateway loss_ratio cannot, since QUIC takes a different path.",
+    "h": 8,
+    "hints": {},
+    "priority": "P2",
+    "row": "Cloudflare Tunnel / Edge",
+    "row_key": "cloudflare",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 0.5
+      },
+      {
+        "color": "red",
+        "value": 5
+      }
+    ],
+    "targets": [
+      {
+        "expr": "sum by (instance) (rate(quic_client_lost_packets[$__rate_interval]))",
+        "instant": false,
+        "legend": "{{instance}}"
+      }
+    ],
+    "title": "QUIC packet loss on tunnel uplink (/s)",
+    "type": "timeseries",
+    "unit": "pps",
+    "w": 12
+  },
+  {
+    "decimals": 3,
+    "desc": "Per-WAN uptime over the dashboard window: fraction of dpinger samples with loss<100% (WAN2 reflects ISP-modem reachability, not the open internet).",
+    "h": 4,
+    "hints": {},
+    "priority": "P0",
+    "row": "\ud83c\udf10 Internet / WAN \u2014 uplink quality & failover",
+    "row_key": "wan",
+    "steps": [
+      {
+        "color": "red",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 99
+      },
+      {
+        "color": "green",
+        "value": 99.9
+      }
+    ],
+    "targets": [
+      {
+        "expr": "avg_over_time((pfsense_gateway_loss_ratio{gateway=~\"WAN1GW|WAN2_DHCP\"} < bool 1)[$__range:]) * 100",
+        "instant": true,
+        "legend": "{{gateway}}"
+      }
+    ],
+    "title": "Per-WAN availability % (window)",
+    "type": "stat",
+    "unit": "percent",
+    "w": 8
+  },
+  {
+    "decimals": 0,
+    "desc": "Counts up/down transitions and draws a DOWN band whenever a WAN gateway hits 100% loss (the pfSense failover trigger condition) within the window.",
+    "h": 4,
+    "hints": {},
+    "priority": "P0",
+    "row": "\ud83c\udf10 Internet / WAN \u2014 uplink quality & failover",
+    "row_key": "wan",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "red",
+        "value": 1
+      }
+    ],
+    "targets": [
+      {
+        "expr": "changes((pfsense_gateway_loss_ratio{gateway=~\"WAN1GW|WAN2_DHCP\"} == bool 1)[$__interval:1m])",
+        "instant": false,
+        "legend": "{{gateway}} transitions"
+      },
+      {
+        "expr": "pfsense_gateway_loss_ratio{gateway=~\"WAN1GW|WAN2_DHCP\"} == bool 1",
+        "instant": false,
+        "legend": "{{gateway}} fully-down"
+      }
+    ],
+    "title": "WAN failover events (100%-loss down intervals)",
+    "type": "timeseries",
+    "unit": "short",
+    "w": 8
+  },
+  {
+    "decimals": 2,
+    "desc": "Percentage of window samples where gateway RTT exceeded the 80ms SLO the live RTT panel already uses as its red threshold.",
+    "h": 4,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83c\udf10 Internet / WAN \u2014 uplink quality & failover",
+    "row_key": "wan",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 1
+      },
+      {
+        "color": "red",
+        "value": 5
+      }
+    ],
+    "targets": [
+      {
+        "expr": "avg_over_time((pfsense_gateway_delay_seconds{gateway=~\"WAN1GW|WAN2_DHCP\"} > bool 0.08)[$__range:]) * 100",
+        "instant": true,
+        "legend": "{{gateway}}"
+      }
+    ],
+    "title": "WAN latency-SLO breach % (delay>80ms, window)",
+    "type": "stat",
+    "unit": "percent",
+    "w": 8
+  },
+  {
+    "decimals": 2,
+    "desc": "Uplink saturation as a fraction of link capacity (ifHighSpeed: WAN1=2500, WAN2=1000 Mbit/s), the actionable framing the absolute-bps throughput panel lacks.",
+    "h": 8,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83c\udf10 Internet / WAN \u2014 uplink quality & failover",
+    "row_key": "wan",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 60
+      },
+      {
+        "color": "red",
+        "value": 85
+      }
+    ],
+    "targets": [
+      {
+        "expr": "rate(ifHCInOctets{ifAlias=~\"WAN1|WAN2\"}[$__rate_interval])*8 / (ifHighSpeed{ifAlias=~\"WAN1|WAN2\"}*1e6) * 100",
+        "instant": false,
+        "legend": "{{ifAlias}} in %"
+      },
+      {
+        "expr": "rate(ifHCOutOctets{ifAlias=~\"WAN1|WAN2\"}[$__rate_interval])*8 / (ifHighSpeed{ifAlias=~\"WAN1|WAN2\"}*1e6) * 100",
+        "instant": false,
+        "legend": "{{ifAlias}} out %"
+      }
+    ],
+    "title": "WAN link utilization vs capacity (%)",
+    "type": "timeseries",
+    "unit": "percent",
+    "w": 12
+  },
+  {
+    "decimals": 2,
+    "desc": "RTT-normalized jitter (stddev relative to the mean) that surfaces relative link instability the absolute-ms jitter panel hides; ratio>1 means stddev exceeds the mean.",
+    "h": 8,
+    "hints": {},
+    "priority": "P2",
+    "row": "\ud83c\udf10 Internet / WAN \u2014 uplink quality & failover",
+    "row_key": "wan",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 0.3
+      },
+      {
+        "color": "red",
+        "value": 1
+      }
+    ],
+    "targets": [
+      {
+        "expr": "pfsense_gateway_stddev_seconds{gateway=~\"WAN1GW|WAN2_DHCP\"} / pfsense_gateway_delay_seconds{gateway=~\"WAN1GW|WAN2_DHCP\"}",
+        "instant": false,
+        "legend": "{{gateway}}"
+      }
+    ],
+    "title": "WAN jitter ratio (stddev / RTT)",
+    "type": "timeseries",
+    "unit": "percentunit",
+    "w": 12
+  },
+  {
+    "decimals": 2,
+    "desc": "Consolidated WAN1-vs-WAN2 row table (RTT, current loss, window availability) joined on the gateway label \u2014 the explicit side-by-side comparison the dimension asks for.",
+    "h": 8,
+    "hints": {
+      "table": true
+    },
+    "priority": "P2",
+    "row": "\ud83c\udf10 Internet / WAN \u2014 uplink quality & failover",
+    "row_key": "wan",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "red",
+        "value": null
+      }
+    ],
+    "targets": [
+      {
+        "expr": "pfsense_gateway_delay_seconds{gateway=~\"WAN1GW|WAN2_DHCP\"}*1000",
+        "instant": true,
+        "legend": "RTT ms"
+      },
+      {
+        "expr": "pfsense_gateway_loss_ratio{gateway=~\"WAN1GW|WAN2_DHCP\"}*100",
+        "instant": true,
+        "legend": "Loss %"
+      },
+      {
+        "expr": "avg_over_time((pfsense_gateway_loss_ratio{gateway=~\"WAN1GW|WAN2_DHCP\"} < bool 1)[$__range:]) * 100",
+        "instant": true,
+        "legend": "Avail %"
+      }
+    ],
+    "title": "WAN1 vs WAN2 \u2014 SLA comparison",
+    "type": "table",
+    "unit": "none",
+    "w": 12
+  },
+  {
+    "decimals": 2,
+    "desc": "Per-VLAN link saturation as a fraction of the negotiated ifHighSpeed capacity (10G on the ix0 VLANs, 2.5G/1G on the igc WANs) \u2014 answers 'how full is the link?' which the absolute-bps panels never do.",
+    "h": 8,
+    "hints": {},
+    "priority": "P0",
+    "row": "\ud83d\udd00 Interface Throughput & Errors \u2014 per VLAN/iface",
+    "row_key": "interface",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 60
+      },
+      {
+        "color": "red",
+        "value": 85
+      }
+    ],
+    "targets": [
+      {
+        "expr": "rate(ifHCInOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])*8 / (ifHighSpeed{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}*1e6) * 100",
+        "instant": false,
+        "legend": "{{ifAlias}} in %"
+      },
+      {
+        "expr": "rate(ifHCOutOctets{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])*8 / (ifHighSpeed{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}*1e6) * 100",
+        "instant": false,
+        "legend": "{{ifAlias}} out %"
+      }
+    ],
+    "title": "Interface utilization % vs link capacity",
+    "type": "timeseries",
+    "unit": "percent",
+    "w": 12
+  },
+  {
+    "decimals": 3,
+    "desc": "Errors and discards normalized by total inbound packets (ucast+mcast+bcast) so identical error counts on idle vs busy links are not confused \u2014 the existing panel only shows absolute pps.",
+    "h": 8,
+    "hints": {},
+    "priority": "P0",
+    "row": "\ud83d\udd00 Interface Throughput & Errors \u2014 per VLAN/iface",
+    "row_key": "interface",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 0.01
+      },
+      {
+        "color": "red",
+        "value": 0.1
+      }
+    ],
+    "targets": [
+      {
+        "expr": "rate(ifInErrors{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) / (rate(ifHCInUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])) * 100",
+        "instant": false,
+        "legend": "{{ifAlias}} in-err %"
+      },
+      {
+        "expr": "rate(ifInDiscards{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) / (rate(ifHCInUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])) * 100",
+        "instant": false,
+        "legend": "{{ifAlias}} in-disc %"
+      }
+    ],
+    "title": "Errors & discards as % of inbound packets (per VLAN)",
+    "type": "timeseries",
+    "unit": "percent",
+    "w": 12
+  },
+  {
+    "decimals": 0,
+    "desc": "Per-VLAN link state from two independent sources \u2014 pfSense-native exporter (friendly names, 1=up/0=down) and the SNMP routing plane (ifOperStatus, 1=up/2=down) \u2014 disagreement between the two rows flags exporter/SNMP drift; there is no link-state view anywhere today.",
+    "h": 6,
+    "hints": {},
+    "priority": "P0",
+    "row": "\ud83d\udd00 Interface Throughput & Errors \u2014 per VLAN/iface",
+    "row_key": "interface",
+    "steps": [
+      {
+        "color": "red",
+        "value": null
+      },
+      {
+        "color": "green",
+        "value": 1
+      }
+    ],
+    "targets": [
+      {
+        "expr": "node_pfsense_interface_up * on(name) group_left(description) node_pfsense_interface_info",
+        "instant": false,
+        "legend": "pfSense {{description}}"
+      },
+      {
+        "expr": "ifOperStatus{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}",
+        "instant": false,
+        "legend": "SNMP {{ifAlias}}"
+      }
+    ],
+    "title": "Interface up/down \u2014 physical link state",
+    "type": "state-timeline",
+    "unit": "none",
+    "w": 24
+  },
+  {
+    "decimals": 0,
+    "desc": "Total packet rate (ucast+mcast+bcast) per VLAN in each direction \u2014 exposes small-packet floods (SYN storms, broadcast loops) that saturate the forwarding path without moving the bytes/s graphs.",
+    "h": 7,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83d\udd00 Interface Throughput & Errors \u2014 per VLAN/iface",
+    "row_key": "interface",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      }
+    ],
+    "targets": [
+      {
+        "expr": "rate(ifHCInUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])",
+        "instant": false,
+        "legend": "{{ifAlias}} in pps"
+      },
+      {
+        "expr": "rate(ifHCOutUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCOutMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCOutBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])",
+        "instant": false,
+        "legend": "{{ifAlias}} out pps"
+      }
+    ],
+    "title": "Packet rate (pps) per VLAN",
+    "type": "timeseries",
+    "unit": "pps",
+    "w": 12
+  },
+  {
+    "decimals": 1,
+    "desc": "Share of inbound packets that are broadcast/multicast per VLAN \u2014 a rising share is an early L2-loop / mDNS-storm indicator; live data already shows GUEST ~41%, ADMIN ~26%, WAN2 ~15% vs HOME ~0.5%.",
+    "h": 7,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83d\udd00 Interface Throughput & Errors \u2014 per VLAN/iface",
+    "row_key": "interface",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 20
+      },
+      {
+        "color": "red",
+        "value": 40
+      }
+    ],
+    "targets": [
+      {
+        "expr": "(rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])) / (rate(ifHCInUcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInMulticastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval]) + rate(ifHCInBroadcastPkts{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}[$__rate_interval])) * 100",
+        "instant": false,
+        "legend": "{{ifAlias}} bcast+mcast %"
+      }
+    ],
+    "title": "Broadcast/multicast share of inbound packets (per VLAN)",
+    "type": "timeseries",
+    "unit": "percent",
+    "w": 12
+  },
+  {
+    "decimals": 3,
+    "desc": "rx+tx drops and rx+tx errors on the physical NICs of the five node_exporter hosts (nas/ds-1/ds-2/dockermaster/pfsense) \u2014 complements the SNMP routing-plane discards with the host plane that is invisible today (pfSense ix0 has live tx drops).",
+    "h": 7,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83d\udd00 Interface Throughput & Errors \u2014 per VLAN/iface",
+    "row_key": "interface",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 0.0001
+      },
+      {
+        "color": "red",
+        "value": 1
+      }
+    ],
+    "targets": [
+      {
+        "expr": "topk(10, rate(node_network_transmit_drop_total{device!~\"lo|veth.*|docker.*|docker0|br-.*|enc0|tap.*|pfsync.*|pflog.*\"}[$__rate_interval]) + rate(node_network_receive_drop_total{device!~\"lo|veth.*|docker.*|docker0|br-.*|enc0|tap.*|pfsync.*|pflog.*\"}[$__rate_interval]))",
+        "instant": false,
+        "legend": "drop {{instance}} \u00b7 {{device}}"
+      },
+      {
+        "expr": "topk(10, rate(node_network_transmit_errs_total{device!~\"lo|veth.*|docker.*|docker0|br-.*|enc0|tap.*\"}[$__rate_interval]) + rate(node_network_receive_errs_total{device!~\"lo|veth.*|docker.*|docker0|br-.*|enc0|tap.*\"}[$__rate_interval]))",
+        "instant": false,
+        "legend": "err {{instance}} \u00b7 {{device}}"
+      }
+    ],
+    "title": "Host NIC drops & errors (node_exporter, all hosts)",
+    "type": "timeseries",
+    "unit": "pps",
+    "w": 12
+  },
+  {
+    "decimals": 0,
+    "desc": "Carrier (link up/down) transitions per host NIC over the window \u2014 any non-zero increase is a flapping cable/port/NIC that SNMP ifOperStatus polling can miss between scrapes; currently 0 across all real devices.",
+    "h": 7,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83d\udd00 Interface Throughput & Errors \u2014 per VLAN/iface",
+    "row_key": "interface",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 1
+      },
+      {
+        "color": "red",
+        "value": 3
+      }
+    ],
+    "targets": [
+      {
+        "expr": "topk(10, increase(node_network_carrier_changes_total{device!~\"lo|veth.*|docker.*|docker0|br-.*|enc0|tap.*|pfsync.*|pflog.*\"}[$__rate_interval]))",
+        "instant": false,
+        "legend": "{{instance}} \u00b7 {{device}}"
+      }
+    ],
+    "title": "Link flaps \u2014 carrier changes (host NICs)",
+    "type": "timeseries",
+    "unit": "short",
+    "w": 12
+  },
+  {
+    "decimals": 0,
+    "desc": "Instant table of per-VLAN MTU (all currently 1500) so an accidental MTU change that silently causes fragmentation/blackholing \u2014 invisible on throughput graphs \u2014 is immediately obvious.",
+    "h": 5,
+    "hints": {
+      "table": true
+    },
+    "priority": "P2",
+    "row": "\ud83d\udd00 Interface Throughput & Errors \u2014 per VLAN/iface",
+    "row_key": "interface",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      }
+    ],
+    "targets": [
+      {
+        "expr": "ifMtu{job=\"snmp-pfsense\", ifAlias=~\"$interface\", ifAlias!=\"\"}",
+        "instant": true,
+        "legend": "{{ifAlias}}"
+      }
+    ],
+    "title": "Interface MTU (per VLAN) \u2014 config sanity",
+    "type": "table",
+    "unit": "bytes",
+    "w": 24
+  },
+  {
+    "decimals": 2,
+    "desc": "True per-Pi-hole DNS throughput from the rolling 1-minute gauge, replacing the meaningless cumulative pihole_query_count line.",
+    "h": 8,
+    "hints": {},
+    "priority": "P0",
+    "row": "\ud83e\udded DNS & Pi-hole \u2014 resolution & ad-blocking",
+    "row_key": "dns",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      }
+    ],
+    "targets": [
+      {
+        "expr": "sum by (instance) (pihole_query_type_1m) / 60",
+        "instant": false,
+        "legend": "{{instance}}"
+      }
+    ],
+    "title": "Live DNS QPS per Pi-hole",
+    "type": "timeseries",
+    "unit": "reqps",
+    "w": 12
+  },
+  {
+    "decimals": 1,
+    "desc": "Live resolver-efficiency SLI; a falling cache-hit ratio signals cache flushing, TTL=0 abuse, or a unique-name flood.",
+    "h": 8,
+    "hints": {},
+    "priority": "P0",
+    "row": "\ud83e\udded DNS & Pi-hole \u2014 resolution & ad-blocking",
+    "row_key": "dns",
+    "steps": [
+      {
+        "color": "red",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 70
+      },
+      {
+        "color": "green",
+        "value": 90
+      }
+    ],
+    "targets": [
+      {
+        "expr": "sum by (instance) (pihole_query_upstream_1m{query_upstream=\"None-CACHE\"}) / sum by (instance) (pihole_query_upstream_1m) * 100",
+        "instant": false,
+        "legend": "{{instance}} cache-hit %"
+      }
+    ],
+    "title": "Cache-hit ratio per Pi-hole (live)",
+    "type": "timeseries",
+    "unit": "percent",
+    "w": 12
+  },
+  {
+    "decimals": 0,
+    "desc": "Validates that each resolver returned a real parseable answer, catching answer-level failures the port-up probe_success timeline cannot detect.",
+    "h": 5,
+    "hints": {},
+    "priority": "P0",
+    "row": "\ud83e\udded DNS & Pi-hole \u2014 resolution & ad-blocking",
+    "row_key": "dns",
+    "steps": [
+      {
+        "color": "red",
+        "value": null
+      },
+      {
+        "color": "green",
+        "value": 1
+      }
+    ],
+    "targets": [
+      {
+        "expr": "probe_dns_query_succeeded{job=\"blackbox-dns\"}",
+        "instant": false,
+        "legend": "{{instance}}"
+      }
+    ],
+    "title": "Internal DNS probe \u2014 answer succeeded (validity matrix)",
+    "type": "state-timeline",
+    "unit": "none",
+    "w": 24
+  },
+  {
+    "decimals": 1,
+    "desc": "Per-instance resolution-failure ratio that surfaces HA divergence (pihole-2 ~36% vs pihole-1 ~19%) from a misbehaving upstream.",
+    "h": 8,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83e\udded DNS & Pi-hole \u2014 resolution & ad-blocking",
+    "row_key": "dns",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 20
+      },
+      {
+        "color": "red",
+        "value": 40
+      }
+    ],
+    "targets": [
+      {
+        "expr": "sum by (instance) (pihole_query_replies{reply_type=~\"NXDOMAIN|SERVFAIL|REFUSED\"}) / sum by (instance) (pihole_query_replies) * 100",
+        "instant": false,
+        "legend": "{{instance}} fail %"
+      }
+    ],
+    "title": "Resolution failure share per Pi-hole (NXDOMAIN/SERVFAIL/REFUSED %)",
+    "type": "timeseries",
+    "unit": "percent",
+    "w": 12
+  },
+  {
+    "decimals": 0,
+    "desc": "Where answers actually originate (cache ~671k vs blocklist ~9k vs forwarded 192.168.4.1 ~5.4k), revealing resolver dependency and upstream-lookup cost.",
+    "h": 8,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83e\udded DNS & Pi-hole \u2014 resolution & ad-blocking",
+    "row_key": "dns",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      }
+    ],
+    "targets": [
+      {
+        "expr": "sum by (ip) (pihole_query_upstream_count)",
+        "instant": true,
+        "legend": "{{ip}}"
+      }
+    ],
+    "title": "Answer source split \u2014 cache vs blocklist vs forwarded upstream",
+    "type": "piechart",
+    "unit": "short",
+    "w": 8
+  },
+  {
+    "decimals": 0,
+    "desc": "Record-type distribution; AAAA share reveals IPv6 adoption and HTTPS/SVCB share reveals DoH/ECH lookups, with always-zero types filtered out.",
+    "h": 8,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83e\udded DNS & Pi-hole \u2014 resolution & ad-blocking",
+    "row_key": "dns",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      }
+    ],
+    "targets": [
+      {
+        "expr": "sum by (query_type) (pihole_query_by_type) > 0",
+        "instant": true,
+        "legend": "{{query_type}}"
+      }
+    ],
+    "title": "Query type mix (A / AAAA / HTTPS / PTR \u2026)",
+    "type": "piechart",
+    "unit": "short",
+    "w": 8
+  },
+  {
+    "decimals": 0,
+    "desc": "Answers by outcome (IP/CNAME good vs NXDOMAIN/NODATA); a rising failure share is a direct resolution-quality degradation signal absent from the status donut.",
+    "h": 8,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83e\udded DNS & Pi-hole \u2014 resolution & ad-blocking",
+    "row_key": "dns",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      }
+    ],
+    "targets": [
+      {
+        "expr": "sum by (reply_type) (pihole_query_replies) > 0",
+        "instant": true,
+        "legend": "{{reply_type}}"
+      }
+    ],
+    "title": "Reply outcome mix (resolution quality)",
+    "type": "piechart",
+    "unit": "short",
+    "w": 8
+  },
+  {
+    "decimals": 0,
+    "desc": "Per-instance gravity size over time, surfacing failed gravity updates (drop to 0) and HA parity drift (pihole-2 carries 83068 vs 81382 elsewhere).",
+    "h": 8,
+    "hints": {},
+    "priority": "P2",
+    "row": "\ud83e\udded DNS & Pi-hole \u2014 resolution & ad-blocking",
+    "row_key": "dns",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      }
+    ],
+    "targets": [
+      {
+        "expr": "max by (instance) (pihole_domains_being_blocked)",
+        "instant": false,
+        "legend": "{{instance}}"
+      }
+    ],
+    "title": "Blocklist (gravity) size drift across the 3 Pi-holes",
+    "type": "timeseries",
+    "unit": "short",
+    "w": 12
+  },
+  {
+    "decimals": 0,
+    "desc": "Splits DNS lookup latency by phase so a slow request phase (upstream timeout) is distinguishable from a slow connect (reachability), turning one opaque number into a diagnosis.",
+    "h": 8,
+    "hints": {},
+    "priority": "P2",
+    "row": "\ud83e\udded DNS & Pi-hole \u2014 resolution & ad-blocking",
+    "row_key": "dns",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 50
+      },
+      {
+        "color": "red",
+        "value": 200
+      }
+    ],
+    "targets": [
+      {
+        "expr": "probe_dns_duration_seconds{job=\"blackbox-dns\"}*1000",
+        "instant": false,
+        "legend": "{{instance}} \u00b7 {{phase}}"
+      }
+    ],
+    "title": "External DNS probe phase breakdown (connect / request / resolve)",
+    "type": "timeseries",
+    "unit": "ms",
+    "w": 12
+  },
+  {
+    "decimals": 2,
+    "desc": "Per-VLAN firewall block rate (v4+v6, in+out) so you can see at a glance which VLAN is being dropped right now \u2014 impossible with the global pflog panels.",
+    "h": 8,
+    "hints": {},
+    "priority": "P0",
+    "row": "\ud83d\udee1\ufe0f Firewall (pflog) \u2014 pass vs block",
+    "row_key": "firewall",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 1
+      },
+      {
+        "color": "red",
+        "value": 10
+      }
+    ],
+    "targets": [
+      {
+        "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace((rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval])),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\"),\"vlan\",\"ADMIN\",\"pfInterfacesIfIndex\",\"7\"),\"vlan\",\"HOME\",\"pfInterfacesIfIndex\",\"9\"),\"vlan\",\"GUEST\",\"pfInterfacesIfIndex\",\"10\"),\"vlan\",\"IoT\",\"pfInterfacesIfIndex\",\"11\"),\"vlan\",\"SRVAN\",\"pfInterfacesIfIndex\",\"12\")",
+        "instant": false,
+        "legend": "{{vlan}}"
+      }
+    ],
+    "title": "Block rate by VLAN (pkts/s)",
+    "type": "timeseries",
+    "unit": "pps",
+    "w": 18
+  },
+  {
+    "decimals": 2,
+    "desc": "Per-VLAN blocked share of total packets \u2014 volume-normalized anomaly signal so a quiet VLAN suddenly dropping a large fraction stands out even at low pps (clamp_min guards 0/0).",
+    "h": 8,
+    "hints": {},
+    "priority": "P0",
+    "row": "\ud83d\udee1\ufe0f Firewall (pflog) \u2014 pass vs block",
+    "row_key": "firewall",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 5
+      },
+      {
+        "color": "red",
+        "value": 20
+      }
+    ],
+    "targets": [
+      {
+        "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(100 * (rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval])) / clamp_min(rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsInPass{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsOutPass{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsInPass{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsOutPass{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]), 1),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\"),\"vlan\",\"ADMIN\",\"pfInterfacesIfIndex\",\"7\"),\"vlan\",\"HOME\",\"pfInterfacesIfIndex\",\"9\"),\"vlan\",\"GUEST\",\"pfInterfacesIfIndex\",\"10\"),\"vlan\",\"IoT\",\"pfInterfacesIfIndex\",\"11\"),\"vlan\",\"SRVAN\",\"pfInterfacesIfIndex\",\"12\")",
+        "instant": false,
+        "legend": "{{vlan}}"
+      }
+    ],
+    "title": "Block-vs-pass ratio by VLAN (%)",
+    "type": "timeseries",
+    "unit": "percent",
+    "w": 12
+  },
+  {
+    "decimals": 2,
+    "desc": "Single-glance verdict tile naming the worst-offending VLAN and its current block rate, mirroring the dashboard's verdict-strip pattern (set textMode=value_and_name).",
+    "h": 8,
+    "hints": {
+      "textmode": "value_and_name"
+    },
+    "priority": "P1",
+    "row": "\ud83d\udee1\ufe0f Firewall (pflog) \u2014 pass vs block",
+    "row_key": "firewall",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 1
+      },
+      {
+        "color": "red",
+        "value": 10
+      }
+    ],
+    "targets": [
+      {
+        "expr": "topk(1, label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace((rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval])),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\"),\"vlan\",\"ADMIN\",\"pfInterfacesIfIndex\",\"7\"),\"vlan\",\"HOME\",\"pfInterfacesIfIndex\",\"9\"),\"vlan\",\"GUEST\",\"pfInterfacesIfIndex\",\"10\"),\"vlan\",\"IoT\",\"pfInterfacesIfIndex\",\"11\"),\"vlan\",\"SRVAN\",\"pfInterfacesIfIndex\",\"12\"))",
+        "instant": false,
+        "legend": "{{vlan}}"
+      }
+    ],
+    "title": "Top-blocked VLAN (now)",
+    "type": "stat",
+    "unit": "pps",
+    "w": 6
+  },
+  {
+    "decimals": 0,
+    "desc": "Byte volume of blocked traffic per VLAN (v4+v6, in+out) \u2014 catches large-payload floods/exfil that packet rate alone would miss; pairs with the per-VLAN packet-rate panel.",
+    "h": 8,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83d\udee1\ufe0f Firewall (pflog) \u2014 pass vs block",
+    "row_key": "firewall",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 1000
+      },
+      {
+        "color": "red",
+        "value": 10000
+      }
+    ],
+    "targets": [
+      {
+        "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(label_replace((rate(pfInterfacesIf4BytesInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4BytesOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6BytesInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6BytesOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval])),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\"),\"vlan\",\"ADMIN\",\"pfInterfacesIfIndex\",\"7\"),\"vlan\",\"HOME\",\"pfInterfacesIfIndex\",\"9\"),\"vlan\",\"GUEST\",\"pfInterfacesIfIndex\",\"10\"),\"vlan\",\"IoT\",\"pfInterfacesIfIndex\",\"11\"),\"vlan\",\"SRVAN\",\"pfInterfacesIfIndex\",\"12\")",
+        "instant": false,
+        "legend": "{{vlan}}"
+      }
+    ],
+    "title": "Blocked bytes by VLAN (bytes/s)",
+    "type": "timeseries",
+    "unit": "Bps",
+    "w": 12
+  },
+  {
+    "decimals": 2,
+    "desc": "Inbound-only block rate on igc0/igc1 (WAN1/WAN2) \u2014 the classic unsolicited-internet-traffic / scan / DDoS SLI that the global pflog panels fold away.",
+    "h": 8,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83d\udee1\ufe0f Firewall (pflog) \u2014 pass vs block",
+    "row_key": "firewall",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 5
+      },
+      {
+        "color": "red",
+        "value": 50
+      }
+    ],
+    "targets": [
+      {
+        "expr": "label_replace(label_replace((rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5\"}[$__rate_interval])),\"vlan\",\"WAN1\",\"pfInterfacesIfIndex\",\"4\"),\"vlan\",\"WAN2\",\"pfInterfacesIfIndex\",\"5\")",
+        "instant": false,
+        "legend": "{{vlan}} inbound-block"
+      }
+    ],
+    "title": "WAN inbound blocks \u2014 internet attack surface (pkts/s)",
+    "type": "timeseries",
+    "unit": "pps",
+    "w": 12
+  },
+  {
+    "decimals": 2,
+    "desc": "Protocol split of all blocked packets \u2014 a sudden IPv6 surge flags an ICMPv6/RA misconfig or v6-only scan that v4-centric monitoring misses (only the IoT VLAN carries IPv6 here).",
+    "h": 8,
+    "hints": {},
+    "priority": "P2",
+    "row": "\ud83d\udee1\ufe0f Firewall (pflog) \u2014 pass vs block",
+    "row_key": "firewall",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 5
+      },
+      {
+        "color": "red",
+        "value": 20
+      }
+    ],
+    "targets": [
+      {
+        "expr": "sum(rate(pfInterfacesIf4PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf4PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]))",
+        "instant": false,
+        "legend": "IPv4 blocked"
+      },
+      {
+        "expr": "sum(rate(pfInterfacesIf6PktsInBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]) + rate(pfInterfacesIf6PktsOutBlock{pfInterfacesIfIndex=~\"4|5|7|9|10|11|12\"}[$__rate_interval]))",
+        "instant": false,
+        "legend": "IPv6 blocked"
+      }
+    ],
+    "title": "IPv4 vs IPv6 blocked traffic (pkts/s)",
+    "type": "timeseries",
+    "unit": "pps",
+    "w": 12
+  },
+  {
+    "decimals": 3,
+    "desc": "Per-service uptime over the selected window via avg_over_time(probe_success) \u2014 the core reachability SLI missing today (e.g. blackbox-dns 192.168.4.1:53 ~85%, rundeck/vault/keycloak ~93-94% intermittent drops, rustdesk WS excluded).",
+    "h": 9,
+    "hints": {},
+    "priority": "P0",
+    "row": "\ud83e\ude7a Service Reachability \u2014 blackbox probes",
+    "row_key": "reach",
+    "steps": [
+      {
+        "color": "red",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 99
+      },
+      {
+        "color": "green",
+        "value": 99.9
+      }
+    ],
+    "targets": [
+      {
+        "expr": "avg_over_time(probe_success{instance!~\"https://rustdesk.*\"}[$__range]) * 100",
+        "instant": true,
+        "legend": "{{job}} \u00b7 {{instance}}"
+      }
+    ],
+    "title": "Per-target availability % (window SLA)",
+    "type": "bargauge",
+    "unit": "percent",
+    "w": 12
+  },
+  {
+    "decimals": 0,
+    "desc": "Dedicated liveness timeline for the 7 internal hosts/gateways in the blackbox-icmp job (192.168.4.1, .16.2, .4.236, .48.44-46, .7.11) \u2014 clean view that complements pfSense's WAN-only gateway RTT and is legible vs the buried all-jobs matrix.",
+    "h": 9,
+    "hints": {},
+    "priority": "P0",
+    "row": "\ud83e\ude7a Service Reachability \u2014 blackbox probes",
+    "row_key": "reach",
+    "steps": [
+      {
+        "color": "red",
+        "value": null
+      },
+      {
+        "color": "green",
+        "value": 1
+      }
+    ],
+    "targets": [
+      {
+        "expr": "probe_success{job=\"blackbox-icmp\"}",
+        "instant": false,
+        "legend": "{{instance}}"
+      }
+    ],
+    "title": "ICMP reachability \u2014 internal LAN & gateways (UP matrix)",
+    "type": "state-timeline",
+    "unit": "none",
+    "w": 12
+  },
+  {
+    "decimals": 1,
+    "desc": "quantile_over_time on the probe_duration gauge (blackbox exposes no histogram buckets) surfaces tail latency that the existing raw 'Probe duration' panel hides \u2014 a chronically slow target reads differently from one slow scrape; rustdesk WS excluded.",
+    "h": 8,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83e\ude7a Service Reachability \u2014 blackbox probes",
+    "row_key": "reach",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 500
+      },
+      {
+        "color": "red",
+        "value": 2000
+      }
+    ],
+    "targets": [
+      {
+        "expr": "quantile_over_time(0.50, probe_duration_seconds{instance!~\"https://rustdesk.*\"}[$__range])*1000",
+        "instant": false,
+        "legend": "p50 {{job}} \u00b7 {{instance}}"
+      },
+      {
+        "expr": "quantile_over_time(0.95, probe_duration_seconds{instance!~\"https://rustdesk.*\"}[$__range])*1000",
+        "instant": false,
+        "legend": "p95 {{job}} \u00b7 {{instance}}"
+      },
+      {
+        "expr": "quantile_over_time(0.99, probe_duration_seconds{instance!~\"https://rustdesk.*\"}[$__range])*1000",
+        "instant": false,
+        "legend": "p99 {{job}} \u00b7 {{instance}}"
+      }
+    ],
+    "title": "Probe latency percentiles (p50 / p95 / p99)",
+    "type": "timeseries",
+    "unit": "ms",
+    "w": 12
+  },
+  {
+    "decimals": 1,
+    "desc": "Per-phase HTTP timing isolates WHICH stage is slow \u2014 e.g. calibre shows resolve~4000ms while tls/processing/transfer are sub-30ms, a DNS-resolution stall invisible in the aggregate probe_duration the dashboard graphs (5 phases \u00d7 15 HTTP targets).",
+    "h": 8,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83e\ude7a Service Reachability \u2014 blackbox probes",
+    "row_key": "reach",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 200
+      },
+      {
+        "color": "red",
+        "value": 1000
+      }
+    ],
+    "targets": [
+      {
+        "expr": "probe_http_duration_seconds{job=~\"blackbox-rproxy|blackbox-http\"}*1000",
+        "instant": false,
+        "legend": "{{instance}} \u00b7 {{phase}}"
+      }
+    ],
+    "title": "HTTP probe phase breakdown (resolve/connect/tls/processing/transfer)",
+    "type": "timeseries",
+    "unit": "ms",
+    "w": 12
+  },
+  {
+    "decimals": 2,
+    "desc": "True internal-LAN/inter-VLAN latency (verified 192.168.4.1=0.91ms, .16.2=0.87ms, .4.236=0.65ms) that pfSense's WAN-only gateway RTT cannot show; spikes flag VLAN routing or NIC saturation.",
+    "h": 8,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83e\ude7a Service Reachability \u2014 blackbox probes",
+    "row_key": "reach",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 5
+      },
+      {
+        "color": "red",
+        "value": 20
+      }
+    ],
+    "targets": [
+      {
+        "expr": "probe_icmp_duration_seconds{job=\"blackbox-icmp\", phase=\"rtt\"}*1000",
+        "instant": false,
+        "legend": "{{instance}}"
+      }
+    ],
+    "title": "ICMP RTT to internal hosts & gateways",
+    "type": "timeseries",
+    "unit": "ms",
+    "w": 12
+  },
+  {
+    "decimals": 0,
+    "desc": "Authoritative positive signal for the rustdesk WS false-positive: the blackbox-tcp job raw-connects all 5 hbbr/hbbs ports (21115-21119, all UP) \u2014 turns the static caveat note into a green proof while the WS-only HTTP probe stays excluded from the % tiles.",
+    "h": 7,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83e\ude7a Service Reachability \u2014 blackbox probes",
+    "row_key": "reach",
+    "steps": [
+      {
+        "color": "red",
+        "value": null
+      },
+      {
+        "color": "green",
+        "value": 1
+      }
+    ],
+    "targets": [
+      {
+        "expr": "probe_success{job=\"blackbox-tcp\"}",
+        "instant": false,
+        "legend": "{{instance}}"
+      }
+    ],
+    "title": "RustDesk relay/signal TCP reachability",
+    "type": "state-timeline",
+    "unit": "none",
+    "w": 12
+  },
+  {
+    "decimals": 0,
+    "desc": "Historical per-vhost status transitions (deduped with max by instance across the http/rproxy jobs) so a transient 5xx or a self-healing 0/probe-failure leaves a trace the existing instant status table loses; distinguishes a flapping backend from a steady outage.",
+    "h": 7,
+    "hints": {
+      "binary": false
+    },
+    "priority": "P2",
+    "row": "\ud83e\ude7a Service Reachability \u2014 blackbox probes",
+    "row_key": "reach",
+    "steps": [
+      {
+        "color": "red",
+        "value": null
+      },
+      {
+        "color": "green",
+        "value": 200
+      },
+      {
+        "color": "yellow",
+        "value": 300
+      },
+      {
+        "color": "red",
+        "value": 400
+      }
+    ],
+    "targets": [
+      {
+        "expr": "max by (instance) (probe_http_status_code)",
+        "instant": false,
+        "legend": "{{instance}}"
+      }
+    ],
+    "title": "HTTP status code over time",
+    "type": "state-timeline",
+    "unit": "none",
+    "w": 12
+  },
+  {
+    "decimals": 0,
+    "desc": "Per-service uptime for the ingress/DNS path (nginx-rproxy, cloudflared x3, pihole x3, vault x3); restart series fires on each process restart and is the SAME expr to wire into the dashboard-wide annotation (changes(process_start_time_seconds...)>0, iconColor orange, tag {{job}}).",
+    "h": 7,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83c\udf10 Internet & Network \u2014 Overview (dashboard-wide annotation)",
+    "row_key": "path",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      }
+    ],
+    "targets": [
+      {
+        "expr": "(time() - process_start_time_seconds{job=~\"nginx|cloudflared|pihole|vault\"})",
+        "instant": false,
+        "legend": "{{job}}/{{instance}} uptime"
+      },
+      {
+        "expr": "changes(process_start_time_seconds{job=~\"nginx|cloudflared|pihole|vault\"}[$__interval]) > 0",
+        "instant": false,
+        "legend": "{{job}}/{{instance}} restart"
+      }
+    ],
+    "title": "Ingress/DNS path uptime & restarts",
+    "type": "timeseries",
+    "unit": "s",
+    "w": 24
+  },
+  {
+    "decimals": 0,
+    "desc": "Count of ingress/DNS-path process restarts in the last 24h; non-zero correlates with blackbox-probe and throughput dips on this dashboard.",
+    "h": 4,
+    "hints": {},
+    "priority": "P1",
+    "row": "\ud83c\udf10 Internet & Network \u2014 Overview (dashboard-wide annotation)",
+    "row_key": "path",
+    "steps": [
+      {
+        "color": "green",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 1
+      },
+      {
+        "color": "red",
+        "value": 4
+      }
+    ],
+    "targets": [
+      {
+        "expr": "sum(changes(process_start_time_seconds{job=~\"nginx|cloudflared|pihole|vault\"}[24h]))",
+        "instant": true,
+        "legend": "restarts"
+      }
+    ],
+    "title": "Service restarts \u2014 last 24h",
+    "type": "stat",
+    "unit": "short",
+    "w": 6
+  },
+  {
+    "decimals": 0,
+    "desc": "Instant table of current uptime per ingress/DNS-path service (job/instance); low values flag a recent restart that explains a probe/throughput dip.",
+    "h": 4,
+    "hints": {
+      "table": true
+    },
+    "priority": "P2",
+    "row": "\ud83c\udf10 Internet & Network \u2014 Overview (dashboard-wide annotation)",
+    "row_key": "path",
+    "steps": [
+      {
+        "color": "red",
+        "value": null
+      },
+      {
+        "color": "yellow",
+        "value": 3600
+      },
+      {
+        "color": "green",
+        "value": 86400
+      }
+    ],
+    "targets": [
+      {
+        "expr": "(time() - process_start_time_seconds{job=~\"nginx|cloudflared|pihole|vault\"})",
+        "instant": true,
+        "legend": "uptime"
+      }
+    ],
+    "title": "Per-service uptime & last restart",
+    "type": "table",
+    "unit": "s",
+    "w": 18
+  }
+]

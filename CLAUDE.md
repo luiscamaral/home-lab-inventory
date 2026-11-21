@@ -1,4 +1,30 @@
-# Remote Servers
+# ⛔ Operating non-negotiables (read first)
+
+**Before ANY infrastructure change, read [`.claude/operating-rules.md`](.claude/operating-rules.md).** In short:
+
+- **RULE #1 — PR → merge → apply from `main`.** Mandatory for every AI agent and every session.
+  Branch from `origin/main` → commit → PR → all required CI checks green → squash-merge →
+  apply **only from a clean checkout of merged `main`**, applying only this PR's diff
+  (`-target`; report any other drift) → verify and post evidence on the PR. Never apply from
+  a feature branch and never change live infra before merge. Docs-only changes still need
+  a PR. Break-glass only with explicit user approval, followed by a `post-hoc` PR in the
+  same session.
+- **IaC only — and IaC is NOT only Terraform.** Portainer/Cloudflare/Vault → `terraform/`;
+  **pfSense + hosts → `pfsense/*.yml` + `pfsense/scripts/` applied via `scripts/sync-*.py`**;
+  Rundeck → `rundeck/jobs/` **(NOT IMPLEMENTED — verified 2026-08-18: Rundeck runs on ds-1 but no
+  `rundeck/` directory exists on any branch, so its jobs are live and unversioned)**.
+  Never SSH-edit `config.xml`, run `write_config`, or hand-place cron/scripts.
+- **Destructive / host / network changes** (link bounce, `pfctl -F`, `docker rm -f`, VM/LXC stop,
+  reboot): present options + rollback, get explicit approval **first**.
+- **Parked projects** — read `docs/projects/README.md` at session start, when you re-anchor, and before work
+  on a listed area. Never delete a parked project's branch; it can be the only copy.
+- **Re-anchor when the session gets long** — scope creep dilutes these rules; stop and re-read the
+  file. `SessionStart` loads it; there is **no tool-time gate** (the IaC-guard `PreToolUse` hook was
+  removed 2026-08-18), so these are self-enforced.
+
+---
+
+## Remote Servers
 
 - Access proxmox (Linux) server with `ssh proxmox`
 - For execute sudo on proxmox, set this first `SUDO_ASKPASS=$HOME/.config/bin/answer.sh`.
@@ -36,16 +62,33 @@
 - GitHub runner service (GitHub-runner-homelab) is a Terraform-managed Portainer stack running on dockermaster for CI/CD.
 - Vault server at <http://vault.d.lcamaral.com> (192.168.59.25) for secret management.
 - Portainer at 192.168.59.2 for container management (Terraform-managed via `terraform/portainer/`).
-- Docker registry at <https://registry.cf.lcamaral.com> (Terraform-managed Portainer stack).
+- Grafana at <https://grafana.cf.lcamaral.com> (public via Cloudflare tunnel; this is its `root_url`
+  and the Keycloak OIDC callback host). LAN alias: <https://grafana.d.lcamaral.com>.
+- Container registry: **Zot** at <https://zot.d.lcamaral.com> (LAN only; `homelab/*` images +
+  pull-through cache for `docker.io`, `ghcr.io`, `quay.io`, `registry.k8s.io`, `gcr.io` under those prefixes).
+  Terraform-managed Portainer stack `zot`; see `docs/zot-registry.md`. The old registry:2 at
+  <https://registry.cf.lcamaral.com> is legacy (cool-off, no new pushes).
 
-## Infrastructure as Code (Terraform)
+## Infrastructure as Code
 
-- All IaC lives under `terraform/` with independent state per domain:
+**IaC is NOT only Terraform** — see `.claude/operating-rules.md` for the full
+surface → source → apply map. Two layers:
+
+- **Terraform** (Portainer stacks, Cloudflare, Vault config) under `terraform/`, independent state per domain:
   - `terraform/cloudflare/` -- Zone, DNS, tunnel, DreamHost wildcard (Cloudflare + DreamHost providers)
+  - `terraform/circunflexo/` -- circunflexo.com DNS on DreamHost (DreamHost provider only; independent domain)
   - `terraform/portainer/` -- Portainer stacks, settings (Portainer provider)
   - `terraform/vault/` -- Secret engines, policies (Vault provider)
   - `terraform/modules/cf-service/` -- Reusable module for `*.cf.lcamaral.com` services
-- See `terraform/README.md` for full auth, workflows, and credentials reference.
+  - See `terraform/README.md` for full auth, workflows, and credentials reference.
+- **pfSense + hosts are NOT Terraform-managed** — change them via repo declarative sources + sync
+  scripts, never direct `config.xml`/SSH writes:
+  - pfSense cron → `pfsense/cron-jobs.yml` (`scripts/sync-pfsense-cron-jobs.py`)
+  - pfSense scripts (e.g. node_exporter collectors) → `pfsense/scripts/` (`scripts/sync-pfsense-scripts.py`)
+  - pfSense ACME hooks → `pfsense/acme-actions.yml`; host overrides → `pfsense/host-overrides.yml` (`scripts/sync-host-*.py`)
+  - Rundeck jobs → `rundeck/jobs/*.yaml` (API import, see `rundeck/README.md`)
+  - NAS kernel tuning → `nas/tuning/sysctl.yml` (`scripts/sync-nas-tuning.py`; DSM boot hook in
+    `/usr/local/etc/rc.d/`, never `/etc/sysctl.conf` — see `nas/tuning/README.md`)
 
 ## DNS and Cloudflare Tunnel
 
@@ -54,14 +97,30 @@
 - Wildcard `*.cf.lcamaral.com` on DreamHost CNAMEs to Cloudflare edge for subdomain delegation.
 - Cloudflare tunnel **bologna** routes `*.cf.lcamaral.com` traffic to `nginx-rproxy:443` on dockermaster.
 - Tunnel uses `noTLSVerify` for origin (Nginx certs are for `*.d.lcamaral.com`).
-- Adding a new service: DNS record + tunnel ingress in `terraform/cloudflare/`, Nginx vhost on
-  dockermaster, Portainer stack in `terraform/portainer/`; if the service needs secrets, add a
-  `vault_kv_secret_v2` data source in `terraform/portainer/vault.tf`.
+- Adding a new service: DNS record + tunnel ingress in `terraform/cloudflare/`, Nginx vhost in the
+  repo (`dockermaster/docker/compose/nginx-rproxy/vhost.d/`, rendered by `terraform/portainer`,
+  then `scripts/portainer-redeploy.py` on each rproxy, one at a time), Portainer stack in
+  `terraform/portainer/`; if the service needs secrets, add a `vault_kv_secret_v2` data source in
+  `terraform/portainer/vault.tf`. Full steps: `terraform/cloudflare/README.md`.
+- The Cloudflare API token has a **client IP allow-list**. Error `9109 Cannot use the access token
+  from location` means pfSense WAN1's DHCP address changed. Only the user can fix it (dashboard),
+  so report the IP and stop; see `terraform/cloudflare/README.md` -> Troubleshooting.
 - SSL certs are auto-provisioned by Cloudflare (free, ~90-day rotation).
 
 ## Secret Management
 
-- All secrets are centralized in Vault. Only the Vault root token is in macOS Keychain (`vault-root-token`).
+- All secrets are centralized in Vault. macOS Keychain holds the Vault root token (`vault-root-token`) and
+  the NAS sudo password (`nas-sudo-password`, also in Vault).
+- **Keychain backup copies (outage fallback only).** Vault runs on the server VLAN. If `ix0` or that
+  VLAN is down, Vault is unreachable and so are the credentials needed to repair the network.
+  Vault stays the source of truth. Use these Keychain items only when Vault does not answer:
+  - `omada-controller-backup` (account `lamaral`): Omada controller login.
+  - `switch24a-backup` (account `admin`): switch24a login.
+  - `switch24a-snmp-backup` (account `snmp_community`): switch24a SNMP community.
+
+  Read one with `security find-generic-password -s <item> -a <account> -w`. Never print it into
+  logs, evidence files or chat. After a password rotation in Vault, refresh the copy. See
+  `docs/network/keychain-credential-backup.md`.
 - Vault paths:
   - `secret/homelab/cloudflare` (API token + tunnel token)
   - `secret/homelab/dreamhost` (DreamHost API key)
@@ -74,8 +133,15 @@
   - `secret/homelab/bind9/dnssec` (DNSSEC keys backup)
   - `secret/homelab/rundeck` (DB + storage converter passwords)
   - `secret/homelab/watchtower` (HTTP API token)
+  - `secret/homelab/zot` (Zot registry admin user, password, htpasswd)
+  - `secret/homelab/registry` (legacy registry:2 admin + htpasswd)
   - `secret/homelab/minio` (root user + password)
   - `secret/homelab/freeswitch` (ESL, SIP extension, calling card credentials)
+  - `secret/homelab/switch24a` (TL-SG3428X core switch admin login)
+  - `secret/homelab/omada-controller` (Omada V6 controller login, VM 100)
+  - `secret/homelab/nas-sudo-password` (NAS sudo password, field `password`; use only with user acknowledgment)
+  - `secret/homelab/esp32-fw-signing` (ECDSA-P256 key that signs the WiFi-probe firmware)
+  - `secret/homelab/wifi-probe` (WiFi-probe API / OTA bearer tokens; managed with the submodule's `tools/probe-tokens.py`)
 - Terraform vars are sourced from Vault at runtime, never stored in files.
 
 ## Docker Services Structure

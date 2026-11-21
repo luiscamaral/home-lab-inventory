@@ -1,0 +1,307 @@
+{
+  "collected_at": "2026-11-17T00:27:52.308840+00:00",
+  "data": [
+    {
+      "clean_git_status": false,
+      "paths": [
+        "terraform/lab-network/.terraform/",
+        "terraform/portainer/.terraform/",
+        "terraform/portainer/terraform.tfstate.gate2-backup-1777147525",
+        "terraform/portainer/terraform.tfstate.backup",
+        "terraform/portainer/terraform.tfstate.pre-l3b-1794416843",
+        "terraform/portainer/terraform.tfstate.1777095525.backup",
+        "terraform/portainer/terraform.tfstate",
+        "terraform/portainer/terraform.tfstate.phase3-applied-1777254238",
+        "terraform/portainer/terraform.tfstate.audit-backup-1777256756",
+        "terraform/portainer/tfplan",
+        "terraform/portainer/terraform.tfstate.pre-m-1794465827",
+        "terraform/portainer/terraform.tfstate.pre-k1edge-1794434434",
+        "terraform/portainer/terraform.tfstate.pre-apply-main-pr67-1794161543",
+        "terraform/portainer/terraform.tfstate.pre-zotalert-1794466290",
+        "terraform/portainer/terraform.tfstate.pre-ollama-dns-1793994758",
+        "terraform/portainer/terraform.tfstate.1777560770.backup",
+        "terraform/portainer/terraform.tfstate.pre-k4b-1794435309",
+        "terraform/portainer/terraform.tfstate.pre-m-backup-1794467332",
+        "terraform/portainer/terraform.tfstate.pre-zot-l4-1794416472",
+        "terraform/portainer/terraform.tfstate.pre-calibre-bump-backup",
+        "terraform/portainer/terraform.tfstate.pre-k0-1794431973",
+        "terraform/portainer/terraform.tfstate.pre-k1h-1794433789",
+        "terraform/portainer/ollama.tfplan",
+        "terraform/portainer/terraform.tfstate.pre-k3a-1794435382",
+        "terraform/portainer/terraform.tfstate.pre-rundeck-zot-1794166802",
+        "terraform/portainer/terraform.tfstate.phase3-bgrun-backup-1777256300",
+        "terraform/portainer/terraform.tfstate.pre-apply-main-pr83-1794192454",
+        "terraform/portainer/terraform.tfstate.pre-m-prom-1794467853",
+        "terraform/portainer/terraform.tfstate.pre-m-alerts-1794466583",
+        "terraform/portainer/terraform.tfstate.1776180377.backup",
+        "terraform/portainer/terraform.tfstate.pre-zot-1793981845",
+        "terraform/portainer/terraform.tfstate.1776362610.backup",
+        "terraform/portainer/terraform.tfstate.pre-k4-1794435234",
+        "terraform/portainer/terraform.tfstate.pre-k3b-1794448665",
+        "terraform/portainer/terraform.tfstate.pre-calibre-9.17-backup",
+        "terraform/portainer/terraform.tfstate.pre-k1a-1794432155",
+        "terraform/portainer/terraform.tfstate.pre-m-backup2-1794467631",
+        "terraform/portainer/terraform.tfstate.pre-ollama-removal-1793994584",
+        "terraform/portainer/terraform.tfstate.pre-hubmirror-1794167205",
+        "terraform/portainer/terraform.tfstate.1776362506.backup",
+        "terraform/portainer/terraform.tfstate.pre-apply-main-pr82-1794184343",
+        "terraform/portainer/terraform.tfstate.pre-grafana-cf-20261110-125250",
+        "terraform/portainer/terraform.tfstate.pre-calibre-db-migration-1788738072",
+        "terraform/portainer/calibre-db-migration.tfplan",
+        "terraform/portainer/terraform.tfstate.pre-apply-main-pr84-1794200594",
+        "terraform/portainer/terraform.tfstate.pre-pr-merge-sync-1777327847",
+        "terraform/portainer/terraform.tfstate.pre-l3-1794415707",
+        "terraform/portainer/terraform.tfstate.pre-k1c-1794434229",
+        "terraform/portainer/terraform.tfstate.phase3-final-backup-1777254595",
+        "terraform/portainer/terraform.tfstate.pre-apply-main-pr71-1794166339",
+        "terraform/portainer/terraform.tfstate.quickwins-backup-1777251186",
+        "terraform/portainer/terraform.tfstate.pre-apply-main-pr80-prom2-1794178092",
+        "terraform/portainer/terraform.tfstate.pre-apply-main-pr80-prom-1794177985",
+        "terraform/portainer/terraform.tfstate.pre-k3b-fix-1794449345",
+        "terraform/portainer/terraform.tfstate.pre-hubfix-1794168243",
+        "terraform/portainer/terraform.tfstate.pre-apply-main-pr80-1794177927",
+        "terraform/portainer/terraform.tfstate.phase3-backup-1777253557",
+        "terraform/portainer/terraform.tfstate.pre-zot-sso-1794168686",
+        "terraform/portainer/terraform.tfstate.1775967705.backup",
+        "terraform/portainer/terraform.tfstate.pre-hubping-1794169690",
+        "terraform/portainer/terraform.tfstate.pre-apply-main-pr79-1794171577",
+        "terraform/lab-buckets/.terraform/",
+        "terraform/cloudflare/.terraform/",
+        "terraform/cloudflare/terraform.tfstate.backup",
+        "terraform/cloudflare/terraform.tfstate",
+        "terraform/cloudflare/terraform.tfstate.1793858323.backup",
+        "terraform/cloudflare/terraform.tfstate.pre-grafana-cf-20261110-125250",
+        "terraform/minio/.terraform/",
+        "terraform/minio/terraform.tfstate.backup",
+        "terraform/tfstate-access/.terraform/",
+        "terraform/tfstate-access/terraform.tfstate.backup",
+        "terraform/tfstate-access/terraform.tfstate",
+        "terraform/circunflexo/.terraform/",
+        "terraform/circunflexo/terraform.tfstate",
+        "terraform/circunflexo/terraform.tfstate.1793858323.backup",
+        "terraform/kubernetes/.terraform/",
+        "terraform/vault/.terraform/",
+        "terraform/vault/terraform.tfstate.backup",
+        "terraform/vault/terraform.tfstate",
+        "dockermaster/docker/compose/n8n-stack/.env"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory-calibre-update"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/",
+        "terraform/cloudflare/.terraform/",
+        "terraform/circunflexo/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/apply-main"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/apply-main-A"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/apply-main-B"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/apply-nomad-observability"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/bb-probe"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/hub-mirror"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-fix2"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-front"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-k2-brute-force"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-k3a-mail-path"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-k3b-reset-flow"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-k4-events"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-realms"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-reg"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-macvlan"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-observability-bge-eval"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-private-children"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-qdrant-timeout"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-qwen3-reranker"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-socket-proxy-ipv4"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/ops-runner"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/",
+        "terraform/portainer/terraform.tfstate.backup",
+        "terraform/portainer/terraform.tfstate",
+        "terraform/portainer/terraform.tfstate.1777560912.backup"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/prometheus-thanos-plan"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/rundeck-from-zot"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/rundeck-reconcile"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-alert"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-backup"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-meta"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-registry"
+    },
+    {
+      "clean_git_status": true,
+      "paths": [
+        "terraform/portainer/.terraform/"
+      ],
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-sso"
+    }
+  ],
+  "source": "protected-local-artifacts.json, filter tracked .env.example templates"
+}

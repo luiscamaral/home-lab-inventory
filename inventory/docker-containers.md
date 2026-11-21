@@ -131,7 +131,7 @@
     `ALTER SYSTEM` (persisted in `postgresql.auto.conf` in the data
     volume). See commits `4aa8d6f` and `7172d61`.
 
-- **homelab-portal** — `registry.cf.lcamaral.com/homelab-portal:latest`
+- **homelab-portal** — `zot.d.lcamaral.com/homelab/homelab-portal:latest` (from zot since 2026-11-06)
   - Networks: `docker-servers-net` (192.168.59.18) + `rproxy` bridge (172.24.0.9)
   - **HA:** stateless replica 1 of 2 (cookie-based session state, shared secrets)
   - Purpose: Custom SSO login UI (`login.cf.lcamaral.com`) backed by Keycloak
@@ -143,13 +143,28 @@
   - **HA:** Raft node 1 of 3 (voter)
   - Purpose: Secret management (`vault.d.lcamaral.com`, `vault.cf.lcamaral.com`)
 
-- **registry** — `registry:2`
-  - Networks: `docker-servers-net` (192.168.59.16) + `rproxy` bridge (172.24.0.3)
-  - Purpose: Private Docker image registry (`registry.cf.lcamaral.com`) — single instance
+- **zot** — `ghcr.io/project-zot/zot:v2.1.22` (+ one-shot `zot-auth-init`, `busybox:1.37.0`, and the nightly
+  `zot-meta-backup` sidecar, `python:3.13.18-alpine3.24`, sharing zot's network namespace: `meta.db` copies on
+  `/nfs/dockermaster/docker/zot/backup`, metrics on `192.168.59.5:9199`)
+  - Networks: `docker-servers-net` (192.168.59.5) + `rproxy` bridge
+  - Volumes: images on the NAS `/nfs/dockermaster/docker/zot/stores/<prefix>` (`homelab`, the Docker Hub, GHCR, Quay,
+    registry.k8s.io and GCR caches), `zot-meta` (local disk: `meta.db` and sessions),
+    `zot-auth` (regenerated htpasswd, OIDC credentials, session keys)
+  - Purpose: OCI registry for `homelab/*` images + on-demand pull-through cache for
+    `docker.io`, `ghcr.io`, `quay.io`, `registry.k8s.io`, `gcr.io` (`zot.d.lcamaral.com`, LAN only).
+    Single instance. Keycloak SSO (client `zot`, admin group `zot-admins`). See `docs/zot-registry.md`
+  - Also served as a pull-only Docker Hub mirror at `hub.d.lcamaral.com` (rproxy vhost rewrite
+    `/v2/<repo>` → `/v2/docker.io/<repo>`, LAN only) for dockerd `registry-mirrors`
 
-- **postfix-relay** — `boky/postfix:latest`
-  - Network: `rproxy` bridge (172.24.0.2)
-  - Purpose: Outbound SMTP relay via DreamHost — single instance
+- **registry** — `registry:2` — **LEGACY, cool-off** (superseded by zot 2026-11-06)
+  - Networks: `docker-servers-net` (192.168.59.16) + `rproxy` bridge (172.24.0.3)
+  - Purpose: Old private registry (`registry.cf.lcamaral.com`). Kept read-compatible during
+    cool-off; nothing pushes to it. Decommission criteria in `docs/zot-registry.md`
+
+- **postfix-relay** — `boky/postfix@sha256:aafc7723…` (postfix 3.10.5, pinned by digest)
+  - Networks: `rproxy` bridge (name `postfix-relay`, dm only) and `docker-servers-net` (192.168.59.14,
+    `postfix-relay.d.lcamaral.com`, reachable from ds-1/ds-2)
+  - Purpose: Outbound SMTP relay via DreamHost, single instance. Smarthost for Keycloak (realm SMTP) and Alertmanager
 
 - **portainer** — `portainer/portainer-ce:latest`
   - Network: `docker-servers-net` (192.168.59.2)
@@ -171,6 +186,11 @@
 - **Grafana** (`grafana-grafana-1`) — `grafana/grafana-oss:13.0.1`
   - Network: `docker-servers-net` (192.168.59.39)
   - Terraform: `portainer_stack.grafana`
+  - URLs: `https://grafana.cf.lcamaral.com` (public, Cloudflare tunnel; Grafana `root_url`),
+    `https://grafana.d.lcamaral.com` (LAN)
+  - Data: SQLite in volume `grafana_grafana_data`, an NFS bind to
+    `/nfs/dockermaster/docker/grafana/data` (created 2026-04-29). It is sensitive to NAS
+    latency: slow NFS writes cause `SQLITE_BUSY`, 500s and slow logins.
   - Purpose: Monitoring dashboards
 
 - **pihole-exporter-1-pihole-exporter-1** — `ekofr/pihole-exporter:v1.2.0`
@@ -229,7 +249,7 @@
   - **HA:** repmgr standby (or primary after failover)
   - Purpose: PostgreSQL HA peer for Keycloak
 
-- **homelab-portal-2** — `registry.cf.lcamaral.com/homelab-portal:latest`
+- **homelab-portal-2** — `zot.d.lcamaral.com/homelab/homelab-portal:latest` (from zot since 2026-11-06)
   - Network: `docker-servers-net` (192.168.59.38)
   - **HA:** stateless replica 2 of 2
   - Purpose: Homelab portal replica
@@ -254,29 +274,37 @@
 
 #### Workloads (single instance)
 
-- **calibre** — `linuxserver/calibre:latest`
+- **calibre** — `linuxserver/calibre:v9.17.0-ls430` (pinned; Watchtower disabled)
   - Network: `docker-servers-net` (192.168.59.7)
+  - Access: **HTTPS only** (Selkies) — `https://calibre.d.lcamaral.com` or
+    `https://192.168.59.7:8181`. Plain `http://…:8080` fails with "requires a secure connection".
   - Volumes: `/nfs/calibre/Library`, `/nfs/calibre/config`, `/nfs/calibre/upload`, `/nfs/calibre/plugins`
   - Purpose: E-book library management (single — SQLite store)
 
 - **calibre-web** — `lscr.io/linuxserver/calibre-web:latest`
   - Network: `docker-servers-net` (192.168.59.6)
-  - Volumes: `/nfs/calibre/calibre-web/{Library,config}`
+  - Volumes: `/opt/calibre-web/config` (**local ext4 disk**), `/nfs/calibre/calibre-web/Library`
   - Purpose: Web-based e-book reader UI
+  - ⚠️ `/config` (SQLite `app.db`) moved off NFS → local disk on 2026-09-06.
+    The NFS export is mounted `soft,local_lock=none`, which cannot host SQLite:
+    it caused `disk I/O error` / `OSError: [Errno 5]` bursts on 2026-08-24.
+    Do **not** move `/config` back to `/nfs/calibre/...`.
+    Old NFS dir `/nfs/calibre/calibre-web/config` is now orphaned (kept as rollback).
 
 - `github-runner-homelab` — `myoung34/github-runner:latest`
   - Network: `docker-servers-net` (192.168.59.4)
   - Volumes: `/var/run/docker.sock`, `/nfs/dockermaster/Docker` (read-only)
   - Purpose: Self-hosted GitHub Actions runner for CI/CD
 
-- **rundeck** — `registry.cf.lcamaral.com/la-rundeck:latest`
+- **rundeck** — `zot.d.lcamaral.com/homelab/la-rundeck:latest` (switched from registry.cf on 2026-11-08)
   - Network: `docker-servers-net` (192.168.59.22)
   - Volumes: `/nfs/dockermaster/docker/rundeck/data`, `/var/run/docker.sock`
   - Purpose: Job scheduler / runbook automation
 
-- **postgres-rundeck** — `postgres:17`
+- **postgres-rundeck** — `postgres:17.9@sha256:7ad98329…` (PG 17.9-1.pgdg13+1, digest-pinned 2026-11-08)
   - Network: `docker-servers-net` (192.168.59.23)
-  - Volumes: `/nfs/dockermaster/docker/rundeck/dbdata`
+  - Volumes: `/opt/rundeck/dbdata` (**local ds-1 disk**, not NFS; salvaged 2026-06-30 after the NFS EIO
+    PANIC, see `docs/zot-registry.md`). `/nfs/dockermaster/docker/rundeck/dbdata` is a stale copy
   - Purpose: Database backend for Rundeck
 
 #### Monitoring stack (Prometheus)
@@ -382,10 +410,34 @@
   - Network: `docker-servers-net` (192.168.59.11)
   - Purpose: RustDesk relay server
 
+- **nomad** (`nomad_admin`, `nomad_mysql`, `nomad_redis`, `nomad_disk_collector`,
+  `nomad_embed_ollama`, `nomad_cli_proxy_api`, `nomad_litellm`, `nomad_remote_ai_init`, plus
+  `nomad_dozzle`, `nomad_docker_readonly`, and DooD-spawned `nomad_qdrant`)
+  - Network: `docker-servers-net` (`.60` for `nomad_admin`, `.61` for `nomad_dozzle`),
+    `project-nomad_default` bridge, and private internal `logs` bridge
+  - Compose: `dockermaster/docker/compose/nomad/docker-compose.yml.tftpl`
+  - Terraform: `portainer_stack.nomad` in `terraform/portainer/stacks.tf`
+  - Storage: `/nfs/dockermaster/nomad/storage` (bulk ZIMs/KB/Qdrant),
+    `/opt/project-nomad/{mysql,redis,ollama,cli-proxy-api}` (local SSD)
+  - URL (internal): <https://nomad.d.lcamaral.com>
+  - Logs/metrics: <https://nomad.d.lcamaral.com/logs/>; built-in HTTP `:9999` link redirects here
+  - Purpose: Offline-first knowledge/education server (Project NOMAD) with local Ollama embeddings
+    (`nomic-embed-text:v1.5`) + LiteLLM routing chat through CLIProxyAPI (Google/Antigravity subscription OAuth)
+  - Spec: `docs/superpowers/specs/2026-11-13-project-nomad-deployment-design.md`
+
+- **nomad-embedding-eval** (`nomad_eval_ollama`, `nomad_embedding_eval`)
+  - Terraform: `portainer_stack.nomad_embedding_eval`
+  - Network: separate Compose bridge, no published ports or production connections
+  - Storage: separate local named volumes `models` and `results`
+  - Limits: Ollama 4 CPUs / 6 GiB; runner 0.5 CPU / 128 MiB
+  - Purpose: one-shot Nomic-vs-BGE-M3 smoke benchmark; no production model/index changes
+  - Guide: `docs/nomad-observability-and-embedding-eval.md`
+
 #### Ancillary
 
-- **portainer-agent** — `portainer/agent:latest`
-  - Network: `docker-servers-net` (192.168.59.46)
+- **portainer-agent** — `portainer/agent:2.39.1`
+  - Network: `docker-servers-net` (192.168.59.59; .46 collided with otel-collector, then .42 with
+    pihole-exporter-2; moved 2026-11-05)
   - Purpose: Portainer agent for managing ds-2 from the central Portainer
 
 ---
@@ -398,6 +450,7 @@
 | .2 | portainer | dm |
 | .3 | bind-dns-bind9-1 | dm |
 | .4 | `github-runner-homelab` | ds-1 |
+| .5 | zot | dm |
 | .6 | calibre-web | ds-1 |
 | .7 | calibre | ds-1 |
 | .9 | vault-2 | ds-1 |
@@ -405,8 +458,9 @@
 | .11 | hbbr (RustDesk relay) | ds-2 |
 | .12 | twingate-sepia-hornet | ds-1 |
 | .13 | keycloak | dm |
+| .14 | postfix-relay | dm |
 | .15 | vault-3 | ds-2 |
-| .16 | registry | dm |
+| .16 | registry (legacy, cool-off) | dm |
 | .17 | minio-minio-1 | ds-1 |
 | .18 | homelab-portal | dm |
 | .22 | rundeck | ds-1 |
@@ -428,6 +482,8 @@
 | .49 | rproxy-3 (edge 3/3) | ds-2 |
 | .50 | pihole-2 | ds-1 |
 | .54 | keycloak-db-1 | ds-1 |
+| .60 | nomad_admin | ds-2 |
+| .61 | nomad_dozzle | ds-2 |
 
 ## Removed services (since last refresh)
 
@@ -437,13 +493,13 @@ The following services were present in the pre-HA inventory and have been remove
 | --- | --- |
 | chisel | Removed — replaced by Twingate + Cloudflare tunnel |
 | ldap-lcamaral-com (openldap, lemonldap, phpldapadmin) | Removed — superseded by Keycloak |
-| ollama | Removed |
 | `elasticsearch` | Removed |
 | `nas-solr`, `nas-tika` | Removed from dockermaster (NAS search now handled differently) |
 | `ansible-observability`, `docker-dns`, `docker-vault`, `litellm`, `n8n-stack`, `puppet` | Removed (were already stopped) |
 | vault on NAS | Superseded by 3-node Vault Raft cluster |
 | ocr-photo-tag on NAS | Removed (non-portable) |
 | paperless-ngx on NAS | Removed — zombie stack (endpoint 6) deleted in commit `43dde4b` |
+| ollama on ds-1 (`.53`) | Removed — stopped for months; sole planned consumer (Honcho) never deployed |
 
 ## Terraform-managed Portainer stacks
 
@@ -451,7 +507,8 @@ Authoritative list in `terraform/portainer/stacks.tf`:
 
 | Stack | Endpoint |
 | --- | --- |
-| `docker-registry` | dm |
+| `zot` | dm |
+| `docker-registry` (legacy, cool-off) | dm |
 | `cloudflare-tunnel`, `cloudflare-tunnel-2`, `cloudflare-tunnel-3` | dm, ds-1, ds-2 |
 | `bind-dns` | dm |
 | `reverse-proxy`, `reverse-proxy-2`, `reverse-proxy-3` | dm, ds-1, ds-2 |
@@ -460,6 +517,8 @@ Authoritative list in `terraform/portainer/stacks.tf`:
 | `calibre` | ds-1 |
 | `github-runner` | ds-1 |
 | `rust-server` | ds-2 |
+| `nomad` | ds-2 |
+| `nomad-embedding-eval` | ds-2 |
 | `la-rundeck` | ds-1 |
 | `prometheus` | ds-1 |
 | `watchtower`, `watchtower_dm` | ds-1, dm |

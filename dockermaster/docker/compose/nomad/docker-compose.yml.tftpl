@@ -1,0 +1,393 @@
+# Project NOMAD + embeddings Ollama + CLIProxyAPI (subscription OAuth) + LiteLLM router — ds-2
+# Spec: docs/superpowers/specs/2026-11-13-project-nomad-deployment-design.md
+# Managed by Terraform (terraform/portainer/stacks.tf -> portainer_stack.nomad).
+#
+# nomad_admin drives the host Docker daemon through the socket and spawns its
+# own children (qdrant, kiwix, ...). Two names are load-bearing and must not
+# change: the container name `nomad_admin` and the network `project-nomad_default`.
+name: project-nomad
+
+configs:
+  litellm_config:
+    content: |
+      ${indent(6, litellm_config)}
+  cli_proxy_config:
+    content: |
+      ${indent(6, cli_proxy_config)}
+
+services:
+  # The built-in Settings link opens http://<hostname>:9999. The reverse
+  # proxies redirect that legacy port to HTTPS /logs/ (Dozzle's base path).
+  dozzle:
+    image: amir20/dozzle:v10.0
+    container_name: nomad_dozzle
+    restart: unless-stopped
+    environment:
+      - DOZZLE_BASE=/logs
+      - DOZZLE_REMOTE_HOST=tcp://docker-readonly:2375|dockerserver-2
+      - DOZZLE_FILTER=name=^/nomad_
+      - DOZZLE_ENABLE_ACTIONS=false
+      - DOZZLE_ENABLE_SHELL=false
+      - DOZZLE_NO_ANALYTICS=true
+    depends_on:
+      docker-readonly:
+        condition: service_started
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.61
+      logs:
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - dozzle-data:/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 256M
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-dozzle"
+      portainer.autodeploy: "false"
+
+  # No published ports and no connection to application networks. Dozzle
+  # cannot mutate Docker: POST/DELETE/PUT and exec remain disabled.
+  docker-readonly:
+    image: tecnativa/docker-socket-proxy:v0.5.0
+    container_name: nomad_docker_readonly
+    restart: unless-stopped
+    environment:
+      # ds-2 has IPv6 disabled; HAProxy otherwise binds [::]:2375 and exits.
+      - DISABLE_IPV6=1
+      - CONTAINERS=1
+      - INFO=1
+      - EVENTS=1
+      - PING=1
+      - VERSION=1
+      - POST=0
+      - EXEC=0
+      - LOG_LEVEL=warning
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - logs
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 64M
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-docker-readonly"
+      portainer.autodeploy: "false"
+
+  admin:
+    image: ghcr.io/luiscamaral/project-nomad:v1.35.1-custom-macvlan
+    container_name: nomad_admin
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /nfs/dockermaster/nomad/storage:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - NODE_ENV=production
+      - NOMAD_STORAGE_PATH=/nfs/dockermaster/nomad/storage
+      - PORT=8080
+      - LOG_LEVEL=info
+      - APP_KEY=$${NOMAD_APP_KEY}
+      - HOST=0.0.0.0
+      - URL=https://nomad.d.lcamaral.com
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=nomad
+      - DB_USER=nomad_user
+      - DB_PASSWORD=$${NOMAD_DB_PASSWORD}
+      - DB_NAME=nomad
+      - DB_SSL=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DISABLE_COMPRESSION=false
+      # Custom embedding configuration (see third_party/project-nomad, the fork
+      # that makes the model + task prefixes env-configurable). Prefixes carry no
+      # trailing space — the fork appends it.
+      - EMBEDDING_MODEL_NAME=embeddinggemma-2:270m
+      - QDRANT_TIMEOUT_MS=1800000
+      - NOMAD_PRIVATE_MANAGED_PORTS=true
+      - NOMAD_KOLIBRI_ZIP_ORIGIN=https://kolibri.d.lcamaral.com:8311
+      - NOMAD_MANAGED_MACVLAN_IPS={"nomad_kiwix_server":"192.168.59.8","nomad_kolibri_2":"192.168.59.3"}
+      - "SEARCH_DOCUMENT_PREFIX=title: none | text:"
+      - "SEARCH_QUERY_PREFIX=task: search result | query:"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      servers-net:
+        ipv4_address: 192.168.59.60
+      default:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-admin"
+      portainer.autodeploy: "false"
+
+  mysql:
+    image: mysql:8.0
+    container_name: nomad_mysql
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=$${NOMAD_MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=nomad
+      - MYSQL_USER=nomad_user
+      - MYSQL_PASSWORD=$${NOMAD_DB_PASSWORD}
+    volumes:
+      - /opt/project-nomad/mysql:/var/lib/mysql
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-mysql"
+      portainer.autodeploy: "false"
+
+  redis:
+    image: redis:7-alpine
+    container_name: nomad_redis
+    restart: unless-stopped
+    volumes:
+      - /opt/project-nomad/redis:/data
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-redis"
+      portainer.autodeploy: "false"
+
+  disk-collector:
+    image: ghcr.io/crosstalk-solutions/project-nomad-disk-collector:v1.31.1
+    container_name: nomad_disk_collector
+    restart: unless-stopped
+    volumes:
+      - /:/host:ro,rslave
+      - /nfs/dockermaster/nomad/storage:/storage
+    networks:
+      - default
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-disk-collector"
+      portainer.autodeploy: "false"
+
+  # Embeddings only. NOMAD hardcodes nomic-embed-text:v1.5 (768-dim) for its
+  # Qdrant knowledge base; chat goes through cli-proxy-api via litellm.
+  # Deliberately NOT named nomad_ollama so NOMAD's own AI installer never
+  # mistakes it for the service it manages.
+  ollama:
+    image: ollama/ollama:0.40.16
+    container_name: nomad_embed_ollama
+    restart: unless-stopped
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_KEEP_ALIVE=30m
+      - OLLAMA_MAX_LOADED_MODELS=1
+    volumes:
+      - /opt/project-nomad/ollama:/root/.ollama
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list > /dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: "10"
+          memory: 3G
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-embed-ollama"
+      portainer.autodeploy: "false"
+
+  # Google / Antigravity subscription OAuth gateway (no pay-per-token API key).
+  # Seeds auth JSON from Vault on first boot so refreshed tokens persist in
+  # /opt/project-nomad/cli-proxy-api/auths across container restarts.
+  cli-proxy-api:
+    image: eceasy/cli-proxy-api:v8.0.71
+    container_name: nomad_cli_proxy_api
+    restart: unless-stopped
+    configs:
+      - source: cli_proxy_config
+        target: /CLIProxyAPI/config.yaml
+    volumes:
+      - /opt/project-nomad/cli-proxy-api/auths:/root/.cli-proxy-api
+    environment:
+      - ANTIGRAVITY_AUTH_JSON=$${ANTIGRAVITY_AUTH_JSON}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /root/.cli-proxy-api
+        if [ ! -s /root/.cli-proxy-api/antigravity-auth.json ]; then
+          printf '%s' "$$ANTIGRAVITY_AUTH_JSON" > /root/.cli-proxy-api/antigravity-auth.json
+          chmod 600 /root/.cli-proxy-api/antigravity-auth.json
+        fi
+        exec ./CLIProxyAPI
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8317"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-cli-proxy-api"
+      portainer.autodeploy: "false"
+
+  litellm:
+    image: ghcr.io/berriai/litellm:v1.108.8
+    container_name: nomad_litellm
+    restart: unless-stopped
+    command: ["--config", "/etc/litellm/config.yaml", "--port", "4000"]
+    configs:
+      - source: litellm_config
+        target: /etc/litellm/config.yaml
+    environment:
+      - CLI_PROXY_API_KEY=$${CLI_PROXY_API_KEY}
+      - LITELLM_LOG=INFO
+    depends_on:
+      ollama:
+        condition: service_healthy
+      cli-proxy-api:
+        condition: service_healthy
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness', timeout=3)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-litellm"
+      portainer.autodeploy: "false"
+
+  # Idempotent IaC bootstrap: persists ai.remoteOllamaUrl=http://litellm:4000,
+  # marks nomad_ollama installed so Settings -> AI Assistant appears in the UI,
+  # and triggers nomad_qdrant installation for Knowledge Base RAG.
+  remote-ai-init:
+    image: curlimages/curl:8.23.0
+    container_name: nomad_remote_ai_init
+    restart: "no"
+    depends_on:
+      admin:
+        condition: service_healthy
+      litellm:
+        condition: service_healthy
+    networks:
+      - default
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        if curl -sf "http://admin:8080/api/system/settings?key=ai.remoteOllamaUrl" | grep -q "http://litellm:4000" && curl -sf "http://admin:8080/api/ollama/remote-status" | grep -q '"connected":true'; then
+          echo "Remote AI already configured -> http://litellm:4000"
+          exit 0
+        fi
+        curl -fsS -X POST "http://admin:8080/api/ollama/configure-remote" \
+          -H "Content-Type: application/json" \
+          -d '{"remoteUrl":"http://litellm:4000"}'
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-remote-ai-init"
+      portainer.autodeploy: "false"
+
+  app-urls-init:
+    image: curlimages/curl:8.23.0
+    container_name: nomad_app_urls_init
+    restart: "no"
+    depends_on:
+      admin:
+        condition: service_healthy
+    networks:
+      - default
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        curl -fsS -X PUT http://admin:8080/api/system/services/custom-url \
+          -H 'Content-Type: application/json' \
+          -d '{"service_name":"nomad_kiwix_server","custom_url":"https://kiwix.d.lcamaral.com"}'
+        curl -fsS -X PUT http://admin:8080/api/system/services/custom-url \
+          -H 'Content-Type: application/json' \
+          -d '{"service_name":"nomad_kolibri_2","custom_url":"https://kolibri.d.lcamaral.com"}'
+    labels:
+      com.docker.stack: "nomad"
+      com.docker.service: "nomad-app-urls-init"
+      portainer.autodeploy: "false"
+
+networks:
+  logs:
+    internal: true
+  servers-net:
+    external: true
+    name: docker-servers-net
+  default:
+    name: project-nomad_default
+    driver: bridge
+
+volumes:
+  dozzle-data:

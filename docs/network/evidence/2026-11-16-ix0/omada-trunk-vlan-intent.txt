@@ -1,0 +1,6 @@
+collected_utc 2026-11-16T21:12:58.639111+00:00 source: Omada API (configured INTENT, not live switch state)
+networks: {'Default': 1, 'Home': 10, 'Servers': 28, 'GuestWifi': 105, 'IoT': 205, 'None': 4094}
+Port25 profile=Trunk-v2 native=('Default', 1) tagged=[('Home', 10), ('Servers', 28), ('GuestWifi', 105), ('IoT', 205)] untagged=[('Default', 1)] isolation=False flow=False eee=False lldpMed=True loopback=True stp_edge=True cfgSpeed=5 cfgDuplex=2
+Port26 profile=HomeOffice-v2 native=('Home', 10) tagged=[('None', 4094)] untagged=[('Home', 10)] isolation=False flow=False eee=False lldpMed=True loopback=True stp_edge=True cfgSpeed=5 cfgDuplex=2
+Port27 profile=Trunk-v2 native=('Default', 1) tagged=[('Home', 10), ('Servers', 28), ('GuestWifi', 105), ('IoT', 205)] untagged=[('Default', 1)] isolation=False flow=False eee=False lldpMed=True loopback=True stp_edge=True cfgSpeed=5 cfgDuplex=2
+Port28 profile=Trunk-v2 native=('Default', 1) tagged=[('Home', 10), ('Servers', 28), ('GuestWifi', 105), ('IoT', 205)] untagged=[('Default', 1)] isolation=False flow=False eee=False lldpMed=True loopback=True stp_edge=True cfgSpeed=5 cfgDuplex=2

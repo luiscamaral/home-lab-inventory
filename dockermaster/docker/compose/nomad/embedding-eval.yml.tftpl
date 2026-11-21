@@ -1,0 +1,124 @@
+# Isolated, one-shot experiment. No production volumes, networks or Qdrant.
+name: nomad-embedding-eval
+
+configs:
+  evaluator:
+    content: |
+      ${indent(6, evaluator)}
+  corpus:
+    content: |
+      ${indent(6, corpus)}
+
+services:
+  ollama:
+    image: ollama/ollama:0.40.16
+    container_name: nomad_eval_ollama
+    restart: "no"
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_KEEP_ALIVE=5m
+      - OLLAMA_NUM_PARALLEL=1
+    volumes:
+      - models:/root/.ollama
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 24G
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      portainer.autodeploy: "false"
+
+  # Cross-encoder reranker via Text Embeddings Inference. Rerankers are not in the
+  # Ollama library; TEI serves the /rerank endpoint the evaluator calls. Model is
+  # pulled from Hugging Face on first start. bge-reranker-v2-m3 (XLM-RoBERTa) is
+  # chosen because TEI does not yet support the LLM-style Qwen3-Reranker models.
+  reranker:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.7.2
+    container_name: nomad_eval_reranker
+    restart: "no"
+    command: ["--model-id", "BAAI/bge-reranker-v2-m3"]
+    volumes:
+      - reranker-models:/data
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:80/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 300s
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+          memory: 8G
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      portainer.autodeploy: "false"
+
+  evaluate:
+    image: python:3.13.18-alpine3.24
+    container_name: nomad_embedding_eval
+    restart: "no"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    configs:
+      - source: evaluator
+        target: /eval/evaluate.py
+      - source: corpus
+        target: /eval/corpus.json
+    command:
+      - python
+      - -u
+      - /eval/evaluate.py
+      - --url
+      - http://ollama:11434
+      - --fixture
+      - /eval/corpus.json
+      - --output
+      - /results/embedding-eval.json
+      - --allow-model-changes
+      - --qwen-model
+      - qwen3-embedding:4b
+      - --qwen-dims
+      - "2560"
+      - --rerank-url
+      - http://reranker:80
+      - --rerank-top-n
+      - "20"
+    volumes:
+      - results:/results
+    networks:
+      - default
+    # Portainer materializes inline configs into the container filesystem;
+    # it rejects configs with content: when the service root is read-only.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+    labels:
+      loki.logging: "true"
+      com.centurylinklabs.watchtower.enable: "false"
+      portainer.autodeploy: "false"
+
+volumes:
+  models:
+  results:
+  reranker-models:

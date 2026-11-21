@@ -155,6 +155,14 @@
   ip: 192.168.4.238
   description: Alertmanager-2 (NAS macvlan, gossip cluster member)
 
+# ── Mail relay ──────────────────────────────────────────────────────
+# Used as the SMTP host by Keycloak (both nodes) and by Alertmanager (smtp_smarthost).
+# The relay sits on docker-servers-net so ds-1 containers can reach it.
+- host: postfix-relay
+  domain: d.lcamaral.com
+  ip: 192.168.59.14
+  description: Postfix relay (dm macvlan), smarthost for Keycloak and Alertmanager mail
+
 - host: prometheus-1
   domain: d.lcamaral.com
   ip: 192.168.59.19

@@ -1,0 +1,16 @@
+{
+  "cited_json_files": 27,
+  "collected_at": "2026-11-17T00:35:24.170493+00:00",
+  "dispositions": {
+    "history covered": 130,
+    "manual review": 19,
+    "open PR decision": 1
+  },
+  "earlier_verifier_attempt": "Rejected package.json as a missing evidence path. Fixed matcher scope to the evidence index, then reran all checks.",
+  "final_open_prs": 9,
+  "limits": "Not a secret scan, infrastructure check, or project test run.",
+  "local_branch_rows": 150,
+  "method": "json.loads all JSON files listed in the Evidence index only; check unique refs and count totals; verify evidence IDs and paths",
+  "prose_lint": "se_lint reports clean",
+  "source": "independent report/evidence re-read"
+}

@@ -1,0 +1,17 @@
+Bonding Mode: IEEE 802.3ad Dynamic link aggregation
+MII Status: up
+LACP rate: fast
+Aggregator selection policy (ad_select): stable
+Slave Interface: eth1
+MII Status: up
+Link Failure Count: 4
+Aggregator ID: 1
+Slave Interface: eth2
+MII Status: up
+Link Failure Count: 4
+Aggregator ID: 1
+Slave Interface: eth3
+MII Status: up
+Link Failure Count: 4
+Aggregator ID: 1
+== /var/log/messages 16:55-17:07

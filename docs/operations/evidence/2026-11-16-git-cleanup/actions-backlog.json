@@ -1,0 +1,1039 @@
+[
+  {
+    "collected_at": "2026-11-17T00:28:52.952502+00:00",
+    "command": [
+      "gh",
+      "run",
+      "list",
+      "--repo",
+      "luiscamaral/home-lab-inventory",
+      "--status",
+      "queued",
+      "--limit",
+      "100",
+      "--json",
+      "databaseId,workflowName,headBranch,createdAt,status,url"
+    ],
+    "data": [
+      {
+        "createdAt": "2026-11-16T21:08:51Z",
+        "databaseId": 43957062518,
+        "headBranch": "main",
+        "status": "queued",
+        "url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43957062518",
+        "workflowName": "Service Health Monitor"
+      },
+      {
+        "createdAt": "2026-11-16T11:19:24Z",
+        "databaseId": 43856709107,
+        "headBranch": "main",
+        "status": "queued",
+        "url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43856709107",
+        "workflowName": "Service Health Monitor"
+      },
+      {
+        "createdAt": "2026-11-16T03:11:46Z",
+        "databaseId": 43796685093,
+        "headBranch": "main",
+        "status": "queued",
+        "url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43796685093",
+        "workflowName": "Service Health Monitor"
+      },
+      {
+        "createdAt": "2026-11-15T23:43:28Z",
+        "databaseId": 43776343825,
+        "headBranch": "main",
+        "status": "queued",
+        "url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43776343825",
+        "workflowName": "Service Health Monitor"
+      },
+      {
+        "createdAt": "2026-11-15T19:47:15Z",
+        "databaseId": 43754358899,
+        "headBranch": "main",
+        "status": "queued",
+        "url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43754358899",
+        "workflowName": "Service Health Monitor"
+      },
+      {
+        "createdAt": "2026-11-15T14:13:00Z",
+        "databaseId": 43723131270,
+        "headBranch": "main",
+        "status": "queued",
+        "url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43723131270",
+        "workflowName": "Service Health Monitor"
+      },
+      {
+        "createdAt": "2026-11-15T06:26:44Z",
+        "databaseId": 43685463967,
+        "headBranch": "main",
+        "status": "queued",
+        "url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43685463967",
+        "workflowName": "Service Health Monitor"
+      },
+      {
+        "createdAt": "2026-05-15T07:45:37Z",
+        "databaseId": 25906694839,
+        "headBranch": "main",
+        "status": "queued",
+        "url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25906694839",
+        "workflowName": "Service Health Monitor"
+      }
+    ],
+    "exit_code": 0,
+    "source": "GitHub Actions API; logs not read"
+  },
+  {
+    "collected_at": "2026-11-17T00:28:53.345227+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/luiscamaral/home-lab-inventory/actions/runs/43957062518/jobs"
+    ],
+    "data": {
+      "jobs": [
+        {
+          "check_run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/check-runs/133614288004",
+          "completed_at": null,
+          "conclusion": null,
+          "created_at": "2026-11-16T21:08:52Z",
+          "head_branch": "main",
+          "head_sha": "091e018899cef091a4e4ad93d86258df3bba9629",
+          "html_url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43957062518/job/133614288004",
+          "id": 133614288004,
+          "labels": [
+            "self-hosted",
+            "dockermaster"
+          ],
+          "name": "Service Health Assessment",
+          "node_id": "CR_kwDOPa4l-c8AAAAfHAg8hA",
+          "run_attempt": 1,
+          "run_id": 43957062518,
+          "run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/runs/43957062518",
+          "runner_group_id": 0,
+          "runner_group_name": "",
+          "runner_id": 0,
+          "runner_name": "",
+          "started_at": "2026-11-16T21:08:52Z",
+          "status": "queued",
+          "steps": [],
+          "url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/jobs/133614288004",
+          "workflow_name": "Service Health Monitor"
+        }
+      ],
+      "total_count": 1
+    },
+    "exit_code": 0,
+    "source": "GitHub Actions API; logs not read"
+  },
+  {
+    "collected_at": "2026-11-17T00:28:54.870718+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/luiscamaral/home-lab-inventory/actions/runs/43835539553/jobs"
+    ],
+    "data": {
+      "jobs": [
+        {
+          "check_run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/check-runs/133191124359",
+          "completed_at": "2026-11-16T08:58:06Z",
+          "conclusion": "success",
+          "created_at": "2026-11-16T08:57:48Z",
+          "head_branch": "main",
+          "head_sha": "091e018899cef091a4e4ad93d86258df3bba9629",
+          "html_url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43835539553/job/133191124359",
+          "id": 133191124359,
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "name": "Dockerfile Security Linting",
+          "node_id": "CR_kwDOPa4l-c8AAAAfAs9Fhw",
+          "run_attempt": 1,
+          "run_id": 43835539553,
+          "run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/runs/43835539553",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions",
+          "runner_id": 1000011152,
+          "runner_name": "GitHub Actions 1000011152",
+          "started_at": "2026-11-16T08:57:50Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completed_at": "2026-11-16T08:57:52Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "started_at": "2026-11-16T08:57:51Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:53Z",
+              "conclusion": "success",
+              "name": "Checkout repository",
+              "number": 2,
+              "started_at": "2026-11-16T08:57:52Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:54Z",
+              "conclusion": "success",
+              "name": "Find all Dockerfiles",
+              "number": 3,
+              "started_at": "2026-11-16T08:57:53Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:54Z",
+              "conclusion": "success",
+              "name": "Run Hadolint on all Dockerfiles",
+              "number": 4,
+              "started_at": "2026-11-16T08:57:54Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:54Z",
+              "conclusion": "success",
+              "name": "Merge Hadolint SARIF reports",
+              "number": 5,
+              "started_at": "2026-11-16T08:57:54Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:02Z",
+              "conclusion": "success",
+              "name": "Upload Hadolint SARIF report",
+              "number": 6,
+              "started_at": "2026-11-16T08:57:54Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:03Z",
+              "conclusion": "success",
+              "name": "Archive Hadolint results",
+              "number": 7,
+              "started_at": "2026-11-16T08:58:02Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:03Z",
+              "conclusion": "success",
+              "name": "Post Upload Hadolint SARIF report",
+              "number": 13,
+              "started_at": "2026-11-16T08:58:03Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:04Z",
+              "conclusion": "success",
+              "name": "Post Checkout repository",
+              "number": 14,
+              "started_at": "2026-11-16T08:58:03Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:04Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 15,
+              "started_at": "2026-11-16T08:58:04Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/jobs/133191124359",
+          "workflow_name": "Security Scanning"
+        },
+        {
+          "check_run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/check-runs/133191124737",
+          "completed_at": "2026-11-16T08:58:11Z",
+          "conclusion": "success",
+          "created_at": "2026-11-16T08:57:48Z",
+          "head_branch": "main",
+          "head_sha": "091e018899cef091a4e4ad93d86258df3bba9629",
+          "html_url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43835539553/job/133191124737",
+          "id": 133191124737,
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "name": "Dependency Security Scan",
+          "node_id": "CR_kwDOPa4l-c8AAAAfAs9HAQ",
+          "run_attempt": 1,
+          "run_id": 43835539553,
+          "run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/runs/43835539553",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions",
+          "runner_id": 1000011154,
+          "runner_name": "GitHub Actions 1000011154",
+          "started_at": "2026-11-16T08:57:50Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completed_at": "2026-11-16T08:57:52Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "started_at": "2026-11-16T08:57:50Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:53Z",
+              "conclusion": "success",
+              "name": "Checkout repository",
+              "number": 2,
+              "started_at": "2026-11-16T08:57:52Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:54Z",
+              "conclusion": "success",
+              "name": "Cache dependency scan data",
+              "number": 3,
+              "started_at": "2026-11-16T08:57:53Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:03Z",
+              "conclusion": "success",
+              "name": "Run Trivy for known vulnerabilities in files",
+              "number": 4,
+              "started_at": "2026-11-16T08:57:54Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:04Z",
+              "conclusion": "success",
+              "name": "Run license scan",
+              "number": 5,
+              "started_at": "2026-11-16T08:58:03Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:05Z",
+              "conclusion": "success",
+              "name": "Archive dependency scan results",
+              "number": 6,
+              "started_at": "2026-11-16T08:58:04Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:09Z",
+              "conclusion": "success",
+              "name": "Post Run Trivy for known vulnerabilities in files",
+              "number": 10,
+              "started_at": "2026-11-16T08:58:05Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:09Z",
+              "conclusion": "success",
+              "name": "Post Cache dependency scan data",
+              "number": 11,
+              "started_at": "2026-11-16T08:58:09Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:09Z",
+              "conclusion": "success",
+              "name": "Post Checkout repository",
+              "number": 12,
+              "started_at": "2026-11-16T08:58:09Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:09Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 13,
+              "started_at": "2026-11-16T08:58:09Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/jobs/133191124737",
+          "workflow_name": "Security Scanning"
+        },
+        {
+          "check_run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/check-runs/133191124784",
+          "completed_at": "2026-11-16T08:57:56Z",
+          "conclusion": "success",
+          "created_at": "2026-11-16T08:57:48Z",
+          "head_branch": "main",
+          "head_sha": "091e018899cef091a4e4ad93d86258df3bba9629",
+          "html_url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43835539553/job/133191124784",
+          "id": 133191124784,
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "name": "Scan Built Docker Images",
+          "node_id": "CR_kwDOPa4l-c8AAAAfAs9HMA",
+          "run_attempt": 1,
+          "run_id": 43835539553,
+          "run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/runs/43835539553",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions",
+          "runner_id": 1000011153,
+          "runner_name": "GitHub Actions 1000011153",
+          "started_at": "2026-11-16T08:57:50Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completed_at": "2026-11-16T08:57:51Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "started_at": "2026-11-16T08:57:50Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:52Z",
+              "conclusion": "success",
+              "name": "Checkout repository",
+              "number": 2,
+              "started_at": "2026-11-16T08:57:51Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:53Z",
+              "conclusion": "success",
+              "name": "Log in to GitHub Container Registry",
+              "number": 3,
+              "started_at": "2026-11-16T08:57:52Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:53Z",
+              "conclusion": "success",
+              "name": "Find recently built images",
+              "number": 4,
+              "started_at": "2026-11-16T08:57:53Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:53Z",
+              "conclusion": "success",
+              "name": "Scan built images with Trivy",
+              "number": 5,
+              "started_at": "2026-11-16T08:57:53Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:53Z",
+              "conclusion": "success",
+              "name": "Upload built image scan results",
+              "number": 6,
+              "started_at": "2026-11-16T08:57:53Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:53Z",
+              "conclusion": "success",
+              "name": "Post Log in to GitHub Container Registry",
+              "number": 11,
+              "started_at": "2026-11-16T08:57:53Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:54Z",
+              "conclusion": "success",
+              "name": "Post Checkout repository",
+              "number": 12,
+              "started_at": "2026-11-16T08:57:53Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:54Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 13,
+              "started_at": "2026-11-16T08:57:54Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/jobs/133191124784",
+          "workflow_name": "Security Scanning"
+        },
+        {
+          "check_run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/check-runs/133191124826",
+          "completed_at": "2026-11-16T08:59:08Z",
+          "conclusion": "success",
+          "created_at": "2026-11-16T08:57:48Z",
+          "head_branch": "main",
+          "head_sha": "091e018899cef091a4e4ad93d86258df3bba9629",
+          "html_url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43835539553/job/133191124826",
+          "id": 133191124826,
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "name": "Container Security Scan",
+          "node_id": "CR_kwDOPa4l-c8AAAAfAs9HWg",
+          "run_attempt": 1,
+          "run_id": 43835539553,
+          "run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/runs/43835539553",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions",
+          "runner_id": 1000011156,
+          "runner_name": "GitHub Actions 1000011156",
+          "started_at": "2026-11-16T08:57:51Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completed_at": "2026-11-16T08:57:58Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "started_at": "2026-11-16T08:57:52Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:04Z",
+              "conclusion": "success",
+              "name": "Checkout repository",
+              "number": 2,
+              "started_at": "2026-11-16T08:57:58Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:05Z",
+              "conclusion": "success",
+              "name": "Cache Trivy database",
+              "number": 3,
+              "started_at": "2026-11-16T08:58:04Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:20Z",
+              "conclusion": "success",
+              "name": "Run Trivy filesystem scan",
+              "number": 4,
+              "started_at": "2026-11-16T08:58:05Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:28Z",
+              "conclusion": "success",
+              "name": "Run Trivy Dockerfile scan",
+              "number": 5,
+              "started_at": "2026-11-16T08:58:20Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:37Z",
+              "conclusion": "success",
+              "name": "Run Trivy docker-compose scan",
+              "number": 6,
+              "started_at": "2026-11-16T08:58:28Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:45Z",
+              "conclusion": "success",
+              "name": "Upload Trivy filesystem SARIF report",
+              "number": 7,
+              "started_at": "2026-11-16T08:58:37Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:52Z",
+              "conclusion": "success",
+              "name": "Upload Trivy Dockerfile SARIF report",
+              "number": 8,
+              "started_at": "2026-11-16T08:58:45Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:58:59Z",
+              "conclusion": "success",
+              "name": "Upload Trivy docker-compose SARIF report",
+              "number": 9,
+              "started_at": "2026-11-16T08:58:52Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:01Z",
+              "conclusion": "success",
+              "name": "Archive container scan results",
+              "number": 10,
+              "started_at": "2026-11-16T08:58:59Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:01Z",
+              "conclusion": "success",
+              "name": "Post Upload Trivy docker-compose SARIF report",
+              "number": 13,
+              "started_at": "2026-11-16T08:59:01Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:01Z",
+              "conclusion": "success",
+              "name": "Post Upload Trivy Dockerfile SARIF report",
+              "number": 14,
+              "started_at": "2026-11-16T08:59:01Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:02Z",
+              "conclusion": "success",
+              "name": "Post Upload Trivy filesystem SARIF report",
+              "number": 15,
+              "started_at": "2026-11-16T08:59:01Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:02Z",
+              "conclusion": "success",
+              "name": "Post Run Trivy docker-compose scan",
+              "number": 16,
+              "started_at": "2026-11-16T08:59:02Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:02Z",
+              "conclusion": "success",
+              "name": "Post Run Trivy Dockerfile scan",
+              "number": 17,
+              "started_at": "2026-11-16T08:59:02Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:04Z",
+              "conclusion": "success",
+              "name": "Post Run Trivy filesystem scan",
+              "number": 18,
+              "started_at": "2026-11-16T08:59:02Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:04Z",
+              "conclusion": "success",
+              "name": "Post Cache Trivy database",
+              "number": 19,
+              "started_at": "2026-11-16T08:59:04Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:04Z",
+              "conclusion": "success",
+              "name": "Post Checkout repository",
+              "number": 20,
+              "started_at": "2026-11-16T08:59:04Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:04Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 21,
+              "started_at": "2026-11-16T08:59:04Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/jobs/133191124826",
+          "workflow_name": "Security Scanning"
+        },
+        {
+          "check_run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/check-runs/133191124866",
+          "completed_at": "2026-11-16T08:57:57Z",
+          "conclusion": "failure",
+          "created_at": "2026-11-16T08:57:48Z",
+          "head_branch": "main",
+          "head_sha": "091e018899cef091a4e4ad93d86258df3bba9629",
+          "html_url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43835539553/job/133191124866",
+          "id": 133191124866,
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "name": "Secret Detection",
+          "node_id": "CR_kwDOPa4l-c8AAAAfAs9Hgg",
+          "run_attempt": 1,
+          "run_id": 43835539553,
+          "run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/runs/43835539553",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions",
+          "runner_id": 1000011155,
+          "runner_name": "GitHub Actions 1000011155",
+          "started_at": "2026-11-16T08:57:50Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completed_at": "2026-11-16T08:57:51Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "started_at": "2026-11-16T08:57:50Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:52Z",
+              "conclusion": "success",
+              "name": "Checkout repository",
+              "number": 2,
+              "started_at": "2026-11-16T08:57:51Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:53Z",
+              "conclusion": "success",
+              "name": "Cache Gitleaks database",
+              "number": 3,
+              "started_at": "2026-11-16T08:57:52Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:55Z",
+              "conclusion": "failure",
+              "name": "Run Gitleaks secret detection",
+              "number": 4,
+              "started_at": "2026-11-16T08:57:53Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:55Z",
+              "conclusion": "skipped",
+              "name": "Upload Gitleaks SARIF report",
+              "number": 5,
+              "started_at": "2026-11-16T08:57:55Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:56Z",
+              "conclusion": "success",
+              "name": "Archive secret scan results",
+              "number": 6,
+              "started_at": "2026-11-16T08:57:55Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:56Z",
+              "conclusion": "skipped",
+              "name": "Post Cache Gitleaks database",
+              "number": 11,
+              "started_at": "2026-11-16T08:57:56Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:56Z",
+              "conclusion": "success",
+              "name": "Post Checkout repository",
+              "number": 12,
+              "started_at": "2026-11-16T08:57:56Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:57:56Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 13,
+              "started_at": "2026-11-16T08:57:56Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/jobs/133191124866",
+          "workflow_name": "Security Scanning"
+        },
+        {
+          "check_run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/check-runs/133191740534",
+          "completed_at": "2026-11-16T08:59:18Z",
+          "conclusion": "success",
+          "created_at": "2026-11-16T08:59:08Z",
+          "head_branch": "main",
+          "head_sha": "091e018899cef091a4e4ad93d86258df3bba9629",
+          "html_url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43835539553/job/133191740534",
+          "id": 133191740534,
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "name": "Security Gate",
+          "node_id": "CR_kwDOPa4l-c8AAAAfAtisdg",
+          "run_attempt": 1,
+          "run_id": 43835539553,
+          "run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/runs/43835539553",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions",
+          "runner_id": 1000011158,
+          "runner_name": "GitHub Actions 1000011158",
+          "started_at": "2026-11-16T08:59:10Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completed_at": "2026-11-16T08:59:11Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "started_at": "2026-11-16T08:59:10Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:12Z",
+              "conclusion": "success",
+              "name": "Checkout repository",
+              "number": 2,
+              "started_at": "2026-11-16T08:59:11Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:13Z",
+              "conclusion": "success",
+              "name": "Download scan results",
+              "number": 3,
+              "started_at": "2026-11-16T08:59:12Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:16Z",
+              "conclusion": "success",
+              "name": "Install jq for JSON processing",
+              "number": 4,
+              "started_at": "2026-11-16T08:59:13Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:16Z",
+              "conclusion": "success",
+              "name": "Evaluate security findings",
+              "number": 5,
+              "started_at": "2026-11-16T08:59:16Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:17Z",
+              "conclusion": "success",
+              "name": "Upload security gate results",
+              "number": 6,
+              "started_at": "2026-11-16T08:59:16Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:17Z",
+              "conclusion": "success",
+              "name": "Post Checkout repository",
+              "number": 12,
+              "started_at": "2026-11-16T08:59:17Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:17Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 13,
+              "started_at": "2026-11-16T08:59:17Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/jobs/133191740534",
+          "workflow_name": "Security Scanning"
+        },
+        {
+          "check_run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/check-runs/133191742080",
+          "completed_at": "2026-11-16T08:59:08Z",
+          "conclusion": "skipped",
+          "created_at": "2026-11-16T08:59:08Z",
+          "head_branch": "main",
+          "head_sha": "091e018899cef091a4e4ad93d86258df3bba9629",
+          "html_url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43835539553/job/133191742080",
+          "id": 133191742080,
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "name": "Generate Security Report",
+          "node_id": "CR_kwDOPa4l-c8AAAAfAtiygA",
+          "run_attempt": 1,
+          "run_id": 43835539553,
+          "run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/runs/43835539553",
+          "runner_group_id": null,
+          "runner_group_name": null,
+          "runner_id": null,
+          "runner_name": null,
+          "started_at": "2026-11-16T08:59:08Z",
+          "status": "completed",
+          "steps": [],
+          "url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/jobs/133191742080",
+          "workflow_name": "Security Scanning"
+        },
+        {
+          "check_run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/check-runs/133191819956",
+          "completed_at": "2026-11-16T08:59:26Z",
+          "conclusion": "success",
+          "created_at": "2026-11-16T08:59:19Z",
+          "head_branch": "main",
+          "head_sha": "091e018899cef091a4e4ad93d86258df3bba9629",
+          "html_url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43835539553/job/133191819956",
+          "id": 133191819956,
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "name": "Performance Monitoring",
+          "node_id": "CR_kwDOPa4l-c8AAAAfAtnitA",
+          "run_attempt": 1,
+          "run_id": 43835539553,
+          "run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/runs/43835539553",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions",
+          "runner_id": 1000011159,
+          "runner_name": "GitHub Actions 1000011159",
+          "started_at": "2026-11-16T08:59:21Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completed_at": "2026-11-16T08:59:22Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "started_at": "2026-11-16T08:59:22Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:23Z",
+              "conclusion": "success",
+              "name": "Calculate performance metrics",
+              "number": 2,
+              "started_at": "2026-11-16T08:59:23Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:23Z",
+              "conclusion": "success",
+              "name": "Cleanup old artifacts",
+              "number": 3,
+              "started_at": "2026-11-16T08:59:23Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:23Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 4,
+              "started_at": "2026-11-16T08:59:23Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/jobs/133191819956",
+          "workflow_name": "Security Scanning"
+        },
+        {
+          "check_run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/check-runs/133191820105",
+          "completed_at": "2026-11-16T08:59:26Z",
+          "conclusion": "success",
+          "created_at": "2026-11-16T08:59:19Z",
+          "head_branch": "main",
+          "head_sha": "091e018899cef091a4e4ad93d86258df3bba9629",
+          "html_url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43835539553/job/133191820105",
+          "id": 133191820105,
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "name": "Notification & Integration",
+          "node_id": "CR_kwDOPa4l-c8AAAAfAtnjSQ",
+          "run_attempt": 1,
+          "run_id": 43835539553,
+          "run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/runs/43835539553",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions",
+          "runner_id": 1000011160,
+          "runner_name": "GitHub Actions 1000011160",
+          "started_at": "2026-11-16T08:59:21Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completed_at": "2026-11-16T08:59:22Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "started_at": "2026-11-16T08:59:22Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:23Z",
+              "conclusion": "skipped",
+              "name": "Send notification on issues",
+              "number": 2,
+              "started_at": "2026-11-16T08:59:23Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:24Z",
+              "conclusion": "success",
+              "name": "Update external security dashboard",
+              "number": 3,
+              "started_at": "2026-11-16T08:59:23Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:24Z",
+              "conclusion": "skipped",
+              "name": "Generate security badge",
+              "number": 4,
+              "started_at": "2026-11-16T08:59:24Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:24Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 5,
+              "started_at": "2026-11-16T08:59:24Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/jobs/133191820105",
+          "workflow_name": "Security Scanning"
+        },
+        {
+          "check_run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/check-runs/133191880264",
+          "completed_at": "2026-11-16T08:59:31Z",
+          "conclusion": "success",
+          "created_at": "2026-11-16T08:59:27Z",
+          "head_branch": "main",
+          "head_sha": "091e018899cef091a4e4ad93d86258df3bba9629",
+          "html_url": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/43835539553/job/133191880264",
+          "id": 133191880264,
+          "labels": [
+            "ubuntu-latest"
+          ],
+          "name": "Cleanup Resources",
+          "node_id": "CR_kwDOPa4l-c8AAAAfAtrOSA",
+          "run_attempt": 1,
+          "run_id": 43835539553,
+          "run_url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/runs/43835539553",
+          "runner_group_id": 0,
+          "runner_group_name": "GitHub Actions",
+          "runner_id": 1000011161,
+          "runner_name": "GitHub Actions 1000011161",
+          "started_at": "2026-11-16T08:59:28Z",
+          "status": "completed",
+          "steps": [
+            {
+              "completed_at": "2026-11-16T08:59:29Z",
+              "conclusion": "success",
+              "name": "Set up job",
+              "number": 1,
+              "started_at": "2026-11-16T08:59:29Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:30Z",
+              "conclusion": "success",
+              "name": "Summary",
+              "number": 2,
+              "started_at": "2026-11-16T08:59:30Z",
+              "status": "completed"
+            },
+            {
+              "completed_at": "2026-11-16T08:59:30Z",
+              "conclusion": "success",
+              "name": "Complete job",
+              "number": 3,
+              "started_at": "2026-11-16T08:59:30Z",
+              "status": "completed"
+            }
+          ],
+          "url": "https://api.github.com/repos/luiscamaral/home-lab-inventory/actions/jobs/133191880264",
+          "workflow_name": "Security Scanning"
+        }
+      ],
+      "total_count": 10
+    },
+    "exit_code": 0,
+    "source": "GitHub Actions API; logs not read"
+  }
+]

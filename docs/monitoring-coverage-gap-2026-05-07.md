@@ -124,7 +124,28 @@ temperature/load metrics from BMC.
 | --- | -------------------------- | --------------------------------------------- |
 | E.1 | FreeSWITCH ESL exporter    | Already covered by `blackbox-tcp` on :5060    |
 | E.2 | Postfix exporter           | Not currently routing real alerts             |
-| E.3 | Managed-switch SNMP        | No managed switch in inventory                |
+| E.3 | Managed-switch SNMP        | ⚠️ Reclassified **required** — see F.1 (2026-06-18 `ix0` outage proved a managed/STP switch sits in the critical path) |
+
+## 🟣 Phase F — Observability resilience gaps (2026-06-18 `ix0` trunk outage RCA)
+
+The 2026-06-18 LAN-trunk outage
+(`docs/network/2026-06-18-lan-trunk-ix0-outage-rca.md`) showed the **cause** — a switch STP
+block on pfSense's `ix0` trunk — was **unobservable**, and that the monitoring stack sits
+**downstream of the failed trunk** (Prometheus/Thanos on SVR, Alertmanager-2 on HOME, and the
+snmp-exporter scrapes pfSense _across_ `ix0`). So it could not witness the cause, partly lost
+the symptom, and likely could not have alerted. Desired improvements:
+
+| #   | Item | Why (from the RCA) |
+| --- | ---- | ------------------ |
+| F.1 | **Managed-switch SNMP + syslog** — IF-MIB + BRIDGE-MIB STP (`dot1dStpTopChanges`, `dot1dStpPortState`) + switch syslog/traps | The trigger lived entirely on the switch; nothing recorded it. Supersedes E.3. |
+| F.2 | **Out-of-band reachability watcher** — independent of `ix0` (admin VLAN `igc3` / a Pi / ESP32 WiFi probes); ping each VLAN gateway; notify path that survives a LAN-trunk outage | Every collector was inside the blast radius — no independent witness existed. |
+| F.3 | **Out-of-band pfSense SNMP collector** (admin VLAN) | Today's snmp-exporter is on SVR and scrapes pfSense across `ix0`; during the outage the pfSense series went absent instead of showing RX→0. |
+| F.4 | **Alert: trunk RX-rate ≈ 0 while link up** (`ifHCInOctets` flat + `ifOperStatus` up) for `ix0`/`ix1`, delivered out-of-band | This exact signature would have flagged the islanding immediately. |
+| F.5 | **Notification path that survives a HOME/SVR island** — AM-1 (SVR `.59.27`) + AM-2 (HOME `.4.238`) were both islanded | Alert delivery routes through the failed segment + gateway. |
+
+> Paired infra (non-observability) follow-ups from the same RCA: LACP `lagg` `ix0`+`ix1` for
+> trunk redundancy, and removing the latent dual-VLAN-10 path
+> (`vlan10@ens1f0` + `vlan010@eno2`).
 
 ---
 

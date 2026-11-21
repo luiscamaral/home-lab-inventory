@@ -1,0 +1,718 @@
+#!/bin/sh
+# pfsync-dest: /usr/local/sbin/ix0-watchdog.sh
+# ix0-watchdog — recover the pfSense ix0 10G LAN trunk when the marginal optic
+# on ix0 <-> switch24a Te1/0/27 corrupts the pfSense-TX -> switch-RX strand.
+#
+# TWO failure modes, two detectors — they are NOT the same shape:
+#
+#   BLACKOUT  — the trunk stops passing LAN traffic entirely. Every probe target
+#               is unreachable. Detected with cheap 56 B pings. (Original 2026-06
+#               behaviour, unchanged.)
+#   DEGRADED  — the trunk stays UP and every host still answers, but 5-25% of
+#               LARGE frames are silently dropped. Bulk TCP collapses via Mathis
+#               (~1.22*MSS/(RTT*sqrt(p))): 20% loss at 14 ms RTT => ~2 Mbps, which
+#               presents to humans as "the internet is slow", not as an outage.
+#               Added 2026-08-17 after this mode ran undetected through three
+#               incidents (2026-08-05, -08-13, -08-16).
+#
+# Why DEGRADED needs its own probe: the blackout probe uses default 56 B pings,
+# and loss here is packet-size dependent (bit-error driven, so a longer frame is
+# more exposed). Measured 2026-08-16: 56 B = 0.0% while 1400 B = 24.4% on the
+# same path. A 56 B probe is structurally blind to this until it is nearly total.
+#
+# Why the bounce decision is made on measured LOSS and not on remote_faults:
+# the fault RATE is not proportional to loss (2026-08-13: 60/s -> 3-6% loss;
+# 2026-08-16: 13.3/s -> 24% loss). remote_faults is the right EARLY WARNING
+# (Prometheus alerts on it, from ix0_link_metrics.sh) but the wrong trigger for
+# anything that causes a 30-50 s outage. Measure what you care about.
+#
+# A bounce is a real outage: down/up drops EVERY LAN VLAN (HOME/IoT/SVR) for
+# ~30-50 s while the link re-inits and STP reconverges, and NFS stalls briefly.
+# So every trigger is heavily guarded: sustain window, cooldown, hard min-gap,
+# per-day cap, and — for DEGRADED — verification that the bounce actually helped,
+# with exponential backoff and eventual self-disarm when it stops helping.
+#
+# Self-disarm matters, but "did not fully restore" is NOT "did not help". The
+# optic is decaying (2026-08-13 a bounce reached 0.0% loss; by 2026-08-17 the
+# best was 6%), so an absolute-only success test would eventually mark every
+# bounce a failure and disarm the watchdog exactly when it is the only thing
+# keeping the LAN usable. Success is therefore "fully restored OR materially
+# improved" — see SUCCESS_IMPROVE_FACTOR. Disarm is reserved for bounces that
+# genuinely change nothing (observed: 41% -> 43%), where continuing would be
+# pure outage for no benefit.
+#
+# Modes: start | stop | pause | resume | status | check | testbounce | reset | run(internal)
+#   pause [reason] / resume — persistent no-bounce switch (survives reboot and the
+#                keepalive cron). USE THIS before rack work, not `stop`.
+#   testbounce [--force] — deliberate on-demand bounce with before/after
+#                measurement (costs a ~30-50 s LAN outage). Refuses on an
+#                already-healthy link without --force: a draw can make things
+#                far worse (observed 2026-08-17: 2% -> 56%; 2026-10-24: the
+#                link never came back -- NO CARRIER until a physical reseat).
+#                Holds the daemon off for the whole test (HOLD_FILE).
+#   reset — clear a self-disarm (after the optic is replaced) and re-arm.
+#
+# Coordination (added 2026-10-24 after the daemon bounced 3 min into a manual
+# testbounce): every bounce, by any process, stamps FLAP_FILE; the daemon adopts
+# external bounces into its rate limiting. testbounce also sets HOLD_FILE so the
+# daemon cannot bounce during its settle window.
+#
+# Blackout bounces are BOUNDED (added 2026-10-24): before, they ignored DISARMED
+# and repeated every MIN_FLAP_GAP forever on a dead link. Now a blackout streak
+# (bounces with no recovery in between) stops at BLACKOUT_MAX_STREAK, or at
+# BLACKOUT_MAX_STREAK_NOCARRIER when the port has no carrier -- re-bouncing a
+# no-carrier port only interrupts physical recovery.
+# Disarming (DISARMED) still only gates DEGRADED bounces: a full blackout always
+# gets its bounded recovery attempts.
+#
+# Hardware runbook (the ACTUAL fix — replace the pfSense-side OEM optic):
+#   docs/network/2026-06-28-ix0-optic-flap-handoff.md
+# Before rack work:  ix0-watchdog.sh pause "rack work"   (undo: ix0-watchdog.sh resume)
+# NOT `stop`: the every-minute keepalive cron restarts the daemon within 60 s.
+#
+# IaC: installed via scripts/sync-pfsense-scripts.py --apply. Keepalive cron
+# (config.xml) is declared in pfsense/cron-jobs.yml; boot start via the rc.d
+# hook pfsense/scripts/ix0watchdog-rcd.sh.
+set -u
+
+IFACE="ix0"
+
+# --- BLACKOUT detector (all targets unreachable) ---
+TARGETS="192.168.48.44 192.168.0.50 192.168.1.50"   # dockermaster(SVR), NAS(HOME), NAS-bond
+INTERVAL=30          # seconds between probes
+THRESHOLD=6          # consecutive all-down probes before a flap (6 x 30s = 3 min)
+
+# --- DEGRADED detector (large-frame loss while still "up") ---
+LOSS_TARGETS="192.168.48.44 192.168.48.45"  # dockermaster, ds-1 — both behind the switch
+LOSS_PROBE_EVERY=2   # run the loss probe every Nth INTERVAL (2 x 30s = every 60s)
+LOSS_PKTS=100        # packets per target per probe (~2 s at -i 0.02)
+LOSS_SIZE=1400       # MUST be large; 56 B is blind to this failure mode
+LOSS_TRIGGER_PCT=10  # MEAN loss across targets that counts as degraded
+LOSS_MIN_TARGETS=2   # minimum measurable targets before we trust the mean
+# Sustain rule is "N of the last M probes", NOT N consecutive. Observed
+# 2026-08-17: loss oscillates 5-24% around the threshold, so a strict
+# consecutive counter kept resetting on a single dip (logged 1/3, then
+# "degraded cleared" at 7%/8%) and would rarely fire during a genuinely bad
+# stretch. A sliding window tolerates the oscillation without lowering the bar.
+DEGRADED_THRESHOLD=3 # degraded probes required within the window
+DEGRADED_WINDOW=5    # window size (5 x 60s = last ~5 min)
+DEGRADED_MIN_GAP=7200    # 2 h between degraded-triggered bounces (base, before backoff)
+# Daily cap. Originally 3, on the assumption bounces mostly failed. Evidence from
+# 2026-08-17/18 says otherwise -- 46->6, 23->2, 53->24->2 and 19->1 all worked,
+# and the optic decays back to ~20% loss roughly every 2 h. At 3/day the LAN sat
+# degraded for most of the day with the watchdog logging "daily cap reached" and
+# refusing to act. 8 matches the observed decay rate; each bounce costs ~30-50 s.
+DEGRADED_MAX_PER_DAY=8   # hard daily cap on degraded-triggered bounces
+SETTLE_SECS=180      # wait after a bounce before judging whether it worked
+# A bounce counts as successful if it FULLY restored the link (mean <= this)...
+SUCCESS_LOSS_PCT=2
+# ...OR if it materially helped: mean improved by at least this factor, starting
+# from a genuinely bad state. Measured 2026-08-17 across three bounces:
+#   46% -> 6%   (7.7x, hugely valuable)      scored FAILED under absolute-only
+#   ?   -> 8%   (large, kept the LAN usable) scored FAILED under absolute-only
+#   41% -> 43%  (no help at all)             correctly FAILED
+# As the optic decays a bounce may never reach 2% again, so an absolute-only
+# test eventually calls every bounce a failure -- which doubles the backoff and
+# self-disarms the watchdog precisely when it is the only thing keeping the LAN
+# usable. "Did it help?" is the question that matters; "is it perfect?" is not.
+SUCCESS_IMPROVE_FACTOR=3
+MAX_CONSEC_FAILURES=2    # consecutive failed bounces before self-disarm
+# A draw that leaves the link WORSE gets an immediate re-draw rather than a
+# backoff. Bounded so a decaying optic cannot turn this into an outage loop;
+# still subject to DEGRADED_MAX_PER_DAY.
+MAX_RECOVERY_DRAWS=3
+
+# --- shared guards ---
+DOWN_SECS=5          # hold ix0 down this long during a flap
+COOLDOWN=180         # pause probing this long right after a flap
+MIN_FLAP_GAP=600     # hard floor between ANY two flaps (10 min) — anti flap-storm
+
+PIDFILE="/var/run/ix0-watchdog.pid"
+LOG="/var/log/ix0-watchdog.log"
+STATE="/var/db/ix0-watchdog.state"
+NOBOUNCE_FLAG="/var/db/ix0-watchdog.nobounce"   # touch to keep metrics but never bounce
+FLAP_FILE="/var/db/ix0-watchdog.lastflap"     # epoch of the latest bounce by ANY process
+HOLD_FILE="/var/run/ix0-watchdog.hold"         # epoch until which the daemon must not bounce
+                                                # (/var/run: cleared on reboot, by design)
+
+# --- blackout bounce bounds (2026-10-24) ---
+BLACKOUT_MAX_STREAK=2            # blackout bounces without recovery in between
+BLACKOUT_MAX_STREAK_NOCARRIER=1  # ...when ix0 reports no carrier
+BLACKOUT_MAX_PER_DAY=6           # hard daily cap on blackout bounces
+GUARD_PKTS=1000                  # per-target sample for testbounce's precise report
+METRICS_DIR="/var/tmp/node_exporter"
+METRICS="$METRICS_DIR/ix0_watchdog.prom"
+
+# --- persisted counters (survive daemon restarts; reset on reboot is fine,
+#     Prometheus handles counter resets) ---
+BOUNCES_BLACKOUT=0
+BOUNCES_DEGRADED=0
+LAST_BOUNCE_TS=0
+LAST_BOUNCE_RESULT=-1    # 1=succeeded, 0=failed, -1=unknown/none yet
+CONSEC_FAILURES=0
+DISARMED=0
+DAY_STAMP=""
+DAY_BOUNCES=0
+BLACKOUT_STREAK=0
+DAY_BLACKOUTS=0
+
+log() {
+  echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$LOG"
+  logger -t ix0-watchdog -p daemon.notice "$1" 2>/dev/null
+}
+running() { [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null; }
+
+# Single-instance guard. `start` from the rc.d hook and the every-minute
+# keepalive cron can race at boot and leave TWO daemons (seen 2026-10-25), each
+# with its own in-memory counters -- which defeats every rate limit. A daemon
+# that finds PIDFILE naming a different LIVE process steps down.
+# $1 = own pid. Returns 0 = keep running, 1 = superseded.
+owns_pidfile() {
+  p=$(read_epoch "$PIDFILE")          # numeric read; 0 if missing/garbage
+  [ "$p" -eq 0 ] && return 0          # not written yet (start writes it after fork)
+  [ "$p" -eq "$1" ] && return 0
+  kill -0 "$p" 2>/dev/null && return 1
+  return 0                            # stale pidfile: owner is dead
+}
+link_status() { /sbin/ifconfig "$IFACE" 2>/dev/null | grep -q "status: active" && echo up || echo down; }
+
+load_state() {
+  [ -r "$STATE" ] || return 0
+  # shellcheck disable=SC1090
+  . "$STATE" 2>/dev/null || true
+}
+save_state() {
+  mkdir -p "$(dirname "$STATE")" 2>/dev/null
+  cat > "$STATE" <<EOF
+BOUNCES_BLACKOUT=$BOUNCES_BLACKOUT
+BOUNCES_DEGRADED=$BOUNCES_DEGRADED
+LAST_BOUNCE_TS=$LAST_BOUNCE_TS
+LAST_BOUNCE_RESULT=$LAST_BOUNCE_RESULT
+CONSEC_FAILURES=$CONSEC_FAILURES
+DISARMED=$DISARMED
+DAY_STAMP="$DAY_STAMP"
+DAY_BOUNCES=$DAY_BOUNCES
+BLACKOUT_STREAK=$BLACKOUT_STREAK
+DAY_BLACKOUTS=$DAY_BLACKOUTS
+EOF
+}
+
+read_epoch() {   # $1=file -> integer epoch, 0 if missing/garbage
+  v=$(head -1 "$1" 2>/dev/null)
+  case "$v" in ''|*[!0-9]*) v=0 ;; esac
+  echo "$v"
+}
+
+# Adopt a bounce performed by another process (testbounce, operator) into the
+# daemon's rate limiting. Uses globals last_flap/LAST_BOUNCE_TS/fails/hist.
+# Returns 0 if an external bounce was adopted.
+sync_external_flap() {
+  ext=$(read_epoch "$FLAP_FILE")
+  [ "$ext" -gt "$last_flap" ] || return 1
+  log "external bounce detected ($(( $(date +%s) - ext ))s ago) — adopting it: counters reset, MIN_FLAP_GAP runs from it"
+  last_flap="$ext"
+  [ "$ext" -gt "$LAST_BOUNCE_TS" ] && LAST_BOUNCE_TS="$ext"
+  fails=0; hist=""
+  return 0
+}
+
+# Blackout bounce decision. $1=now $2=last_flap $3=link(up|down).
+# Echoes "<keyword> <human message>"; keyword is one of:
+#   bounce | nobounce | hold | giveup | daycap | ratelimit
+blackout_decide() {
+  now_="$1"; lf_="$2"; link_="$3"
+  max_="$BLACKOUT_MAX_STREAK"
+  [ "$link_" = down ] && max_="$BLACKOUT_MAX_STREAK_NOCARRIER"
+  hold_=$(read_epoch "$HOLD_FILE")
+  if [ -f "$NOBOUNCE_FLAG" ]; then
+    echo "nobounce nobounce flag set"
+  elif [ "$now_" -lt "$hold_" ]; then
+    echo "hold held by a manual operation for another $((hold_ - now_))s"
+  elif [ "$BLACKOUT_STREAK" -ge "$max_" ]; then
+    echo "giveup $BLACKOUT_STREAK blackout bounce(s) without recovery (max $max_ with link=$link_)"
+  elif [ "$DAY_BLACKOUTS" -ge "$BLACKOUT_MAX_PER_DAY" ]; then
+    echo "daycap daily blackout cap reached ($DAY_BLACKOUTS/$BLACKOUT_MAX_PER_DAY)"
+  elif [ $((now_ - lf_)) -lt "$MIN_FLAP_GAP" ]; then
+    echo "ratelimit rate-limited: last flap $((now_ - lf_))s ago (< ${MIN_FLAP_GAP}s)"
+  else
+    echo "bounce ok"
+  fi
+}
+
+# --- probes -----------------------------------------------------------------
+
+probe() {   # BLACKOUT: 0 = at least one target reachable (healthy); 1 = ALL unreachable
+  for t in $TARGETS; do
+    /sbin/ping -c1 -t1 "$t" >/dev/null 2>&1 && return 0
+  done
+  return 1
+}
+
+measure_loss_precise() {   # $1=target $2=count -> loss percent with decimals, or -1
+  out=$(/sbin/ping -c "$2" -i 0.005 -s "$LOSS_SIZE" -q -t $(( $2 / 200 + 5 )) "$1" 2>/dev/null)
+  pct=$(printf '%s\n' "$out" | sed -n 's/.*, \([0-9.]*\)% packet loss.*/\1/p' | head -1)
+  echo "${pct:--1}"
+}
+
+remote_fault_rate() {   # remote_faults per second over a 10 s window
+  a=$(sysctl -n dev.ix.0.mac_stats.remote_faults 2>/dev/null || echo 0)
+  sleep 10
+  b=$(sysctl -n dev.ix.0.mac_stats.remote_faults 2>/dev/null || echo 0)
+  echo $(( (b - a) / 10 ))
+}
+
+measure_loss() {   # $1=target -> integer loss percent, or -1 if unmeasurable
+  out=$(/sbin/ping -c "$LOSS_PKTS" -i 0.02 -s "$LOSS_SIZE" -q -t 5 "$1" 2>/dev/null)
+  pct=$(printf '%s\n' "$out" | sed -n 's/.*, \([0-9.]*\)% packet loss.*/\1/p' | head -1)
+  [ -n "$pct" ] || { echo -1; return 0; }
+  awk -v p="$pct" 'BEGIN{printf "%d", p + 0.5}'
+}
+
+LOSS_KV=""        # "target=pct target=pct" from the most recent sweep
+WORST_LOSS=-1
+LOSS_MEAN=-1      # mean across measurable targets (-1 = not enough data)
+LOSS_MIN=-1       # best target, used as the sick-host guard
+LOSS_N=0          # how many targets were measurable
+sweep_loss() {    # measure every LOSS_TARGET; sets LOSS_KV/WORST_LOSS/LOSS_MEAN/LOSS_MIN/LOSS_N
+  LOSS_KV=""; WORST_LOSS=-1; LOSS_MEAN=-1; LOSS_MIN=-1; LOSS_N=0
+  sum=0
+  for t in $LOSS_TARGETS; do
+    l=$(measure_loss "$t")
+    LOSS_KV="$LOSS_KV $t=$l"
+    [ "$l" -lt 0 ] && continue
+    [ "$l" -gt "$WORST_LOSS" ] && WORST_LOSS="$l"
+    if [ "$LOSS_MIN" -lt 0 ] || [ "$l" -lt "$LOSS_MIN" ]; then LOSS_MIN="$l"; fi
+    sum=$((sum + l)); LOSS_N=$((LOSS_N + 1))
+  done
+  LOSS_KV="${LOSS_KV# }"
+  [ "$LOSS_N" -gt 0 ] && LOSS_MEAN=$((sum / LOSS_N))
+}
+
+degraded() {      # 0 = degraded; 1 = healthy. Reads what sweep_loss computed.
+  # AGGREGATE, then threshold -- do NOT threshold each target and count.
+  # Measured 2026-08-17 with true loss ~10%: per-target estimates over 100
+  # packets have a standard error of ~3% (sqrt(p(1-p)/n)), so they swing +-6%.
+  # Requiring BOTH noisy estimates to independently clear 10% fired 0 times in
+  # 6 paired samples (.44=16,9,6,15,12,14 vs .45=9,11,10,7,7,8) even though the
+  # trunk was plainly degraded -- the automation was effectively inert.
+  # Averaging doubles the effective sample and tests what we actually care
+  # about: "is the trunk dropping ~10% of large frames right now".
+  [ "$LOSS_N" -ge "$LOSS_MIN_TARGETS" ] || return 1   # need corroboration
+  [ "$LOSS_MEAN" -ge "$LOSS_TRIGGER_PCT" ] || return 1
+  # Sick-host guard, replacing what the count-based rule gave us: one broken
+  # target must not drag the mean over on its own. If the trunk is genuinely
+  # bad every target sees it, so require the BEST target to be at least half
+  # the threshold. (100% + 0% averages to 50% but min=0 -> correctly rejected.)
+  [ "$LOSS_MIN" -ge $((LOSS_TRIGGER_PCT / 2)) ] || return 1
+  return 0
+}
+
+# --- metrics ----------------------------------------------------------------
+
+write_metrics() {
+  mkdir -p "$METRICS_DIR" 2>/dev/null
+  tmp="$(mktemp "$METRICS_DIR/ix0_watchdog.XXXXXX")" || return 0
+  {
+    echo "# HELP pfsense_ix0_watchdog_up ix0-watchdog daemon is running"
+    echo "# TYPE pfsense_ix0_watchdog_up gauge"
+    echo "pfsense_ix0_watchdog_up{device=\"$IFACE\"} 1"
+    echo "# HELP pfsense_ix0_watchdog_last_run_timestamp_seconds Heartbeat of the watchdog loop (alert on staleness)"
+    echo "# TYPE pfsense_ix0_watchdog_last_run_timestamp_seconds gauge"
+    echo "pfsense_ix0_watchdog_last_run_timestamp_seconds{device=\"$IFACE\"} $(date +%s)"
+    echo "# HELP pfsense_ix0_large_frame_loss_percent Measured packet loss at ${LOSS_SIZE}B payload (the size bulk TCP uses)"
+    echo "# TYPE pfsense_ix0_large_frame_loss_percent gauge"
+    for kv in $LOSS_KV; do
+      t="${kv%%=*}"; l="${kv#*=}"
+      [ "$l" -ge 0 ] && echo "pfsense_ix0_large_frame_loss_percent{device=\"$IFACE\",target=\"$t\",size=\"$LOSS_SIZE\"} $l"
+    done
+    if [ "$LOSS_MEAN" -ge 0 ]; then
+      echo "# HELP pfsense_ix0_large_frame_loss_mean_percent Mean large-frame loss across probe targets (this is what the auto-bounce decides on)"
+      echo "# TYPE pfsense_ix0_large_frame_loss_mean_percent gauge"
+      echo "pfsense_ix0_large_frame_loss_mean_percent{device=\"$IFACE\",size=\"$LOSS_SIZE\"} $LOSS_MEAN"
+    fi
+    echo "# HELP pfsense_ix0_watchdog_bounces_total Link bounces performed by the watchdog, by trigger"
+    echo "# TYPE pfsense_ix0_watchdog_bounces_total counter"
+    echo "pfsense_ix0_watchdog_bounces_total{device=\"$IFACE\",reason=\"blackout\"} $BOUNCES_BLACKOUT"
+    echo "pfsense_ix0_watchdog_bounces_total{device=\"$IFACE\",reason=\"degraded\"} $BOUNCES_DEGRADED"
+    echo "# HELP pfsense_ix0_watchdog_last_bounce_timestamp_seconds Epoch of the most recent watchdog bounce"
+    echo "# TYPE pfsense_ix0_watchdog_last_bounce_timestamp_seconds gauge"
+    echo "pfsense_ix0_watchdog_last_bounce_timestamp_seconds{device=\"$IFACE\"} $LAST_BOUNCE_TS"
+    echo "# HELP pfsense_ix0_watchdog_last_bounce_succeeded Did the last degraded bounce restore the link? 1=yes 0=no -1=unknown"
+    echo "# TYPE pfsense_ix0_watchdog_last_bounce_succeeded gauge"
+    echo "pfsense_ix0_watchdog_last_bounce_succeeded{device=\"$IFACE\"} $LAST_BOUNCE_RESULT"
+    echo "# HELP pfsense_ix0_watchdog_consecutive_failures Consecutive degraded bounces that did NOT restore the link"
+    echo "# TYPE pfsense_ix0_watchdog_consecutive_failures gauge"
+    echo "pfsense_ix0_watchdog_consecutive_failures{device=\"$IFACE\"} $CONSEC_FAILURES"
+    echo "# HELP pfsense_ix0_watchdog_disarmed Watchdog gave up auto-bouncing (bounces no longer help -> optic replacement required)"
+    echo "# TYPE pfsense_ix0_watchdog_disarmed gauge"
+    echo "pfsense_ix0_watchdog_disarmed{device=\"$IFACE\"} $DISARMED"
+    echo "# HELP pfsense_ix0_watchdog_blackout_streak Blackout bounces since the link last passed traffic"
+    echo "# TYPE pfsense_ix0_watchdog_blackout_streak gauge"
+    echo "pfsense_ix0_watchdog_blackout_streak{device=\"$IFACE\"} $BLACKOUT_STREAK"
+    gaveup=0
+    if [ "$BLACKOUT_STREAK" -ge "$BLACKOUT_MAX_STREAK" ] \
+       || { [ "$BLACKOUT_STREAK" -ge "$BLACKOUT_MAX_STREAK_NOCARRIER" ] && [ "$(link_status)" = down ]; }; then
+      gaveup=1
+    fi
+    echo "# HELP pfsense_ix0_watchdog_blackout_gave_up Watchdog stopped blackout bounces; physical intervention required"
+    echo "# TYPE pfsense_ix0_watchdog_blackout_gave_up gauge"
+    echo "pfsense_ix0_watchdog_blackout_gave_up{device=\"$IFACE\"} $gaveup"
+    paused=0; [ -f "$NOBOUNCE_FLAG" ] && paused=1
+    echo "# HELP pfsense_ix0_watchdog_paused Operator pause (nobounce flag) is set"
+    echo "# TYPE pfsense_ix0_watchdog_paused gauge"
+    echo "pfsense_ix0_watchdog_paused{device=\"$IFACE\"} $paused"
+  } > "$tmp" || { rm -f "$tmp"; return 0; }
+  # Explicit rm on every path rather than a trap: this runs inside a long-lived
+  # daemon, where an EXIT trap would not fire until the daemon itself exits.
+  if mv "$tmp" "$METRICS" 2>/dev/null; then
+    chmod 644 "$METRICS" 2>/dev/null
+  else
+    rm -f "$tmp"
+  fi
+  return 0
+}
+
+bounce_succeeded() {  # $1 = pre-bounce mean; uses LOSS_MEAN/LOSS_N (post-bounce)
+  [ "$LOSS_N" -ge "$LOSS_MIN_TARGETS" ] || return 1
+  [ "$LOSS_MEAN" -ge 0 ] || return 1
+  # Fully restored.
+  [ "$LOSS_MEAN" -le "$SUCCESS_LOSS_PCT" ] && return 0
+  # Or materially improved from a genuinely bad starting point. Guarding on the
+  # trigger threshold stops noise around a healthy link counting as a "win".
+  before="$1"
+  [ "$before" -ge "$LOSS_TRIGGER_PCT" ] || return 1
+  [ $((LOSS_MEAN * SUCCESS_IMPROVE_FACTOR)) -le "$before" ] && return 0
+  return 1
+}
+
+# --- actions ----------------------------------------------------------------
+
+do_bounce() {   # $1 = reason label
+  log "ACTION: bouncing $IFACE (reason=$1, link=$(link_status))"
+  # Critical section: a signal (stop, dropped SSH session) between down and up
+  # would leave every LAN VLAN down with nothing left to bring it back.
+  trap '' HUP INT TERM
+  /sbin/ifconfig "$IFACE" down; sleep "$DOWN_SECS"; /sbin/ifconfig "$IFACE" up
+  trap - HUP INT TERM
+  LAST_BOUNCE_TS=$(date +%s)
+  echo "$LAST_BOUNCE_TS" > "$FLAP_FILE" 2>/dev/null
+  log "ACTION: $IFACE bounced (reason=$1); cooldown ${COOLDOWN}s"
+}
+
+roll_day() {    # reset the per-day cap when the date changes
+  today=$(date +%Y%m%d)
+  if [ "$DAY_STAMP" != "$today" ]; then DAY_STAMP="$today"; DAY_BOUNCES=0; DAY_BLACKOUTS=0; fi
+}
+
+# Effective gap between degraded bounces, doubled per consecutive failure so a
+# decaying optic backs the automation off instead of looping outages.
+degraded_gap() {
+  gap="$DEGRADED_MIN_GAP"
+  i=0
+  while [ "$i" -lt "$CONSEC_FAILURES" ]; do gap=$((gap * 2)); i=$((i + 1)); done
+  echo "$gap"
+}
+
+handle_degraded_bounce() {
+  # A bounce is a LOTTERY, not a repair. Each re-negotiation trains the link to
+  # a random quality. Measured 2026-08-17 across six draws on this optic:
+  #   46% -> 6%    big win        23% -> 2%    big win
+  #   53% -> 24%   partial        35% -> 13%   partial
+  #   41% -> 43%   no change       2% -> 56%   CATASTROPHIC
+  # So a single draw is not a verdict on whether bouncing helps -- and crucially
+  # a draw can leave the link far WORSE than it started. Backing off for hours
+  # after that would strand the LAN in a bad state we ourselves created, which
+  # is the worst possible response. Re-draw instead, exactly as the manual
+  # recovery did on 2026-08-17 (53% -> 24% -> 2%, good after two draws).
+  first_mean="$LOSS_MEAN"
+  before_mean="$LOSS_MEAN"
+  draw=0
+  while :; do
+    draw=$((draw + 1))
+    do_bounce degraded
+    BOUNCES_DEGRADED=$((BOUNCES_DEGRADED + 1))
+    DAY_BOUNCES=$((DAY_BOUNCES + 1))
+    save_state; write_metrics
+
+    log "verifying: settling ${SETTLE_SECS}s before re-measuring loss (draw ${draw}/${MAX_RECOVERY_DRAWS})"
+    sleep "$SETTLE_SECS"
+    sweep_loss
+
+    if bounce_succeeded "$before_mean"; then
+      LAST_BOUNCE_RESULT=1; CONSEC_FAILURES=0
+      log "RESULT: bounce SUCCEEDED — mean ${first_mean}% -> ${LOSS_MEAN}% after ${draw} draw(s) [$LOSS_KV]"
+      break
+    fi
+
+    # Did this draw leave us WORSE than we started? If so the right response is
+    # another draw, not a multi-hour backoff -- we broke it, we fix it.
+    if [ "$LOSS_MEAN" -gt "$before_mean" ] && [ "$draw" -lt "$MAX_RECOVERY_DRAWS" ] \
+       && [ "$DAY_BOUNCES" -lt "$DEGRADED_MAX_PER_DAY" ]; then
+      log "RESULT: draw ${draw} made it WORSE (${before_mean}% -> ${LOSS_MEAN}%) — re-drawing immediately [$LOSS_KV]"
+      before_mean="$LOSS_MEAN"
+      save_state; write_metrics
+      continue
+    fi
+
+    # No material improvement and not worse: bouncing genuinely is not helping.
+    LAST_BOUNCE_RESULT=0; CONSEC_FAILURES=$((CONSEC_FAILURES + 1))
+    log "RESULT: bounce FAILED — mean ${first_mean}% -> ${LOSS_MEAN}% after ${draw} draw(s), no material improvement [$LOSS_KV]; consecutive failures=$CONSEC_FAILURES"
+    if [ "$CONSEC_FAILURES" -ge "$MAX_CONSEC_FAILURES" ]; then
+      DISARMED=1
+      log "DISARM: $CONSEC_FAILURES consecutive failed bounces — auto-bounce DISABLED. Bouncing no longer restores this link; the optic must be replaced (docs/network/2026-08-17-ix0-optic-replacement-procedure.md). Re-arm with: ix0-watchdog.sh reset"
+    fi
+    break
+  done
+  save_state; write_metrics
+}
+
+run() {
+  load_state; roll_day
+  log "started (iface=$IFACE blackout='${THRESHOLD}x${INTERVAL}s' degraded='mean >=${LOSS_TRIGGER_PCT}% @${LOSS_SIZE}B over >=${LOSS_MIN_TARGETS} targets, ${DEGRADED_THRESHOLD} of last ${DEGRADED_WINDOW} probes' min_gap=${MIN_FLAP_GAP}s degraded_gap=$(degraded_gap)s cap=${DEGRADED_MAX_PER_DAY}/day disarmed=$DISARMED)"
+  fails=0; degraded_count=0; tick=0; hist=""; gaveup_logged=0
+  # Warm-up guard: treat daemon start as if we had just flapped, so starting (or
+  # the cron keepalive restarting) the daemon into an ALREADY-degraded link can
+  # not bounce immediately — MIN_FLAP_GAP must elapse first. Deploying this into
+  # a live fault must not itself cause an unapproved outage.
+  last_flap=$(date +%s)
+
+  while :; do
+    if ! owns_pidfile "$$"; then
+      log "another instance owns $PIDFILE (pid $(cat "$PIDFILE" 2>/dev/null)) — this one ($$) exiting"
+      exit 0
+    fi
+    tick=$((tick + 1))
+    roll_day
+    sync_external_flap || true
+
+    # ---- BLACKOUT ----
+    if probe; then
+      [ "$fails" -gt 0 ] && log "recovered after ${fails} all-down probe(s)"
+      fails=0; gaveup_logged=0
+      if [ "$BLACKOUT_STREAK" -gt 0 ]; then
+        log "link passing traffic again — blackout streak ($BLACKOUT_STREAK) reset"
+        BLACKOUT_STREAK=0; save_state
+      fi
+    else
+      fails=$((fails + 1))
+      link=$(link_status)
+      log "all LAN targets unreachable (${fails}/${THRESHOLD}, link=$link)"
+      if [ "$fails" -ge "$THRESHOLD" ]; then
+        decision=$(blackout_decide "$(date +%s)" "$last_flap" "$link")
+        case "${decision%% *}" in
+          bounce)
+            BLACKOUT_STREAK=$((BLACKOUT_STREAK + 1))
+            DAY_BLACKOUTS=$((DAY_BLACKOUTS + 1))
+            do_bounce "blackout#${BLACKOUT_STREAK}"
+            BOUNCES_BLACKOUT=$((BOUNCES_BLACKOUT + 1))
+            last_flap="$LAST_BOUNCE_TS"; fails=0; degraded_count=0; hist=""
+            save_state; write_metrics
+            sleep "$COOLDOWN"
+            continue
+            ;;
+          giveup)
+            # Log once per streak, not every 30 s.
+            if [ "$gaveup_logged" -eq 0 ]; then
+              log "GIVE UP: ${decision#* } — NOT bouncing again until the link passes traffic. Physical intervention required (reseat/replace: docs/network/2026-08-17-ix0-optic-replacement-procedure.md)"
+              gaveup_logged=1
+            fi
+            ;;
+          *)
+            log "${decision#* } — NOT bouncing (blackout)"
+            ;;
+        esac
+      fi
+      write_metrics
+      sleep "$INTERVAL"
+      continue          # link is blacked out; a loss probe would be meaningless
+    fi
+
+    # ---- DEGRADED (every LOSS_PROBE_EVERY ticks) ----
+    if [ $((tick % LOSS_PROBE_EVERY)) -eq 0 ]; then
+      sweep_loss
+      # Sliding window of the last DEGRADED_WINDOW verdicts, newest on the right.
+      if degraded; then hist="${hist}1"; else hist="${hist}0"; fi
+      hist=$(printf '%s' "$hist" | tail -c "$DEGRADED_WINDOW")
+      degraded_count=$(printf '%s' "$hist" | tr -cd '1' | wc -c | tr -d ' ')
+      if degraded; then
+        log "degraded: mean ${LOSS_MEAN}% >= ${LOSS_TRIGGER_PCT}% (${degraded_count}/${DEGRADED_THRESHOLD} in last ${DEGRADED_WINDOW} probes) [$LOSS_KV]"
+        if [ "$degraded_count" -ge "$DEGRADED_THRESHOLD" ]; then
+          now=$(date +%s); gap=$(degraded_gap)
+          # Every suppressed path clears the window so we re-observe from
+          # scratch rather than re-triggering on the next single bad probe.
+          if [ "$DISARMED" -eq 1 ]; then
+            log "DISARMED — not bouncing; replace the optic (worst loss ${WORST_LOSS}%)"
+            hist=""
+          elif [ -f "$NOBOUNCE_FLAG" ]; then
+            log "nobounce flag set — NOT bouncing (degraded, worst ${WORST_LOSS}%)"
+            hist=""
+          elif [ "$now" -lt "$(read_epoch "$HOLD_FILE")" ]; then
+            log "held by a manual operation — NOT bouncing (degraded)"
+            hist=""
+          elif [ "$DAY_BOUNCES" -ge "$DEGRADED_MAX_PER_DAY" ]; then
+            log "daily cap reached ($DAY_BOUNCES/${DEGRADED_MAX_PER_DAY}) — NOT bouncing"
+            hist=""
+          elif [ $((now - last_flap)) -lt "$MIN_FLAP_GAP" ] || [ $((now - LAST_BOUNCE_TS)) -lt "$gap" ]; then
+            log "rate-limited: last bounce $((now - LAST_BOUNCE_TS))s ago (< ${gap}s effective gap) — NOT bouncing"
+            hist=""
+          else
+            handle_degraded_bounce
+            last_flap=$(date +%s); hist=""
+            sleep "$COOLDOWN"
+            continue
+          fi
+        fi
+      elif [ "$degraded_count" -gt 0 ]; then
+        # Below threshold on THIS probe, but the window still holds recent bad
+        # ones -- report it rather than looking silently healthy.
+        log "below threshold this probe (mean ${LOSS_MEAN}%), window still ${degraded_count}/${DEGRADED_THRESHOLD} [$LOSS_KV]"
+      fi
+      write_metrics
+    fi
+
+    sleep "$INTERVAL"
+  done
+}
+
+# Unit tests source this file with IX0WD_LIB=1 to exercise the functions above
+# without running a mode (tests/pfsense/test_ix0_watchdog.sh).
+if [ "${IX0WD_LIB:-0}" = 1 ]; then return 0 2>/dev/null || exit 0; fi
+
+case "${1:-}" in
+  start)
+    running && exit 0
+    nohup "$0" run >/dev/null 2>&1 &
+    echo $! > "$PIDFILE"
+    ;;
+  run)    run ;;
+  stop)
+    running && kill "$(cat "$PIDFILE")" 2>/dev/null; rm -f "$PIDFILE"; log "stopped"
+    echo "stopped. NOTE: the keepalive cron restarts it within 60 s."
+    echo "To stop BOUNCING (rack work), use: $0 pause \"reason\""
+    ;;
+  pause)
+    mkdir -p "$(dirname "$NOBOUNCE_FLAG")" 2>/dev/null
+    echo "$(date '+%Y-%m-%d %H:%M:%S') ${2:-no reason given}" > "$NOBOUNCE_FLAG"
+    log "PAUSED by operator (${2:-no reason given}) — metrics continue, no bounces"
+    echo "paused: no bounces until '$0 resume' (persists across reboot and keepalive)"
+    ;;
+  resume)
+    rm -f "$NOBOUNCE_FLAG"
+    log "RESUMED by operator — bounces re-enabled (subject to all guards)"
+    echo "resumed"
+    ;;
+  status)
+    load_state
+    running && echo "running (pid $(cat "$PIDFILE"))" || echo "not running"
+    echo "bounces: blackout=$BOUNCES_BLACKOUT degraded=$BOUNCES_DEGRADED  last_result=$LAST_BOUNCE_RESULT consec_failures=$CONSEC_FAILURES disarmed=$DISARMED"
+    echo "blackout: streak=$BLACKOUT_STREAK (max $BLACKOUT_MAX_STREAK, $BLACKOUT_MAX_STREAK_NOCARRIER if no carrier) today=$DAY_BLACKOUTS/$BLACKOUT_MAX_PER_DAY  link=$(link_status)"
+    lf=$(read_epoch "$FLAP_FILE"); hold=$(read_epoch "$HOLD_FILE"); now=$(date +%s)
+    [ "$lf" -gt 0 ] && echo "last bounce (any process): $((now - lf))s ago"
+    if [ "$now" -lt "$hold" ]; then echo "HOLD active for another $((hold - now))s (manual operation)"; fi
+    # Trailing `[ ] && echo` would make this case exit 1 whenever the flag is
+    # absent (the normal state) -- the same falsy-last-command class of bug that
+    # silently broke ix0_link_metrics.sh. Keep the exit status deliberate.
+    if [ -f "$NOBOUNCE_FLAG" ]; then echo "PAUSED (nobounce flag): $(head -1 "$NOBOUNCE_FLAG" 2>/dev/null)"; fi
+    exit 0
+    ;;
+  check)
+    probe || { echo "BLACKOUT: all LAN targets unreachable (ix0 link=$(link_status))"; exit 0; }
+    sweep_loss
+    echo "reachable; large-frame(${LOSS_SIZE}B) loss: $LOSS_KV  worst=${WORST_LOSS}%"
+    # `degraded` populates LOSS_MEAN, so evaluate it before reporting.
+    if degraded; then verdict="DEGRADED — would count toward a bounce"; else verdict="not degraded by the trigger rule"; fi
+    echo "mean=${LOSS_MEAN}% (trigger at >=${LOSS_TRIGGER_PCT}% over >=${LOSS_MIN_TARGETS} targets)"
+    echo "STATUS: $verdict"
+    exit 0
+    ;;
+  testbounce)
+    # Deliberate on-demand bounce, for validating the pipeline end to end.
+    # Exercises the REAL path: measure -> bounce -> settle -> re-measure ->
+    # score with the same criterion production uses. Bypasses only the
+    # rate-limit/daily-cap guards, since those exist to stop the DAEMON from
+    # acting too often, not to stop a human testing deliberately.
+    # It does NOT touch CONSEC_FAILURES/DISARMED: a test run against an
+    # already-healthy link would otherwise push the watchdog toward disarming
+    # itself for no reason.
+    if [ -f "$NOBOUNCE_FLAG" ]; then
+      echo "refusing: paused ($(head -1 "$NOBOUNCE_FLAG" 2>/dev/null)); '$0 resume' first"; exit 1
+    fi
+    # A dropped SSH session must not kill the test; do_bounce also shields its
+    # down/up critical section. Run detached anyway: nohup ... &
+    trap '' HUP
+    load_state
+    # Hold the daemon off for the whole test, so it cannot stack a second bounce
+    # on top of ours (2026-10-24: it bounced again 3 min in). Time-based, so it
+    # expires by itself even if this process dies.
+    hold_secs=$((DOWN_SECS + SETTLE_SECS + 300))
+    echo $(( $(date +%s) + hold_secs )) > "$HOLD_FILE"
+    log "TEST: daemon held off for ${hold_secs}s"
+    echo "=== BEFORE ==="
+    sweep_loss
+    # Never gamble with a healthy link. On 2026-08-17 a testbounce took a 2%
+    # link to 56% -- the downside of a draw is unbounded, so refuse unless the
+    # caller explicitly accepts that risk.
+    if [ "$LOSS_N" -ge "$LOSS_MIN_TARGETS" ] && [ "$LOSS_MEAN" -le "$SUCCESS_LOSS_PCT" ] \
+       && [ "${2:-}" != "--force" ]; then
+      echo "  loss@${LOSS_SIZE}B: $LOSS_KV  (mean=${LOSS_MEAN}%)"
+      echo "refusing: link is already healthy (mean ${LOSS_MEAN}% <= ${SUCCESS_LOSS_PCT}%)."
+      echo "A bounce is a lottery and can make it far worse (observed 2% -> 56%)."
+      echo "Re-run with: $0 testbounce --force"
+      rm -f "$HOLD_FILE"
+      exit 1
+    fi
+    if [ "${2:-}" = "--force" ]; then
+      echo "!!! --force: bouncing a link that is passing traffic. 2026-10-24 a forced"
+      echo "!!! bounce left ix0 with NO CARRIER; only a physical reseat + reboot fixed it."
+      echo "!!! Have rack access and the ADMIN out-of-band path (igc3) ready."
+    fi
+    for t in $LOSS_TARGETS; do
+      echo "  precise loss@${LOSS_SIZE}B ${t}: $(measure_loss_precise "$t" "$GUARD_PKTS")% (${GUARD_PKTS} pkts)"
+    done
+    echo "  remote_faults rate: $(remote_fault_rate)/s"
+    echo "  loss@${LOSS_SIZE}B: $LOSS_KV"
+    echo "  mean=${LOSS_MEAN}%  worst=${WORST_LOSS}%  link=$(link_status)"
+    rf_before=$(sysctl -n dev.ix.0.mac_stats.remote_faults 2>/dev/null)
+    echo "  remote_faults=$rf_before"
+    before_mean="$LOSS_MEAN"
+
+    log "TEST: manual testbounce requested (before: mean ${LOSS_MEAN}% [$LOSS_KV])"
+    do_bounce manual-test
+    trap '' HUP
+
+    echo "=== settling ${SETTLE_SECS}s ==="
+    sleep "$SETTLE_SECS"
+
+    echo "=== AFTER ==="
+    sweep_loss
+    echo "  loss@${LOSS_SIZE}B: $LOSS_KV"
+    echo "  mean=${LOSS_MEAN}%  worst=${WORST_LOSS}%  link=$(link_status)"
+    rf_after=$(sysctl -n dev.ix.0.mac_stats.remote_faults 2>/dev/null)
+    echo "  remote_faults=$rf_after (delta=$((rf_after - rf_before)) over the run)"
+
+    if [ "$(link_status)" = down ]; then
+      LAST_BOUNCE_RESULT=0
+      echo "  VERDICT: LINK DOWN — no carrier after ${SETTLE_SECS}s. Do NOT bounce again."
+      echo "  The daemon will try at most $BLACKOUT_MAX_STREAK_NOCARRIER blackout bounce; then physical reseat/replace."
+      log "TEST: testbounce LEFT THE LINK DOWN (no carrier) — physical intervention likely required"
+    elif bounce_succeeded "$before_mean"; then
+      LAST_BOUNCE_RESULT=1
+      echo "  VERDICT: SUCCEEDED (mean ${before_mean}% -> ${LOSS_MEAN}%)"
+      log "TEST: testbounce SUCCEEDED — mean ${before_mean}% -> ${LOSS_MEAN}% [$LOSS_KV]"
+    else
+      LAST_BOUNCE_RESULT=0
+      echo "  VERDICT: FAILED (mean ${before_mean}% -> ${LOSS_MEAN}%, no material improvement)"
+      log "TEST: testbounce FAILED — mean ${before_mean}% -> ${LOSS_MEAN}% [$LOSS_KV]"
+    fi
+    save_state; write_metrics
+    exit 0
+    ;;
+  reset)
+    load_state
+    DISARMED=0; CONSEC_FAILURES=0; LAST_BOUNCE_RESULT=-1
+    save_state
+    log "reset: disarm cleared, failure counter zeroed (re-armed)"
+    echo "re-armed"
+    ;;
+  *) echo "usage: $0 {start|stop|pause [reason]|resume|status|check|testbounce [--force]|reset}"; exit 1 ;;
+esac

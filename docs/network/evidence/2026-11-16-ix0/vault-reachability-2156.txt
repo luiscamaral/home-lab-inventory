@@ -1,0 +1,21 @@
+### collected 2026-11-16T21:56:42Z Vault reachability
+## DNS
+192.168.59.48
+192.168.59.28
+## ping from Mac (10 pkts)
+192.168.59.25: 10 packets transmitted, 10 packets received, 0.0% packet loss round-trip min/avg/max/stddev = 3.351/12.033/69.446/19.523 ms
+192.168.59.2: 10 packets transmitted, 10 packets received, 0.0% packet loss round-trip min/avg/max/stddev = 3.227/9.715/34.711/10.800 ms
+192.168.32.33: 10 packets transmitted, 10 packets received, 0.0% packet loss round-trip min/avg/max/stddev = 2.874/14.144/67.758/20.939 ms
+## TCP 8200/80 to Vault
+tcp 80: FAIL
+tcp 8200: Connection to 192.168.59.25 port 8200 [tcp/trivnet1] succeeded!
+open
+## dockermaster ssh
+21:56:51
+vault Up 8 days (healthy)
+nginx-exporter-nginx-exporter-1 Up 8 days
+local vault health 200 0.001679s
+## pfSense view
+10 packets transmitted, 10 packets received, 0.0% packet loss
+round-trip min/avg/max/stddev = 0.206/0.327/0.433/0.066 ms
+10 packets transmitted, 10 packets received, 0.0% packet loss

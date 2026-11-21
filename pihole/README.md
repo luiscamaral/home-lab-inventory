@@ -421,6 +421,36 @@ Each tool plays to its strengths:
    problem; not something Pattern B addresses. ISC dhcpd supports
    `failover-peer` if you ever want a second DHCP server.
 
+## Reverse DNS (PTR) for static hosts
+
+**Status:** `[x]` deployed & verified 2026-06-12 — see
+[`docs/network/reverse-dns-static-hosts-2026-06-12.md`](../docs/network/reverse-dns-static-hosts-2026-06-12.md).
+
+`nslookup -type=PTR <private-ip>` against any pihole returns NXDOMAIN, while
+the same query against pfSense Unbound (`192.168.4.1`) resolves correctly.
+pfSense already registers static DHCP mappings into Unbound (forward **and**
+PTR) — the records exist.
+
+Root cause: **Pi-hole v6 defaults `dns.bogusPriv = true`**, which makes pihole
+answer NXDOMAIN for private-range reverse lookups _instead of forwarding them
+upstream_. Since the trio's only upstream is pfSense Unbound itself
+(`FTLCONF_dns_upstreams: 192.168.4.1`) — the authoritative resolver for these
+zones — `bogusPriv` is breaking the intended pihole→Unbound reverse path, not
+protecting against a public-DNS leak.
+
+Fix (pihole only; pfSense unchanged): disable `bogusPriv` so private PTRs
+forward to Unbound.
+
+- pihole-2/-3: add `FTLCONF_dns_bogusPriv: "false"` to the `.tftpl` stacks →
+  `terraform apply`.
+- pihole-1 LXC: `pihole-FTL --config dns.bogusPriv false` (see
+  [`lxc-hardening.md`](./lxc-hardening.md#reverse-dns-boguspriv)).
+
+Dynamic leases stay out of scope: `regdhcp` is off, so Unbound returns
+NXDOMAIN for unregistered IPs even after the forward is enabled. The surgical
+alternative (`rev-server=<subnet>,192.168.4.1` per subnet) is documented in
+the plan.
+
 ## Manual deploy of dnsmasq.d to pihole-1
 
 ```bash

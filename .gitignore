@@ -78,6 +78,8 @@ grafana_data/
 *.sql
 *.dump
 *.backup
+# Vendored compose init scripts are config, not dumps
+!dockermaster/docker/compose/honcho/database-init.sql
 
 # Devin AI config (keep skills tracked in git)
 .devin/*
@@ -85,6 +87,7 @@ grafana_data/
 
 # Generated output
 output/
+graphify-out/
 
 # Timestamped backup directories inside compose trees
 backup_*/
@@ -101,3 +104,9 @@ terraform/**/tfplan
 
 # Git worktrees (isolated dev workspaces)
 .worktrees/
+# Tool caches — Serena MCP index and token-save cache, machine-local
+.serena/
+.tokensave/
+
+# pi agent runtime state (Herdr pane mappings) — local only
+.pi/

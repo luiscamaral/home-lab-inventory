@@ -6,7 +6,12 @@ networks:
 
 services:
   runner:
-    image: myoung34/github-runner:latest
+    # Pinned to 2.338.2 (matches actions/runner v2.338.2, 2026-10-26).
+    # GitHub refuses runner versions it has deprecated: 2.336.0 caused a
+    # restart loop (416 restarts, 2026-11-05: "Runner version v2.336.0 is
+    # deprecated and cannot receive messages"). Bump deliberately when
+    # actions/runner releases; check the GitHub release page first.
+    image: myoung34/github-runner:2.338.2
     container_name: github-runner-homelab
     hostname: dockerserver-1-runner
     networks:

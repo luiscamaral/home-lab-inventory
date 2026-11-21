@@ -83,6 +83,9 @@ configs:
   blackbox_tcp_targets:
     content: |
       ${indent(6, blackbox_tcp_targets)}
+  blackbox_rproxy_targets:
+    content: |
+      ${indent(6, blackbox_rproxy_targets)}
   # Phase 5 (initial slice): TLS cert-expiry alert rules. See
   # locals.tf `prometheus_rules_yml` for the rule definitions and the
   # 2026-04-29 incident that motivated this group.
@@ -141,6 +144,9 @@ services:
         mode: 0644
       - source: blackbox_tcp_targets
         target: /etc/prometheus/blackbox-targets/tcp-targets.json
+        mode: 0644
+      - source: blackbox_rproxy_targets
+        target: /etc/prometheus/blackbox-targets/rproxy-targets.json
         mode: 0644
       - source: prometheus_rules_yml
         target: /etc/prometheus/rules/cert-expiry.yml

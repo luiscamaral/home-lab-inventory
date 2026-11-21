@@ -1,0 +1,110 @@
+# collected 2026-11-16 17:06:16 MST from Thanos query http://192.168.59.26:10902. Post-recovery window = last 15m (ix0 up since 16:46:26 MST)
+### query: avg_over_time(probe_success[15m]) < 1
+{"instance":"192.168.4.236:53"}  0.9285714285714286
+{"instance":"192.168.4.236"}  0.875
+{"instance":"192.168.59.28:443","sni":"auth.cf.lcamaral.com"}  0.75
+{"instance":"192.168.59.48:443","sni":"auth.cf.lcamaral.com"}  0.5
+{"instance":"https://calibre.d.lcamaral.com"}  0.8148148148148148
+{"instance":"https://grafana.d.lcamaral.com"}  0.8518518518518519
+{"instance":"https://ha.home.lcamaral.com"}  0.8518518518518519
+{"instance":"https://hub.d.lcamaral.com/v2/library/zz-blackbox-canary/tags/list"}  0.8214285714285714
+{"instance":"https://karma.d.lcamaral.com"}  0.8214285714285714
+{"instance":"https://keycloak.d.lcamaral.com"}  0.5454545454545454
+{"instance":"https://keycloak.d.lcamaral.com"}  0.7407407407407407
+{"instance":"https://portainer.d.lcamaral.com"}  0.8571428571428571
+{"instance":"https://portainer.d.lcamaral.com"}  0.9230769230769231
+{"instance":"https://prometheus.d.lcamaral.com"}  0.75
+{"instance":"https://prometheus.d.lcamaral.com"}  0.8571428571428571
+{"instance":"https://rundeck.d.lcamaral.com"}  0.7857142857142857
+{"instance":"https://rustdesk-relay.home.lcamaral.com"}  0
+{"instance":"https://rustdesk.home.lcamaral.com"}  0
+{"instance":"https://s3.d.lcamaral.com"}  0.8571428571428571
+{"instance":"https://vault.d.lcamaral.com"}  0.8
+{"instance":"https://vault.d.lcamaral.com"}  0.8
+{"instance":"https://zot.d.lcamaral.com"}  0.8064516129032258
+
+### query: count(probe_success)
+{}  58
+
+### query: avg_over_time(up[15m]) < 1
+{"instance":"192.168.100.254:53"}  0.8235294117647058
+{"instance":"192.168.16.2"}  0.8666666666666667
+{"instance":"192.168.4.1:53"}  0.8125
+{"instance":"192.168.4.1"}  0.8666666666666667
+{"instance":"192.168.4.236:53"}  0.875
+{"instance":"192.168.48.44"}  0.8125
+{"instance":"192.168.48.45"}  0.8
+{"instance":"192.168.48.46"}  0.875
+{"instance":"192.168.59.48:443","sni":"auth.cf.lcamaral.com"}  0.5
+{"instance":"192.168.59.49:443","sni":"auth.cf.lcamaral.com"}  0.8
+{"instance":"alertmanager-1"}  0.8166666666666667
+{"instance":"cloudflare-tunnel-1"}  0.7833333333333333
+{"instance":"cloudflare-tunnel-2"}  0.7833333333333333
+{"instance":"cloudflare-tunnel-3"}  0.819672131147541
+{"instance":"dockermaster"}  0.8
+{"instance":"dockermaster"}  0.9836065573770492
+{"instance":"ds-1"}  0.9836065573770492
+{"instance":"ds-2"}  0.7833333333333333
+{"instance":"ds-2"}  0.9666666666666667
+{"instance":"ha.home.lcamaral.com:443"}  0.6666666666666666
+{"instance":"hbbs.d.lcamaral.com:21115"}  0.75
+{"instance":"hbbs.d.lcamaral.com:21116"}  0.75
+{"instance":"hbbs.d.lcamaral.com:21118"}  0.8
+{"instance":"home-assistant"}  0.75
+{"instance":"https://calibre.d.lcamaral.com"}  0.7666666666666667
+{"instance":"https://grafana.d.lcamaral.com"}  0.7741935483870968
+{"instance":"https://ha.home.lcamaral.com"}  0.8
+{"instance":"https://hub.d.lcamaral.com/v2/library/zz-blackbox-canary/tags/list"}  0.7741935483870968
+{"instance":"https://karma.d.lcamaral.com"}  0.8
+{"instance":"https://keycloak.d.lcamaral.com"}  0.7333333333333333
+{"instance":"https://keycloak.d.lcamaral.com"}  0.8
+{"instance":"https://portainer.d.lcamaral.com"}  0.8333333333333334
+{"instance":"https://portainer.d.lcamaral.com"}  0.8666666666666667
+{"instance":"https://prometheus.d.lcamaral.com"}  0.8
+{"instance":"https://rundeck.d.lcamaral.com"}  0.9333333333333333
+{"instance":"https://rustdesk-relay.home.lcamaral.com"}  0.8
+{"instance":"https://s3.d.lcamaral.com"}  0.8
+{"instance":"keycloak-1"}  0.7868852459016393
+{"instance":"keycloak-2"}  0.8
+{"instance":"keycloak-db-0"}  0.8
+{"instance":"minio-1"}  0.7666666666666667
+{"instance":"minio-2"}  0
+{"instance":"nginx-rproxy"}  0.7540983606557377
+{"instance":"otel-collector"}  0.9672131147540983
+{"instance":"pfsense"}  0.8125
+{"instance":"pihole-1"}  0.8
+{"instance":"pihole-2"}  0.8387096774193549
+{"instance":"pihole-3"}  0.9666666666666667
+{"instance":"postgres-rundeck"}  0.7833333333333333
+{"instance":"prometheus-1"}  0.7868852459016393
+{"instance":"registry-1"}  0.9666666666666667
+{"instance":"thanos-query"}  0.8
+{"instance":"thanos-sidecar-2"}  0.7833333333333333
+{"instance":"thanos-store-gw"}  0.7868852459016393
+{"instance":"vault-1"}  0.8
+{"instance":"vault-2"}  0.7868852459016393
+{"instance":"vault-3"}  0.8
+{"instance":"watchtower-dm"}  0.7166666666666667
+{"instance":"watchtower-ds1"}  0.9672131147540983
+{"instance":"zot-1"}  0.6885245901639344
+
+### query: count(up)
+{}  87
+
+### query: max_over_time(pfsense_ix0_large_frame_loss_percent[15m])
+{"device":"ix0","instance":"pfsense","size":"1400","target":"192.168.48.44"}  0
+{"device":"ix0","instance":"pfsense","size":"1400","target":"192.168.48.45"}  0
+
+### query: rate(pfsense_ix0_remote_faults_total[15m])
+{"device":"ix0","instance":"pfsense"}  0
+
+### query: rate(pfsense_ix0_local_faults_total[15m])
+{"device":"ix0","instance":"pfsense"}  0
+
+### query: max_over_time(pfsense_gateway_loss_ratio[15m])
+{"gateway":"WAN1_DHCP","instance":"pfsense","monitor":"8.8.4.4","source":"136.38.130.122"}  0
+{"gateway":"WAN2_DHCP","instance":"pfsense","monitor":"192.168.12.1","source":"192.168.12.32"}  0
+
+### query: rate(ifInErrors[15m]) > 0
+
+### query: rate(ifOutDiscards[15m]) > 0

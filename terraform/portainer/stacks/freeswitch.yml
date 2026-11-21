@@ -28,14 +28,18 @@ services:
       CC_PASSWORD: ${CC_PASSWORD}
       CC_DID: ${CC_DID}
     restart: unless-stopped
-    # Healthcheck disabled: fs_cli ESL connection failing (pre-existing issue)
-    # Uncomment once ESL event socket is configured:
-    # healthcheck:
-    #   test: ["CMD-SHELL", "fs_cli -p $ESL_PASSWORD -x status"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 30s
+    # The upstream image bakes in a HEALTHCHECK that runs
+    # `fs_cli -x status` with no password flag (defaults to ClueCon).
+    # This homelab uses a rotated ESL password, so the baked-in probe
+    # has been failing forever and flagged the container as unhealthy
+    # despite FreeSWITCH being fully functional. Override the image
+    # healthcheck with a working one that passes the real password.
+    healthcheck:
+      test: ["CMD-SHELL", "fs_cli -p $$ESL_PASSWORD -x status | grep -q ^UP"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     labels:
       com.centurylinklabs.watchtower.enable: "false"
       com.docker.stack: "freeswitch"

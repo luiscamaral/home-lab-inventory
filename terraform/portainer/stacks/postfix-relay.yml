@@ -3,14 +3,23 @@ name: postfix-relay
 networks:
   rproxy:
     external: true
+  servers-net:
+    name: docker-servers-net
+    external: true
 
 services:
   postfix:
-    image: boky/postfix:latest
+    # Pinned by digest to the running build (postfix 3.10.5): the stack is recreated for the network change,
+    # and `latest` must not move under it. Update the digest deliberately.
+    image: boky/postfix@sha256:aafc772384232497bed875e1eb66b4d3e54ba1ebc86e2e185a6dc1dbc48182ef
     container_name: postfix-relay
     hostname: mail.d.lcamaral.com
+    # rproxy: dm-local name `postfix-relay` (existing users). servers-net: a LAN address so Keycloak-2 and
+    # Alertmanager on ds-1 can reach it as postfix-relay.d.lcamaral.com (pfsense/host-overrides.yml).
     networks:
       rproxy:
+      servers-net:
+        ipv4_address: 192.168.59.14
     environment:
       RELAYHOST: "[smtp.dreamhost.com]:587"
       RELAYHOST_USERNAME: ${SMTP_USERNAME}

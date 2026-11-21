@@ -13,6 +13,7 @@ rundeck/
     ├── calibre-replication.yaml    # nightly calibre -> calibre-web rsync
     ├── calibre-restart.yaml        # restart calibre & calibre-web containers
     ├── pihole-auth-check.yaml      # one-time follow-up (2026-05-12)
+    ├── pihole-exporter-restart.yaml # nightly FD-reset of pihole-exporter-1
     ├── ps.yaml                     # process snapshot every 30 min
     ├── rundeck-token-check.yaml    # monthly token-expiry warning
     ├── sync-ssl-certificates.yaml  # daily SSL cert sync pfSense -> nginx
@@ -27,6 +28,7 @@ rundeck/
 | `calibre-replication.yaml` | Calibre replication to Calibre-Web | `682e675a-4ec3-435d-80e5-288c8cd1a316` | Daily 22:10 (America/Denver) | Dockermaster.local |
 | `calibre-restart.yaml` | Calibre Restart | `20007299-edab-4383-b416-12359ca5f294` | On-demand (called by replication job) | Dockermaster.local |
 | `pihole-auth-check.yaml` | pihole-auth-check | `pihole-auth-check-2026-05-12` | One-time: 2026-05-12 15:00 UTC | Local |
+| `pihole-exporter-restart.yaml` | pihole-exporter-restart | `pihole-exporter-restart-nightly` | Daily 04:17 (America/Denver) | Dockermaster.local |
 | `ps.yaml` | PS | `12b5296b-846d-43aa-85b1-559d794b6326` | Every 30 min | All servers (excl. XenServer) |
 | `rundeck-token-check.yaml` | rundeck-token-check | `rundeck-token-check-monthly` | 1st of month 15:00 UTC | Local |
 | `sync-ssl-certificates.yaml` | Sync SSL Certificates | `cert-sync-pfsense-nginx` | Daily 00:00 UTC | rundeck-local |

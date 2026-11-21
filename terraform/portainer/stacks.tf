@@ -17,6 +17,29 @@ resource "portainer_stack" "docker_registry" {
 }
 
 # ──────────────────────────────────────────────
+# Zot registry — successor to docker-registry (kept for cool-off).
+# Hosts homelab/* images + on-demand pull-through cache for docker.io,
+# ghcr.io, quay.io, registry.k8s.io, gcr.io. LAN-only via
+# zot.d.lcamaral.com (rproxy vhost). See docs/zot-registry.md.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "zot" {
+  name            = "zot"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/zot.yml.tftpl", {
+    zot_config          = file("${path.module}/stacks/zot-config.json")
+    htpasswd            = data.vault_kv_secret_v2.zot.data["htpasswd"]
+    oidc_client_id      = keycloak_openid_client.zot.client_id
+    oidc_client_secret  = data.vault_kv_secret_v2.zot.data["oidc_client_secret"]
+    session_hash_key    = data.vault_kv_secret_v2.zot.data["session_hash_key"]
+    session_encrypt_key = data.vault_kv_secret_v2.zot.data["session_encrypt_key"]
+    meta_backup_script  = file("${path.module}/../../scripts/zot-meta-backup.py")
+  })
+}
+
+# ──────────────────────────────────────────────
 # Cloudflare Tunnel (replica 1 on dockermaster)
 # Connects homelab to Cloudflare edge via tunnel "bologna"
 # Token injected from Vault at apply time
@@ -108,10 +131,10 @@ resource "portainer_stack" "reverse_proxy" {
   method          = "string"
 
   stack_file_content = templatefile("${path.module}/stacks/reverse-proxy.yml.tftpl", {
-    vhosts           = local.rproxy_vhosts
-    nginx_conf       = local.rproxy_nginx_conf
-    promtail_config  = local.rproxy_promtail_config
-    start_sh         = local.rproxy_promtail_start
+    vhosts          = local.rproxy_vhosts
+    nginx_conf      = local.rproxy_nginx_conf
+    promtail_config = local.rproxy_promtail_config
+    start_sh        = local.rproxy_promtail_start
   })
 }
 
@@ -163,6 +186,12 @@ resource "portainer_stack" "vault_3" {
   deployment_type = "standalone"
   method          = "string"
 
+  # Don't re-pull on redeploy: the image is version-pinned and cached on
+  # the node, so a re-pull only adds an egress dependency that a transient
+  # Docker Hub blip (e.g. during an ix0/WAN flap) turns into a failed
+  # recreate ("Proxy failure"). Deterministic + offline-capable redeploys.
+  pull_image = false
+
   stack_file_content = templatefile("${path.module}/stacks/vault-3.yml.tftpl", {
     vault_config = local.vault_configs["vault-3"]
   })
@@ -178,6 +207,7 @@ resource "portainer_stack" "vault_2" {
   endpoint_id     = var.ds1_endpoint_id
   deployment_type = "standalone"
   method          = "string"
+  pull_image      = false # cached pinned image — see vault_3
 
   stack_file_content = templatefile("${path.module}/stacks/vault-2.yml.tftpl", {
     vault_config = local.vault_configs["vault-2"]
@@ -193,6 +223,7 @@ resource "portainer_stack" "vault" {
   endpoint_id     = var.endpoint_id
   deployment_type = "standalone"
   method          = "string"
+  pull_image      = false # cached pinned image — see vault_3
 
   stack_file_content = templatefile("${path.module}/stacks/vault.yml.tftpl", {
     vault_config = local.vault_configs["vault-1"]
@@ -365,13 +396,17 @@ resource "portainer_stack" "rustdesk" {
 # ──────────────────────────────────────────────
 # Rundeck + PostgreSQL → dockerserver-1
 # Automation server — DB and storage passwords from Vault
-# Image pushed to registry as registry.cf.lcamaral.com/la-rundeck:latest
+# Image: zot.d.lcamaral.com/homelab/la-rundeck:latest (copied from the ds-1 local image on
+# 2026-11-06; registry:2 never received it). The stack switched to the zot ref on 2026-11-08
+# (docs/zot-registry.md, cool-off). postgres is pinned by digest to the running build.
 # ──────────────────────────────────────────────
 resource "portainer_stack" "rundeck" {
   name            = "la-rundeck"
   endpoint_id     = var.ds1_endpoint_id
   deployment_type = "standalone"
   method          = "string"
+  # postgres is cached on ds-1 (digest-pinned); la-rundeck is pulled from zot by `compose up` when missing
+  pull_image = false
 
   stack_file_content = templatefile("${path.module}/stacks/rundeck.yml.tftpl", {
     # admin user line for realm.properties: MD5-hashed password from
@@ -423,6 +458,7 @@ resource "portainer_stack" "rundeck" {
 #   .26  thanos-query (on dockermaster)
 #   .27  alertmanager-1
 #   .29  snmp-exporter
+#   .46  otel-collector
 # ──────────────────────────────────────────────
 
 # prometheus-1 + thanos-sidecar-1 (replica A) on ds-1.
@@ -453,13 +489,14 @@ resource "portainer_stack" "prometheus" {
     rundeck_token = data.vault_kv_secret_v2.rundeck.data["api_token"]
     # Phase 3h — blackbox file_sd target lists (rendered as JSON in locals.tf).
     # Phase 3f extends with the tcp list (FreeSWITCH SIP, RustDesk hbbs/hbbr).
-    blackbox_http_targets = local.blackbox_http_targets
-    blackbox_icmp_targets = local.blackbox_icmp_targets
-    blackbox_ssl_targets  = local.blackbox_ssl_targets
-    blackbox_dns_targets  = local.blackbox_dns_targets
-    blackbox_tcp_targets  = local.blackbox_tcp_targets
+    blackbox_http_targets   = local.blackbox_http_targets
+    blackbox_icmp_targets   = local.blackbox_icmp_targets
+    blackbox_ssl_targets    = local.blackbox_ssl_targets
+    blackbox_dns_targets    = local.blackbox_dns_targets
+    blackbox_tcp_targets    = local.blackbox_tcp_targets
+    blackbox_rproxy_targets = local.blackbox_rproxy_targets
     # Phase 5 (initial slice): TLS cert-expiry alert rules.
-    prometheus_rules_yml  = local.prometheus_rules_yml
+    prometheus_rules_yml = local.prometheus_rules_yml
   })
 }
 
@@ -505,6 +542,19 @@ resource "portainer_stack" "alertmanager_1" {
   stack_file_content = templatefile("${path.module}/stacks/alertmanager.yml.tftpl", {
     alertmanager_config = local.alertmanager_config
   })
+}
+
+# karma — Alertmanager dashboard UI (prymitive/karma) on dockermaster.
+# Reads from alertmanager-1 over docker-servers-net. Listed-as-a-cluster
+# config so we can add alertmanager-2 to `servers:` in the stack file
+# when Phase 2 of the alerting plane lands (no terraform churn).
+resource "portainer_stack" "karma" {
+  name            = "karma"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = file("${path.module}/stacks/karma.yml")
 }
 
 # node-exporter on ds-1 (host network mode, no IP allocation needed).
@@ -700,13 +750,25 @@ resource "portainer_stack" "cadvisor_nas" {
 # /nfs/dockermaster/docker/snmp-exporter/snmp.yml — the orchestrator must
 # pre-stage this file before the legacy prometheus stack is destroyed in
 # Phase 0 (or accept a brief snmp scrape gap).
+#
+# switch24a (2026-11-16): the generated switch module is read from
+# dockermaster/docker/snmp-exporter/snmp-switch24a.yml (regen.sh output)
+# and injected through `configs:`. The community stays a Compose variable
+# in that file; the env block below fills it from Vault at deploy time.
 resource "portainer_stack" "snmp_exporter" {
   name            = "snmp-exporter"
   endpoint_id     = var.ds1_endpoint_id
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/snmp-exporter.yml")
+  stack_file_content = templatefile("${path.module}/stacks/snmp-exporter.yml.tftpl", {
+    switch24a_config = file("${path.module}/../../dockermaster/docker/snmp-exporter/snmp-switch24a.yml")
+  })
+
+  env {
+    name  = "SWITCH24A_SNMP_COMMUNITY"
+    value = data.vault_kv_secret_v2.switch24a.data["snmp_community"]
+  }
 }
 
 # pve-exporter on dockermaster (Phase 3c — Proxmox VE metrics).
@@ -898,6 +960,7 @@ resource "portainer_stack" "keycloak_db_0" {
   endpoint_id     = var.endpoint_id
   deployment_type = "standalone"
   method          = "string"
+  pull_image      = false # cached bitnamilegacy/postgresql-repmgr:17.6.0 on dm — avoid Docker Hub proxy failure on recreate
 
   stack_file_content = file("${path.module}/stacks/keycloak-db-0.yml")
 
@@ -1320,13 +1383,14 @@ resource "portainer_stack" "prometheus_2" {
     rundeck_token = data.vault_kv_secret_v2.rundeck.data["api_token"]
     # Phase 3h — blackbox file_sd target lists (rendered as JSON in locals.tf).
     # Phase 3f extends with the tcp list (FreeSWITCH SIP, RustDesk hbbs/hbbr).
-    blackbox_http_targets = local.blackbox_http_targets
-    blackbox_icmp_targets = local.blackbox_icmp_targets
-    blackbox_ssl_targets  = local.blackbox_ssl_targets
-    blackbox_dns_targets  = local.blackbox_dns_targets
-    blackbox_tcp_targets  = local.blackbox_tcp_targets
+    blackbox_http_targets   = local.blackbox_http_targets
+    blackbox_icmp_targets   = local.blackbox_icmp_targets
+    blackbox_ssl_targets    = local.blackbox_ssl_targets
+    blackbox_dns_targets    = local.blackbox_dns_targets
+    blackbox_tcp_targets    = local.blackbox_tcp_targets
+    blackbox_rproxy_targets = local.blackbox_rproxy_targets
     # Phase 5 (initial slice): TLS cert-expiry alert rules.
-    prometheus_rules_yml  = local.prometheus_rules_yml
+    prometheus_rules_yml = local.prometheus_rules_yml
   })
 }
 
@@ -1356,8 +1420,92 @@ resource "portainer_stack" "blackbox_exporter" {
   })
 }
 
+# ──────────────────────────────────────────────
+# OTel Collector on dockermaster (Phase A — OTLP push cache for wifi probes)
+#
+# Always-up caching layer between the single-radio ESP32 wifi probes and
+# Prometheus. The probes PUSH OTLP/HTTP (plain, :4318); the collector's
+# prometheus exporter holds each series for 30m and serves it on :8889 for
+# both Prometheus replicas to scrape — closing the band-switch dark windows
+# that produced gaps when Prometheus scraped the probes directly.
+#
+# Static IP 192.168.59.46 from the docker-servers-net free pool (next free
+# after .45 blackbox). Config rendered from local.otelcol_config and injected
+# via docker `configs:` — same pattern as blackbox/pihole. Inert until probe
+# firmware (Phase B/C) starts pushing.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "otel_collector" {
+  name            = "otel-collector"
+  endpoint_id     = var.endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/stacks/otel-collector.yml.tftpl", {
+    otelcol_config = local.otelcol_config
+  })
+}
+
 # Phase 3f: Twingate metrics are now scraped natively from the
 # connector containers (TWINGATE_METRICS_PORT=9999) — see twingate-a.yml
 # and twingate-b.yml. The earlier twingate-exporter stack (Admin-API
 # poller) was removed when we discovered (a) no upstream image exists
 # and (b) the connector itself exposes /metrics in v1.80+.
+
+# Ollama embedding service (ds-1, 192.168.59.53) was removed — container had
+# been stopped for months and its only planned consumer (Honcho) was never
+# deployed. Spec kept for history: docs/superpowers/specs/2026-05-21-ollama-deployment-design.md
+
+# ──────────────────────────────────────────────
+# Project NOMAD (ds-2) — offline knowledge/RAG server
+# Spec: docs/superpowers/specs/2026-11-13-project-nomad-deployment-design.md
+# nomad_admin on docker-servers-net @ 192.168.59.60; ollama (embeddings only,
+# nomic-embed-text:v1.5), cli-proxy-api (Google/Antigravity subscription OAuth),
+# and litellm (OpenAI-compatible router) stay on the project-nomad_default bridge.
+# ──────────────────────────────────────────────
+resource "portainer_stack" "nomad" {
+  name            = "nomad"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/../../dockermaster/docker/compose/nomad/docker-compose.yml.tftpl", {
+    litellm_config = file("${path.module}/../../dockermaster/docker/compose/nomad/litellm-config.yaml")
+    cli_proxy_config = templatefile("${path.module}/../../dockermaster/docker/compose/nomad/cli-proxy-config.yaml.tftpl", {
+      cli_proxy_api_key = data.vault_kv_secret_v2.nomad.data["cli_proxy_api_key"]
+    })
+  })
+
+  env {
+    name  = "NOMAD_APP_KEY"
+    value = data.vault_kv_secret_v2.nomad.data["app_key"]
+  }
+  env {
+    name  = "NOMAD_DB_PASSWORD"
+    value = data.vault_kv_secret_v2.nomad.data["db_password"]
+  }
+  env {
+    name  = "NOMAD_MYSQL_ROOT_PASSWORD"
+    value = data.vault_kv_secret_v2.nomad.data["mysql_root_password"]
+  }
+  env {
+    name  = "CLI_PROXY_API_KEY"
+    value = data.vault_kv_secret_v2.nomad.data["cli_proxy_api_key"]
+  }
+  env {
+    name  = "ANTIGRAVITY_AUTH_JSON"
+    value = data.vault_kv_secret_v2.nomad.data["antigravity_auth_json"]
+  }
+}
+
+# Independent Nomic/BGE-M3 smoke evaluation; never routes production requests.
+resource "portainer_stack" "nomad_embedding_eval" {
+  name            = "nomad-embedding-eval"
+  endpoint_id     = var.ds2_endpoint_id
+  deployment_type = "standalone"
+  method          = "string"
+
+  stack_file_content = templatefile("${path.module}/../../dockermaster/docker/compose/nomad/embedding-eval.yml.tftpl", {
+    evaluator = file("${path.module}/../../scripts/nomad-embedding-eval.py")
+    corpus    = file("${path.module}/../../tests/fixtures/nomad-embedding-eval.json")
+  })
+}

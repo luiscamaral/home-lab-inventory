@@ -6,8 +6,8 @@
 
 - **Hostname**: `pfsense.admin.lcamaral.com` (short: `pfsense`)
 - **Role**: Main router, firewall, DNS resolver, DHCP, ACME CA, HAProxy edge, dual-WAN gateway
-- **OS**: pfSense Plus **26.03-RELEASE** (build `20260401-1720`)
-- **Kernel**: FreeBSD 16.0-CURRENT (`plus-RELENG_26_03-n256531`)
+- **OS**: pfSense Plus **26.07-RELEASE** (patch applied 2026-09-10; verified 2026-11-10)
+- **Kernel**: FreeBSD 16.0-CURRENT (`plus-RELENG_26_07-n256584`)
 - **Hardware**:
   - **CPU**: Intel Core i3-N305 (8 cores, Alder Lake-N)
   - **RAM**: 16 GB
@@ -70,17 +70,18 @@
 
 ### NAS Server
 
-- **Type**: Synology NAS
+- **Type**: Synology NAS (DS1522+, DSM 7.4.1)
 - **Network Interfaces**:
   - `eth0`: 192.168.0.50
   - `bond0.10`: 192.168.1.50
   - `eth4.10`: 192.168.2.50 (NFS storage interface)
 - **Hardware**:
-  - **CPU**: x86_64 / 4 CPUs
-  - **RAM**: 7.7 GiB
+  - **CPU**: AMD Ryzen Embedded R1600 / 4 CPUs
+  - **RAM**: 7.7 GiB (supports up to 32 GB ECC DDR4)
   - **Kernel**: 4.4.302+
 - **Storage**:
-  - `/volume2`: 25TB total, 6.7TB free, btrfs filesystem
+  - `/volume2`: 25TB total, 2.5TB free (90% used, 2026-11-03), btrfs on RAID5 (5 HDD)
+    behind a 2x NVMe RAID1 write-back SSD cache
 - **Docker Environment** (Synology Container Manager):
   - **Docker Binary**: `/var/packages/ContainerManager/target/usr/bin/docker`
   - **Docker Version**: 24.0.2 (API 1.43)
@@ -98,6 +99,8 @@
 - **Services**:
   - NFS shares for VM storage and backups
   - Docker containers via Portainer Edge (4 active stacks — see `docker-containers.md`)
+- **Kernel tuning**: IaC-managed writeback limits — `nas/tuning/sysctl.yml`, applied by
+  `scripts/sync-nas-tuning.py` (see `nas/tuning/README.md`)
 - **Access**: SSH via `ssh nas`
 
 ## Virtual Servers
@@ -130,7 +133,8 @@
 - **Services Hosted** (12 containers):
   - **Edge tier (HA 1/3):** rproxy (`.28`), cloudflare-tunnel-cloudflare-1, reverse-proxy-promtail-1
   - **Auth tier:** keycloak (`.13`, HA 1/2), keycloak-db-0 (`.44`, PG HA primary), homelab-portal (`.18`, HA 1/2)
-  - **Backing:** vault (`.25`, raft 1/3), bind-dns-bind9-1 (`.3`), registry (`.16`), postfix-relay
+  - **Backing:** vault (`.25`, raft 1/3), bind-dns-bind9-1 (`.3`), zot registry (`.5`),
+    registry:2 legacy (`.16`, cool-off), postfix-relay
   - **Management:** portainer (`.2`), watchtower
 - **Access**: SSH via `ssh dockermaster`
 
@@ -146,7 +150,8 @@
 - **Network**:
   - **LAN IP**: 192.168.48.45/20
   - **Macvlan**: 192.168.59.33 (host alias in `docker-servers-net`)
-  - **Macvlan shim MAC**: `02:00:00:00:00:21` (explicit, see task #31)
+  - **Macvlan shim MAC**: `02:00:00:00:00:02` (explicit; reconciled 2026-07-01
+    to match live — repo previously drifted to `:21`, never applied)
   - **machine-id**: `de152d98902944208fb3571dd969c3a9` (regenerated
     2026-04-13 — was identical to dm's before; caused shim MAC collision)
 - **Docker**: Latest CE, Portainer agent endpoint ID 9
@@ -171,12 +176,14 @@
 - **OS**: Ubuntu 24.04 LTS
 - **Hardware**:
   - **CPU**: 8 cores
-  - **RAM**: 24 GB
+  - **RAM**: 48 GB
   - **Storage**: 120 GB SSD (local for MinIO site replication)
 - **Network**:
   - **LAN IP**: 192.168.48.46/20
-  - **Macvlan**: 192.168.59.46 (host alias)
-  - **Macvlan shim MAC**: `02:00:00:00:00:2e` (explicit, see task #31)
+  - **Macvlan shim**: 192.168.59.62 (was .46 — collided with the otel-collector
+    container on dm; moved to top of the /26 on 2026-07-01)
+  - **Macvlan shim MAC**: `02:00:00:00:00:03` (explicit; reconciled 2026-07-01
+    to match live — repo previously drifted to `:2e`, never applied)
   - **machine-id**: `3b8d239a029a4afbb7cb0e562e8b407f` (regenerated
     2026-04-13)
 - **Docker**: Latest CE, Portainer agent endpoint ID 13
@@ -186,5 +193,5 @@
   - **Edge tier (HA 3/3):** rproxy-3 (`.49`), cloudflare-tunnel-3 (local rproxy bridge)
   - **HA backing:** vault-3 (`.15`, raft 3/3), minio-2 (`.37`, site replication 2/2, local disk)
   - **Workloads:** twingate-golden-mussel (`.24`), freeswitch (`.40`), rustdesk hbbs (`.10`), rustdesk hbbr (`.11`)
-  - **Ancillary:** portainer-agent (`.46`)
+  - **Ancillary:** portainer-agent (`.59`)
 - **Access**: SSH via `ssh dockerserver-2`

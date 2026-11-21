@@ -90,6 +90,16 @@ resource "cloudflare_dns_record" "registry_cf_tunnel" {
   ttl     = 1
 }
 
+# Grafana: grafana.cf.lcamaral.com -> tunnel (public URL; grafana.d is LAN-only)
+resource "cloudflare_dns_record" "grafana_cf_tunnel" {
+  zone_id = cloudflare_zone.lcamaral_com.id
+  type    = "CNAME"
+  name    = "grafana.cf.lcamaral.com"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.bologna.id}.cfargotunnel.com"
+  proxied = true
+  ttl     = 1
+}
+
 # Tunnel CNAME: bologna.lcamaral.com -> tunnel (legacy)
 resource "cloudflare_dns_record" "bologna_tunnel" {
   zone_id = cloudflare_zone.lcamaral_com.id
@@ -180,6 +190,13 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "bologna" {
       },
       {
         hostname = "minio.cf.lcamaral.com"
+        service  = "https://nginx-rproxy:443"
+        origin_request = {
+          no_tls_verify = true
+        }
+      },
+      {
+        hostname = "grafana.cf.lcamaral.com"
         service  = "https://nginx-rproxy:443"
         origin_request = {
           no_tls_verify = true

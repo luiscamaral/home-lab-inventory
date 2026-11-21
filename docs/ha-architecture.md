@@ -173,7 +173,8 @@ HA is out of scope for the homelab:
 
 | Service | Host | IP | Why single |
 |---|---|---|---|
-| Docker registry | dm | `192.168.59.16` + rproxy bridge | Single; no HA yet |
+| Zot registry (+ pull-through cache) | dm | `192.168.59.5` + rproxy bridge | Single; no HA yet (data on NAS). See `docs/zot-registry.md` |
+| Docker registry (registry:2, legacy) | dm | `192.168.59.16` + rproxy bridge | Single; cool-off, to be removed |
 | postfix-relay | dm | (rproxy bridge) | Outbound SMTP queue; tolerates brief outages |
 | portainer | dm | `192.168.59.2` | Management plane only |
 | Prometheus + exporters | ds-1 | host-published `:9090` | Metric store; single TSDB |

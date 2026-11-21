@@ -1,0 +1,74 @@
+Collected UTC: 2026-11-18, 16:58 to 17:03 UTC
+Source: official Proxmox and Ubuntu web pages, fetched through web tools
+Scope: release status, release features, microcode setup, backup checks, Ubuntu support dates
+Method: web_search, fetch_content, get_search_content
+No host changes. These excerpts are source statements, not host observations.
+
+U1. Proxmox VE 9.2 announcement
+URL: https://www.proxmox.com/en/about/company-details/press-releases/proxmox-virtual-environment-9-2
+Tool response: mwmd9drymr4o4d, URL index 2
+Exact excerpts:
+"VIENNA, Austria – May 21, 2026"
+"Proxmox Server Solutions GmbH today announced the immediate availability of Proxmox Virtual Environment 9.2"
+"Proxmox Virtual Environment 9.2 is based on Debian 13.5 \"Trixie\" and features Linux kernel 7.0 as the new stable default."
+"Along with the latest versions of QEMU 11.0, LXC 7.0, and ZFS 2.4"
+The page describes dynamic balancing of HA-managed guests across cluster nodes, SDN WireGuard/BGP, custom CPU model management, and HA arm/disarm.
+
+U2. Proxmox download list
+URL: https://www.proxmox.com/en/downloads/proxmox-virtual-environment
+Tool response: mwmd9drymr4o4d, URL index 3
+Relevant output:
+Proxmox VE 9.2 ISO Installer, version 9.2-1, last updated May 21, 2026.
+Also lists the arm64 9.2-1 installer updated August 5, 2026.
+This page does not establish the latest package patch versions. Host APT candidates are in evidence 04 and 09.
+
+U3. Proxmox roadmap and release notes
+URL: https://pve.proxmox.com/wiki/Roadmap
+Tool response: mwmdc0huz1wxsu, URL index 0
+Exact excerpts from the Proxmox VE 9.2 release section:
+"Released 21. May 2026"
+"Latest 7.0 Kernel as new stable default"
+"QEMU 11.0"
+"LXC 7.0"
+"Before upgrading, please consider Known Issues & Breaking Changes"
+"The new load balancer can automatically migrate HA-managed guests to lower the overall node imbalance across the cluster."
+The future roadmap contains features that have not shipped. Do not treat the roadmap goals as installed or released features.
+
+U4. Proxmox administration guide, firmware
+URL: https://pve.proxmox.com/pve-docs/pve-admin-guide.html#sysadmin_firmware
+Tool response: mwmdc0huz1wxsu, URL index 1, searches non-free-firmware and intel-microcode
+Exact excerpts:
+"Since Proxmox VE 9 this repository is enabled by default for new installations to ensure they can get Early OS Microcode Updates."
+"If you upgraded your Proxmox VE 9 install from a previous version of Proxmox VE and have modernized your package repositories to the new deb822-style, you will need to adapt /etc/apt/sources.list.d/debian.sources instead."
+"For Intel CPUs: apt install intel-microcode"
+"Any future microcode update will also require a reboot to be loaded."
+The guide requires the Debian non-free-firmware component for these packages.
+These are upstream steps, not approval to change this host. Local rules require a repo source and sync/apply tool.
+
+U5. Proxmox Backup Server maintenance
+URL: https://pbs.proxmox.com/docs/maintenance.html
+Tool response: mwmdc0huz1wxsu, URL index 2
+Page title: Maintenance Tasks, Proxmox Backup 4.2.11-1 documentation
+Exact excerpts:
+"Prune lets you specify which backup snapshots you want to keep, removing others."
+"When pruning a snapshot, only the snapshot metadata (manifest, indices, blobs, log and notes) is removed."
+"The chunks containing the actual backup data and previously referenced by the pruned snapshot, have to be removed by a garbage collection run."
+"It is recommended that you reverify all backups at least monthly, even if a previous verification was successful."
+The page describes scheduled verification jobs, garbage collection, and task notifications.
+
+U6. Ubuntu 20.04 support
+URL: https://ubuntu.com/20-04
+Tool response: mwmdd0ucje5wc2, URL index 0
+Exact excerpt:
+"Reached end of standard support on 31 May 2025"
+The page offers migration to a newer LTS or extended subscription support. This assessment recommends migration, not a subscription.
+The host assessment did not inspect the UniFi VM's extended support entitlement.
+
+U7. Ubuntu release cycle
+URL: https://ubuntu.com/about/release-cycle
+Tool response: mwmdd0ucje5wc2, URL index 1
+Relevant table fields:
+Ubuntu 24.04 LTS: released April 2024, standard security maintenance through May 2029.
+Ubuntu 22.04 LTS: released April 2022, standard security maintenance through May 2027.
+Ubuntu 26.04 LTS: released April 2026, standard security maintenance through May 2031.
+A newer Ubuntu release is not proof that the installed UniFi application and database support it.
