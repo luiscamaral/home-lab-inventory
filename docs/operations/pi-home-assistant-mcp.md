@@ -51,13 +51,18 @@ Pi exposes reads through `codemode`. It exposes the write tools and `template` o
 `searchTools()` to `inventory_ha`. Native Pi can also list and read the Assist snapshot. The local shortcut client
 supports this server's JSON replies. Native Pi supports streaming tool replies.
 
-Both paths require terminal review for all 20 writes and for `template`. Read the tool name and JSON. Press Enter to
-continue to a separate confirmation. Escape cancels.
+Both paths post an approval request in chat for all 20 writes and for `template`. Read the tool name and exact JSON.
+Type `approve HA-…` or `cancel HA-…` using the full ID shown. Pi handles the reply without a model call or a dialog.
+The result appears in chat. Ordinary reads do not ask for approval.
+
+Each session can hold one request for two minutes. Pi consumes the ID before it sends the request. A second reply with
+the same ID does not send it again. Disconnect, reload, session changes, and `/tree` clear pending approval. Plain `yes`,
+model messages, and RPC inputs do not approve a request. A new request does not replace one that is still pending.
 
 Pi blocks unmapped tools and blocks writes outside the Pi terminal. The extension does not retry writes. If the result
 is unclear, check the live state before you retry.
 
-A terminal confirmation does not approve an infrastructure change. Do not use generic actions or integration reloads to
+A chat confirmation does not approve an infrastructure change. Do not use generic actions or integration reloads to
 bypass the repo's approval and apply rules. Use a Home Assistant account with only the permissions you need. This
 extension gates its own tools. It is not a sandbox for shell commands or other extensions.
 
@@ -65,9 +70,9 @@ Shortcut results open at the top of a read-only view. Use Up and Down to scroll,
 or Home and End to jump. Press Escape or Enter to close the result. The view shows the snapshot and prompt text without
 wrapping them in JSON. Large results may reach the display limit. Use a narrower query for more detail.
 
-Shortcut results do not enter the Pi transcript. Native MCP results can reach the model and transcript. Do not share
-private logs or whole-house snapshots when a narrower query will do. Keep the token out of prompts, files, and terminal
-history.
+Read shortcuts use the local viewer. Approval previews and approved results are saved in the Pi transcript as local
+entries. These entries do not enter model context. Native MCP arguments and read results can reach the model and
+transcript. Use a narrow query for private data. Keep the token out of prompts, files, and terminal history.
 
 ## Test and remove
 
