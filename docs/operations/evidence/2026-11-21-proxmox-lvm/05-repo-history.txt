@@ -1,0 +1,40 @@
+Collected UTC: 2026-11-21T06:33:04.370701+00:00
+Source: repository history records, not fresh checks of the April incident
+Scope: prior shrink and repair records, collection method pathlib file excerpts
+Main base commit: 2c897a94f3f3a3b60cea698c1a676e0bd80be094
+
+FILE docs/ha-architecture.md lines 214-232
+214:   with a small custom script that hits Pi-hole v6's Teleporter API.
+215: - **dockermaster file damage recovery** — ✓ resolved 2026-04-17.
+216:   The 2026-04-12 disk shrink had amputated ~42k files across 603
+217:   packages. Systematic `apt install --reinstall` across 172 packages
+218:   with non-cosmetic damage restored all functional files, including:
+219:   needrestart + perl deps (Module::Find, NeedRestart::Utils, Digest::MD5,
+220:   Dpkg::Conf, Text::Iconv, Net::SSLeay, HTML::Parser), kernel headers,
+221:   ca-certificates, tzdata, python3-botocore, Ansible, git, openssl,
+222:   libkrb5-3 (spake preauth), libheif codecs, ImageMagick coders, and
+223:   ~150 others. Two packages needed special handling: python3-botocore
+224:   (dpkg --remove --force-all then reinstall due to post-install
+225:   ModuleNotFoundError on `debpython`), and grub-pc (pre-seeded
+226:   `grub-pc/install_devices=/dev/sda` via debconf — the legacy value
+227:   was `/dev/xvda` from a previous Xen/Oracle-style install that
+228:   caused the postinst to hang on an interactive device-selection
+229:   prompt). ~13k cosmetic files (man pages, docs, locales, icons,
+230:   `/usr/share/bug/*` report templates, gdb auto-load scripts)
+231:   intentionally left unreinstalled — benign and not worth 2-3 GB
+232:   of package download.
+
+FILE inventory/servers.md lines 111-123
+111: ### dockermaster (VM 120) — control plane + edge
+112:
+113: - **Hostname**: dockermaster
+114: - **Type**: Virtual Machine on Proxmox (VMID 120)
+115: - **OS**: Ubuntu 24.04 LTS
+116: - **Hardware**:
+117:   - **CPU**: 8 cores (reduced from 6 → 8 on 2026-04-12)
+118:   - **RAM**: 62 GB
+119:   - **Storage**: 120 GB SSD (shrunk from 196GB → 120GB on 2026-04-12)
+120: - **Network**:
+121:   - **LAN IP**: 192.168.48.44/20
+122:   - **Macvlan gateway**: 192.168.59.1/26 (host alias for `docker-servers-net`)
+123:   - **Macvlan shim MAC**: `02:00:00:00:00:01` (explicit in

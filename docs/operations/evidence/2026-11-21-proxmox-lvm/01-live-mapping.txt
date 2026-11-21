@@ -1,0 +1,272 @@
+Collection started UTC: 2026-11-21T06:31:45.141363+00:00
+Collection ended UTC: 2026-11-21T06:31:53.589061+00:00
+Source: SSH proxmox, sudo read-only commands; guest commands through QEMU agent
+Scope: 01-live-mapping
+No disk writes, TRIM, metadata snapshot messages, repairs, snapshots, guest stops, or reboots.
+Exit status: 0
+Commands:
+
+date -u +%Y-%m-%dT%H:%M:%SZ
+pveversion | head -1
+qm status 120
+qm status 123
+lvs -a --units b --nosuffix -o vg_name,lv_name,lv_size,lv_attr,pool_lv,origin,data_percent,metadata_percent,segtype,thin_id
+vgs --units b --nosuffix -o vg_name,vg_size,vg_free
+pvs --units b --nosuffix -o pv_name,vg_name,pv_size,pv_free
+dmsetup ls --tree
+dmsetup table --target thin
+dmsetup table --target thin-pool
+dmsetup status --target thin
+dmsetup status --target thin-pool
+for dev in /dev/ssd_vg/vm-120-disk-2 /dev/ssd_vg/vm-123-disk-0; do printf '\nDEVICE %s\n' "$dev"; blockdev --getsize64 "$dev"; sfdisk --dump "$dev"; done
+lvmconfig --type current activation/thin_pool_autoextend_threshold activation/thin_pool_autoextend_percent allocation/thin_pool_metadata_require_separate_pvs
+python3 - <<'P'
+from pathlib import Path
+for v in [120,123]:
+ p=Path(f'/etc/pve/qemu-server/{v}.conf')
+ print('\nVM_CONFIG',v)
+ for line in p.read_text().splitlines():
+  if line.startswith(('name:','scsi','virtio','sata','ide','unused','lock:','agent:','[')):print(line)
+P
+qm listsnapshot 120
+qm listsnapshot 123
+journalctl -k --since '7 days ago' --no-pager | grep -Ei 'device-mapper.*(error|fail|thin)|thin.*(out.of|metadata|fail|error)|blk_update_request|I/O error|Buffer I/O|EXT4-fs.*(error|warning)|XFS.*(corrupt|error)' | tail -70
+
+OUTPUT:
+2026-11-21T06:31:45Z
++ date -u +%Y-%m-%dT%H:%M:%SZ
++ pveversion
++ head -1
+pve-manager/9.1.7/16b139a017452f16 (running kernel: 6.17.13-2-pve)
++ qm status 120
+status: running
++ qm status 123
+status: running
++ lvs -a --units b --nosuffix -o vg_name,lv_name,lv_size,lv_attr,pool_lv,origin,data_percent,metadata_percent,segtype,thin_id
+  VG     LV                                              LSize         Attr       Pool      Origin          Data%  Meta%  Type      ThId
+  pve    data                                              45092962304 twi-aotz--                           0.00   1.59   thin-pool
+  pve    [data_tdata]                                      45092962304 Twi-ao----                                         linear
+  pve    [data_tmeta]                                       1073741824 ewi-ao----                                         linear
+  pve    [lvol0_pmspare]                                    1073741824 ewi-------                                         linear
+  pve    root                                              37308334080 -wi-ao----                                         linear
+  pve    swap                                               8589934592 -wi-a-----                                         linear
+  ssd_vg base-9000-disk-0                                 253403070464 Vri---tz-k thin-pool                               thin        46
+  ssd_vg [lvol0_pmspare]                                     536870912 ewi-------                                         linear
+  ssd_vg [lvol0_pmspare]                                     536870912 ewi-------                                         linear
+  ssd_vg [lvol0_pmspare]                                     536870912 ewi-------                                         linear
+  ssd_vg [lvol0_pmspare]                                     536870912 ewi-------                                         linear
+  ssd_vg snap_vm-100-disk-0_Pre-ansible                    32212254720 Vri---tz-k thin-pool vm-100-disk-0                 thin        26
+  ssd_vg snap_vm-100-disk-0_pre-omada-6-3-0-111-20261116   32212254720 Vri---tz-k thin-pool vm-100-disk-0                 thin        52
+  ssd_vg snap_vm-100-disk-0_pre-omada-v6-20260618          32212254720 Vri---tz-k thin-pool vm-100-disk-0                 thin        51
+  ssd_vg snap_vm-100-disk-0_pre-ubuntu-22-04-20261116      32212254720 Vri---tz-k thin-pool vm-100-disk-0                 thin        53
+  ssd_vg snap_vm-100-disk-0_pre-ubuntu-24-04-20261116      32212254720 Vri---tz-k thin-pool vm-100-disk-0                 thin        54
+  ssd_vg snap_vm-10020-disk-0_start                       253403070464 Vri---tz-k thin-pool vm-10020-disk-0               thin        48
+  ssd_vg snap_vm-121-disk-0_pre-resize-20251222            34359738368 Vri---tz-k thin-pool vm-121-disk-0                 thin        34
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  ssd_vg thin-pool                                       1939899154432 twi-aotz--                           42.94  14.62  thin-pool
+  ssd_vg [thin-pool_tdata]                               1939899154432 Twi-ao----                                         linear
+  ssd_vg [thin-pool_tdata]                               1939899154432 Twi-ao----                                         linear
+  ssd_vg [thin-pool_tdata]                               1939899154432 Twi-ao----                                         linear
+  ssd_vg [thin-pool_tdata]                               1939899154432 Twi-ao----                                         linear
+  ssd_vg [thin-pool_tmeta]                                   536870912 ewi-ao----                                         linear
+  ssd_vg [thin-pool_tmeta]                                   536870912 ewi-ao----                                         linear
+  ssd_vg [thin-pool_tmeta]                                   536870912 ewi-ao----                                         linear
+  ssd_vg vm-100-disk-0                                     32212254720 Vwi-aotz-- thin-pool                 75.60         thin         9
+  ssd_vg vm-100-state-Pre-ansible                           4819255296 Vwi-a-tz-- thin-pool                 36.98         thin        25
+  ssd_vg vm-10000-disk-0                                    8589934592 Vwi-aotz-- thin-pool                 81.54         thin        31
+  ssd_vg vm-10020-disk-0                                  253403070464 Vwi---tz-- thin-pool                               thin        47
+  ssd_vg vm-101-disk-0                                    128849018880 Vwi-a-tz-- thin-pool                 0.00          thin        17
+  ssd_vg vm-102-disk-0                                    253403070464 Vwi---tz-- thin-pool                               thin        45
+  ssd_vg vm-111-disk-0                                     85899345920 Vwi-a-tz-- thin-pool                 32.94         thin        23
+  ssd_vg vm-111-disk-1                                     17179869184 Vwi-a-tz-- thin-pool                 0.06          thin        24
+  ssd_vg vm-120-disk-2                                    128849018880 Vwi-aotz-- thin-pool                 100.00        thin         5
+  ssd_vg vm-121-disk-0                                     68719476736 Vwi-aotz-- thin-pool                 98.69         thin         8
+  ssd_vg vm-122-disk-0                                    137438953472 Vwi-aotz-- thin-pool                 37.52         thin        10
+  ssd_vg vm-123-disk-0                                    128849018880 Vwi-aotz-- thin-pool                 100.00        thin        43
+  ssd_vg vm-124-disk-0                                    128849018880 Vwi-aotz-- thin-pool                 100.00        thin        44
+  ssd_vg vm-130-cloudinit                                      4194304 Vwi---tz-- thin-pool                               thin        50
+  ssd_vg vm-130-disk-0                                      8589934592 Vwi---tz-- thin-pool                               thin        49
++ vgs --units b --nosuffix -o vg_name,vg_size,vg_free
+  VG       VSize         VFree
+  hdd-pool 1200174923776 1200174923776
+  pve       106296246272   13157531648
+  ssd_vg   1940972896256             0
+  PV         VG       PSize         PFree
+  /dev/sda3  pve       106296246272  13157531648
+  /dev/sda4  ssd_vg   1940972896256            0
+  /dev/sdb1  hdd-pool  549751619584 549751619584
+  /dev/sdb2  hdd-pool  549751619584 549751619584
+  /dev/sdb3  hdd-pool  100671684608 100671684608
+pve-data (252:7)
+ `-pve-data-tpool (252:6)
+    |-pve-data_tdata (252:4)
+    |  `- (8:3)
+    `-pve-data_tmeta (252:3)
+       `- (8:3)
+pve-root (252:1)
+ `- (8:3)
+pve-swap (252:0)
+ `- (8:3)
+ssd_vg-thin--pool (252:9)
+ `-ssd_vg-thin--pool-tpool (252:8)
+    |-ssd_vg-thin--pool_tdata (252:5)
+    |  `- (8:4)
+    `-ssd_vg-thin--pool_tmeta (252:2)
+       `- (8:4)
+ssd_vg-vm--100--disk--0 (252:12)
+ `-ssd_vg-thin--pool-tpool (252:8)
+    |-ssd_vg-thin--pool_tdata (252:5)
+    |  `- (8:4)
+    `-ssd_vg-thin--pool_tmeta (252:2)
+       `- (8:4)
+ssd_vg-vm--100--state--Pre--ansible (252:17)
+ `-ssd_vg-thin--pool-tpool (252:8)
+    |-ssd_vg-thin--pool_tdata (252:5)
+    |  `- (8:4)
+    `-ssd_vg-thin--pool_tmeta (252:2)
+       `- (8:4)
+ssd_vg-vm--10000--disk--0 (252:19)
+ `-ssd_vg-thin--pool-tpool (252:8)
+    |-ssd_vg-thin--pool_tdata (252:5)
+    |  `- (8:4)
+    `-ssd_vg-thin--pool_tmeta (252:2)
+       `- (8:4)
+ssd_vg-vm--101--disk--0 (252:14)
+ `-ssd_vg-thin--pool-tpool (252:8)
+    |-ssd_vg-thin--pool_tdata (252:5)
+    |  `- (8:4)
+    `-ssd_vg-thin--pool_tmeta (252:2)
+       `- (8:4)
+ssd_vg-vm--111--disk--0 (252:15)
+ `-ssd_vg-thin--pool-tpool (252:8)
+    |-ssd_vg-thin--pool_tdata (252:5)
+    |  `- (8:4)
+    `-ssd_vg-thin--pool_tmeta (252:2)
+       `- (8:4)
+ssd_vg-vm--111--disk--1 (252:16)
+ `-ssd_vg-thin--pool-tpool (252:8)
+    |-ssd_vg-thin--pool_tdata (252:5)
+    |  `- (8:4)
+    `-ssd_vg-thin--pool_tmeta (252:2)
+       `- (8:4)
+ssd_vg-vm--120--disk--2 (252:10)
+ `-ssd_vg-thin--pool-tpool (252:8)
+    |-ssd_vg-thin--pool_tdata (252:5)
+    |  `- (8:4)
+    `-ssd_vg-thin--pool_tmeta (252:2)
+       `- (8:4)
+ssd_vg-vm--121--disk--0 (252:11)
+ `-ssd_vg-thin--pool-tpool (252:8)
+    |-ssd_vg-thin--pool_tdata (252:5)
+    |  `- (8:4)
+    `-ssd_vg-thin--pool_tmeta (252:2)
+       `- (8:4)
+ssd_vg-vm--122--disk--0 (252:13)
+ `-ssd_vg-thin--pool-tpool (252:8)
+    |-ssd_vg-thin--pool_tdata (252:5)
+    |  `- (8:4)
+    `-ssd_vg-thin--pool_tmeta (252:2)
+       `- (8:4)
+ssd_vg-vm--123--disk--0 (252:20)
+ `-ssd_vg-thin--pool-tpool (252:8)
+    |-ssd_vg-thin--pool_tdata (252:5)
+    |  `- (8:4)
+    `-ssd_vg-thin--pool_tmeta (252:2)
+       `- (8:4)
+ssd_vg-vm--124--disk--0 (252:18)
+ `-ssd_vg-thin--pool-tpool (252:8)
+    |-ssd_vg-thin--pool_tdata (252:5)
+    |  `- (8:4)
+    `-ssd_vg-thin--pool_tmeta (252:2)
+       `- (8:4)
+ssd_vg-vm--100--disk--0: 0 62914560 thin 252:8 9
+ssd_vg-vm--100--state--Pre--ansible: 0 9412608 thin 252:8 25
+ssd_vg-vm--10000--disk--0: 0 16777216 thin 252:8 31
+ssd_vg-vm--101--disk--0: 0 251658240 thin 252:8 17
+ssd_vg-vm--111--disk--0: 0 167772160 thin 252:8 23
+ssd_vg-vm--111--disk--1: 0 33554432 thin 252:8 24
+ssd_vg-vm--120--disk--2: 0 251658240 thin 252:8 5
+ssd_vg-vm--121--disk--0: 0 134217728 thin 252:8 8
+ssd_vg-vm--122--disk--0: 0 268435456 thin 252:8 10
+ssd_vg-vm--123--disk--0: 0 251658240 thin 252:8 43
+ssd_vg-vm--124--disk--0: 0 251658240 thin 252:8 44
+pve-data-tpool: 0 88072192 thin-pool 252:3 252:4 128 0 0
+ssd_vg-thin--pool-tpool: 0 3788865536 thin-pool 252:2 252:5 512 0 0
+ssd_vg-vm--100--disk--0: 0 62914560 thin 47561216 62914559
+ssd_vg-vm--100--state--Pre--ansible: 0 9412608 thin 3481088 3481087
+ssd_vg-vm--10000--disk--0: 0 16777216 thin 13679616 16777215
+ssd_vg-vm--101--disk--0: 0 251658240 thin 0 -
+ssd_vg-vm--111--disk--0: 0 167772160 thin 55256064 167772159
+ssd_vg-vm--111--disk--1: 0 33554432 thin 21504 33554431
+ssd_vg-vm--120--disk--2: 0 251658240 thin 406610944 411041791
+ssd_vg-vm--121--disk--0: 0 134217728 thin 132457984 134217727
+ssd_vg-vm--122--disk--0: 0 268435456 thin 100714496 268435455
+ssd_vg-vm--123--disk--0: 0 251658240 thin 411041792 411041791
+ssd_vg-vm--124--disk--0: 0 251658240 thin 251658240 251658239
+pve-data-tpool: 0 88072192 thin-pool 1018 4163/262144 0/688064 - rw no_discard_passdown queue_if_no_space - 1024
+ssd_vg-thin--pool-tpool: 0 3788865536 thin-pool 469 19160/131072 3177932/7400128 - rw no_discard_passdown queue_if_no_space - 1024
+
+DEVICE /dev/ssd_vg/vm-120-disk-2
++ pvs --units b --nosuffix -o pv_name,vg_name,pv_size,pv_free
++ dmsetup ls --tree
++ dmsetup table --target thin
++ dmsetup table --target thin-pool
++ dmsetup status --target thin
++ dmsetup status --target thin-pool
++ for dev in /dev/ssd_vg/vm-120-disk-2 /dev/ssd_vg/vm-123-disk-0
++ printf '\nDEVICE %s\n' /dev/ssd_vg/vm-120-disk-2
++ blockdev --getsize64 /dev/ssd_vg/vm-120-disk-2
+128849018880
++ sfdisk --dump /dev/ssd_vg/vm-120-disk-2
+label: gpt
+label-id: 8DF91146-9D06-4927-B9D1-318381152090
+device: /dev/ssd_vg/vm-120-disk-2
+unit: sectors
+first-lba: 34
+last-lba: 251658206
+sector-size: 512
+
+/dev/ssd_vg/vm-120-disk-2p1 : start=        2048, size=        2048, type=21686148-6449-6E6F-744E-656564454649, uuid=6105D219-CE42-4311-BC5C-DBE515764279, name="BIOS boot partition"
+/dev/ssd_vg/vm-120-disk-2p2 : start=        4096, size=   251652096, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=3E7D0CC2-7A3F-4FC7-97A2-1A6D3D83BBF7, name="Linux filesystem"
+
+DEVICE /dev/ssd_vg/vm-123-disk-0
++ for dev in /dev/ssd_vg/vm-120-disk-2 /dev/ssd_vg/vm-123-disk-0
++ printf '\nDEVICE %s\n' /dev/ssd_vg/vm-123-disk-0
++ blockdev --getsize64 /dev/ssd_vg/vm-123-disk-0
+128849018880
++ sfdisk --dump /dev/ssd_vg/vm-123-disk-0
+label: gpt
+label-id: C19B1B58-C8F6-4FE1-852D-2F468B652E15
+device: /dev/ssd_vg/vm-123-disk-0
+unit: sectors
+first-lba: 34
+last-lba: 251658206
+sector-size: 512
+
+/dev/ssd_vg/vm-123-disk-0p1 : start=        2048, size=        2048, type=21686148-6449-6E6F-744E-656564454649, uuid=97F03894-E154-4C1D-A075-DC05F4EA5B65
+/dev/ssd_vg/vm-123-disk-0p2 : start=        4096, size=   251652096, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=080EB71C-B01F-41CD-854B-3770F6D6AFBA
++ lvmconfig --type current activation/thin_pool_autoextend_threshold activation/thin_pool_autoextend_percent allocation/thin_pool_metadata_require_separate_pvs
+  Configuration node activation/thin_pool_autoextend_threshold not found
+  Configuration node activation/thin_pool_autoextend_percent not found
+  Configuration node allocation/thin_pool_metadata_require_separate_pvs not found
++ python3 -
+
+VM_CONFIG 120
+agent: 1
+name: dockermaster
+scsi0: thin-pool-ssd:vm-120-disk-2,iothread=1,size=120G,ssd=1
+scsihw: virtio-scsi-single
+
+VM_CONFIG 123
+agent: 1
+name: dockerserver-1
+scsi0: thin-pool-ssd:vm-123-disk-0,iothread=1,size=120G,ssd=1
+scsihw: virtio-scsi-single
++ qm listsnapshot 120
+`-> current                                             You are here!
++ qm listsnapshot 123
+`-> current                                             You are here!
++ journalctl -k --since '7 days ago' --no-pager
++ grep -Ei 'device-mapper.*(error|fail|thin)|thin.*(out.of|metadata|fail|error)|blk_update_request|I/O error|Buffer I/O|EXT4-fs.*(error|warning)|XFS.*(corrupt|error)'
++ tail -70

@@ -1,0 +1,12 @@
+{
+  "created_utc": "2026-11-21T06:35:45.681889+00:00",
+  "normalization": "Repository checks remove trailing whitespace and normalize final newlines.",
+  "sha256": {
+    "01-live-mapping.txt": "e6be270fa8fd220acc5e2a3d50187196437a5cddfdc8233cf1c33fabcfffae03",
+    "02-guest-sizes.txt": "e2d59ae1317f5524d015ac5386cc98800846c44494c6d4e35e76151e76d97b84",
+    "03-lvm-history.txt": "626a82343af3e94c7f7d7a09a949665dc425cf1d898cb5fed581a091716c2c62",
+    "04-safety-and-recovery.txt": "d983cb38ad37fa926791a35feb507b96cdf8a50ef2527e1e87998aee1367ab93",
+    "05-repo-history.txt": "b60cc7687ec806d2434794225d23f5f708ad30a3d7218110d00bcc11ed776de0",
+    "06-kernel-reference.txt": "ee1d19f8f02f3d6660cae8e5cb3a3fab07ed46a257bc5409574b0fefc3216009"
+  }
+}
