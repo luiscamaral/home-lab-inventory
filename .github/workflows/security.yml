@@ -86,7 +86,7 @@ jobs:
         # found. Don't try to upload a non-existent file (was producing
         # "Path does not exist: gitleaks.sarif" failures on every run).
         if: always() && hashFiles('gitleaks.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: gitleaks.sarif
           category: secrets
@@ -197,7 +197,7 @@ jobs:
 
       - name: Upload Hadolint SARIF report
         if: always() && steps.find-dockerfiles.outputs.dockerfiles != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: hadolint-merged.sarif
           category: hadolint
@@ -268,21 +268,21 @@ jobs:
 
       - name: Upload Trivy filesystem SARIF report
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-fs.sarif
           category: trivy-filesystem
 
       - name: Upload Trivy Dockerfile SARIF report
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-dockerfile.sarif
           category: trivy-dockerfile
 
       - name: Upload Trivy docker-compose SARIF report
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-compose.sarif
           category: trivy-docker-compose
