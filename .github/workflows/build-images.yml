@@ -42,7 +42,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.services }}" ]; then
             # Manual trigger with specific services
             IFS=',' read -ra SERVICES <<< "${{ github.event.inputs.services }}"
-            JSON_ARRAY=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -s .)
+            JSON_ARRAY=$(printf '%s\n' "${SERVICES[@]}" | jq -R . | jq -sc .)
           else
             # Find all directories with Dockerfiles
             SERVICES=()
@@ -61,7 +61,7 @@ jobs:
               echo "No services with Dockerfiles found"
               JSON_ARRAY='[]'
             else
-              JSON_ARRAY=$(printf '%s\n' "${UNIQUE_SERVICES[@]}" | jq -R . | jq -s .)
+              JSON_ARRAY=$(printf '%s\n' "${UNIQUE_SERVICES[@]}" | jq -R . | jq -sc .)
             fi
           fi
 
