@@ -4,7 +4,7 @@ import { ACCESS, PREFIX, SERVER, TOOLS, TOOL_EXPOSURE, URL, parseCommand, termin
 import { HomeAssistantClient } from "./client.ts";
 import { formatPrompt, formatSnapshot, formatTool, prepareDisplay } from "./results.ts";
 import { openViewer } from "./viewer.ts";
-import { APPROVAL_MINUTES, ApprovalQueue, parseApproval } from "./approval.ts";
+import { APPROVAL_MINUTES, ApprovalQueue, parseApproval, type Batch } from "./approval.ts";
 
 export const TRANSCRIPT_ENTRY = "inventory-ha-approval";
 const KEYCHAIN_SERVICE = "HA-TOKEN";
@@ -43,6 +43,7 @@ export default function homeAssistant(pi: ExtensionAPI) {
   let connection: Connection | undefined;
   let connecting = false;
   let sending = false;
+  let generation = 0;
   const approvals = new ApprovalQueue();
 
   function transcript(text: string) {
@@ -52,11 +53,39 @@ export default function homeAssistant(pi: ExtensionAPI) {
   function stage(name: string, input: Record<string, unknown>, ctx: ExtensionContext, active: Connection) {
     if (ctx.mode !== "tui" || !ctx.hasUI || ctx.signal?.aborted) return { reason: "Approval requires the Pi terminal." };
     if (sending) return { reason: "Wait for the current Home Assistant request to finish." };
-    const { request, reason } = approvals.stage(name, input, active.token);
-    if (!request) return { reason };
-    const note = ADMIN_TOOLS.has(name) ? " Follow the repo approval rules for infrastructure changes." : "";
-    transcript(`Home Assistant needs approval: ${name}\n${terminalText(request.args)}\nType approve ${request.id} or cancel ${request.id} in chat. Expires in ${APPROVAL_MINUTES} minutes.${note}`);
-    return { staged: true, reason: `Not sent. The user can type approve ${request.id} or cancel ${request.id} in chat. Do not retry.` };
+    const { batch, reason } = approvals.stage(name, input, active.token);
+    if (!batch) return { reason };
+    showBatch(batch);
+    return { staged: true, reason: `Not sent. The user can type approve all ${batch.id} or cancel ${batch.id} in chat. Do not retry.` };
+  }
+
+  function showBatch(batch: Batch) {
+    const rows = batch.requests.map(({ name, args }, index) => `${index + 1}. ${name}\n${terminalText(args)}`);
+    const note = batch.requests.some(({ name }) => ADMIN_TOOLS.has(name)) ? "\nFollow the repo approval rules for infrastructure changes." : "";
+    transcript(`Home Assistant batch ${batch.id}: ${rows.length} pending\n${rows.join("\n\n")}\nType approve all ${batch.id} or cancel ${batch.id} in chat. Only this batch ID is valid. The batch expires at ${new Date(batch.expiresAt).toISOString().slice(11, 19)} UTC (${APPROVAL_MINUTES} minutes after the last addition).${note}`);
+  }
+
+  async function sendBatch(batch: Batch, active: Connection) {
+    let completed = 0;
+    const started = generation;
+    for (const { name, args } of batch.requests) {
+      if (connection !== active || generation !== started) break;
+      try {
+        const result = await active.client.call(name, JSON.parse(args));
+        const text = prepareDisplay(formatTool(result), active.token);
+        const summary = text.length > 4000 ? `${text.slice(0, 4000)}\n[Display limit reached.]` : text;
+        const status = result.isError ? "returned an error. Check the state before retrying." : "completed.";
+        transcript(`Home Assistant ${batch.id} [${completed + 1}/${batch.requests.length}] ${name}: ${status}\n${summary}`);
+        if (result.isError) break;
+        completed++;
+      } catch {
+        transcript(`Home Assistant ${batch.id} [${completed + 1}/${batch.requests.length}] ${name}: no confirmed result. Check the live state before you retry.`);
+        break;
+      }
+    }
+    if (completed < batch.requests.length) {
+      transcript(`Home Assistant ${batch.id}: stopped after ${completed}/${batch.requests.length} confirmed successes. No remaining requests will be sent.`);
+    }
   }
 
   async function disconnect() {
@@ -70,7 +99,10 @@ export default function homeAssistant(pi: ExtensionAPI) {
 
   pi.on("session_start", disconnect);
   pi.on("session_shutdown", disconnect);
-  pi.on("session_tree", () => approvals.clear());
+  pi.on("session_tree", () => {
+    generation++;
+    approvals.clear();
+  });
   pi.on("input", async (event, ctx) => {
     const reply = parseApproval(event.text);
     if (!reply) return;
@@ -82,19 +114,13 @@ export default function homeAssistant(pi: ExtensionAPI) {
       return { action: "handled" };
     }
     const active = connection;
-    const request = active && approvals.take(reply.id);
-    if (!active || !request) ctx.ui.notify("No pending Home Assistant request matches that ID.", "warning");
-    else if (reply.action === "cancel") transcript(`Home Assistant ${request.id}: canceled. Nothing sent.`);
+    const batch = active && approvals.take(reply.id);
+    if (!active || !batch) ctx.ui.notify("Approval did not match. Use /ha-batch to see the current batch and valid reply.", "warning");
+    else if (reply.action === "cancel") transcript(`Home Assistant ${batch.id}: canceled. Nothing sent.`);
     else {
       sending = true;
       try {
-        const result = await active.client.call(request.name, JSON.parse(request.args));
-        const text = prepareDisplay(formatTool(result), active.token);
-        const summary = text.length > 4000 ? `${text.slice(0, 4000)}\n[Display limit reached. Use a narrower query.]` : text;
-        const status = result.isError ? "returned an error. Check the state before retrying." : "completed.";
-        transcript(`Home Assistant ${request.id}: ${status}\n${summary}`);
-      } catch {
-        transcript(`Home Assistant ${request.id}: no confirmed result. Check the live state before you retry.`);
+        await sendBatch(batch, active);
       } finally {
         sending = false;
       }
@@ -140,6 +166,15 @@ export default function homeAssistant(pi: ExtensionAPI) {
       } finally {
         connecting = false;
       }
+    },
+  });
+
+  pi.registerCommand("ha-batch", {
+    description: "Show the current Home Assistant approval batch",
+    handler: async (_args, ctx) => {
+      const batch = approvals.current();
+      if (batch && ctx.isProjectTrusted() && ctx.mode === "tui") showBatch(batch);
+      else ctx.ui.notify("No Home Assistant batch is pending.", "info");
     },
   });
 

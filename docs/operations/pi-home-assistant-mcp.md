@@ -17,6 +17,7 @@ macOS Keychain, and access to the LAN HTTPS proxy. It does not add a global Pi s
 | --- | --- |
 | `/ha-status` | Check the registration and native mapped tool count. |
 | `/ha-tools` | Compare the local map with the live tool list. |
+| `/ha-batch` | Show the current approval batch and its exact reply. |
 | `/ha <alias> [JSON]` | Run a tool with exact arguments and no model call. |
 | `/ha-prompt` | View the server prompt. Pi does not send it to the model or transcript. |
 | `/ha-snapshot` | View the state of entities exposed to Assist. |
@@ -51,13 +52,16 @@ Pi exposes reads through `codemode`. It exposes the write tools and `template` o
 `searchTools()` to `inventory_ha`. Native Pi can also list and read the Assist snapshot. The local shortcut client
 supports this server's JSON replies. Native Pi supports streaming tool replies.
 
-Both paths post an approval request in chat for all 20 writes and for `template`. Read the tool name and exact JSON.
-Type `approve HA-…` or `cancel HA-…` using the full ID shown. Pi handles the reply without a model call or a dialog.
-The result appears in chat. Ordinary reads do not ask for approval.
+Both paths add all 20 writes and `template` to an approval batch in chat. Review every tool name and its exact JSON.
+Type `approve all HA-BATCH-…` or `cancel HA-BATCH-…` with the full ID shown. Pi handles the reply without a model call
+or a dialog. Ordinary reads do not ask for approval.
 
-Each session can hold one request for two minutes. Pi consumes the ID before it sends the request. A second reply with
-the same ID does not send it again. Disconnect, reload, session changes, and `/tree` clear pending approval. Plain `yes`,
-model messages, and RPC inputs do not approve a request. A new request does not replace one that is still pending.
+Use `/ha-batch` to see the complete current list. Each new request gives the batch a new ID and invalidates the old ID.
+A batch can hold up to eight requests and expires two minutes after the last addition. Approval applies only to that
+list. It does not grant permission for future requests. Plain `yes`, model messages, and RPC inputs cannot approve it.
+
+Pi consumes the ID before sending requests in order. It stops at the first error or uncertain result. It does not send
+the remaining requests or undo earlier ones. Disconnect, reload, session changes, and `/tree` clear pending approval.
 
 Pi blocks unmapped tools and blocks writes outside the Pi terminal. The extension does not retry writes. If the result
 is unclear, check the live state before you retry.
