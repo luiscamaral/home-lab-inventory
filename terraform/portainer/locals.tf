@@ -1929,5 +1929,92 @@ locals {
                 transmitter, and this module's TX strand is already the
                 suspected fault. Replace it:
                 docs/network/2026-06-28-ix0-optic-flap-handoff.md
+
+      # ---- switch24a (TL-SG3428X, Omada-managed). Added 2026-11-21 after the
+      # 2026-11-16 outage: Te1/0/27 lost carrier, a pfSense reboot did not
+      # restore it, and only a switch power cycle did. A controller-managed
+      # switch sends no syslog (Omada: "Syslog Server N/A"; the NAS has had no
+      # switch syslog since 2026-06-18) and Omada holds no events, so SNMP is the
+      # only record. Metrics come from job snmp-switch24a (instance="switch24a").
+      # NOTE: that scrape crosses ix0 (SVR -> pfSense -> ADMIN). During an ix0
+      # outage these rules go quiet or fire Switch24aScrapeDown; they do not
+      # record the outage itself. Evidence:
+      # docs/network/evidence/2026-11-21-ix0-restore-timeline.md
+      - name: switch24a
+        interval: 1m
+        rules:
+          - alert: Switch24aScrapeDown
+            expr: up{job="snmp-switch24a"} == 0
+            for: 5m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "switch24a SNMP scrape failing"
+              description: |
+                Prometheus has not read switch24a over SNMP for 5m. Either the
+                switch is down or stuck, or the path is broken: the scrape
+                crosses ix0 (check Ix0LinkDown and pfSense igc3/ADMIN first).
+                While this fires, every other switch24a alert is blind.
+
+          - alert: Switch24aRebooted
+            expr: sysUpTime{instance="switch24a"} < 60000 or resets(sysUpTime{instance="switch24a"}[15m]) > 0
+            for: 0m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "switch24a restarted"
+              description: |
+                switch24a rebooted or was power-cycled in the last 15 minutes
+                (sysUpTime below 10 minutes, or a reset seen). On 2026-11-16 a power cycle was the
+                only thing that cleared a stuck Te1/0/27. Find out who did it
+                and why. Every port, including the ix0 trunk, blipped.
+
+          - alert: Switch24aTenGigPortDown
+            expr: ifOperStatus{instance="switch24a",ifName=~"ten-gigabitEthernet 1/0/2[5-8]"} != 1 and on(ifIndex) ifAdminStatus{instance="switch24a"} == 1
+            for: 2m
+            labels:
+              severity: critical
+              category: network
+            annotations:
+              summary: "switch24a {{ $$labels.ifName }} ({{ $$labels.ifAlias }}) is down"
+              description: |
+                10G port {{ $$labels.ifName }} ({{ $$labels.ifAlias }}) is
+                administratively up but has no link. Te1/0/27 is the pfSense ix0
+                trunk (the whole LAN), 1/0/28 Proxmox, 1/0/25 and 1/0/26 other
+                10G links. On 2026-11-16 Te1/0/27 stayed down through a pfSense
+                reboot and recovered only after a switch power cycle.
+                Evidence: docs/network/evidence/2026-11-21-ix0-restore-timeline.md
+
+          - alert: Switch24aTenGigPortFlapped
+            expr: changes(ifLastChange{instance="switch24a",ifName=~"ten-gigabitEthernet 1/0/2[5-8]"}[10m]) > 0
+            for: 0m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "switch24a {{ $$labels.ifName }} ({{ $$labels.ifAlias }}) changed link state"
+              description: |
+                ifLastChange moved on {{ $$labels.ifName }} in the last 10m, so the
+                port went down and up (or the switch restarted). This catches
+                flaps shorter than the 30s scrape interval. Compare with
+                Ix0LinkFlapping on pfSense for the other end of Te1/0/27.
+
+          - alert: Switch24aTenGigInputErrors
+            expr: rate(ifInErrors{instance="switch24a",ifName=~"ten-gigabitEthernet 1/0/2[5-8]"}[15m]) > 0.1
+            for: 15m
+            labels:
+              severity: warning
+              category: network
+            annotations:
+              summary: "switch24a {{ $$labels.ifName }} input errors {{ printf \"%.2f\" $$value }}/s"
+              description: |
+                {{ $$labels.ifName }} ({{ $$labels.ifAlias }}) counted
+                {{ printf "%.2f" $$value }} receive errors per second over 15m.
+                Healthy is 0. Te1/0/27 was about 0.2/s on 2026-11-16. Te1/0/25
+                (a 10G link to the AP switch) was 3.6/s on 2026-11-16 and 47/s on
+                2026-11-21: that link is a separate fault nobody has traced yet.
+                Counters: switch24a dashboard, panel "Te1/0/27 input errors /s".
   EOT
 }
