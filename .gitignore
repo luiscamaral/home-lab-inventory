@@ -108,5 +108,8 @@ terraform/**/tfplan
 .serena/
 .tokensave/
 
-# pi agent runtime state (Herdr pane mappings) — local only
-.pi/
+# Keep Pi runtime state local. Track only the Home Assistant extension.
+.pi/*
+!.pi/extensions/
+.pi/extensions/*
+!.pi/extensions/home-assistant/
