@@ -1,6 +1,8 @@
-# Same tag as the deployed stack (terraform/portainer/stacks/calibre.yml), so CI
-# scans what production runs. Bump both together.
-FROM linuxserver/calibre:v9.17.0-ls430
+# Tracks upstream :latest. Production does not use this image: the deployed stack
+# pins linuxserver/calibre:v9.17.0-ls430 (terraform/portainer/stacks/calibre.yml).
+# The ls430 tag scored worse in CI (7 fixable high findings vs 2 on :latest, after
+# apt-get upgrade): older bundled pebble, dnspython and docker CLI plugins.
+FROM linuxserver/calibre:latest
 
 LABEL maintainer="local"
 
