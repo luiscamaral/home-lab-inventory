@@ -1,0 +1,21 @@
+collected_utc 2026-11-16T21:07:09.839456+00:00
+source: Thanos Query 192.168.59.26:10902, instance=pfsense job=node; rate = increase over 6h / 21600; times are UTC
+DAC install window (from pfSense watchdog log): link down 2026-11-11 15:24 MST (22:24Z) to reboot 15:37:59 MST (22:38Z), link up 22:39:24Z
+
+window_end_utc          rf_per_s(6h avg)  link_flaps(6h)
+2026-10-22 22:00Z       None           None
+2026-10-28 22:00Z       None           None
+2026-11-01 22:00Z       None           None
+2026-11-04 22:00Z       None           None
+2026-11-06 22:00Z       None           None
+2026-11-08 22:00Z       None           None
+2026-11-09 22:00Z       None           None
+2026-11-10 22:00Z       None           None
+2026-11-11 22:00Z       None           None
+2026-11-12 06:00Z     133.25           1.00
+2026-11-13 06:00Z      93.50           0.00
+2026-11-14 06:00Z       1.54           0.00
+2026-11-15 06:00Z       1.42           0.00
+2026-11-16 06:00Z       2.00           0.00
+2026-11-16 21:07Z     635.39           0.00
+2026-11-17 06:00Z       None           None

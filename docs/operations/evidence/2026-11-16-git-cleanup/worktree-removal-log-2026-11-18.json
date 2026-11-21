@@ -1,0 +1,600 @@
+{
+  "collected_at": "2026-11-18T17:47:06.456111+00:00",
+  "data": [
+    {
+      "branch": "feat/acme-cf-cert",
+      "category": "DONE merged PR #95",
+      "exists_after": false,
+      "exit": 0,
+      "head": "9c879ef62dbe5695c316cee6c7baf0d81fa62dff",
+      "name": "acme-cf",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/acme-cert-create-name",
+      "category": "DONE merged PR #96",
+      "exists_after": false,
+      "exit": 0,
+      "head": "b04e32a50865bda6bce7f4547a88e6314d171e02",
+      "name": "acme-fix",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/acme-cert-iac",
+      "category": "DONE merged PR #94",
+      "exists_after": false,
+      "exit": 0,
+      "head": "18cd82bdbd4852968408f05e2fcbc020bf3b5a88",
+      "name": "acme-iac",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/acme-issue-polling",
+      "category": "DONE merged PR #98",
+      "exists_after": false,
+      "exit": 0,
+      "head": "5bfaa4d549064806ebaf2d75f9654aa0bb1ff773",
+      "name": "acme-poll",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/acme-poller-stale-log",
+      "category": "DONE merged PR #99",
+      "exists_after": false,
+      "exit": 0,
+      "head": "ff069af07437874a3a8b37edbb4f8012ebfb41e0",
+      "name": "acme-poll2",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/acme-cf-explicit-sans",
+      "category": "DONE merged PR #97",
+      "exists_after": false,
+      "exit": 0,
+      "head": "848743f505ae524b7f842886a6f69761bba0babb",
+      "name": "acme-san",
+      "stderr": ""
+    },
+    {
+      "branch": "",
+      "category": "DONE detached in main",
+      "exists_after": false,
+      "exit": 0,
+      "head": "091e018899cef091a4e4ad93d86258df3bba9629",
+      "name": "apply-main",
+      "stderr": ""
+    },
+    {
+      "branch": "",
+      "category": "DONE detached in main",
+      "exists_after": false,
+      "exit": 0,
+      "head": "55f4ea9975219933570de2c6fdefc45cd84b2f0d",
+      "name": "apply-main-A",
+      "stderr": ""
+    },
+    {
+      "branch": "",
+      "category": "DONE detached in main",
+      "exists_after": false,
+      "exit": 0,
+      "head": "82f3ce88f6e1166d7807da62da2cb962fa330d2b",
+      "name": "apply-main-B",
+      "stderr": ""
+    },
+    {
+      "branch": "",
+      "category": "DONE detached in main",
+      "exists_after": true,
+      "exit": 128,
+      "head": "091e018899cef091a4e4ad93d86258df3bba9629",
+      "name": "apply-nomad-observability",
+      "stderr": "fatal: working trees containing submodules cannot be moved or removed"
+    },
+    {
+      "branch": "",
+      "category": "DONE detached in main",
+      "exists_after": false,
+      "exit": 0,
+      "head": "503fcf4f8342599e91b4800e8c19a79ceb014580",
+      "name": "apply-omada-admin",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/blackbox-auth-cf-probe",
+      "category": "DONE merged PR #101",
+      "exists_after": false,
+      "exit": 0,
+      "head": "bd428ad6eb46a30cbe43b378bba4c7c893c4285e",
+      "name": "bb-probe",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/dhcp-static-php-writer",
+      "category": "DONE merged PR #147",
+      "exists_after": false,
+      "exit": 0,
+      "head": "172d719f9b346d0d427c5555c19575037ddbd63e",
+      "name": "dhcp-php",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/dhcp-sync-safe-writes",
+      "category": "DONE merged PR #146",
+      "exists_after": false,
+      "exit": 0,
+      "head": "08f3d3a4c35be3d1fb3c6b43cba57cda6fb71da4",
+      "name": "dhcp-sync-safe",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/docker-daemon-iac",
+      "category": "DONE merged PR #69",
+      "exists_after": false,
+      "exit": 0,
+      "head": "80849800b52f4a3b2f2b71ff9ffde6bd6b4eaa4b",
+      "name": "docker-daemon-iac",
+      "stderr": ""
+    },
+    {
+      "branch": "docs/nas-drive-versioning-applied",
+      "category": "DONE merged PR #123",
+      "exists_after": false,
+      "exit": 0,
+      "head": "83e2d8ea126f95809dac913d6f8e49b8e6ea5b0f",
+      "name": "drive-versioning",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/hub-mirror-set-order",
+      "category": "DONE merged PR #75",
+      "exists_after": false,
+      "exit": 0,
+      "head": "0002170da193644710c93742ef39a91e7f06cdb0",
+      "name": "hub-fix",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/docker-registry-mirror",
+      "category": "DONE merged PR #76",
+      "exists_after": false,
+      "exit": 0,
+      "head": "f53fc447e7c70ac1ffb314563c9dfc799f90aade",
+      "name": "hub-hosts",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/hub-mirror-vhost",
+      "category": "DONE merged PR #73",
+      "exists_after": false,
+      "exit": 0,
+      "head": "3c45b6a1a61ef62cc4fe5b451a0acccd9bff4b7e",
+      "name": "hub-mirror",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/hub-mirror-ping",
+      "category": "DONE merged PR #77",
+      "exists_after": false,
+      "exit": 0,
+      "head": "f01dea83b7383effb83f77baa38a271a0041099c",
+      "name": "hub-ping",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/keycloak-edge-lockdown",
+      "category": "DONE merged PR #104",
+      "exists_after": false,
+      "exit": 0,
+      "head": "ad6cd9e7f7907ffe96a2833d4e7fa15084c05f61",
+      "name": "kc-edge",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/kc-test-totp-secret",
+      "category": "DONE merged PR #116",
+      "exists_after": false,
+      "exit": 0,
+      "head": "d1aafdd0b84bb2c6563139297f72ec79a0c4ef84",
+      "name": "kc-fix1",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/keycloak-reset-flow-priority",
+      "category": "DONE merged PR #117",
+      "exists_after": false,
+      "exit": 0,
+      "head": "a9ff81f909877c810d28a0270d3c47d78aa85303",
+      "name": "kc-fix2",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/keycloak-master-frontend-url",
+      "category": "DONE merged PR #109",
+      "exists_after": false,
+      "exit": 0,
+      "head": "b2e5872d85e66c32878808cacda0818acf69bc10",
+      "name": "kc-front",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/keycloak-hostname-admin",
+      "category": "DONE merged PR #105",
+      "exists_after": false,
+      "exit": 0,
+      "head": "a9b4d6e52c7669dcb8adc1f3ee7b3dd549da2f16",
+      "name": "kc-hostadmin",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/keycloak-k-tests",
+      "category": "DONE merged PR #114",
+      "exists_after": false,
+      "exit": 0,
+      "head": "14675dc165531a01c5a141fa31cc6f1584beea6a",
+      "name": "kc-k-tests",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/keycloak-k2-brute-force",
+      "category": "DONE merged PR #112",
+      "exists_after": false,
+      "exit": 0,
+      "head": "9357ebf9c6e1675315054637832e82d59812a036",
+      "name": "kc-k2-brute-force",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/keycloak-k3a-mail-path",
+      "category": "DONE merged PR #113",
+      "exists_after": false,
+      "exit": 0,
+      "head": "7e32b148a26c487952c33de9efc4a0dd041a3c90",
+      "name": "kc-k3a-mail-path",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/keycloak-k3b-reset-flow",
+      "category": "DONE merged PR #115",
+      "exists_after": false,
+      "exit": 0,
+      "head": "293897cc6284bfc5614c6158962e12200a626774",
+      "name": "kc-k3b-reset-flow",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/keycloak-k4-events",
+      "category": "DONE merged PR #111",
+      "exists_after": false,
+      "exit": 0,
+      "head": "26bd1e69e298148bb2aee04094a4f579285b693e",
+      "name": "kc-k4-events",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/keycloak-realm-import",
+      "category": "DONE merged PR #103",
+      "exists_after": false,
+      "exit": 0,
+      "head": "12bfeba4e9e0d7cbc9b32cd7947bee7599d1aeb2",
+      "name": "kc-realms",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/keycloak-registration-off",
+      "category": "DONE merged PR #106",
+      "exists_after": false,
+      "exit": 0,
+      "head": "54629fb753e2a7269aaa534a074a9e5636f1eb14",
+      "name": "kc-reg",
+      "stderr": ""
+    },
+    {
+      "branch": "docs/keychain-credential-backup",
+      "category": "DONE merged PR #145",
+      "exists_after": false,
+      "exit": 0,
+      "head": "571da87a2a042c5754d924226d02cfaf772851a3",
+      "name": "keychain-backup",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/zot-meta-backup-readonly",
+      "category": "DONE merged PR #122",
+      "exists_after": false,
+      "exit": 0,
+      "head": "06d2bd6eb57e468cd1816f541c22686465d4e749",
+      "name": "m-fix",
+      "stderr": ""
+    },
+    {
+      "branch": "docs/nas-drive-versioning-record",
+      "category": "DONE merged PR #90",
+      "exists_after": false,
+      "exit": 0,
+      "head": "abd895fd976fde69f98066bf98b680cd9177c951",
+      "name": "nas-drive-doc",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/nomad-embed-ollama-10cpu",
+      "category": "DONE merged PR #137",
+      "exists_after": false,
+      "exit": 0,
+      "head": "a98859c9fea7361fefba2e23f06fbd567aaa05bc",
+      "name": "nomad-10cpu",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/nomad-eval-config-compat",
+      "category": "DONE merged PR #131",
+      "exists_after": false,
+      "exit": 0,
+      "head": "d2dbc614dd6bdb068bd8019c2f07e95d978a10c0",
+      "name": "nomad-eval-config-compat",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/nomad-gemma-deploy",
+      "category": "DONE merged PR #138",
+      "exists_after": true,
+      "exit": 128,
+      "head": "aea4d6de4044bf50a7d1ab0fb1e637efd87b8786",
+      "name": "nomad-gemma-deploy",
+      "stderr": "fatal: working trees containing submodules cannot be moved or removed"
+    },
+    {
+      "branch": "feat/nomad-embedding-gemma2",
+      "category": "DONE merged PR #136",
+      "exists_after": false,
+      "exit": 0,
+      "head": "0cac5fb641d1d70656eb699a6b45a0edba95bdfb",
+      "name": "nomad-gemma2",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/nomad-macvlan",
+      "category": "DONE merged PR #141",
+      "exists_after": true,
+      "exit": 128,
+      "head": "313eb7fe634d714b6553b9ed380005d077ed1995",
+      "name": "nomad-macvlan",
+      "stderr": "fatal: working trees containing submodules cannot be moved or removed"
+    },
+    {
+      "branch": "fix/nomad-observability-bge-eval",
+      "category": "DONE merged PR #129",
+      "exists_after": false,
+      "exit": 0,
+      "head": "2b96337e446b6e7c6c23d4171520756930b306e5",
+      "name": "nomad-observability-bge-eval",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/nomad-private-children",
+      "category": "DONE merged PR #140",
+      "exists_after": true,
+      "exit": 128,
+      "head": "1824b31697364c6d280d8c564bfba7afc3c16301",
+      "name": "nomad-private-children",
+      "stderr": "fatal: working trees containing submodules cannot be moved or removed"
+    },
+    {
+      "branch": "fix/nomad-qdrant-timeout",
+      "category": "DONE merged PR #139",
+      "exists_after": true,
+      "exit": 128,
+      "head": "c037e91cb92a2de196191a00b4ff3976d28fb59f",
+      "name": "nomad-qdrant-timeout",
+      "stderr": "fatal: working trees containing submodules cannot be moved or removed"
+    },
+    {
+      "branch": "feat/nomad-embedding-qwen3-4b",
+      "category": "DONE merged PR #135",
+      "exists_after": false,
+      "exit": 0,
+      "head": "77807524fd0389a6c186af79d20e5678a63583a2",
+      "name": "nomad-qwen3-4b",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/nomad-embedding-qwen3-reranker",
+      "category": "DONE merged PR #134",
+      "exists_after": false,
+      "exit": 0,
+      "head": "a1bc46860920af78f0ef0079f38a923cebd6da58",
+      "name": "nomad-qwen3-reranker",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/nomad-socket-proxy-ipv4",
+      "category": "DONE merged PR #130",
+      "exists_after": false,
+      "exit": 0,
+      "head": "28eddfd7e4a398001a1766959ffd2f9f28aff51e",
+      "name": "nomad-socket-proxy-ipv4",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/omada-admin-reservation",
+      "category": "DONE merged PR #144",
+      "exists_after": false,
+      "exit": 0,
+      "head": "364a8114d1863226b555b746eeffd96d501d09b8",
+      "name": "omada-admin-reservation",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/omada-vm-static-ip",
+      "category": "DONE merged PR #148",
+      "exists_after": false,
+      "exit": 0,
+      "head": "b79ca01a44427200baf14975bd7246b9eadc9f54",
+      "name": "omada-static",
+      "stderr": ""
+    },
+    {
+      "branch": "docs/omada-6-3-0-111-upgrade",
+      "category": "DONE merged PR #151",
+      "exists_after": false,
+      "exit": 0,
+      "head": "b37419c6dd8d7270c7790762368cd9af2a4ca955",
+      "name": "omada-upgrade-doc",
+      "stderr": ""
+    },
+    {
+      "branch": "docs/pr-merge-apply-rule",
+      "category": "DONE merged PR #68",
+      "exists_after": false,
+      "exit": 0,
+      "head": "f838d1865557b4be672df04b68393bf2916ed847",
+      "name": "pr-rule",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/rproxy-cf-cert",
+      "category": "DONE merged PR #100",
+      "exists_after": false,
+      "exit": 0,
+      "head": "7d64e92ee6d3f4b6908c43181627928197f04979",
+      "name": "rproxy-cf",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/rundeck-from-zot",
+      "category": "DONE merged PR #72",
+      "exists_after": false,
+      "exit": 0,
+      "head": "be0391d1eeac151ee44cd8064ebc2038408eee90",
+      "name": "rundeck-from-zot",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/rundeck-reconcile-live",
+      "category": "DONE merged PR #70",
+      "exists_after": false,
+      "exit": 0,
+      "head": "14d70fb18bc270f53e28c74598b8785c77eff89f",
+      "name": "rundeck-reconcile",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/switch24a-grafana-dashboard",
+      "category": "DONE merged PR #150",
+      "exists_after": false,
+      "exit": 0,
+      "head": "42fce63ad928bff14a743c2279bb0201fab20b60",
+      "name": "switch24a-dash",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/switch24a-snmp-metrics",
+      "category": "DONE merged PR #149",
+      "exists_after": false,
+      "exit": 0,
+      "head": "2cb1bb5ee81eae10f2fc8b862907458404062f51",
+      "name": "switch24a-snmp",
+      "stderr": ""
+    },
+    {
+      "branch": "docs/omada-vm-ubuntu-24-04",
+      "category": "DONE merged PR #152",
+      "exists_after": false,
+      "exit": 0,
+      "head": "f0f425c98375828cbbe21ad6dae6ddc1fe83fcc5",
+      "name": "ubuntu-24-doc",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/zot-error-alerts",
+      "category": "DONE merged PR #120",
+      "exists_after": false,
+      "exit": 0,
+      "head": "f89782a82672a5b0e02c83e3ffb6a1a3d58fdce3",
+      "name": "zot-alert",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/zot-meta-backup",
+      "category": "DONE merged PR #121",
+      "exists_after": false,
+      "exit": 0,
+      "head": "114a14c0d815165954d70aa0f7ecc0ab2ecba5eb",
+      "name": "zot-backup",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/zot-e2e-test",
+      "category": "DONE merged PR #102",
+      "exists_after": false,
+      "exit": 0,
+      "head": "c629c30bb944a0f65217bed1c87e5b430138ee8c",
+      "name": "zot-e2e",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/zot-e2e-email-username",
+      "category": "DONE merged PR #107",
+      "exists_after": false,
+      "exit": 0,
+      "head": "3cb1c54def75a18526ed604266a50412924ba9ce",
+      "name": "zot-e2e-fix",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/zot-e2e-session-header",
+      "category": "DONE merged PR #108",
+      "exists_after": false,
+      "exit": 0,
+      "head": "199d70fabd00908cead96addc1d76f32c47283ee",
+      "name": "zot-e2e-fix2",
+      "stderr": ""
+    },
+    {
+      "branch": "fix/zot-e2e-jwks-evidence",
+      "category": "DONE merged PR #110",
+      "exists_after": false,
+      "exit": 0,
+      "head": "5e2642e22f622f303dbf88a63cb707d90673fd22",
+      "name": "zot-e2e-fix3",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/zot-local-metadb",
+      "category": "DONE merged PR #118",
+      "exists_after": false,
+      "exit": 0,
+      "head": "4a1f2df82c6f7005ea2b60850ffd4347cfd7e789",
+      "name": "zot-meta",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/zot-oidc-lan-hosts",
+      "category": "DONE merged PR #93",
+      "exists_after": false,
+      "exit": 0,
+      "head": "bf0a4cc9253bcadd0a4902082b4604d416f1f579",
+      "name": "zot-oidc-lan",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/zot-registry",
+      "category": "DONE merged PR #67",
+      "exists_after": false,
+      "exit": 0,
+      "head": "7a337073139d7e842fc478e5ddac0f374620eb91",
+      "name": "zot-registry",
+      "stderr": ""
+    },
+    {
+      "branch": "feat/zot-sso",
+      "category": "DONE merged PR #74",
+      "exists_after": false,
+      "exit": 0,
+      "head": "c19869e4822d7edb7ddbe946ceb4f7995e7f1676",
+      "name": "zot-sso",
+      "stderr": ""
+    }
+  ],
+  "source": "git worktree remove (no --force)"
+}

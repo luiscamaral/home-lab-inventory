@@ -1,0 +1,22 @@
+{
+  "check": "Each worktree clean; project-nomad commit contained in fork origin/main; esp32 submodule uninitialised",
+  "collected_at": "2026-11-18T17:47:35.588018+00:00",
+  "remaining": [
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory                                   6104e15 [fix/ds2-portainer-agent-ip-collision]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory-calibre-update                    fab1145 [fix/calibre-version-bump]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/network-resilience     cc31249 [fix/ix0-watchdog-safety]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/ops-ds1-logs           a3d6fb7 [fix/ops-ds1-log-rotation]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/ops-ds2-agent          af4d3fa [fix/ops-ds2-agent-ip]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/ops-runner             fe0f57d [fix/ops-github-runner]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/prometheus-thanos-plan 687b2f6 [feature/prometheus-thanos-plan]",
+    "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/storage-policy         cb7b8bb [feat/storage-policy]"
+  ],
+  "source": "git worktree remove --force for 5 submodule worktrees",
+  "worktrees": [
+    "apply-nomad-observability",
+    "nomad-gemma-deploy",
+    "nomad-macvlan",
+    "nomad-private-children",
+    "nomad-qdrant-timeout"
+  ]
+}

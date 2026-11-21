@@ -1,0 +1,124 @@
+{
+  "collected_at": "2026-11-17T00:27:52.513411+00:00",
+  "records": [
+    {
+      "command": [
+        "git",
+        "grep",
+        "-n",
+        "-E",
+        "node-version:|setup-node@|runs-on:.*dockermaster|require\\(|getOctokit|request\\(|octokit",
+        "origin/main",
+        "--",
+        ".github/workflows"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "origin/main:.github/workflows/dockermaster-deployment.yml:66:    runs-on: [self-hosted, dockermaster]\norigin/main:.github/workflows/dockermaster-deployment.yml:235:    runs-on: [self-hosted, dockermaster]\norigin/main:.github/workflows/dockermaster-deployment.yml:360:    runs-on: [self-hosted, dockermaster]\norigin/main:.github/workflows/dockermaster-deployment.yml:479:    runs-on: [self-hosted, dockermaster]\norigin/main:.github/workflows/dockermaster-deployment.yml:583:    runs-on: [self-hosted, dockermaster]\norigin/main:.github/workflows/dockermaster-deployment.yml:690:    runs-on: [self-hosted, dockermaster]\norigin/main:.github/workflows/emergency-rollback.yml:64:    runs-on: [self-hosted, dockermaster]\norigin/main:.github/workflows/emergency-rollback.yml:234:    runs-on: [self-hosted, dockermaster]\norigin/main:.github/workflows/emergency-rollback.yml:394:    runs-on: [self-hosted, dockermaster]\norigin/main:.github/workflows/emergency-rollback.yml:605:    runs-on: [self-hosted, dockermaster]\norigin/main:.github/workflows/pr-validation.yml:87:        uses: actions/setup-node@v4\norigin/main:.github/workflows/pr-validation.yml:89:          node-version: ${{ env.NODE_VERSION }}\norigin/main:.github/workflows/pr-validation.yml:227:        uses: actions/setup-node@v4\norigin/main:.github/workflows/pr-validation.yml:229:          node-version: ${{ env.NODE_VERSION }}\norigin/main:.github/workflows/pr-validation.yml:303:        uses: actions/setup-node@v4\norigin/main:.github/workflows/pr-validation.yml:305:          node-version: ${{ env.NODE_VERSION }}\norigin/main:.github/workflows/service-health-monitor.yml:47:    runs-on: [self-hosted, dockermaster]\norigin/main:.github/workflows/service-health-monitor.yml:309:    runs-on: [self-hosted, dockermaster]\norigin/main:.github/workflows/service-health-monitor.yml:446:    runs-on: [self-hosted, dockermaster]\n"
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "origin/main:hosts/nas/drive-versioning.md"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "# nas (Synology) Drive versioning \u2014 desired state (applied) + apply (manual, DSM UI)\n\nSynology Drive keeps old file versions under `/volume2/@synologydrive/@sync`. On 2026-11-03 that folder held at\nleast 2.6 TiB that no share accounts for (btrfs data used 21.93 TiB, minus the referenced size of every other\nsubvolume). There is no IaC path for Drive settings, so this file is the record.\n\n## Previous state (read 2026-11-04, before the change)\n\nOnly 2 of 27 folders have Drive enabled:\n\n| Folder | Policy | Max versions | Age limit |\n|---|---|---|---|\n| `homes/mydrive_home` (each user's My Drive) | Intelliversioning | 8 | none |\n| `sharedCloudStation` | Intelliversioning | 12 | none |\n\n## Desired state (= live, applied by hand in DSM; verified 2026-11-12)\n\n| Folder | `view_id` | Policy | Max versions | Age limit |\n|---|---|---|---|---|\n| `homes/mydrive_home` | 0 | Intelliversioning | 2 | 120 days |\n| `sharedCloudStation` | 3 | Intelliversioning | 2 | 30 days |\n\n`sharedCloudStation` was set to 30 days (not the 120 first planned); this file records what is live.\nEffect: btrfs data used on `/volume2` went from 21.93 TiB (2026-11-03) to 18.91 TiB (2026-11-12), about 3 TiB freed.\n\nLowering the count deletes the extra versions as soon as it is applied. That cannot be undone, and homes have no\nHyper Backup, so these versions may be the only restore points.\n\n## Apply (manual \u2014 DSM UI)\n\nSynology Drive Admin Console \u2192 **Team Folder** \u2192 select both folders \u2192 **Versioning Settings**:\n\n- Maximum versions: `2`\n- Rotation policy: Intelliversioning\n- Tick **Rotate versions regularly**, then pick the age limit from the table above (choices: 7, 30, 60, 120). The\n  age limit is a separate checkbox that works with either policy. Unticked, it stores `rotate_days=0`.\n\nStatus 2026-11-04 00:32: max versions set to 2 on both folders (admin log ids 12846956 and 12846960). The age limit\nwas still off (`rotate_days=0`).\n\nStatus 2026-11-12: age limits applied by hand in DSM (homes 120 days, `sharedCloudStation` 30 days); verified with\nthe query below.\n\n## Verify (no root needed)\n\n```bash\nssh nas 'sqlite3 -readonly /volume2/@synologydrive/@sync/user-db.sqlite \\\n  \"select view_id,rotate_cnt,rotate_policy,rotate_days from view_setting_table;\"'\n# expected: 0|2|smart|120   and   3|2|smart|30\n# view_id \u2192 folder:\nssh nas 'sqlite3 -readonly /volume2/@synologydrive/@sync/user-db.sqlite \\\n  \"select view_id,name,watch_path from user_table where user_type=1;\"'   # 3 | @sharedCloudStation\nssh nas 'btrfs filesystem df /volume2 | head -1'   # 21.93TiB before; 18.91TiB on 2026-11-12\n```\n\n## CLI attempt that does not work\n\n`synowebapi --exec api=SYNO.SynologyDrive.Share method=set` (version 1 and 2, run as root on 2026-11-04) returned\n`success: true` but left `view_setting_table` unchanged and wrote no admin log entry. Use the UI. Reading works:\n`synowebapi --exec api=SYNO.SynologyDrive.Share method=list version=2`.\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "origin/main",
+        "fix/ops-github-runner",
+        "--",
+        "terraform/portainer/stacks/github-runner.yml"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "diff --git a/terraform/portainer/stacks/github-runner.yml b/terraform/portainer/stacks/github-runner.yml\nindex 45249a5..d4f2813 100644\n--- a/terraform/portainer/stacks/github-runner.yml\n+++ b/terraform/portainer/stacks/github-runner.yml\n@@ -6,7 +6,12 @@ networks:\n \n services:\n   runner:\n-    image: myoung34/github-runner:latest\n+    # Pinned to 2.338.2 (matches actions/runner v2.338.2, 2026-10-26).\n+    # GitHub refuses runner versions it has deprecated: 2.336.0 caused a\n+    # restart loop (416 restarts, 2026-11-05: \"Runner version v2.336.0 is\n+    # deprecated and cannot receive messages\"). Bump deliberately when\n+    # actions/runner releases; check the GitHub release page first.\n+    image: myoung34/github-runner:2.338.2\n     container_name: github-runner-homelab\n     hostname: dockerserver-1-runner\n     networks:\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "origin/main",
+        "fix/ops-ds1-log-rotation",
+        "--",
+        "hosts/dockerserver-1/etc/docker/daemon.json",
+        "dockerserver-1/host/etc/docker/daemon.json"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "diff --git a/hosts/dockerserver-1/etc/docker/daemon.json b/dockerserver-1/host/etc/docker/daemon.json\nsimilarity index 63%\nrename from hosts/dockerserver-1/etc/docker/daemon.json\nrename to dockerserver-1/host/etc/docker/daemon.json\nindex 93bc529..e810980 100644\n--- a/hosts/dockerserver-1/etc/docker/daemon.json\n+++ b/dockerserver-1/host/etc/docker/daemon.json\n@@ -4,8 +4,5 @@\n   \"log-opts\": {\n     \"max-file\": \"3\",\n     \"max-size\": \"50m\"\n-  },\n-  \"registry-mirrors\": [\n-    \"https://hub.d.lcamaral.com\"\n-  ]\n+  }\n }\n"
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "origin/main:hosts/dockerserver-1/etc/docker/daemon.json"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "{\n  \"live-restore\": true,\n  \"log-driver\": \"json-file\",\n  \"log-opts\": {\n    \"max-file\": \"3\",\n    \"max-size\": \"50m\"\n  },\n  \"registry-mirrors\": [\n    \"https://hub.d.lcamaral.com\"\n  ]\n}\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "origin/main",
+        "feat/circunflexo-dns-root",
+        "--",
+        "terraform/circunflexo",
+        "terraform/cloudflare/dreamhost.tf"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "origin/main",
+        "fix/calibre-version-bump",
+        "--",
+        "terraform/portainer/stacks/calibre.yml"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "diff --git a/terraform/portainer/stacks/calibre.yml b/terraform/portainer/stacks/calibre.yml\nindex 2dc73f5..618c520 100644\n--- a/terraform/portainer/stacks/calibre.yml\n+++ b/terraform/portainer/stacks/calibre.yml\n@@ -1,22 +1,6 @@\n name: calibre\n \n-# Calibre desktop (Selkies) + calibre-web reader on dockerserver-1.\n-#\n-# Desktop access is HTTPS-ONLY. linuxserver/calibre moved its remote-desktop\n-# layer from KasmVNC to Selkies; Selkies needs a browser secure context, so\n-# plain http://192.168.59.7:8080 now loads the sidebar and then fails with\n-# \"This application requires a secure connection (HTTPS)\". Use:\n-#   https://calibre.d.lcamaral.com     (nginx-rproxy \u2192 https://192.168.59.7:8181)\n-#   https://192.168.59.7:8181          (direct, self-signed cert)\n-#\n-# Image is pinned (not :latest + Watchtower). The KasmVNC\u2192Selkies swap\n-# arrived silently via Watchtower and broke the documented access URL;\n-# pinning makes base-image changes a reviewed diff. First pinned at\n-# v9.11.0-ls413 (the digest then running, sha256:150db5b3\u2026); bumped\n-# 2026-10-17 to v9.16.0-ls427 (same ports 8080/8181, HOME=/config, still\n-# Selkies; only the encoder list grew), then 2026-10-30 to v9.17.0-ls430\n-# (image config byte-identical to ls427). Bump deliberately and verify the\n-# UI over HTTPS, not just a status code.\n+# Calibre desktop (Selkies remote desktop) + calibre-web reader on dockerserver-1.\n #\n # 10-keyboard.conf is delivered via Compose `configs:` instead of a host\n # bind-mount. The previous bind source on the NFS share\n@@ -26,6 +10,11 @@ name: calibre\n # content lives in `_archive/calibre-server/10-keyboard.conf` (US intl\n # layout); inlining it here removes the host filesystem coupling per the\n # project's IaC-first principle.\n+#\n+# The openbox autostart is delivered the same way, for the same reason: it\n+# previously lived only at /nfs/calibre/config/.config/openbox/autostart, an\n+# untracked file on the NFS share \u2014 precisely the coupling that caused the\n+# 2026-05-11 outage above. See the config content for the failure it fixes.\n \n networks:\n   servers-net:\n@@ -38,9 +27,34 @@ configs:\n       XKBLayout=\"us\"\n       XKBVARIANT=\"intl\"\n \n+  autostart_conf:\n+    content: |\n+      # Supervise the Calibre GUI.\n+      #\n+      # The window manager runs this script once per desktop session (openbox\n+      # under X pre-2026-07-21, labwc under Wayland after). Upstream's\n+      # autostart is a bare \"/usr/bin/calibre\", so when the app exits \u2014 a\n+      # user closing the window is enough \u2014 the desktop is left empty and\n+      # nothing ever relaunches it. That is what happened on 2026-06-06:\n+      # calibre shut down cleanly at 11:51 MDT and the container went on\n+      # reporting \"healthy\" for 7 weeks while streaming a blank desktop,\n+      # because the healthcheck only probed nginx/selkies on :8080.\n+      #\n+      # The loop keeps the app present for the life of the session; the\n+      # sleep bounds the respawn rate if calibre ever fails at startup.\n+      #\n+      # Deliberately contains no shell variables: Compose and Portainer both\n+      # interpolate configs.content, so upstream's CLI_ARGS expansion cannot\n+      # survive the round trip. CLI_ARGS is unset in this stack \u2014 add any\n+      # arguments to the calibre line below literally if they become needed.\n+      while true; do\n+        /usr/bin/calibre\n+        sleep 15\n+      done\n+\n services:\n   calibre:\n-    image: linuxserver/calibre:v9.17.0-ls430\n+    image: linuxserver/calibre:v9.13.0-ls416\n     hostname: calibre\n     container_name: calibre\n     shm_size: '2gb'\n@@ -59,6 +73,17 @@ services:\n       - source: keyboard_conf\n         target: /etc/X11/xorg.conf.d/10-keyboard.conf\n         mode: 0644\n+      # Mounted at BOTH window-manager paths on purpose. The 2026-07-21 image\n+      # switched the desktop from X/openbox to Wayland/labwc, which moved the\n+      # autostart to .config/labwc/ and silently reverted the supervision fix\n+      # to upstream's one-shot launcher. Covering both paths means the fix\n+      # survives a flip in either direction; the unused one is inert.\n+      - source: autostart_conf\n+        target: /config/.config/labwc/autostart\n+        mode: 0644\n+      - source: autostart_conf\n+        target: /config/.config/openbox/autostart\n+        mode: 0644\n     security_opt:\n       - seccomp:unconfined\n     environment:\n@@ -70,22 +95,25 @@ services:\n       DISABLE_IPV6: true\n       LANG: en_US.UTF-8\n     restart: always\n+    # The pgrep arm is the point of this check: :8080 is nginx/selkies, which\n+    # serves a login page whether or not Calibre is running. Probing only the\n+    # HTTP port let a 7-week blank-desktop outage report \"healthy\" (2026-06-06\n+    # \u2192 2026-07-25). Docker will not restart an unhealthy container \u2014 the\n+    # autostart respawn loop does the healing, this check does the reporting.\n     healthcheck:\n-      # Probe the HTTPS listener (8181) \u2014 the only path Selkies supports.\n-      # 401 = basic-auth prompt, i.e. the web front is serving.\n-      test: [\"CMD-SHELL\", \"curl -sk --max-time 5 -o /dev/null -w '%{http_code}' https://localhost:8181/ | grep -qE '^(200|401)$'\"]\n+      test: [\"CMD-SHELL\", \"pgrep -x calibre >/dev/null && curl -s --max-time 5 -o /dev/null -w '%{http_code}' http://localhost:8080/ | grep -qE '^(200|401)$'\"]\n       interval: 30s\n       timeout: 10s\n       retries: 3\n-      start_period: 60s\n+      start_period: 180s\n     labels:\n-      com.centurylinklabs.watchtower.enable: \"false\"  # pinned \u2014 see header\n+      com.centurylinklabs.watchtower.enable: \"true\"\n       com.docker.stack: \"calibre\"\n       com.docker.service: \"calibre\"\n       portainer.autodeploy: \"false\"\n \n   calibre-web:\n-    image: lscr.io/linuxserver/calibre-web:latest\n+    image: lscr.io/linuxserver/calibre-web:0.6.27-ls397\n     container_name: calibre-web\n     hostname: calibre-web\n     networks:\n@@ -98,19 +126,7 @@ services:\n       - DOCKER_MODS=linuxserver/mods:universal-calibre\n       - OAUTHLIB_RELAX_TOKEN_SCOPE=1\n     volumes:\n-      # /config holds calibre-web's SQLite app.db and MUST stay on local disk.\n-      # It previously lived on /nfs/calibre/calibre-web/config, an NFS4 export\n-      # mounted `soft,local_lock=none`. SQLite cannot survive that: a transient\n-      # NFS stall returns an I/O error instead of retrying, and there is no file\n-      # locking. On 2026-08-24 ~22:56 MDT that produced a burst of\n-      # `sqlite3.OperationalError: disk I/O error` + `OSError: [Errno 5]` on\n-      # /login, immediately after the nightly Rundeck `calibre-replication` job\n-      # (22:10 MDT) rsync'd into this same directory while the DB was open.\n-      # That job also carries a stale desktop-side app.db (Apr 2025) which `rsync\n-      # -a` would copy over the live one \u2014 moving /config off the NFS path\n-      # removes it from the rsync target and closes that clobber hole too.\n-      # Library/books stays on NFS: large, read-mostly, no SQLite writers.\n-      - /opt/calibre-web/config:/config\n+      - /nfs/calibre/calibre-web/config:/config\n       - /nfs/calibre/calibre-web/Library:/books\n     restart: unless-stopped\n     healthcheck:\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "origin/main",
+        "feat/storage-policy",
+        "--",
+        "scripts/check-storage-policy.py",
+        "docs/operations/keycloak-ha-runbook.md"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "diff --git a/docs/operations/keycloak-ha-runbook.md b/docs/operations/keycloak-ha-runbook.md\nnew file mode 100644\nindex 0000000..57645d0\n--- /dev/null\n+++ b/docs/operations/keycloak-ha-runbook.md\n@@ -0,0 +1,74 @@\n+# Keycloak HA and host-restart runbook\n+\n+Status: active (2026-11-05). Covers the Keycloak Postgres pair (repmgr), the two Keycloak\n+nodes, and the restart procedure for any Docker host.\n+Policy references: `docs/architecture/storage-policy.md` (postgres exception),\n+`docs/ha-architecture.md`.\n+\n+## 1. Known risk (open design task)\n+\n+The repmgr pair (`keycloak-db-0` on dockermaster, `keycloak-db-1` on dockerserver-1) runs on\n+local disks. If both nodes restart within the same window, or a restart leaves a node\n+without a primary, the two can each promote themselves. On 2026-10-30 this caused a split\n+brain. Writes landed on the wrong node and were later lost when the other node re-cloned.\n+\n+NAS storage does **not** fix this. A fencing or witness design does. Track it as a separate\n+task. Until it exists, follow the rules below.\n+\n+## 2. Rules\n+\n+1. **Never restart both DB nodes in the same window.** Restart one node, wait until it is\n+   healthy and repmgr shows one primary, then do the other.\n+2. **Before any DB restart, check primary and standby:**\n+\n+   ```bash\n+   # on the host that runs the node, via the DB container\n+   docker exec keycloak-db-1 bash -c 'PGPASSWORD=$POSTGRESQL_PASSWORD psql -h 127.0.0.1 \\\n+     -U $POSTGRESQL_USERNAME -d $POSTGRESQL_DATABASE -Atc \"select pg_is_in_recovery()\"'\n+   ```\n+\n+   `f` = primary, `t` = standby. Exactly one node must answer `f`.\n+3. **Keycloak nodes**: restart one, confirm `ISPN000094` shows 2 members in its log, then the\n+   other. Keycloak keeps serving from the other node while one is down.\n+4. **Never edit `JGROUPS_ADDRESS_SEQUENCE` or `JGROUPS_PING` by hand** except under an\n+   approved incident. (The 2026-10-30 fix set the sequence to 36 in `server_config`. Rollback\n+   value was 35.)\n+\n+## 3. Host restart (any Docker host): required steps, in order\n+\n+Learned the hard way during the 2026-11-05 NFS wave.\n+\n+1. **Sync disks** before any reset (`sync` twice). Get approval first.\n+2. **After any `dockerd` restart, restart `portainer-agent`.** The agent keeps the old\n+   `/var/run/docker.sock` inode, so the Portainer endpoint reports down and the proxy\n+   returns 500. Confirm with `curl -sk -H \"Authorization: Bearer $JWT\"\n+   https://192.168.59.2:9443/api/endpoints/<id>/docker/containers/json` (expect 200).\n+   Affected: ds-1 (endpoint 9), ds-2 (13), NAS (14).\n+3. **Vault restarts seal the node.** Unseal with the designed script, not by hand:\n+   `sudo /usr/local/bin/vault-auto-unseal.sh`. Do **not** use `systemctl start\n+   vault-auto-unseal`: the unit has `RemainAfterExit=yes`, so the start is a no-op.\n+   Then confirm with `vault operator raft list-peers` (3 voters).\n+4. **Containers that hold a bind mount do not see a remounted NFS.** Restarting the host\n+   mount is not enough. Each container with an NFS bind must be stopped and started again,\n+   and its mount checked in `/proc/<pid>/mountinfo` (expect `,hard,`).\n+5. **Use literal loops in shell snippets** that run over SSH. The remote shell is zsh, which\n+   does not split unquoted variables. `docker stop $LIST` silently does nothing.\n+6. **Check the endpoint and the container health** after every step. A healthy container can\n+   still hold a stale mount or socket.\n+\n+## 4. Mount policy\n+\n+- NFS mounts from `tnas` must be `hard` (fstab `defaults,hard,...`). `soft` returns I/O\n+  errors to applications, and MinIO treats those as a drive going offline.\n+- Check with: `grep \" nfs\" /proc/mounts | grep -o -E \"soft|hard\"`.\n+- The live remount of `hard` is rejected by this `mount.nfs` (nfs-utils 2.6.4). The\n+  procedure that worked: stop the users, `umount`, `mount` from fstab, start the users.\n+\n+## 5. Verification checklist after any change to these components\n+\n+- [ ] `pg_is_in_recovery()` returns exactly one `f` across the pair\n+- [ ] Keycloak logs show 2 cluster members, `ISPN000094`\n+- [ ] Vault: all nodes unsealed, 3 voters\n+- [ ] Portainer: all endpoints `Status == 1`\n+- [ ] `https://keycloak.d.lcamaral.com/realms/master/.well-known/openid-configuration` returns 200\n+- [ ] MinIO: `mc admin info` shows `Drives: 1/1 OK` on minio-1 and minio-2\n"
+    },
+    {
+      "command": [
+        "git",
+        "log",
+        "--oneline",
+        "origin/main",
+        "--",
+        "terraform/portainer/stacks/github-runner.yml",
+        "dockerserver-1/host/etc/docker/daemon.json",
+        "hosts/dockerserver-1/etc/docker/daemon.json"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "3fddae6 feat(docker): point the docker hosts at the hub.d registry mirror (#76)\ne8c2b8f feat(docker): manage daemon.json via scripts/sync-docker-daemon.py (#69)\nf9820d2 feat(infra): multi-host HA + NAS endpoint + network IaC + Phase 3 monitoring (#8)\n381bc4a \u2728(infra): Complete IaC migration - 18 Portainer stacks, Keycloak IdP, security hardening (#5)\n"
+    }
+  ],
+  "source": "Git tracked source comparisons only"
+}

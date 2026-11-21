@@ -1,0 +1,172 @@
+[
+  {
+    "collected_at": "2026-11-17T00:27:29.509567+00:00",
+    "dependencies": {
+      "@commitlint/config-conventional": "^21.2.0",
+      "@commitlint/format": "^21.2.0",
+      "@commitlint/lint": "^21.2.0",
+      "@commitlint/load": "^21.2.0",
+      "@commitlint/read": "^21.2.1",
+      "@commitlint/types": "^21.2.0",
+      "tinyexec": "^1.0.0",
+      "yargs": "^18.0.0"
+    },
+    "engines": {
+      "node": ">=22.12.0"
+    },
+    "name": "@commitlint/cli",
+    "url": "https://registry.npmjs.org/@commitlint/cli/21.2.1",
+    "version": "21.2.1"
+  },
+  {
+    "collected_at": "2026-11-17T00:27:29.609246+00:00",
+    "dependencies": {
+      "@commitlint/types": "^21.0.0",
+      "conventional-changelog-conventionalcommits": "^9.2.0"
+    },
+    "engines": {
+      "node": ">=22.12.0"
+    },
+    "name": "@commitlint/config-conventional",
+    "url": "https://registry.npmjs.org/@commitlint/config-conventional/21.0.0",
+    "version": "21.0.0"
+  },
+  {
+    "collected_at": "2026-11-17T00:27:30.249018+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/actions/checkout/contents/README.md?ref=v6",
+      "-H",
+      "Accept: application/vnd.github.raw+json"
+    ],
+    "excerpts": [
+      {
+        "line": 7,
+        "text": "\n- Improved credential security: `persist-credentials` now stores credentials in a separate file under `$RUNNER_TEMP` instead of directly in `.git/config`\n- No workflow changes required \u2014 `git fetch`, `git push`, etc. continue to work automatically\n- Running authenticated git commands from a [Docker container action](https://docs.github.com/actions/sharing-automations/creating-actions/creating-a-docker-container-action) requires Actions Runner [v2.329.0](https://github.com/actions/runner/releases/tag/v2.329.0) or later"
+      },
+      {
+        "line": 9,
+        "text": "- No workflow changes required \u2014 `git fetch`, `git push`, etc. continue to work automatically\n- Running authenticated git commands from a [Docker container action](https://docs.github.com/actions/sharing-automations/creating-actions/creating-a-docker-container-action) requires Actions Runner [v2.329.0](https://github.com/actions/runner/releases/tag/v2.329.0) or later\n\n# Checkout v5"
+      },
+      {
+        "line": 15,
+        "text": "\n- Updated to the node24 runtime\n  - This requires a minimum Actions Runner version of [v2.327.1](https://github.com/actions/runner/releases/tag/v2.327.1) to run.\n"
+      },
+      {
+        "line": 16,
+        "text": "- Updated to the node24 runtime\n  - This requires a minimum Actions Runner version of [v2.327.1](https://github.com/actions/runner/releases/tag/v2.327.1) to run.\n\n"
+      },
+      {
+        "line": 43,
+        "text": "\nWe will still provide security updates for this project and fix major breaking changes during this time.\n\nYou are welcome to still raise bugs in this repo."
+      },
+      {
+        "line": 166,
+        "text": "    # `pull_request_target` or `workflow_run`. These workflows run with the base\n    # repository's GITHUB_TOKEN, secrets, default-branch cache scope, and runner\n    # access; fetching and executing a fork's code in that trusted context commonly\n    # leads to \"pwn request\" vulnerabilities. Set to `true` only after reviewing the"
+      }
+    ],
+    "exit_code": 0,
+    "source": "https://github.com/actions/checkout/blob/v6/README.md",
+    "stderr": ""
+  },
+  {
+    "collected_at": "2026-11-17T00:27:30.821404+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/actions/upload-artifact/contents/README.md?ref=v7",
+      "-H",
+      "Accept: application/vnd.github.raw+json"
+    ],
+    "excerpts": [
+      {
+        "line": 57,
+        "text": "\nWe will still provide security updates for this project and fix major breaking changes during this time.\n\nYou are welcome to still raise bugs in this repo."
+      }
+    ],
+    "exit_code": 0,
+    "source": "https://github.com/actions/upload-artifact/blob/v7/README.md",
+    "stderr": ""
+  },
+  {
+    "collected_at": "2026-11-17T00:27:31.255367+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/actions/download-artifact/contents/README.md?ref=v8",
+      "-H",
+      "Accept: application/vnd.github.raw+json"
+    ],
+    "excerpts": [
+      {
+        "line": 39,
+        "text": "\nWe will still provide security updates for this project and fix major breaking changes during this time.\n\nYou are welcome to still raise bugs in this repo."
+      }
+    ],
+    "exit_code": 0,
+    "source": "https://github.com/actions/download-artifact/blob/v8/README.md",
+    "stderr": ""
+  },
+  {
+    "collected_at": "2026-11-17T00:27:31.634909+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/actions/github-script/contents/README.md?ref=v9",
+      "-H",
+      "Accept: application/vnd.github.raw+json"
+    ],
+    "excerpts": [
+      {
+        "line": 24,
+        "text": "\nWe will still provide security updates for this project and fix major breaking changes during this time.\n\nYou are welcome to still raise bugs in this repo."
+      },
+      {
+        "line": 55,
+        "text": "\n## Breaking Changes\n\n### V9"
+      },
+      {
+        "line": 66,
+        "text": "\n**Breaking changes:**\n\n- **`require('@actions/github')` no longer works in scripts.** The upgrade to `@actions/github` v9 (ESM-only) means `require('@actions/github')` will fail at runtime. If you previously used patterns like `const { getOctokit } = require('@actions/github')` to create secondary clients, use the new injected `getOctokit` function instead \u2014 it's available directly in the script context with no imports needed."
+      },
+      {
+        "line": 76,
+        "text": "\nAll scripts are now run with Node 24 instead of Node 20 and are affected by any breaking changes between Node 20 and 24.\n\n**This requires a minimum Actions Runner version of [v2.327.1](https://github.com/actions/runner/releases/tag/v2.327.1)**"
+      },
+      {
+        "line": 78,
+        "text": "\n**This requires a minimum Actions Runner version of [v2.327.1](https://github.com/actions/runner/releases/tag/v2.327.1)**\n\n### V7"
+      },
+      {
+        "line": 84,
+        "text": "\nAll scripts are now run with Node 20 instead of Node 16 and are affected by any breaking changes between Node 16 and 20\n\nThe `previews` input now only applies to GraphQL API calls as REST API previews are no longer necessary - https://github.blog/changelog/2021-10-14-rest-api-preview-promotions/."
+      },
+      {
+        "line": 92,
+        "text": "\nAll scripts are now run with Node 16 instead of Node 12 and are affected by any breaking changes between Node 12 and 16.\n\n### V5"
+      },
+      {
+        "line": 546,
+        "text": "\n> **Note:** `getOctokit` is injected as a function parameter (like `github`, `context`, `core`, etc.). You cannot redeclare it with `const` or `let` \u2014 this will cause a `SyntaxError`. Use `getOctokit` directly, or use `var` if you need to redeclare it. See [V9 breaking changes](#v9) for details.\n\n#### Basic usage \u2014 one primary token, one secondary token"
+      }
+    ],
+    "exit_code": 0,
+    "source": "https://github.com/actions/github-script/blob/v9/README.md",
+    "stderr": ""
+  },
+  {
+    "collected_at": "2026-11-17T00:27:32.035454+00:00",
+    "command": [
+      "gh",
+      "api",
+      "repos/github/codeql-action/contents/README.md?ref=v4",
+      "-H",
+      "Accept: application/vnd.github.raw+json"
+    ],
+    "excerpts": [],
+    "exit_code": 0,
+    "source": "https://github.com/github/codeql-action/blob/v4/README.md",
+    "stderr": ""
+  }
+]

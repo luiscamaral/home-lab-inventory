@@ -1,0 +1,171 @@
+{
+  "collected_at": "2026-11-17T00:33:31.906991+00:00",
+  "records": [
+    {
+      "command": [
+        "git",
+        "show",
+        "HEAD:.claude/operating-rules.md"
+      ],
+      "exit_code": 0,
+      "matches": [
+        {
+          "line": 7,
+          "text": "This file is the single source of truth \u2014 CLAUDE.md points here."
+        },
+        {
+          "line": 9,
+          "text": "## 1. IaC only \u2014 never touch a host/router config directly"
+        },
+        {
+          "line": 26,
+          "text": "## 2. Destructive / host / network changes need approval FIRST"
+        },
+        {
+          "line": 30,
+          "text": "## 3. Before any mutating action, state four things"
+        },
+        {
+          "line": 33,
+          "text": "## 4. Re-ground when context gets polluted"
+        },
+        {
+          "line": 37,
+          "text": "## 5. Secrets: Vault only"
+        }
+      ],
+      "scope": "matching source lines only"
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "origin/main:.claude/operating-rules.md"
+      ],
+      "exit_code": 0,
+      "matches": [
+        {
+          "line": 7,
+          "text": "This file is the single source of truth \u2014 CLAUDE.md and AGENTS.md point here."
+        },
+        {
+          "line": 11,
+          "text": "## 1. RULE #1 \u2014 PR \u2192 merge \u2192 apply from `main`. No exceptions without explicit approval."
+        },
+        {
+          "line": 52,
+          "text": "## 2. IaC only \u2014 never touch a host/router config directly"
+        },
+        {
+          "line": 71,
+          "text": "## 3. Destructive / host / network changes need approval FIRST"
+        },
+        {
+          "line": 75,
+          "text": "## 4. Before any mutating action, state five things"
+        },
+        {
+          "line": 78,
+          "text": "## 5. Re-ground when context gets polluted"
+        },
+        {
+          "line": 82,
+          "text": "## 6. Secrets: Vault only"
+        },
+        {
+          "line": 89,
+          "text": "## 7. NFS is the storage architecture \u2014 never propose moving off it"
+        }
+      ],
+      "scope": "matching source lines only"
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "HEAD:.gitignore"
+      ],
+      "exit_code": 0,
+      "matches": [],
+      "scope": "matching source lines only"
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "origin/main:.gitignore"
+      ],
+      "exit_code": 0,
+      "matches": [
+        {
+          "line": 112,
+          "text": ".pi/"
+        }
+      ],
+      "scope": "matching source lines only"
+    },
+    {
+      "command": "read local hosts/nas/drive-versioning.md",
+      "matches": [
+        {
+          "line": 7,
+          "text": "## Current state (read 2026-11-04)"
+        },
+        {
+          "line": 13,
+          "text": "| `homes/mydrive_home` (each user's My Drive) | Intelliversioning | 8 | none |"
+        },
+        {
+          "line": 14,
+          "text": "| `sharedCloudStation` | Intelliversioning | 12 | none |"
+        },
+        {
+          "line": 16,
+          "text": "## Desired state"
+        },
+        {
+          "line": 20,
+          "text": "| `homes/mydrive_home` | Intelliversioning | 2 | 120 days |"
+        },
+        {
+          "line": 21,
+          "text": "| `sharedCloudStation` | Intelliversioning | 2 | 120 days |"
+        },
+        {
+          "line": 26,
+          "text": "## Apply (manual \u2014 DSM UI)"
+        },
+        {
+          "line": 35,
+          "text": "Status 2026-11-04 00:32: max versions set to 2 on both folders (admin log ids 12846956 and 12846960). The age limit"
+        },
+        {
+          "line": 38,
+          "text": "## Verify (no root needed)"
+        },
+        {
+          "line": 46,
+          "text": "## CLI attempt that does not work"
+        }
+      ],
+      "scope": "document policy and timestamps only",
+      "source": "hosts/nas/drive-versioning.md"
+    },
+    {
+      "command": [
+        "git",
+        "grep",
+        "-n",
+        "-E",
+        "docker restart|docker compose|ssh |restart|remediation",
+        "origin/main",
+        "--",
+        ".github/workflows/service-health-monitor.yml"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "origin/main:.github/workflows/service-health-monitor.yml:71:                if docker compose ps --services --filter \"status=running\" | grep -q .; then\norigin/main:.github/workflows/service-health-monitor.yml:145:            if docker compose ps --format json >/dev/null 2>&1; then\norigin/main:.github/workflows/service-health-monitor.yml:166:              done <<< \"$(docker compose ps --format json 2>/dev/null || echo '')\"\norigin/main:.github/workflows/service-health-monitor.yml:234:                  RUNNER_LOGS=$(docker compose logs --tail=10 2>/dev/null | grep -i \"Listening for Jobs\" || echo \"\")\n"
+    }
+  ],
+  "source": "tracked Git sources and local documentation only"
+}

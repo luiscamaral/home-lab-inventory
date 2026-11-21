@@ -1,0 +1,160 @@
+Collection started UTC: 2026-11-18T17:02:46.188699+00:00
+Collection ended UTC: 2026-11-18T17:02:53.705320+00:00
+Source: SSH proxmox, sudo read-only commands and APT simulation
+Scope: package solver, Ceph runtime, backup path permissions, filter rules
+Exit status: 0
+Commands:
+
+date -u +%Y-%m-%dT%H:%M:%SZ
+python3 - <<'P'
+import subprocess,json
+from pathlib import Path
+print('KERNEL_AND_LXC_CANDIDATES')
+p=subprocess.run(['apt-cache','policy','proxmox-default-kernel','proxmox-kernel-7.0','lxc-pve','ceph'],capture_output=True,text=True)
+for line in p.stdout.splitlines():
+ if not line.startswith(' ') or line.strip().startswith(('Installed:','Candidate:')):print(line)
+print('\nAPT_SIMULATION_NO_CHANGES')
+p=subprocess.run(['apt-get','--simulate','dist-upgrade'],capture_output=True,text=True,timeout=60)
+print('exit',p.returncode)
+for line in (p.stdout+'\n'+p.stderr).splitlines():
+ if not line.startswith(('Inst ','Conf ')):print(line)
+print('\nCEPH_RUNTIME_CONFIGURATION')
+print('ceph.conf exists:',Path('/etc/pve/ceph.conf').exists())
+p=subprocess.run(['systemctl','list-units','--type=service','--state=running','--no-pager','--no-legend'],capture_output=True,text=True)
+for line in p.stdout.splitlines():
+ if any(x in line for x in ['ceph','pve','proxmox','smart','chrony','ssh']):print(line)
+print('\nBACKUP_PATH_PERMISSIONS')
+p=subprocess.run(['namei','-l','/mnt/pve/pve-backups/dump'],capture_output=True,text=True);print(p.stdout)
+print('\nFORWARDING_AND_FILTERS')
+p=subprocess.run(['sysctl','net.ipv4.ip_forward'],capture_output=True,text=True);print(p.stdout)
+for cmd in [['iptables','-S'],['ip6tables','-S']]:
+ p=subprocess.run(cmd,capture_output=True,text=True);print(' '.join(cmd));print(p.stdout[:10000]);print(p.stderr)
+P
+
+OUTPUT:
+2026-11-18T17:02:47Z
++ date -u +%Y-%m-%dT%H:%M:%SZ
++ python3 -
+KERNEL_AND_LXC_CANDIDATES
+proxmox-default-kernel:
+  Installed: 2.0.2
+  Candidate: 2.1.0
+proxmox-kernel-7.0:
+  Installed: (none)
+  Candidate: 7.0.14-29
+lxc-pve:
+  Installed: 6.0.5-4
+  Candidate: 7.0.0-2
+ceph:
+  Installed: 19.2.3-pve4
+  Candidate: 19.2.7-pve1
+
+APT_SIMULATION_NO_CHANGES
+exit 0
+Reading package lists...
+Building dependency tree...
+Reading state information...
+Calculating upgrade...
+The following NEW packages will be installed:
+  proxmox-enterprise-support-keyring proxmox-firewall-data
+  proxmox-kernel-6.14.11-9-pve-signed proxmox-kernel-6.17.13-21-pve-signed
+  proxmox-kernel-7.0 proxmox-kernel-7.0.14-29-pve-signed wireguard-tools
+The following packages will be upgraded:
+  apt apt-utils base-files bash bind9-dnsutils bind9-host bind9-libs
+  bsdextrautils bsdutils busybox ca-certificates ceph ceph-base ceph-common
+  ceph-fuse ceph-mds ceph-mgr ceph-mgr-modules-core ceph-mon ceph-osd
+  ceph-volume chrony cifs-utils corosync curl dirmngr distro-info-data
+  e2fsprogs eject fdisk frr frr-pythontools gir1.2-glib-2.0 gnupg-utils
+  gnutls-bin gpg gpg-agent gpg-wks-client gpg-wks-server gpgconf gpgsm gpgv
+  grub-common grub-efi-amd64-bin grub-efi-amd64-signed grub-efi-amd64-unsigned
+  grub-pc grub-pc-bin grub2-common gzip ifupdown2 initramfs-tools
+  initramfs-tools-bin initramfs-tools-core krb5-locales libapt-pkg7.0
+  libarchive13t64 libasound2-data libasound2t64 libaudit-common libaudit1
+  libblkid1 libbrotli1 libbytes-random-secure-perl libc-bin libc-l10n libc6
+  libcap2 libcap2-bin libcares2 libcephfs2 libcfg7 libcmap4 libcom-err2
+  libcorosync-common4 libcpg4 libcurl3t64-gnutls libcurl4t64 libevent-2.1-7t64
+  libevent-core-2.1-7t64 libexpat1 libext2fs2t64 libfdisk1 libgbm1 libgcrypt20
+  libglib2.0-0t64 libglib2.0-data libgnutls-dane0t64 libgnutls30t64
+  libgraphite2-3 libgssapi-krb5-2 libgstreamer-plugins-base1.0-0 libharfbuzz0b
+  libhtml-parser-perl libhttp-daemon-perl libjs-extjs libk5crypto3 libknet1t64
+  libkrb5-3 libkrb5support0 liblastlog2-2 libldb2 liblzma5 libmount1
+  libnet-dns-perl libnghttp2-14 libngtcp2-16 libngtcp2-crypto-gnutls8
+  libnozzle1t64 libnss-systemd libnss3 libnvpair3linux libpam-systemd
+  libpcre2-16-0 libpcre2-8-0 libpcre2-posix3 libperl5.40 libpng16-16t64
+  libprotobuf32t64 libproxmox-acme-perl libproxmox-acme-plugins
+  libproxmox-backup-qemu0 libproxmox-rs-perl libpve-access-control
+  libpve-apiclient-perl libpve-cluster-api-perl libpve-cluster-perl
+  libpve-common-perl libpve-guest-common-perl libpve-http-server-perl
+  libpve-network-api-perl libpve-network-perl libpve-notify-perl
+  libpve-rs-perl libpve-storage-perl libpython3.13 libpython3.13-minimal
+  libpython3.13-stdlib libquorum5 librabbitmq4 librados2 librados2-perl
+  libradosstriper1 librbd1 librgw2 libslirp0 libsmartcols1 libsmbclient0
+  libsqlite3-0 libsqlite3-mod-ceph libss2 libssh2-1t64 libssl3t64
+  libsystemd-shared libsystemd0 libtalloc2 libtasn1-6 libtdb1 libtevent0t64
+  libtpms0 libudev1 libunbound8 libuuid1 libuutil3linux libvotequorum8
+  libwbclient0 libxml-libxml-perl libxml2 libxslt1.1 libzfs7linux
+  libzpool7linux locales login logsave lxc-pve lxcfs mesa-libgallium mount
+  nano novnc-pve openssh-client openssh-server openssh-sftp-server openssl
+  openssl-provider-legacy perl perl-base perl-modules-5.40 postfix
+  proxmox-backup-client proxmox-backup-file-restore
+  proxmox-backup-restore-image proxmox-default-kernel proxmox-firewall
+  proxmox-kernel-6.14 proxmox-kernel-6.17 proxmox-kernel-helper
+  proxmox-mail-forward proxmox-mini-journalreader proxmox-offline-mirror-docs
+  proxmox-offline-mirror-helper proxmox-termproxy proxmox-ve
+  proxmox-widget-toolkit pve-cluster pve-container pve-docs pve-edk2-firmware
+  pve-edk2-firmware-legacy pve-edk2-firmware-ovmf pve-firewall pve-firmware
+  pve-ha-manager pve-i18n pve-manager pve-nvidia-vgpu-helper pve-qemu-kvm
+  pve-xtermjs pve-yew-mobile-gui pve-yew-mobile-i18n python3-ceph-argparse
+  python3-ceph-common python3-cephfs python3-httplib2 python3-idna python3-jwt
+  python3-openssl python3-protobuf python3-rados python3-rbd python3-rgw
+  python3-urllib3 python3-webob python3.13 python3.13-minimal qemu-server
+  rsync samba-common samba-libs sed shim-helpers-amd64-signed shim-signed
+  shim-signed-common shim-unsigned smartmontools smbclient socat spiceterm
+  sqlite3 ssh sudo swtpm swtpm-libs swtpm-tools systemd systemd-boot
+  systemd-boot-efi systemd-boot-tools systemd-cryptsetup systemd-sysv tzdata
+  udev util-linux util-linux-extra uuid-runtime vim-common vim-tiny vncterm
+  xfsprogs xsltproc xz-utils zfs-initramfs zfs-zed zfsutils-linux zlib1g
+275 upgraded, 7 newly installed, 0 to remove and 0 not upgraded.
+
+
+CEPH_RUNTIME_CONFIGURATION
+ceph.conf exists: True
+  ceph-crash.service          loaded active running Ceph crash dump collector
+  chrony.service              loaded active running chrony, an NTP client/server
+  proxmox-firewall.service    loaded active running Proxmox nftables firewall
+  pve-cluster.service         loaded active running The Proxmox VE cluster filesystem
+  pve-container@10000.service loaded active running PVE LXC Container: 10000
+  pve-firewall.service        loaded active running Proxmox VE firewall
+  pve-ha-crm.service          loaded active running PVE Cluster HA Resource Manager Daemon
+  pve-ha-lrm.service          loaded active running PVE Local HA Resource Manager Daemon
+  pve-lxc-syscalld.service    loaded active running Proxmox VE LXC Syscall Daemon
+  pvedaemon.service           loaded active running PVE API Daemon
+  pvefw-logger.service        loaded active running Proxmox VE firewall logger
+  pveproxy.service            loaded active running PVE API Proxy Server
+  pvescheduler.service        loaded active running Proxmox VE scheduler
+  pvestatd.service            loaded active running PVE Status Daemon
+  smartmontools.service       loaded active running Self Monitoring and Reporting Technology (SMART) Daemon
+  ssh.service                 loaded active running OpenBSD Secure Shell server
+
+BACKUP_PATH_PERMISSIONS
+f: /mnt/pve/pve-backups/dump
+drwxr-xr-x root    root  /
+drwxr-xr-x root    root  mnt
+drwxr-xr-x root    root  pve
+drwx------ lamaral 65538 pve-backups
+drwxr-xr-x lamaral 65538 dump
+
+
+FORWARDING_AND_FILTERS
+net.ipv4.ip_forward = 1
+
+iptables -S
+-P INPUT ACCEPT
+-P FORWARD ACCEPT
+-P OUTPUT ACCEPT
+
+
+ip6tables -S
+-P INPUT ACCEPT
+-P FORWARD ACCEPT
+-P OUTPUT ACCEPT

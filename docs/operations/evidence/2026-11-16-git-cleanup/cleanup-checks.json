@@ -1,0 +1,161 @@
+{
+  "collected_at": "2026-11-17T00:27:00.533235+00:00",
+  "records": [
+    {
+      "command": [
+        "git",
+        "stash",
+        "show",
+        "--stat",
+        "stash@{0}"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": " docs/network/switch24a-omada-integration-plan.md | 45 +++++++++++++-----------\n 1 file changed, 24 insertions(+), 21 deletions(-)\n"
+    },
+    {
+      "command": [
+        "git",
+        "stash",
+        "show",
+        "--stat",
+        "stash@{1}"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": " .pre-commit-config.yaml | 14 ++++++++++++++\n 1 file changed, 14 insertions(+)\n"
+    },
+    {
+      "command": [
+        "git",
+        "stash",
+        "show",
+        "--stat",
+        "stash@{2}"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": " .claude/agents/prd-specialist.md                   |  0\n .claude/agents/tactical-planner.md                 |  0\n .claude/agents/technical-manager-task-executor.md  |  0\n .claude/commands/commit.md                         |  0\n .claude/commands/create-pr.md                      |  0\n .claude/commands/resolve-validation.md             | 12 +++-\n .claude/new-command                                |  0\n .commitlintrc.json                                 |  0\n .github/workflows/build-images.yml                 |  0\n .github/workflows/build-multi-type-images.yml      |  0\n .github/workflows/deploy.yml                       |  0\n .github/workflows/dockermaster-deployment.yml      |  0\n .github/workflows/emergency-rollback.yml           |  0\n .github/workflows/pr-validation.yml                |  0\n .github/workflows/security.yml                     |  0\n .github/workflows/service-health-monitor.yml       |  0\n .gitleaks.toml                                     |  1 -\n .gitmessage                                        |  0\n .gitmodules                                        |  0\n .markdownlint.json                                 |  0\n .pre-commit-config.yaml                            |  0\n .yamllint.yml                                      |  0\n COMMIT_CONVENTIONS.md                              | 21 +++++-\n CONTRIBUTING.md                                    | 45 ++++++++++++-\n Makefile                                           |  0\n deployment/README.md                               | 21 +++++-\n deployment/watchtower/.env.example                 |  0\n dockermaster/README.md                             | 22 +++----\n dockermaster/configs/README.md                     | 14 ++--\n .../ansible-observability/docker-compose.yml       |  0\n .../compose/ansible-observability/prometheus.yml   |  0\n .../calibre-server/CALIBRE_PORTAINER_MIGRATION.md  | 69 +++++++++++++++----\n .../docker/compose/calibre-server/Dockerfile       |  0\n .../calibre-server/docker-compose.portainer.yml    |  0\n .../calibre-server/docker-compose.yaml.cicd        |  0\n .../compose/calibre-server/monitoring-config.yml   |  0\n .../compose/calibre-server/monitoring-setup.md     | 19 ++++++\n .../calibre-server/portainer-stack-config.json     |  0\n .../compose/calibre-server/test-results.json       |  0\n .../compose/calibre-server/validation-checklist.md |  0\n .../compose/calibre-server/validation-issues.md    |  1 +\n .../compose/calibre-server/validation-report.md    |  0\n .../compose/calibre-server/watchtower-config.yml   |  0\n .../docker/compose/docker-dns/docker-compose.yml   |  0\n .../docker/compose/docker-vault/docker-compose.yml |  0\n .../docker/compose/keycloak/docker-compose.yml     |  0\n .../compose/litellm/docker-compose.local.yml       |  2 +-\n .../compose/litellm/docker-compose.standalone.yml  |  2 +-\n .../docker/compose/n8n-stack/docker-compose.yml    |  0\n .../docker/compose/portainer/docker-compose.yml    |  0\n .../docker/compose/puppet/docker-compose.yml       |  0\n dockermaster/docker/config.md                      | 23 ++++---\n dockermaster/monitoring/README.md                  |  8 ++-\n dockermaster/network/interfaces.md                 |  5 +-\n dockermaster/scripts/README.md                     |  6 +-\n .../services/high-priority/github-runner/README.md | 36 +++++++---\n .../services/high-priority/keycloak/README.md      | 48 +++++++++++---\n .../services/high-priority/prometheus/README.md    | 47 +++++++++----\n .../services/low-priority/ansible-stack/README.md  | 40 +++++++----\n .../services/low-priority/bitwarden/README.md      | 25 +++++--\n .../services/low-priority/docspell/README.md       | 34 ++++++++--\n .../services/low-priority/fluentd/README.md        | 25 +++++--\n .../services/low-priority/ghost.io/README.md       | 33 ++++++++--\n dockermaster/services/low-priority/kafka/README.md | 32 +++++++--\n .../low-priority/opentelemetry-home/README.md      | 42 +++++++++---\n dockermaster/services/low-priority/otel/README.md  | 25 +++++--\n dockermaster/services/low-priority/solr/README.md  | 31 +++++++--\n dockermaster/services/systemd.md                   | 18 +++--\n .../stacks/templates/portainer-stack-template.yml  |  0\n .../stacks/templates/stack-config-template.json    |  0\n dockermaster/storage/mounts.md                     | 20 +++---\n dockermaster/system/info.md                        |  2 +-\n dockermaster/templates/README.md                   | 30 +++++++--\n dockermaster/templates/docker-compose.yml          |  0\n dockermaster/templates/env-template                |  0\n dockermaster/templates/service-documentation.md    | 21 +++++-\n docs/cicd-pipeline.md                              | 28 ++++++++\n docs/dockermaster-recovery-report.md               | 33 +++++++++-\n docs/dockermaster-sync-report.md                   | 53 +++++++++------\n docs/dockermaster-tactical-plan.md                 | 56 ++++++++++++++++\n docs/ssh-setup-instructions.md                     |  7 +-\n .../health-status-matrix-20250829-120445.md        |  3 +-\n docs/vault-diagnosis.md                            | 20 ++++--\n docs/vault-integration-plan.md                     | 35 +++++++---\n inventory/commands-available.md                    | 17 ++++-\n inventory/servers.md                               |  3 +\n inventory/virtual-machines.md                      | 13 ++++\n mcp/instructions/generate-tasks.mdc.md             | 16 ++---\n mcp/instructions/process-task-list.mdc.md          |  0\n mcp/work/dockermaster-recovery/prd.md              | 77 ++++++++++++++++++----\n mcp/work/dockermaster-recovery/tasks.md            | 28 +++++---\n pyproject.toml                                     |  0\n scripts/cicd/README.md                             | 17 ++++-\n scripts/portainer/README.md                        |  0\n 94 files changed, 960 insertions(+), 226 deletions(-)\n"
+    },
+    {
+      "command": [
+        "git",
+        "ls-files",
+        "--",
+        "*.bak",
+        "*.backup",
+        "*.tfstate",
+        "*.tfplan",
+        "*.sarif",
+        "*.log",
+        "*lock*",
+        "generated/*"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "generated/prometheus-thanos-monitoring/01-architecture.md\ngenerated/prometheus-thanos-monitoring/02-inventory-and-scope.md\ngenerated/prometheus-thanos-monitoring/03-thanos-design.md\ngenerated/prometheus-thanos-monitoring/04-deployment-plan.md\ngenerated/prometheus-thanos-monitoring/05-exporters.md\ngenerated/prometheus-thanos-monitoring/06-dashboards-and-alerting.md\ngenerated/prometheus-thanos-monitoring/07-secrets-and-security.md\ngenerated/prometheus-thanos-monitoring/08-operations-runbook.md\ngenerated/prometheus-thanos-monitoring/09-open-questions.md\ngenerated/prometheus-thanos-monitoring/DECISIONS.md\ngenerated/prometheus-thanos-monitoring/PHASE-3-REVIEW.md\ngenerated/prometheus-thanos-monitoring/README.md\ngenerated/prometheus-thanos-monitoring/RECON-FINDINGS.md\ngenerated/prometheus-thanos-monitoring/STATUS.md\ngenerated/prometheus-thanos-monitoring/VERSIONS.md\ngenerated/prometheus-thanos-monitoring/diagrams/topology.mmd\ngenerated/prometheus-thanos-monitoring/legacy-prom-snapshot/alertmanager-config.yml\ngenerated/prometheus-thanos-monitoring/legacy-prom-snapshot/cli-args.txt\ngenerated/prometheus-thanos-monitoring/legacy-prom-snapshot/host-compose.yaml\ngenerated/prometheus-thanos-monitoring/legacy-prom-snapshot/prometheus.yml\ngenerated/prometheus-thanos-monitoring/legacy-prom-snapshot/rules/README.md\ngenerated/prometheus-thanos-monitoring/legacy-prom-snapshot/tsdb-state.txt\nterraform/kubernetes/.terraform.lock.hcl\nterraform/lab-buckets/.terraform.lock.hcl\n"
+    },
+    {
+      "command": [
+        "git",
+        "status",
+        "--short",
+        "--branch"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "## fix/ds2-portainer-agent-ip-collision...origin/fix/ds2-portainer-agent-ip-collision [behind 54]\n M terraform/portainer/locals.tf\n M terraform/portainer/stacks.tf\nRM terraform/portainer/stacks/snmp-exporter.yml -> terraform/portainer/stacks/snmp-exporter.yml.tftpl\n M terraform/portainer/vault.tf\n?? .pi/\n?? dockermaster/docker/snmp-exporter/generator-switch24a.yml\n?? dockermaster/docker/snmp-exporter/snmp-switch24a.yml\n?? docs/network/2026-11-16-ix0-live-evidence.md\n?? docs/network/2026-11-16-ix0-rca.md\n?? docs/network/2026-11-16-ix0-switch-evidence.md\n?? docs/network/2026-11-16-network-instability-check.md\n?? docs/network/evidence/\n?? docs/operations/evidence/\n?? hosts/nas/drive-versioning.md\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "git",
+        "ls-tree",
+        "origin/main",
+        "hosts/nas/drive-versioning.md"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "100644 blob 188b1aa90a26fba603205c6c12d2889ba6f4c095\thosts/nas/drive-versioning.md\n"
+    },
+    {
+      "command": [
+        "git",
+        "hash-object",
+        "hosts/nas/drive-versioning.md"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "05180f3f1e074e50b5af24d57d76438c04a159ad\n"
+    },
+    {
+      "command": [
+        "du",
+        "-sk",
+        ".git",
+        ".worktrees",
+        ".pi",
+        ".history",
+        ".venv",
+        "node_modules",
+        "graphify-out",
+        "generated"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "87704\t.git\n3310168\t.worktrees\n8\t.pi\n2104\t.history\n60\t.venv\n89360\tnode_modules\n15260\tgraphify-out\n172\tgenerated\n"
+    },
+    {
+      "command": [
+        "git",
+        "grep",
+        "-n",
+        "-E",
+        "NOT IMPLEMENTED|Rundeck jobs|PR.*merge|NFS is",
+        "origin/main",
+        "--",
+        "CLAUDE.md",
+        ".claude/operating-rules.md"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "origin/main:.claude/operating-rules.md:11:## 1. RULE #1 \u2014 PR \u2192 merge \u2192 apply from `main`. No exceptions without explicit approval.\norigin/main:.claude/operating-rules.md:41:`scripts/portainer-redeploy.py`, API or SSH changes) before its PR is merged. Also\norigin/main:.claude/operating-rules.md:61:| Rundeck jobs | `rundeck/jobs/*.yaml` | API import (see `rundeck/README.md`) |\norigin/main:.claude/operating-rules.md:89:## 7. NFS is the storage architecture \u2014 never propose moving off it\norigin/main:CLAUDE.md:5:- **RULE #1 \u2014 PR \u2192 merge \u2192 apply from `main`.** Mandatory for every AI agent and every session.\norigin/main:CLAUDE.md:6:  Branch from `origin/main` \u2192 commit \u2192 PR \u2192 all required CI checks green \u2192 squash-merge \u2192\norigin/main:CLAUDE.md:14:  Rundeck \u2192 `rundeck/jobs/` **(NOT IMPLEMENTED \u2014 verified 2026-08-18: Rundeck runs on ds-1 but no\norigin/main:CLAUDE.md:87:  - Rundeck jobs \u2192 `rundeck/jobs/*.yaml` (API import, see `rundeck/README.md`)\n"
+    },
+    {
+      "command": [
+        "git",
+        "grep",
+        "-n",
+        "-E",
+        "apply|No changes|remaining|pending",
+        "origin/main",
+        "--",
+        "docs/operations/audit-closure*"
+      ],
+      "exit_code": 1,
+      "stderr": "",
+      "stdout": ""
+    }
+  ],
+  "source": "local file metadata and git trees"
+}

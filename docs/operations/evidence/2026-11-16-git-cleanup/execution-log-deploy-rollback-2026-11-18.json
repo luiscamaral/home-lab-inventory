@@ -1,0 +1,54 @@
+{
+  "actions": [
+    "Health monitor: rewritten to read Thanos (firing alerts + down targets), schedule restored, single-issue lifecycle. Merged #157. Tested: 2 branch dispatches, then merged; issue #156 created and verified.",
+    "Deploy/rollback (Path A): Vault AppRole github-runner + least-privilege policy (read secret/homelab/portainer only). Merged #159, applied with -target (drift left for separate decision), role_id + secret_id stored as GitHub secrets VAULT_ROLE_ID/VAULT_SECRET_ID.",
+    "Deploy/rollback workflows: dockermaster-deployment.yml -> portainer-deploy.yml, emergency-rollback.yml -> portainer-rollback.yml, both via scripts/ci/portainer-cli.sh with dry-run default. Merged #160.",
+    "Timeout bump 30->120s for stop/start. Merged #161.",
+    "Tests: AppRole login verified (token 95 chars, TTL 899s; read portainer secret 200; list other metadata 403). portainer-cli.sh list shows ~80 live stacks. Deploy dry-run (grafana) passed; one real grafana redeploy failed once on a transient 30s timeout, then succeeded (\"redeployed grafana id=147\"). Rollback dry-run passed."
+  ],
+  "collected_at": "2026-11-19T07:39:09.122839+00:00",
+  "limits": [
+    "True version rollback remains git revert + terraform apply (not a GitHub button).",
+    "The Vault state drift (16 import + 3 change) was NOT applied.",
+    "deploy.yml (legacy webhook/ssh deploy) still exists and is out of scope."
+  ],
+  "prs": {
+    "157": {
+      "mergeCommit": {
+        "oid": "bf22056d1948ce5aa25d6e7df4c78e42a914bcef"
+      },
+      "mergedAt": "2026-11-18T21:05:16Z",
+      "number": 157,
+      "state": "MERGED",
+      "title": "fix(ci): health monitor reads Thanos, not the docker socket"
+    },
+    "159": {
+      "mergeCommit": {
+        "oid": "2d9589eb2842a12f1dcf35c35474b7bfe403d887"
+      },
+      "mergedAt": "2026-11-19T07:14:04Z",
+      "number": 159,
+      "state": "MERGED",
+      "title": "feat(security): add AppRole for the GitHub Actions runner"
+    },
+    "160": {
+      "mergeCommit": {
+        "oid": "4f868ddd806205a6cae49f7f9261bd2585aff19a"
+      },
+      "mergedAt": "2026-11-19T07:26:26Z",
+      "number": 160,
+      "state": "MERGED",
+      "title": "fix(ci): drive deploy and rollback through the Portainer API"
+    },
+    "161": {
+      "mergeCommit": {
+        "oid": "499e2a4b795e06d6ae154635b5a5780674803d84"
+      },
+      "mergedAt": "2026-11-19T07:37:29Z",
+      "number": 161,
+      "state": "MERGED",
+      "title": "fix(ci): raise Portainer stop/start timeout to 120s"
+    }
+  },
+  "source": "GitHub API and local git"
+}

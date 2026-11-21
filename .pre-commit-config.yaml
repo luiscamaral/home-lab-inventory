@@ -43,13 +43,15 @@ repos:
   # `mcp/` and `generated/` hold AI-tooling artifacts (PRDs, plans,
   # captured snapshots) that pre-date strict markdownlint adoption;
   # excluded so they don't gate commits. Audit/clean-up tracked separately.
+  # Saved evidence records and the 2026-11 evidence-first reports keep their
+  # collected text verbatim, so they are excluded too (same set as CI).
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.48.0
     hooks:
       - id: markdownlint
         args: [--config=.markdownlint.json]
         types: [markdown]
-        exclude: ^(.history/|CHANGELOG\.md|\.github/ISSUE_TEMPLATE/|\.github/PULL_REQUEST_TEMPLATE\.md|mcp/|generated/|\.devin/)
+        exclude: ^(.history/|CHANGELOG\.md|\.github/ISSUE_TEMPLATE/|\.github/PULL_REQUEST_TEMPLATE\.md|mcp/|generated/|\.devin/|docs/evidence/|docs/[a-z]+/evidence/|docs/(network|operations)/2026-11-)
 
   # Dockerfile linting with hadolint
   - repo: https://github.com/hadolint/hadolint

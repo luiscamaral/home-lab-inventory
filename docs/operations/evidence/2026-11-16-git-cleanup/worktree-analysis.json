@@ -1,0 +1,707 @@
+{
+  "collected_at": "2026-11-17T00:24:53.006373+00:00",
+  "commands": [
+    "git worktree list --porcelain",
+    "git -C WORKTREE status --porcelain=v1 --untracked-files=all",
+    "git merge-base --is-ancestor HEAD origin/main"
+  ],
+  "data": [
+    {
+      "HEAD": "6104e15c71115c47b335b38ba905011cd489fa5d",
+      "branch": "refs/heads/fix/ds2-portainer-agent-ip-collision",
+      "head_in_main": false,
+      "status": [
+        " M terraform/portainer/locals.tf",
+        " M terraform/portainer/stacks.tf",
+        "RM terraform/portainer/stacks/snmp-exporter.yml -> terraform/portainer/stacks/snmp-exporter.yml.tftpl",
+        " M terraform/portainer/vault.tf",
+        "?? .pi/subagents/project-panes/herdr-roots.json",
+        "?? .pi/subagents/project-panes/herdr.json",
+        "?? dockermaster/docker/snmp-exporter/generator-switch24a.yml",
+        "?? dockermaster/docker/snmp-exporter/snmp-switch24a.yml",
+        "?? docs/network/2026-11-16-ix0-live-evidence.md",
+        "?? docs/network/2026-11-16-ix0-rca.md",
+        "?? docs/network/2026-11-16-ix0-switch-evidence.md",
+        "?? docs/network/2026-11-16-network-instability-check.md",
+        "?? docs/network/evidence/2026-11-16-home-ix0-outage.md",
+        "?? docs/network/evidence/2026-11-16-instability-check/live-rf-and-switch-5x.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/mac-local.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/mac-nas-tcp.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/mac-ping.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/nas-bond-and-syslog.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/nas-dmesg-link-events.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/nas-link-state.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/nas-macvlan-eth4.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/pfsense-after-te27-lastchange.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/pfsense-counters-3min.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/pfsense-logs-gw.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/pfsense-parallel-ping-final.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/pfsense-ping-1400.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/pfsense-ping-nas.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/pfsense-status-1.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/switch-port-lastchange.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/switch-snmp-10g-delta.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/thanos-alerts-and-metric-discovery.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/thanos-down-targets-at-dips.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/thanos-network-health.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/thanos-post-recovery-15m.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/thanos-range-up-45m.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/thanos-replica-down-detail.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/thanos-rf-burst-40m.txt",
+        "?? docs/network/evidence/2026-11-16-instability-check/thanos-up-per-replica-30m.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/dac-eeprom-decode.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/mtu-checks.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/mtu-inventory-and-log-sources.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/nas-eth4-mtu9000.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/omada-events-switch.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/omada-switch-ports-25-28.json",
+        "?? docs/network/evidence/2026-11-16-ix0/omada-trunk-vlan-intent.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/pfsense-driver-logs-2026-11-16.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/pfsense-ix0-deep-dump.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/pfsense-link-irq-and-system.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/pfsense-mtu-logs.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/pfsense-pcie-ix0.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/pfsense-pcie-sfp-eeprom.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/pfsense-sampler.sh",
+        "?? docs/network/evidence/2026-11-16-ix0/pfsense-samples-5min.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/pfsense-watchdog-history.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/switch-10g-ports-ifInErrors-delta.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/switch-all-ports-errors-snmp.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/switch-fdb-lldp-ports.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/switch-rmon-errortypes-mtu.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/switch-te1-0-27-snmp.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/switch-vlan-membership-snmp.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/thanos-history-ix0.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/thanos-loss-after-dac.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/thanos-rf-vs-temp-cpu.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/thanos-rf-vs-traffic-5d.txt",
+        "?? docs/network/evidence/2026-11-16-ix0/vault-reachability-2156.txt",
+        "?? docs/network/evidence/2026-11-16-omada-dns-access.md",
+        "?? docs/operations/evidence/2026-11-16-git-cleanup/all-prs.json",
+        "?? docs/operations/evidence/2026-11-16-git-cleanup/branch-analysis.json",
+        "?? docs/operations/evidence/2026-11-16-git-cleanup/initial-local.json",
+        "?? docs/operations/evidence/2026-11-16-git-cleanup/open-issues.json",
+        "?? docs/operations/evidence/2026-11-16-git-cleanup/open-prs.json",
+        "?? docs/operations/evidence/2026-11-16-git-cleanup/recent-runs.json",
+        "?? docs/operations/evidence/2026-11-16-git-cleanup/remote-heads.json",
+        "?? hosts/nas/drive-versioning.md"
+      ],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory"
+    },
+    {
+      "HEAD": "fab1145e26cae78dad8390cc3048615c8c3274b2",
+      "branch": "refs/heads/fix/calibre-version-bump",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory-calibre-update"
+    },
+    {
+      "HEAD": "9c879ef62dbe5695c316cee6c7baf0d81fa62dff",
+      "branch": "refs/heads/feat/acme-cf-cert",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/acme-cf"
+    },
+    {
+      "HEAD": "b04e32a50865bda6bce7f4547a88e6314d171e02",
+      "branch": "refs/heads/fix/acme-cert-create-name",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/acme-fix"
+    },
+    {
+      "HEAD": "18cd82bdbd4852968408f05e2fcbc020bf3b5a88",
+      "branch": "refs/heads/feat/acme-cert-iac",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/acme-iac"
+    },
+    {
+      "HEAD": "5bfaa4d549064806ebaf2d75f9654aa0bb1ff773",
+      "branch": "refs/heads/fix/acme-issue-polling",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/acme-poll"
+    },
+    {
+      "HEAD": "ff069af07437874a3a8b37edbb4f8012ebfb41e0",
+      "branch": "refs/heads/fix/acme-poller-stale-log",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/acme-poll2"
+    },
+    {
+      "HEAD": "848743f505ae524b7f842886a6f69761bba0babb",
+      "branch": "refs/heads/feat/acme-cf-explicit-sans",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/acme-san"
+    },
+    {
+      "HEAD": "091e018899cef091a4e4ad93d86258df3bba9629",
+      "detached": "",
+      "head_in_main": true,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/apply-main"
+    },
+    {
+      "HEAD": "55f4ea9975219933570de2c6fdefc45cd84b2f0d",
+      "detached": "",
+      "head_in_main": true,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/apply-main-A"
+    },
+    {
+      "HEAD": "82f3ce88f6e1166d7807da62da2cb962fa330d2b",
+      "detached": "",
+      "head_in_main": true,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/apply-main-B"
+    },
+    {
+      "HEAD": "091e018899cef091a4e4ad93d86258df3bba9629",
+      "detached": "",
+      "head_in_main": true,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/apply-nomad-observability"
+    },
+    {
+      "HEAD": "18786b56395a9c43003022965ee224a748bee6dd",
+      "detached": "",
+      "head_in_main": true,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/apply-omada-admin"
+    },
+    {
+      "HEAD": "bd428ad6eb46a30cbe43b378bba4c7c893c4285e",
+      "branch": "refs/heads/feat/blackbox-auth-cf-probe",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/bb-probe"
+    },
+    {
+      "HEAD": "172d719f9b346d0d427c5555c19575037ddbd63e",
+      "branch": "refs/heads/fix/dhcp-static-php-writer",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/dhcp-php"
+    },
+    {
+      "HEAD": "08f3d3a4c35be3d1fb3c6b43cba57cda6fb71da4",
+      "branch": "refs/heads/fix/dhcp-sync-safe-writes",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/dhcp-sync-safe"
+    },
+    {
+      "HEAD": "80849800b52f4a3b2f2b71ff9ffde6bd6b4eaa4b",
+      "branch": "refs/heads/feat/docker-daemon-iac",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/docker-daemon-iac"
+    },
+    {
+      "HEAD": "83e2d8ea126f95809dac913d6f8e49b8e6ea5b0f",
+      "branch": "refs/heads/docs/nas-drive-versioning-applied",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/drive-versioning"
+    },
+    {
+      "HEAD": "0002170da193644710c93742ef39a91e7f06cdb0",
+      "branch": "refs/heads/fix/hub-mirror-set-order",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/hub-fix"
+    },
+    {
+      "HEAD": "f53fc447e7c70ac1ffb314563c9dfc799f90aade",
+      "branch": "refs/heads/feat/docker-registry-mirror",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/hub-hosts"
+    },
+    {
+      "HEAD": "3c45b6a1a61ef62cc4fe5b451a0acccd9bff4b7e",
+      "branch": "refs/heads/feat/hub-mirror-vhost",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/hub-mirror"
+    },
+    {
+      "HEAD": "f01dea83b7383effb83f77baa38a271a0041099c",
+      "branch": "refs/heads/fix/hub-mirror-ping",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/hub-ping"
+    },
+    {
+      "HEAD": "ad6cd9e7f7907ffe96a2833d4e7fa15084c05f61",
+      "branch": "refs/heads/feat/keycloak-edge-lockdown",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-edge"
+    },
+    {
+      "HEAD": "d1aafdd0b84bb2c6563139297f72ec79a0c4ef84",
+      "branch": "refs/heads/fix/kc-test-totp-secret",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-fix1"
+    },
+    {
+      "HEAD": "a9ff81f909877c810d28a0270d3c47d78aa85303",
+      "branch": "refs/heads/fix/keycloak-reset-flow-priority",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-fix2"
+    },
+    {
+      "HEAD": "b2e5872d85e66c32878808cacda0818acf69bc10",
+      "branch": "refs/heads/feat/keycloak-master-frontend-url",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-front"
+    },
+    {
+      "HEAD": "a9b4d6e52c7669dcb8adc1f3ee7b3dd549da2f16",
+      "branch": "refs/heads/feat/keycloak-hostname-admin",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-hostadmin"
+    },
+    {
+      "HEAD": "14675dc165531a01c5a141fa31cc6f1584beea6a",
+      "branch": "refs/heads/feat/keycloak-k-tests",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-k-tests"
+    },
+    {
+      "HEAD": "9357ebf9c6e1675315054637832e82d59812a036",
+      "branch": "refs/heads/feat/keycloak-k2-brute-force",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-k2-brute-force"
+    },
+    {
+      "HEAD": "7e32b148a26c487952c33de9efc4a0dd041a3c90",
+      "branch": "refs/heads/feat/keycloak-k3a-mail-path",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-k3a-mail-path"
+    },
+    {
+      "HEAD": "293897cc6284bfc5614c6158962e12200a626774",
+      "branch": "refs/heads/feat/keycloak-k3b-reset-flow",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-k3b-reset-flow"
+    },
+    {
+      "HEAD": "26bd1e69e298148bb2aee04094a4f579285b693e",
+      "branch": "refs/heads/feat/keycloak-k4-events",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-k4-events"
+    },
+    {
+      "HEAD": "12bfeba4e9e0d7cbc9b32cd7947bee7599d1aeb2",
+      "branch": "refs/heads/feat/keycloak-realm-import",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-realms"
+    },
+    {
+      "HEAD": "54629fb753e2a7269aaa534a074a9e5636f1eb14",
+      "branch": "refs/heads/feat/keycloak-registration-off",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/kc-reg"
+    },
+    {
+      "HEAD": "571da87a2a042c5754d924226d02cfaf772851a3",
+      "branch": "refs/heads/docs/keychain-credential-backup",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/keychain-backup"
+    },
+    {
+      "HEAD": "06d2bd6eb57e468cd1816f541c22686465d4e749",
+      "branch": "refs/heads/fix/zot-meta-backup-readonly",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/m-fix"
+    },
+    {
+      "HEAD": "abd895fd976fde69f98066bf98b680cd9177c951",
+      "branch": "refs/heads/docs/nas-drive-versioning-record",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nas-drive-doc"
+    },
+    {
+      "HEAD": "cc31249a64580322b2262192d346630239edd353",
+      "branch": "refs/heads/fix/ix0-watchdog-safety",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/network-resilience"
+    },
+    {
+      "HEAD": "a98859c9fea7361fefba2e23f06fbd567aaa05bc",
+      "branch": "refs/heads/feat/nomad-embed-ollama-10cpu",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-10cpu"
+    },
+    {
+      "HEAD": "d2dbc614dd6bdb068bd8019c2f07e95d978a10c0",
+      "branch": "refs/heads/fix/nomad-eval-config-compat",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-eval-config-compat"
+    },
+    {
+      "HEAD": "aea4d6de4044bf50a7d1ab0fb1e637efd87b8786",
+      "branch": "refs/heads/feat/nomad-gemma-deploy",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-gemma-deploy"
+    },
+    {
+      "HEAD": "0cac5fb641d1d70656eb699a6b45a0edba95bdfb",
+      "branch": "refs/heads/feat/nomad-embedding-gemma2",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-gemma2"
+    },
+    {
+      "HEAD": "313eb7fe634d714b6553b9ed380005d077ed1995",
+      "branch": "refs/heads/fix/nomad-macvlan",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-macvlan"
+    },
+    {
+      "HEAD": "2b96337e446b6e7c6c23d4171520756930b306e5",
+      "branch": "refs/heads/fix/nomad-observability-bge-eval",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-observability-bge-eval"
+    },
+    {
+      "HEAD": "1824b31697364c6d280d8c564bfba7afc3c16301",
+      "branch": "refs/heads/fix/nomad-private-children",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-private-children"
+    },
+    {
+      "HEAD": "c037e91cb92a2de196191a00b4ff3976d28fb59f",
+      "branch": "refs/heads/fix/nomad-qdrant-timeout",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-qdrant-timeout"
+    },
+    {
+      "HEAD": "77807524fd0389a6c186af79d20e5678a63583a2",
+      "branch": "refs/heads/feat/nomad-embedding-qwen3-4b",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-qwen3-4b"
+    },
+    {
+      "HEAD": "a1bc46860920af78f0ef0079f38a923cebd6da58",
+      "branch": "refs/heads/feat/nomad-embedding-qwen3-reranker",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-qwen3-reranker"
+    },
+    {
+      "HEAD": "28eddfd7e4a398001a1766959ffd2f9f28aff51e",
+      "branch": "refs/heads/fix/nomad-socket-proxy-ipv4",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/nomad-socket-proxy-ipv4"
+    },
+    {
+      "HEAD": "364a8114d1863226b555b746eeffd96d501d09b8",
+      "branch": "refs/heads/fix/omada-admin-reservation",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/omada-admin-reservation"
+    },
+    {
+      "HEAD": "a3d6fb742408df2a76212f14f2824e8ce70b5f6f",
+      "branch": "refs/heads/fix/ops-ds1-log-rotation",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/ops-ds1-logs"
+    },
+    {
+      "HEAD": "af4d3fa571df0f330400bbd91681bc903853a5ef",
+      "branch": "refs/heads/fix/ops-ds2-agent-ip",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/ops-ds2-agent"
+    },
+    {
+      "HEAD": "fe0f57d176c960589c6440cac681f02ede17a440",
+      "branch": "refs/heads/fix/ops-github-runner",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/ops-runner"
+    },
+    {
+      "HEAD": "f838d1865557b4be672df04b68393bf2916ed847",
+      "branch": "refs/heads/docs/pr-merge-apply-rule",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/pr-rule"
+    },
+    {
+      "HEAD": "687b2f6df0535cbd380a97f0f9bc826835b3beb6",
+      "branch": "refs/heads/feature/prometheus-thanos-plan",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/prometheus-thanos-plan"
+    },
+    {
+      "HEAD": "7d64e92ee6d3f4b6908c43181627928197f04979",
+      "branch": "refs/heads/feat/rproxy-cf-cert",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/rproxy-cf"
+    },
+    {
+      "HEAD": "be0391d1eeac151ee44cd8064ebc2038408eee90",
+      "branch": "refs/heads/feat/rundeck-from-zot",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/rundeck-from-zot"
+    },
+    {
+      "HEAD": "14d70fb18bc270f53e28c74598b8785c77eff89f",
+      "branch": "refs/heads/fix/rundeck-reconcile-live",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/rundeck-reconcile"
+    },
+    {
+      "HEAD": "cb7b8bbd4e0857d77e90bfe848f30f49b538fad3",
+      "branch": "refs/heads/feat/storage-policy",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/storage-policy"
+    },
+    {
+      "HEAD": "f89782a82672a5b0e02c83e3ffb6a1a3d58fdce3",
+      "branch": "refs/heads/feat/zot-error-alerts",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-alert"
+    },
+    {
+      "HEAD": "114a14c0d815165954d70aa0f7ecc0ab2ecba5eb",
+      "branch": "refs/heads/feat/zot-meta-backup",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-backup"
+    },
+    {
+      "HEAD": "c629c30bb944a0f65217bed1c87e5b430138ee8c",
+      "branch": "refs/heads/feat/zot-e2e-test",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-e2e"
+    },
+    {
+      "HEAD": "3cb1c54def75a18526ed604266a50412924ba9ce",
+      "branch": "refs/heads/fix/zot-e2e-email-username",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-e2e-fix"
+    },
+    {
+      "HEAD": "199d70fabd00908cead96addc1d76f32c47283ee",
+      "branch": "refs/heads/fix/zot-e2e-session-header",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-e2e-fix2"
+    },
+    {
+      "HEAD": "5e2642e22f622f303dbf88a63cb707d90673fd22",
+      "branch": "refs/heads/fix/zot-e2e-jwks-evidence",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-e2e-fix3"
+    },
+    {
+      "HEAD": "4a1f2df82c6f7005ea2b60850ffd4347cfd7e789",
+      "branch": "refs/heads/feat/zot-local-metadb",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-meta"
+    },
+    {
+      "HEAD": "bf0a4cc9253bcadd0a4902082b4604d416f1f579",
+      "branch": "refs/heads/feat/zot-oidc-lan-hosts",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-oidc-lan"
+    },
+    {
+      "HEAD": "7a337073139d7e842fc478e5ddac0f374620eb91",
+      "branch": "refs/heads/feat/zot-registry",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-registry"
+    },
+    {
+      "HEAD": "c19869e4822d7edb7ddbe946ceb4f7995e7f1676",
+      "branch": "refs/heads/feat/zot-sso",
+      "head_in_main": false,
+      "status": [],
+      "status_exit": 0,
+      "status_stderr": "",
+      "worktree": "/Users/lamaral/Library/CloudStorage/SynologyDrive-lamaral/SynDrive/05.Code/Dev/lamaral/home/inventory/.worktrees/zot-sso"
+    }
+  ],
+  "source": "local worktree registrations and git status"
+}

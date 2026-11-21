@@ -99,7 +99,9 @@ jobs:
           echo "Running markdownlint..."
           if markdownlint --config .markdownlint.json '**/*.md' \
               --ignore .history --ignore node_modules \
-              --ignore mcp --ignore generated --ignore .devin; then
+              --ignore mcp --ignore generated --ignore .devin \
+              --ignore 'docs/evidence/**' --ignore 'docs/*/evidence/**' \
+              --ignore 'docs/network/2026-11-*' --ignore 'docs/operations/2026-11-*'; then
             echo "result=success" >> "$GITHUB_OUTPUT"
             echo "✅ Markdown linting passed"
           else

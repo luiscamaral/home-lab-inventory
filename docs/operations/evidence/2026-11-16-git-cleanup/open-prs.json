@@ -1,0 +1,1688 @@
+{
+  "collected_at": "2026-11-17T00:24:17.535786+00:00",
+  "command": [
+    "gh",
+    "pr",
+    "list",
+    "--repo",
+    "luiscamaral/home-lab-inventory",
+    "--state",
+    "open",
+    "--limit",
+    "200",
+    "--json",
+    "number,title,url,headRefName,baseRefName,isDraft,mergeable,mergeStateStatus,reviewDecision,statusCheckRollup,updatedAt,headRefOid"
+  ],
+  "data": [
+    {
+      "baseRefName": "main",
+      "headRefName": "dependabot/npm_and_yarn/commitlint/cli-21.2.1",
+      "headRefOid": "f28e75dc0d27af1906fd6332a4e2b591da2649e1",
+      "isDraft": false,
+      "mergeStateStatus": "UNKNOWN",
+      "mergeable": "UNKNOWN",
+      "number": 63,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:05Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752739/job/86811902825",
+          "name": "Lint Validation (markdown)",
+          "startedAt": "2026-07-13T12:08:53Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:04Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752731/job/86811902942",
+          "name": "Secret Detection",
+          "startedAt": "2026-07-13T12:08:54Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:06Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752739/job/86811902796",
+          "name": "Lint Validation (yaml)",
+          "startedAt": "2026-07-13T12:08:54Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:09Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752739/job/86811902833",
+          "name": "Lint Validation (shell)",
+          "startedAt": "2026-07-13T12:08:53Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:00Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752739/job/86811902863",
+          "name": "Lint Validation (json)",
+          "startedAt": "2026-07-13T12:08:53Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:02Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752739/job/86811902830",
+          "name": "Lint Validation (actionlint)",
+          "startedAt": "2026-07-13T12:08:54Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:10:26Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752739/job/86811902744",
+          "name": "Pre-commit Validation",
+          "startedAt": "2026-07-13T12:08:55Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:06Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752731/job/86811902906",
+          "name": "Dockerfile Security Linting",
+          "startedAt": "2026-07-13T12:08:53Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:09Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752739/job/86811902793",
+          "name": "Commit Message Validation",
+          "startedAt": "2026-07-13T12:08:53Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:40Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752731/job/86811902943",
+          "name": "Container Security Scan",
+          "startedAt": "2026-07-13T12:08:53Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:09Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752739/job/86811902769",
+          "name": "Docker Build Validation",
+          "startedAt": "2026-07-13T12:08:55Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:08:59Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752731/job/86811902925",
+          "name": "Scan Built Docker Images",
+          "startedAt": "2026-07-13T12:08:53Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:08:58Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752739/job/86811902790",
+          "name": "Documentation Validation",
+          "startedAt": "2026-07-13T12:08:53Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:11Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752731/job/86811902922",
+          "name": "Dependency Security Scan",
+          "startedAt": "2026-07-13T12:08:54Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:08:58Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752739/job/86811902779",
+          "name": "File Structure Validation",
+          "startedAt": "2026-07-13T12:08:54Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:54Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752731/job/86812070192",
+          "name": "Generate Security Report",
+          "startedAt": "2026-07-13T12:09:42Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:10:38Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752739/job/86812233143",
+          "name": "Generate PR Summary",
+          "startedAt": "2026-07-13T12:10:30Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:10:12Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752731/job/86812119845",
+          "name": "Security Gate",
+          "startedAt": "2026-07-13T12:09:57Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:10:45Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752739/job/86812272526",
+          "name": "Cleanup & Performance Monitoring",
+          "startedAt": "2026-07-13T12:10:40Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:10:20Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752731/job/86812181431",
+          "name": "Performance Monitoring",
+          "startedAt": "2026-07-13T12:10:15Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:10:12Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752731/job/86812182175",
+          "name": "Notification & Integration",
+          "startedAt": "2026-07-13T12:10:13Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:10:26Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752731/job/86812209897",
+          "name": "Cleanup Resources",
+          "startedAt": "2026-07-13T12:10:23Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:00Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/runs/86811926205",
+          "name": "Hadolint",
+          "startedAt": "2026-07-13T12:08:58Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-13T12:09:15Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/runs/86811979233",
+          "name": "Trivy",
+          "startedAt": "2026-07-13T12:09:13Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "PR Validation",
+          "startedAt": "2026-07-13T12:10:35Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/29248752739"
+        }
+      ],
+      "title": "chore: bump @commitlint/cli from 19.8.1 to 21.2.1",
+      "updatedAt": "2026-07-13T12:10:35Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/63"
+    },
+    {
+      "baseRefName": "main",
+      "headRefName": "dependabot/github_actions/github/codeql-action-4",
+      "headRefOid": "89c998f41efdfe2e9c8cf01f13bbee76d0a5366a",
+      "isDraft": false,
+      "mergeStateStatus": "UNKNOWN",
+      "mergeable": "UNKNOWN",
+      "number": 58,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:39Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737482/job/75429637511",
+          "name": "Lint Validation (markdown)",
+          "startedAt": "2026-05-11T19:16:24Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:17Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737460/job/75429636976",
+          "name": "Secret Detection",
+          "startedAt": "2026-05-11T19:16:06Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:03Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737482/job/75429637826",
+          "name": "Lint Validation (yaml)",
+          "startedAt": "2026-05-11T19:16:53Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:06Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737482/job/75429637547",
+          "name": "Lint Validation (shell)",
+          "startedAt": "2026-05-11T19:16:45Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:10Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737482/job/75429637587",
+          "name": "Lint Validation (json)",
+          "startedAt": "2026-05-11T19:16:03Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:53Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737482/job/75429637659",
+          "name": "Lint Validation (actionlint)",
+          "startedAt": "2026-05-11T19:16:47Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:18Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737482/job/75429637489",
+          "name": "Pre-commit Validation",
+          "startedAt": "2026-05-11T19:16:00Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:59Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737460/job/75429636974",
+          "name": "Dockerfile Security Linting",
+          "startedAt": "2026-05-11T19:16:46Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:46Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737482/job/75429637571",
+          "name": "Commit Message Validation",
+          "startedAt": "2026-05-11T19:16:31Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:59Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737460/job/75429637053",
+          "name": "Container Security Scan",
+          "startedAt": "2026-05-11T19:16:02Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:00Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737482/job/75429637519",
+          "name": "Docker Build Validation",
+          "startedAt": "2026-05-11T19:15:58Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:09Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737460/job/75429636948",
+          "name": "Scan Built Docker Images",
+          "startedAt": "2026-05-11T19:16:03Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:57Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737482/job/75429637409",
+          "name": "Documentation Validation",
+          "startedAt": "2026-05-11T19:15:51Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:20Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737460/job/75429637069",
+          "name": "Dependency Security Scan",
+          "startedAt": "2026-05-11T19:16:10Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:56Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737482/job/75429637482",
+          "name": "File Structure Validation",
+          "startedAt": "2026-05-11T19:16:48Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:22Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737460/job/75429927852",
+          "name": "Generate Security Report",
+          "startedAt": "2026-05-11T19:17:02Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:40Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737482/job/75429983174",
+          "name": "Generate PR Summary",
+          "startedAt": "2026-05-11T19:17:28Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:45Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737460/job/75429995189",
+          "name": "Security Gate",
+          "startedAt": "2026-05-11T19:17:25Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:46Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737482/job/75430045649",
+          "name": "Cleanup & Performance Monitoring",
+          "startedAt": "2026-05-11T19:17:43Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:58Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737460/job/75430060366",
+          "name": "Performance Monitoring",
+          "startedAt": "2026-05-11T19:17:54Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:45Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737460/job/75430061113",
+          "name": "Notification & Integration",
+          "startedAt": "2026-05-11T19:17:46Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:18:09Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737460/job/75430096099",
+          "name": "Cleanup Resources",
+          "startedAt": "2026-05-11T19:18:07Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:53Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/runs/75429902905",
+          "name": "Hadolint",
+          "startedAt": "2026-05-11T19:16:51Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:35Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/runs/75429843302",
+          "name": "Trivy",
+          "startedAt": "2026-05-11T19:16:33Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "PR Validation",
+          "startedAt": "2026-05-11T19:17:36Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691737482"
+        }
+      ],
+      "title": "chore: bump github/codeql-action from 3 to 4",
+      "updatedAt": "2026-05-11T19:17:35Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/58"
+    },
+    {
+      "baseRefName": "main",
+      "headRefName": "dependabot/github_actions/actions/github-script-9",
+      "headRefOid": "221657c9f5c272d65bf015fae1e1271245b39006",
+      "isDraft": false,
+      "mergeStateStatus": "UNKNOWN",
+      "mergeable": "UNKNOWN",
+      "number": 57,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:00Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734792/job/75429627966",
+          "name": "Lint Validation (markdown)",
+          "startedAt": "2026-05-11T19:15:46Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:46Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734794/job/75429627384",
+          "name": "Secret Detection",
+          "startedAt": "2026-05-11T19:15:36Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:58Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734792/job/75429628002",
+          "name": "Lint Validation (yaml)",
+          "startedAt": "2026-05-11T19:15:50Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:43Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734792/job/75429627994",
+          "name": "Lint Validation (shell)",
+          "startedAt": "2026-05-11T19:16:24Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:55Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734792/job/75429627999",
+          "name": "Lint Validation (json)",
+          "startedAt": "2026-05-11T19:15:47Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:57Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734792/job/75429628020",
+          "name": "Lint Validation (actionlint)",
+          "startedAt": "2026-05-11T19:16:49Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:38Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734792/job/75429627876",
+          "name": "Pre-commit Validation",
+          "startedAt": "2026-05-11T19:16:27Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:55Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734794/job/75429627362",
+          "name": "Dockerfile Security Linting",
+          "startedAt": "2026-05-11T19:15:38Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:09Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734792/job/75429628017",
+          "name": "Commit Message Validation",
+          "startedAt": "2026-05-11T19:16:57Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:59Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734794/job/75429627446",
+          "name": "Container Security Scan",
+          "startedAt": "2026-05-11T19:16:12Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:33Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734792/job/75429627801",
+          "name": "Docker Build Validation",
+          "startedAt": "2026-05-11T19:15:41Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:16Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734794/job/75429627340",
+          "name": "Scan Built Docker Images",
+          "startedAt": "2026-05-11T19:16:10Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:01Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734792/job/75429627800",
+          "name": "Documentation Validation",
+          "startedAt": "2026-05-11T19:15:57Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:53Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734794/job/75429627421",
+          "name": "Dependency Security Scan",
+          "startedAt": "2026-05-11T19:15:37Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:45Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734792/job/75429627826",
+          "name": "File Structure Validation",
+          "startedAt": "2026-05-11T19:15:38Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:21Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734794/job/75429925702",
+          "name": "Generate Security Report",
+          "startedAt": "2026-05-11T19:17:02Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:48Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734792/job/75430040184",
+          "name": "Generate PR Summary",
+          "startedAt": "2026-05-11T19:17:40Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:49Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734794/job/75429991111",
+          "name": "Security Gate",
+          "startedAt": "2026-05-11T19:17:30Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:53Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734792/job/75430067394",
+          "name": "Cleanup & Performance Monitoring",
+          "startedAt": "2026-05-11T19:17:50Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:18:00Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734794/job/75430070455",
+          "name": "Performance Monitoring",
+          "startedAt": "2026-05-11T19:17:58Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:49Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734794/job/75430071006",
+          "name": "Notification & Integration",
+          "startedAt": "2026-05-11T19:17:49Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:18:15Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734794/job/75430103374",
+          "name": "Cleanup Resources",
+          "startedAt": "2026-05-11T19:18:10Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:47Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/runs/75429686389",
+          "name": "Hadolint",
+          "startedAt": "2026-05-11T19:15:45Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:38Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/runs/75429850585",
+          "name": "Trivy",
+          "startedAt": "2026-05-11T19:16:35Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "PR Validation",
+          "startedAt": "2026-05-11T19:17:45Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691734792"
+        }
+      ],
+      "title": "chore: bump actions/github-script from 7 to 9",
+      "updatedAt": "2026-05-11T19:17:45Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/57"
+    },
+    {
+      "baseRefName": "main",
+      "headRefName": "dependabot/github_actions/actions/checkout-6",
+      "headRefOid": "245a9a51d4f46881bd04f8825da08a0e17cd960a",
+      "isDraft": false,
+      "mergeStateStatus": "UNKNOWN",
+      "mergeable": "UNKNOWN",
+      "number": 56,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:57Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731696/job/75429615604",
+          "name": "Lint Validation (markdown)",
+          "startedAt": "2026-05-11T19:16:42Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:01Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731615/job/75429614988",
+          "name": "Secret Detection",
+          "startedAt": "2026-05-11T19:15:51Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:04Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731696/job/75429615587",
+          "name": "Lint Validation (yaml)",
+          "startedAt": "2026-05-11T19:15:55Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:22Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731696/job/75429615606",
+          "name": "Lint Validation (shell)",
+          "startedAt": "2026-05-11T19:16:01Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:45Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731696/job/75429615588",
+          "name": "Lint Validation (json)",
+          "startedAt": "2026-05-11T19:16:39Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:03Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731696/job/75429615631",
+          "name": "Lint Validation (actionlint)",
+          "startedAt": "2026-05-11T19:16:55Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:47Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731696/job/75429615529",
+          "name": "Pre-commit Validation",
+          "startedAt": "2026-05-11T19:15:25Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:03Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731615/job/75429614980",
+          "name": "Dockerfile Security Linting",
+          "startedAt": "2026-05-11T19:16:51Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:37Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731696/job/75429615532",
+          "name": "Commit Message Validation",
+          "startedAt": "2026-05-11T19:16:19Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:34Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731615/job/75429614997",
+          "name": "Container Security Scan",
+          "startedAt": "2026-05-11T19:15:31Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:14Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731696/job/75429615569",
+          "name": "Docker Build Validation",
+          "startedAt": "2026-05-11T19:16:19Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:53Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731615/job/75429615059",
+          "name": "Scan Built Docker Images",
+          "startedAt": "2026-05-11T19:16:43Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:54Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731696/job/75429615557",
+          "name": "Documentation Validation",
+          "startedAt": "2026-05-11T19:16:49Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:35Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731615/job/75429614979",
+          "name": "Dependency Security Scan",
+          "startedAt": "2026-05-11T19:15:25Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:42Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731696/job/75429615547",
+          "name": "File Structure Validation",
+          "startedAt": "2026-05-11T19:15:37Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:35Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731615/job/75429940074",
+          "name": "Generate Security Report",
+          "startedAt": "2026-05-11T19:17:06Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:23Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731696/job/75429970655",
+          "name": "Generate PR Summary",
+          "startedAt": "2026-05-11T19:17:17Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:18:04Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731615/job/75430032292",
+          "name": "Security Gate",
+          "startedAt": "2026-05-11T19:17:39Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:30Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731696/job/75429997534",
+          "name": "Cleanup & Performance Monitoring",
+          "startedAt": "2026-05-11T19:17:27Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:18:18Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731615/job/75430115548",
+          "name": "Performance Monitoring",
+          "startedAt": "2026-05-11T19:18:14Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:18:05Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731615/job/75430116381",
+          "name": "Notification & Integration",
+          "startedAt": "2026-05-11T19:18:05Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:18:29Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731615/job/75430152873",
+          "name": "Cleanup Resources",
+          "startedAt": "2026-05-11T19:18:26Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:58Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/runs/75429914428",
+          "name": "Hadolint",
+          "startedAt": "2026-05-11T19:16:55Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:11Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/runs/75429758838",
+          "name": "Trivy",
+          "startedAt": "2026-05-11T19:16:08Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "PR Validation",
+          "startedAt": "2026-05-11T19:17:21Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691731696"
+        }
+      ],
+      "title": "chore: bump actions/checkout from 4 to 6",
+      "updatedAt": "2026-05-11T19:17:32Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/56"
+    },
+    {
+      "baseRefName": "main",
+      "headRefName": "dependabot/github_actions/actions/download-artifact-8",
+      "headRefOid": "2affce6e89d81a8aee5ff0c5185183972362df58",
+      "isDraft": false,
+      "mergeStateStatus": "UNKNOWN",
+      "mergeable": "UNKNOWN",
+      "number": 55,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:15Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728969/job/75429605147",
+          "name": "Lint Validation (markdown)",
+          "startedAt": "2026-05-11T19:16:05Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:39Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728912/job/75429603963",
+          "name": "Secret Detection",
+          "startedAt": "2026-05-11T19:15:29Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:59Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728969/job/75429605176",
+          "name": "Lint Validation (yaml)",
+          "startedAt": "2026-05-11T19:15:48Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:09Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728969/job/75429605161",
+          "name": "Lint Validation (shell)",
+          "startedAt": "2026-05-11T19:15:48Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:18Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728969/job/75429605173",
+          "name": "Lint Validation (json)",
+          "startedAt": "2026-05-11T19:16:11Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:28Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728969/job/75429605229",
+          "name": "Lint Validation (actionlint)",
+          "startedAt": "2026-05-11T19:16:22Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:53Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728969/job/75429605084",
+          "name": "Pre-commit Validation",
+          "startedAt": "2026-05-11T19:15:39Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:47Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728912/job/75429604051",
+          "name": "Dockerfile Security Linting",
+          "startedAt": "2026-05-11T19:15:30Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:53Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728969/job/75429605108",
+          "name": "Commit Message Validation",
+          "startedAt": "2026-05-11T19:16:37Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:11Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728912/job/75429604065",
+          "name": "Container Security Scan",
+          "startedAt": "2026-05-11T19:15:29Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:57Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728969/job/75429605033",
+          "name": "Docker Build Validation",
+          "startedAt": "2026-05-11T19:16:01Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:37Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728912/job/75429604034",
+          "name": "Scan Built Docker Images",
+          "startedAt": "2026-05-11T19:15:30Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:03Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728969/job/75429605049",
+          "name": "Documentation Validation",
+          "startedAt": "2026-05-11T19:15:58Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:54Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728912/job/75429604008",
+          "name": "Dependency Security Scan",
+          "startedAt": "2026-05-11T19:15:43Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:48Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728969/job/75429605038",
+          "name": "File Structure Validation",
+          "startedAt": "2026-05-11T19:15:43Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:40Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728912/job/75429769231",
+          "name": "Generate Security Report",
+          "startedAt": "2026-05-11T19:16:19Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:07Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728969/job/75429922402",
+          "name": "Generate PR Summary",
+          "startedAt": "2026-05-11T19:17:00Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:22Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728912/job/75429867438",
+          "name": "Security Gate",
+          "startedAt": "2026-05-11T19:17:02Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:14Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728969/job/75429951349",
+          "name": "Cleanup & Performance Monitoring",
+          "startedAt": "2026-05-11T19:17:11Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:28Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728912/job/75429992837",
+          "name": "Performance Monitoring",
+          "startedAt": "2026-05-11T19:17:24Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:22Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728912/job/75429993656",
+          "name": "Notification & Integration",
+          "startedAt": "2026-05-11T19:17:22Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:34Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728912/job/75430009302",
+          "name": "Cleanup Resources",
+          "startedAt": "2026-05-11T19:17:31Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:40Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/runs/75429663912",
+          "name": "Hadolint",
+          "startedAt": "2026-05-11T19:15:37Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:53Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/runs/75429702860",
+          "name": "Trivy",
+          "startedAt": "2026-05-11T19:15:50Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "PR Validation",
+          "startedAt": "2026-05-11T19:17:05Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691728969"
+        }
+      ],
+      "title": "chore: bump actions/download-artifact from 4 to 8",
+      "updatedAt": "2026-05-11T19:17:05Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/55"
+    },
+    {
+      "baseRefName": "main",
+      "headRefName": "dependabot/github_actions/actions/upload-artifact-7",
+      "headRefOid": "da3ccfdc6aaf10dc544c4f1e7e9df92396818063",
+      "isDraft": false,
+      "mergeStateStatus": "UNKNOWN",
+      "mergeable": "UNKNOWN",
+      "number": 54,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:36Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725226/job/75429589057",
+          "name": "Lint Validation (markdown)",
+          "startedAt": "2026-05-11T19:15:19Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:27Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725236/job/75429588772",
+          "name": "Secret Detection",
+          "startedAt": "2026-05-11T19:15:18Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:35Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725226/job/75429588993",
+          "name": "Lint Validation (yaml)",
+          "startedAt": "2026-05-11T19:15:24Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:49Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725226/job/75429589215",
+          "name": "Lint Validation (shell)",
+          "startedAt": "2026-05-11T19:15:28Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:28Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725226/job/75429589023",
+          "name": "Lint Validation (json)",
+          "startedAt": "2026-05-11T19:15:21Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:33Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725226/job/75429589195",
+          "name": "Lint Validation (actionlint)",
+          "startedAt": "2026-05-11T19:15:28Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:45Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725226/job/75429588838",
+          "name": "Pre-commit Validation",
+          "startedAt": "2026-05-11T19:15:24Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:35Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725236/job/75429588836",
+          "name": "Dockerfile Security Linting",
+          "startedAt": "2026-05-11T19:15:18Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:36Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725226/job/75429588857",
+          "name": "Commit Message Validation",
+          "startedAt": "2026-05-11T19:15:23Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:01Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725236/job/75429588807",
+          "name": "Container Security Scan",
+          "startedAt": "2026-05-11T19:15:23Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:19Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725226/job/75429588843",
+          "name": "Docker Build Validation",
+          "startedAt": "2026-05-11T19:15:17Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:36Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725236/job/75429588777",
+          "name": "Scan Built Docker Images",
+          "startedAt": "2026-05-11T19:15:18Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:23Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725226/job/75429588887",
+          "name": "Documentation Validation",
+          "startedAt": "2026-05-11T19:15:17Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:28Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725236/job/75429588780",
+          "name": "Dependency Security Scan",
+          "startedAt": "2026-05-11T19:15:18Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:23Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725226/job/75429588774",
+          "name": "File Structure Validation",
+          "startedAt": "2026-05-11T19:15:17Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:16:46Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725236/job/75429737779",
+          "name": "Generate Security Report",
+          "startedAt": "2026-05-11T19:16:20Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:01Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725226/job/75429885972",
+          "name": "Generate PR Summary",
+          "startedAt": "2026-05-11T19:16:54Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:18Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725236/job/75429890346",
+          "name": "Security Gate",
+          "startedAt": "2026-05-11T19:16:55Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:08Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725226/job/75429932753",
+          "name": "Cleanup & Performance Monitoring",
+          "startedAt": "2026-05-11T19:17:04Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:24Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725236/job/75429981357",
+          "name": "Performance Monitoring",
+          "startedAt": "2026-05-11T19:17:21Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:18Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725236/job/75429982227",
+          "name": "Notification & Integration",
+          "startedAt": "2026-05-11T19:17:18Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:17:29Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725236/job/75429999239",
+          "name": "Cleanup Resources",
+          "startedAt": "2026-05-11T19:17:27Z",
+          "status": "COMPLETED",
+          "workflowName": "Security Scanning"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:28Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/runs/75429625130",
+          "name": "Hadolint",
+          "startedAt": "2026-05-11T19:15:25Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-05-11T19:15:47Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/runs/75429687119",
+          "name": "Trivy",
+          "startedAt": "2026-05-11T19:15:45Z",
+          "status": "COMPLETED",
+          "workflowName": ""
+        },
+        {
+          "__typename": "StatusContext",
+          "context": "PR Validation",
+          "startedAt": "2026-05-11T19:16:59Z",
+          "state": "SUCCESS",
+          "targetUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/25691725226"
+        }
+      ],
+      "title": "chore: bump actions/upload-artifact from 4 to 7",
+      "updatedAt": "2026-05-11T19:16:58Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/54"
+    },
+    {
+      "baseRefName": "main",
+      "headRefName": "custom-login-portal",
+      "headRefOid": "a1ca9c81ce29d5828ae989d49c28814034d45a2b",
+      "isDraft": true,
+      "mergeStateStatus": "UNKNOWN",
+      "mergeable": "UNKNOWN",
+      "number": 6,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-04-11T07:17:48Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/24277479930/job/70893789768",
+          "name": "Lint Validation (${{ matrix.linter }})",
+          "startedAt": "2026-04-11T07:17:48Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-04-11T07:17:48Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/24277479930/job/70893789747",
+          "name": "Pre-commit Validation",
+          "startedAt": "2026-04-11T07:17:48Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-04-11T07:17:48Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/24277479930/job/70893789785",
+          "name": "Commit Message Validation",
+          "startedAt": "2026-04-11T07:17:48Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-04-11T07:17:48Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/24277479930/job/70893789784",
+          "name": "Docker Build Validation",
+          "startedAt": "2026-04-11T07:17:48Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-04-11T07:17:48Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/24277479930/job/70893789777",
+          "name": "Documentation Validation",
+          "startedAt": "2026-04-11T07:17:48Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-04-11T07:17:48Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/24277479930/job/70893789801",
+          "name": "File Structure Validation",
+          "startedAt": "2026-04-11T07:17:48Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-04-11T07:17:48Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/24277479930/job/70893789893",
+          "name": "Generate PR Summary",
+          "startedAt": "2026-04-11T07:17:49Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-04-11T07:17:55Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/luiscamaral/home-lab-inventory/actions/runs/24277479930/job/70893789858",
+          "name": "Cleanup & Performance Monitoring",
+          "startedAt": "2026-04-11T07:17:51Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Validation"
+        }
+      ],
+      "title": "\u2728(portal): homelab login portal (sveltekit + keycloak)",
+      "updatedAt": "2026-04-11T07:17:44Z",
+      "url": "https://github.com/luiscamaral/home-lab-inventory/pull/6"
+    }
+  ],
+  "exit_code": 0,
+  "source": "GitHub API via gh",
+  "stderr": ""
+}

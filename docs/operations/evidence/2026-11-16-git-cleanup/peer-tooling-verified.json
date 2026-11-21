@@ -1,0 +1,330 @@
+{
+  "collected_at": "2026-11-17T00:36:09.673854+00:00",
+  "limits": "Static source review only. No tools, setup scripts, test targets, or infrastructure scripts executed. No unseal script contents collected.",
+  "records": [
+    {
+      "command": [
+        "git",
+        "show",
+        "18786b56395a9c43003022965ee224a748bee6dd:package.json"
+      ],
+      "excerpts": [
+        {
+          "end": 56,
+          "start": 42,
+          "text": "42:     \"commit\": \"cz\",\n43:     \"commitlint\": \"commitlint --from HEAD~1 --to HEAD --verbose\",\n44:     \"commitlint:edit\": \"commitlint --edit\",\n45:     \"commitlint:last\": \"commitlint --from HEAD~1 --to HEAD --verbose\",\n46:     \"lint:commits\": \"commitlint --from HEAD~5 --to HEAD --verbose\",\n47:     \"precommit\": \"echo 'Running pre-commit validation...' && pre-commit run --all-files\",\n48:     \"prepare\": \"husky\",\n49:     \"setup\": \"npm run setup:husky && npm run setup:git-template\",\n50:     \"setup:git-template\": \"git config commit.template .gitmessage\",\n51:     \"setup:husky\": \"husky install && husky add .husky/commit-msg 'npx --no -- commitlint --edit ${1}'\",\n52:     \"validate:commit\": \"commitlint --from HEAD~1 --to HEAD --verbose\",\n53:     \"validate:commits\": \"commitlint --from HEAD~10 --to HEAD --verbose\"\n54:   },\n55:   \"version\": \"1.0.0\"\n56: }"
+        }
+      ],
+      "exit_code": 0,
+      "path": "package.json",
+      "scope": "selected non-secret tracked source lines",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "18786b56395a9c43003022965ee224a748bee6dd:Makefile"
+      ],
+      "excerpts": [
+        {
+          "end": 231,
+          "start": 155,
+          "text": "155: \n156: lint-yaml: ## \ud83d\udcc4 Lint YAML files with yamllint\n157: \t$(call print_section,\"YAML Linting\")\n158: \t@yamllint -c .yamllint.yml . || ($(call print_error,\"YAML linting failed\") && exit 1)\n159: \t@$(call print_success,\"YAML linting passed\")\n160: \n161: lint-markdown: ## \ud83d\udcdd Lint Markdown files with markdownlint\n162: \t$(call print_section,\"Markdown Linting\")\n163: \t@markdownlint --config .markdownlint.json **/*.md --ignore .history --ignore node_modules || \\\n164: \t\t($(call print_error,\"Markdown linting failed\") && exit 1)\n165: \t@$(call print_success,\"Markdown linting passed\")\n166: \n167: lint-shell: ## \ud83d\udc1a Lint shell scripts with shellcheck\n168: \t$(call print_section,\"Shell Script Linting\")\n169: \t@SHELL_FILES=$$(find . -name \"*.sh\" -not -path \"./.git/*\" -not -path \"./node_modules/*\" -not -path \"./.history/*\"); \\\n170: \tif [ -n \"$$SHELL_FILES\" ]; then \\\n171: \t\techo \"$$SHELL_FILES\" | xargs shellcheck -e SC1091 -e SC2034 -e SC2154 || \\\n172: \t\t\t($(call print_error,\"Shell script linting failed\") && exit 1); \\\n173: \t\t$(call print_success,\"Shell script linting passed\"); \\\n174: \telse \\\n175: \t\techo \"\u2139\ufe0f  No shell scripts found to lint\"; \\\n176: \tfi\n177: \n178: lint-docker: ## \ud83d\udc33 Lint Dockerfiles with hadolint\n179: \t$(call print_section,\"Dockerfile Linting\")\n180: \t@DOCKER_FILES=$$(find . -name \"Dockerfile\" -o -name \"*.dockerfile\" | grep -v node_modules | grep -v .git); \\\n181: \tif [ -n \"$$DOCKER_FILES\" ]; then \\\n182: \t\techo \"$$DOCKER_FILES\" | xargs docker run --rm -i hadolint/hadolint:latest \\\n183: \t\t\t--ignore DL3008 --ignore DL3009 --ignore DL3015 || \\\n184: \t\t\t($(call print_error,\"Dockerfile linting failed\") && exit 1); \\\n185: \t\t$(call print_success,\"Dockerfile linting passed\"); \\\n186: \telse \\\n187: \t\techo \"\u2139\ufe0f  No Dockerfiles found to lint\"; \\\n188: \tfi\n189: \n190: lint-json: ## \ud83d\udccb Validate JSON files\n191: \t$(call print_section,\"JSON Validation\")\n192: \t@JSON_FILES=$$(find . -name \"*.json\" -not -path \"./.git/*\" -not -path \"./node_modules/*\" -not -path \"./.history/*\"); \\\n193: \tFAILED=false; \\\n194: \tfor file in $$JSON_FILES; do \\\n195: \t\tif ! python3 -m json.tool \"$$file\" > /dev/null 2>&1; then \\\n196: \t\t\t$(call print_error,\"Invalid JSON: $$file\"); \\\n197: \t\t\tFAILED=true; \\\n198: \t\telse \\\n199: \t\t\techo \"\u2705 Valid JSON: $$file\"; \\\n200: \t\tfi; \\\n201: \tdone; \\\n202: \tif [ \"$$FAILED\" = true ]; then \\\n203: \t\texit 1; \\\n204: \tfi\n205: \t@$(call print_success,\"JSON validation passed\")\n206: \n207: lint-actions: ## \u26a1 Lint GitHub Actions workflows\n208: \t$(call print_section,\"GitHub Actions Linting\")\n209: \t@if command -v actionlint >/dev/null 2>&1; then \\\n210: \t\tactionlint .github/workflows/*.yml || \\\n211: \t\t\t($(call print_error,\"GitHub Actions linting failed\") && exit 1); \\\n212: \t\t$(call print_success,\"GitHub Actions linting passed\"); \\\n213: \telse \\\n214: \t\t$(call print_warning,\"actionlint not installed, installing...\"); \\\n215: \t\tbash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash); \\\n216: \t\t./actionlint .github/workflows/*.yml || \\\n217: \t\t\t($(call print_error,\"GitHub Actions linting failed\") && exit 1); \\\n218: \t\t$(call print_success,\"GitHub Actions linting passed\"); \\\n219: \tfi\n220: \n221: lint-python: ## \ud83d\udc0d Lint Python files (if any)\n222: \t$(call print_section,\"Python Code Linting\")\n223: \t@PYTHON_FILES=$$(find . -name \"*.py\" -not -path \"./.git/*\" -not -path \"./node_modules/*\" -not -path \"./.history/*\"); \\\n224: \tif [ -n \"$$PYTHON_FILES\" ]; then \\\n225: \t\techo \"Running flake8 on Python files...\"; \\\n226: \t\tpython3 -m flake8 $$PYTHON_FILES --max-line-length=88 --ignore=E203,W503 || \\\n227: \t\t\t($(call print_warning,\"Python linting failed (non-critical)\") && true); \\\n228: \t\t$(call print_success,\"Python linting completed\"); \\\n229: \telse \\\n230: \t\techo \"\u2139\ufe0f  No Python files found to lint\"; \\\n231: \tfi"
+        },
+        {
+          "end": 326,
+          "start": 300,
+          "text": "300: \t\tcd \"$$COMPOSE_DIR\" && $(DOCKER_COMPOSE_CMD) build && cd - >/dev/null || \\\n301: \t\t\t($(call print_warning,\"Failed to build $$SERVICE_NAME\") && continue); \\\n302: \t\t$(call print_success,\"Built $$SERVICE_NAME\"); \\\n303: \tdone\n304: \n305: # Test Commands\n306: test: validate lint test-docker-configs ## \ud83e\uddea Run all tests and validations\n307: \n308: test-docker-configs: ## \ud83d\udc33 Test Docker Compose configurations\n309: \t$(call print_section,\"Testing Docker Compose Configurations\")\n310: \t@find . -name \"docker-compose.yml\" -o -name \"docker-compose.yaml\" | grep -v node_modules | while read compose_file; do \\\n311: \t\techo \"Testing $$compose_file...\"; \\\n312: \t\t$(DOCKER_COMPOSE_CMD) -f \"$$compose_file\" config --quiet || \\\n313: \t\t\t($(call print_error,\"Docker Compose config validation failed for $$compose_file\") && exit 1); \\\n314: \t\t$(call print_success,\"$$compose_file is valid\"); \\\n315: \tdone\n316: \n317: # Security Commands\n318: security: security-scan security-audit security-secrets ## \ud83d\udd12 Run all security scans locally\n319: \n320: security-scan: ## \ud83d\udd0d Run security vulnerability scans\n321: \t$(call print_section,\"Security Vulnerability Scanning\")\n322: \t@echo \"Scanning Node.js dependencies...\"\n323: \t@npm audit --audit-level=moderate || $(call print_warning,\"Node.js security issues found\")\n324: \t@echo \"Scanning Python dependencies...\"\n325: \t@pip3 list --format=freeze | safety check --stdin || $(call print_warning,\"Python security issues found\")\n326: \t@$(call print_success,\"Security scanning completed\")"
+        }
+      ],
+      "exit_code": 0,
+      "path": "Makefile",
+      "scope": "selected non-secret tracked source lines",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "18786b56395a9c43003022965ee224a748bee6dd:setup-commitlint.sh"
+      ],
+      "excerpts": [
+        {
+          "end": 68,
+          "start": 54,
+          "text": "54: print_step \"Installing npm dependencies...\"\n55: npm install\n56: \n57: print_success \"Dependencies installed successfully\"\n58: \n59: # Initialize Husky\n60: print_step \"Initializing Husky...\"\n61: npx husky install\n62: \n63: # Add commit-msg hook\n64: print_step \"Adding commit-msg hook...\"\n65: npx husky add .husky/commit-msg 'npx --no -- commitlint --edit ${1}'\n66: \n67: print_success \"Husky hooks configured\"\n68: "
+        }
+      ],
+      "exit_code": 0,
+      "path": "setup-commitlint.sh",
+      "scope": "selected non-secret tracked source lines",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "18786b56395a9c43003022965ee224a748bee6dd:.husky/commit-msg"
+      ],
+      "excerpts": [
+        {
+          "end": 12,
+          "start": 1,
+          "text": "1: #!/usr/bin/env sh\n2: . \"$(dirname -- \"$0\")/_/husky.sh\"\n3: \n4: # Validate commit message format with commitlint\n5: echo \"\ud83d\udd0d Validating commit message format...\"\n6: npx --no -- commitlint --edit ${1}\n7: \n8: if [ $? -eq 0 ]; then\n9:   echo \"\u2705 Commit message format is valid\"\n10: else\n11:   echo \"\u274c Commit message format validation failed\"\n12:   echo \"\""
+        }
+      ],
+      "exit_code": 0,
+      "path": ".husky/commit-msg",
+      "scope": "selected non-secret tracked source lines",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "18786b56395a9c43003022965ee224a748bee6dd:.husky/pre-commit"
+      ],
+      "excerpts": [
+        {
+          "end": 12,
+          "start": 1,
+          "text": "1: #!/usr/bin/env sh\n2: . \"$(dirname -- \"$0\")/_/husky.sh\"\n3: \n4: # Run pre-commit hooks if available\n5: if command -v pre-commit >/dev/null 2>&1; then\n6:   echo \"\ud83d\udd0d Running pre-commit hooks...\"\n7:   pre-commit run --files $(git diff --cached --name-only)\n8: \n9:   if [ $? -eq 0 ]; then\n10:     echo \"\u2705 Pre-commit hooks passed\"\n11:   else\n12:     echo \"\u274c Pre-commit hooks failed\""
+        }
+      ],
+      "exit_code": 0,
+      "path": ".husky/pre-commit",
+      "scope": "selected non-secret tracked source lines",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "18786b56395a9c43003022965ee224a748bee6dd:.pre-commit-config.yaml"
+      ],
+      "excerpts": [
+        {
+          "end": 77,
+          "start": 48,
+          "text": "48:     hooks:\n49:       - id: markdownlint\n50:         args: [--config=.markdownlint.json]\n51:         types: [markdown]\n52:         exclude: ^(.history/|CHANGELOG\\.md|\\.github/ISSUE_TEMPLATE/|\\.github/PULL_REQUEST_TEMPLATE\\.md|mcp/|generated/|\\.devin/)\n53: \n54:   # Dockerfile linting with hadolint\n55:   - repo: https://github.com/hadolint/hadolint\n56:     rev: v2.14.0\n57:     hooks:\n58:       - id: hadolint-docker\n59:         # DL3007 (use specific tag, not :latest) and DL3027 (apt vs\n60:         # apt-get) currently flag the calibre-server Dockerfile; both\n61:         # require Dockerfile rewrites that are out of scope for the CI\n62:         # cleanup. DL3002 (last USER not root) is fine for build-time\n63:         # helper images like snmp-generator-with-mibs that produce a\n64:         # config artifact at build and never run as a long-lived service.\n65:         # Tracked for follow-up.\n66:         args:\n67:           - --ignore=DL3008\n68:           - --ignore=DL3009\n69:           - --ignore=DL3015\n70:           - --ignore=DL3007\n71:           - --ignore=DL3027\n72:           - --ignore=DL3002\n73: \n74:   # Shell script linting with shellcheck\n75:   # `--severity=error` matches the CI workflow `Lint Validation (shell)` job.\n76:   # Pre-existing warning/info-level findings (SC2155, SC2086 in SSH-using\n77:   # scripts, etc.) are tracked separately and not gating commits."
+        },
+        {
+          "end": 112,
+          "start": 87,
+          "text": "87:     rev: v8.30.1\n88:     hooks:\n89:       - id: gitleaks\n90: \n91:   # Docker Compose validation\n92:   - repo: local\n93:     hooks:\n94:       - id: nomad-regression-tests\n95:         name: NOMAD observability and embedding evaluation tests\n96:         entry: python -m unittest discover -s tests -p 'test_nomad*.py'\n97:         language: python\n98:         additional_dependencies: [PyYAML==6.0.3]\n99:         pass_filenames: false\n100:         files: '^(scripts/nomad-embedding-eval\\.py|tests/test_nomad.*\\.py|tests/fixtures/nomad-embedding-eval\\.json|dockermaster/docker/compose/nomad/|dockermaster/docker/compose/nginx-rproxy/vhost\\.d/nomad\\.d\\.lcamaral\\.com\\.conf)'\n101: \n102:       - id: docker-compose-check\n103:         name: Docker Compose Check\n104:         entry: bash -c 'for file in \"$@\"; do docker compose -f \"$file\" config --quiet || exit 1; done'\n105:         language: system\n106:         files: docker-compose\\.ya?ml$\n107:         require_serial: false\n108: \n109:   # Validate GitHub Actions workflows\n110:   - repo: local\n111:     hooks:\n112:       - id: actionlint"
+        }
+      ],
+      "exit_code": 0,
+      "path": ".pre-commit-config.yaml",
+      "scope": "selected non-secret tracked source lines",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "18786b56395a9c43003022965ee224a748bee6dd:pyproject.toml"
+      ],
+      "excerpts": [
+        {
+          "end": 16,
+          "start": 1,
+          "text": "1: # Python project configuration for home-lab-inventory repository\n2: # This file configures Python tooling for any future Python scripts or utilities\n3: \n4: [build-system]\n5: requires = [\"setuptools\", \"wheel\"]\n6: \n7: [project]\n8: name = \"home-lab-inventory\"\n9: description = \"Home lab infrastructure inventory and management system\"\n10: readme = \"README.md\"\n11: requires-python = \">=3.8\"\n12: license = {text = \"MIT\"}\n13: authors = [{name = \"Luis Camaral\", email = \"luiscamaral@example.com\"}]\n14: classifiers = [\n15:     \"Development Status :: 4 - Beta\",\n16:     \"Intended Audience :: System Administrators\","
+        },
+        {
+          "end": 161,
+          "start": 137,
+          "text": "137:     \"yaml.*\",\n138: ]\n139: ignore_missing_imports = true\n140: \n141: [tool.pytest.ini_options]\n142: minversion = \"6.0\"\n143: addopts = [\n144:     \"--strict-markers\",\n145:     \"--strict-config\",\n146:     \"--disable-warnings\",\n147:     \"-ra\",\n148: ]\n149: testpaths = [\"tests\"]\n150: python_files = [\"test_*.py\", \"*_test.py\"]\n151: python_classes = [\"Test*\"]\n152: python_functions = [\"test_*\"]\n153: markers = [\n154:     \"slow: marks tests as slow (deselect with '-m \\\"not slow\\\"')\",\n155:     \"integration: marks tests as integration tests\",\n156:     \"unit: marks tests as unit tests\",\n157: ]\n158: \n159: [tool.coverage.run]\n160: source = [\".\"]\n161: omit = ["
+        }
+      ],
+      "exit_code": 0,
+      "path": "pyproject.toml",
+      "scope": "selected non-secret tracked source lines",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "18786b56395a9c43003022965ee224a748bee6dd:docs/service-matrix.md"
+      ],
+      "excerpts": [
+        {
+          "end": 14,
+          "start": 1,
+          "text": "1: # Service Inventory Matrix\n2: \n3: > **SUPERSEDED (2026-04-09):** This document was created during the Dockermaster Recovery project (2025-08-28) and is no\n4: > longer the authoritative service inventory. The current source of truth for managed services is\n5: > `terraform/portainer/stacks.tf` (9 Terraform-managed Portainer stacks) and `dockermaster/docker/compose/STATUS.md` for\n6: > all services. This file is retained for historical reference only.\n7: \n8: **Project:** Dockermaster Recovery - Documentation Framework\n9: **Last Updated:** 2025-08-28 (archived)\n10: **Total Services:** 32\n11: **Documentation Status:** 23/32 (71.9%) Complete\n12: \n13: ## \ud83d\udcc8 Progress Overview\n14: "
+        }
+      ],
+      "exit_code": 0,
+      "path": "docs/service-matrix.md",
+      "scope": "selected non-secret tracked source lines",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "18786b56395a9c43003022965ee224a748bee6dd:.github/workflows/pr-validation.yml"
+      ],
+      "excerpts": [
+        {
+          "end": 593,
+          "start": 574,
+          "text": "574: \n575:       - name: Check documentation requirements\n576:         id: docs-check\n577:         run: |\n578:           echo \"Checking documentation requirements...\"\n579: \n580:           # Check if README exists\n581:           if [ ! -f \"README.md\" ]; then\n582:             echo \"\u274c README.md is missing\"\n583:             echo \"readme_exists=false\" >> $GITHUB_OUTPUT\n584:           else\n585:             echo \"\u2705 README.md exists\"\n586:             echo \"readme_exists=true\" >> $GITHUB_OUTPUT\n587:           fi\n588: \n589:           # Check if CLAUDE.md is properly maintained\n590:           if [ ! -f \"CLAUDE.md\" ]; then\n591:             echo \"\u274c CLAUDE.md is missing\"\n592:             echo \"claude_docs_exists=false\" >> $GITHUB_OUTPUT\n593:           else"
+        },
+        {
+          "end": 678,
+          "start": 664,
+          "text": "664: \n665:           ISSUES_FOUND=false\n666: \n667:           # README check\n668:           if [ \"${{ steps.docs-check.outputs.readme_exists }}\" = \"false\" ]; then\n669:             echo \"\u274c **README.md is missing**\" >> docs-report.md\n670:             echo \"A README.md file is required to describe the project.\" >> docs-report.md\n671:             echo \"\" >> docs-report.md\n672:             ISSUES_FOUND=true\n673:           else\n674:             echo \"\u2705 README.md exists\" >> docs-report.md\n675:           fi\n676: \n677:           # CLAUDE.md check\n678:           if [ \"${{ steps.docs-check.outputs.claude_docs_exists }}\" = \"false\" ]; then"
+        }
+      ],
+      "exit_code": 0,
+      "path": ".github/workflows/pr-validation.yml",
+      "scope": "selected non-secret tracked source lines",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "18786b56395a9c43003022965ee224a748bee6dd:docs/monitoring-coverage-gap-2026-05-07.md"
+      ],
+      "excerpts": [
+        {
+          "end": 122,
+          "start": 91,
+          "text": "91:    conventions: \"no frameworks under a paywall\").\n92: \n93: _Recommended:_ option 1, but only if we adopt the Vault-agent sidecar\n94: pattern (already noted as deferred). Until then, option 2 is the\n95: honest choice.\n96: \n97: ## \ud83d\udfe0 Phase C \u2014 design-named exporters not yet deployed\n98: \n99: Tracked for separate PRs.\n100: \n101: | #   | Item                         | Inventory hit                            |\n102: | --- | ---------------------------- | ---------------------------------------- |\n103: | C.1 | `unpoller` (UniFi)           | VM 122 \u2014 UniFi Controller                |\n104: | C.2 | `omada-exporter`             | VM 100 \u2014 Omada Controller                |\n105: | C.3 | `thanos-compactor` (ds-2)    | Required for retention plan to execute   |\n106: | C.4 | `thanos-ruler` (ds-2)        | Long-window alerts (capacity, SLO burn)  |\n107: | C.5 | `ilo_exporter` (HPE iLO)     | proxmox = HP ProLiant Gen8               |\n108: | C.6 | `nginx-prometheus-exporter`  | Nginx-rproxy on dockermaster + ds-2      |\n109: | C.7 | `twingate-exporter`          | sepia-hornet (ds-1), golden-mussel (ds-2)|\n110: \n111: C.5 motivation: would have caught the 2026-04-26 amsd runaway via\n112: temperature/load metrics from BMC.\n113: \n114: ## \ud83d\udd35 Phase D \u2014 not in design but justified by inventory\n115: \n116: | #   | Item                          | Targets                                       |\n117: | --- | ----------------------------- | --------------------------------------------- |\n118: | D.1 | `postgres_exporter` \u00d7 3       | keycloak-db-0/1, postgres-rundeck             |\n119: | D.2 | `node_exporter` proxmox host  | 192.168.7.11:9100 (host-level CPU/IRQ/load)   |\n120: \n121: ## \u26ab Phase E \u2014 likely drop from design\n122: "
+        }
+      ],
+      "exit_code": 0,
+      "path": "docs/monitoring-coverage-gap-2026-05-07.md",
+      "scope": "selected non-secret tracked source lines",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "18786b56395a9c43003022965ee224a748bee6dd:dockermaster/docker/compose/calibre-server/test-results.json"
+      ],
+      "excerpts": [
+        {
+          "end": 23,
+          "start": 1,
+          "text": "1: {\n2:   \"blocking_issues\": true,\n3:   \"critical_blockers\": [\n4:     \"Missing .env configuration file\",\n5:     \"CALIBRE_PASSWORD not configured\"\n6:   ],\n7:   \"deployment_instructions\": {\n8:     \"deployment_command\": \"./deploy-to-portainer.sh\",\n9:     \"prerequisites\": [\n10:       \"Copy .env.example to .env\",\n11:       \"Set CALIBRE_PASSWORD in .env file\",\n12:       \"Ensure NFS mounts exist on dockermaster\",\n13:       \"Verify Portainer is accessible\"\n14:     ],\n15:     \"validation_command\": \"./validate-deployment.sh\"\n16:   },\n17:   \"deployment_readiness\": \"CONDITIONAL\",\n18:   \"expected_issues\": [\n19:     \"Volume paths missing (expected on dev machine, will exist on dockermaster)\"\n20:   ],\n21:   \"migration_agent\": \"Agent E - Validation Specialist\",\n22:   \"next_steps\": [\n23:     \"Create .env file from .env.example\","
+        },
+        {
+          "end": 58,
+          "start": 45,
+          "text": "45:     \"healthchecks\": \"pass\",\n46:     \"network_access\": \"pass\",\n47:     \"port_availability\": \"pass\",\n48:     \"portainer_compatibility\": \"pass\",\n49:     \"security_config\": \"warning\",\n50:     \"volume_paths\": \"expected_fail\"\n51:   },\n52:   \"timestamp\": \"2025-08-21T23:46:53Z\",\n53:   \"validation_summary\": {\n54:     \"docker_compose_format\": \"\\u2705 Valid Portainer-compatible YAML\",\n55:     \"environment_setup\": \"\\u274c Requires .env configuration\",\n56:     \"health_checks\": \"\\u2705 Health checks configured for both services\",\n57:     \"labels\": \"\\u2705 Portainer autodeploy labels present\",\n58:     \"port_configuration\": \"\\u2705 All ports available (58080, 58181, 58081, 58090, 58083)\","
+        }
+      ],
+      "exit_code": 0,
+      "path": "dockermaster/docker/compose/calibre-server/test-results.json",
+      "scope": "selected non-secret tracked source lines",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "ls-tree",
+        "-r",
+        "--name-only",
+        "18786b56395a9c43003022965ee224a748bee6dd",
+        "README.md",
+        "tests",
+        "generated/prometheus-thanos-monitoring"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "generated/prometheus-thanos-monitoring/01-architecture.md\ngenerated/prometheus-thanos-monitoring/02-inventory-and-scope.md\ngenerated/prometheus-thanos-monitoring/03-thanos-design.md\ngenerated/prometheus-thanos-monitoring/04-deployment-plan.md\ngenerated/prometheus-thanos-monitoring/05-exporters.md\ngenerated/prometheus-thanos-monitoring/06-dashboards-and-alerting.md\ngenerated/prometheus-thanos-monitoring/07-secrets-and-security.md\ngenerated/prometheus-thanos-monitoring/08-operations-runbook.md\ngenerated/prometheus-thanos-monitoring/09-open-questions.md\ngenerated/prometheus-thanos-monitoring/DECISIONS.md\ngenerated/prometheus-thanos-monitoring/PHASE-3-REVIEW.md\ngenerated/prometheus-thanos-monitoring/README.md\ngenerated/prometheus-thanos-monitoring/RECON-FINDINGS.md\ngenerated/prometheus-thanos-monitoring/STATUS.md\ngenerated/prometheus-thanos-monitoring/VERSIONS.md\ngenerated/prometheus-thanos-monitoring/diagrams/topology.mmd\ngenerated/prometheus-thanos-monitoring/legacy-prom-snapshot/alertmanager-config.yml\ngenerated/prometheus-thanos-monitoring/legacy-prom-snapshot/cli-args.txt\ngenerated/prometheus-thanos-monitoring/legacy-prom-snapshot/host-compose.yaml\ngenerated/prometheus-thanos-monitoring/legacy-prom-snapshot/prometheus.yml\ngenerated/prometheus-thanos-monitoring/legacy-prom-snapshot/rules/README.md\ngenerated/prometheus-thanos-monitoring/legacy-prom-snapshot/tsdb-state.txt\ntests/fixtures/nomad-embedding-eval.json\ntests/pfsense/test_ix0_watchdog.sh\ntests/test_check_image_pins.py\ntests/test_nomad_embedding_eval.py\ntests/test_nomad_observability.py\ntests/test_sync_nas_tuning.py\ntests/test_sync_pfsense_dhcp_static_mappings.py\ntests/test_zot_meta_backup.py\n"
+    },
+    {
+      "command": [
+        "git",
+        "grep",
+        "-n",
+        "-E",
+        "pytest|test_ix0_watchdog|unittest|test_nomad|tests/|npm install -g",
+        "18786b5",
+        "--",
+        "Makefile",
+        ".github/workflows",
+        ".pre-commit-config.yaml"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "18786b5:.github/workflows/pr-validation.yml:98:          npm install -g markdownlint-cli\n18786b5:.github/workflows/pr-validation.yml:309:          npm install -g @commitlint/cli @commitlint/config-conventional\n18786b5:.pre-commit-config.yaml:96:        entry: python -m unittest discover -s tests -p 'test_nomad*.py'\n18786b5:.pre-commit-config.yaml:100:        files: '^(scripts/nomad-embedding-eval\\.py|tests/test_nomad.*\\.py|tests/fixtures/nomad-embedding-eval\\.json|dockermaster/docker/compose/nomad/|dockermaster/docker/compose/nginx-rproxy/vhost\\.d/nomad\\.d\\.lcamaral\\.com\\.conf)'\n18786b5:.pre-commit-config.yaml:150:    \\.pytest_cache/.*|\n18786b5:Makefile:122:\t@npm install -g markdownlint-cli\n18786b5:Makefile:141:\t@find . -type d -name \".pytest_cache\" -exec rm -rf {} + 2>/dev/null || true\n"
+    },
+    {
+      "command": [
+        "git",
+        "grep",
+        "-n",
+        "-E",
+        "TODO|bearer|tokens/minio|tokens/watchtower|configs:|minio_jwt",
+        "18786b5",
+        "--",
+        "terraform/portainer/locals.tf",
+        "terraform/portainer/stacks/prometheus.yml.tftpl"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "18786b5:terraform/portainer/locals.tf:49:          static_configs:\n18786b5:terraform/portainer/locals.tf:56:    scrape_configs:\n18786b5:terraform/portainer/locals.tf:59:        static_configs:\n18786b5:terraform/portainer/locals.tf:73:        static_configs:\n18786b5:terraform/portainer/locals.tf:99:        static_configs:\n18786b5:terraform/portainer/locals.tf:104:        static_configs:\n18786b5:terraform/portainer/locals.tf:110:        static_configs:\n18786b5:terraform/portainer/locals.tf:140:        static_configs:\n18786b5:terraform/portainer/locals.tf:145:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:153:        static_configs:\n18786b5:terraform/portainer/locals.tf:175:        static_configs:\n18786b5:terraform/portainer/locals.tf:188:        static_configs:\n18786b5:terraform/portainer/locals.tf:204:        static_configs:\n18786b5:terraform/portainer/locals.tf:217:        static_configs:\n18786b5:terraform/portainer/locals.tf:228:      # TODO: bearer JWT setup \u2014 Prometheus expects the file at\n18786b5:terraform/portainer/locals.tf:229:      # /etc/prometheus/tokens/minio_jwt. Two options:\n18786b5:terraform/portainer/locals.tf:236:        bearer_token_file: /etc/prometheus/tokens/minio_jwt\n18786b5:terraform/portainer/locals.tf:237:        static_configs:\n18786b5:terraform/portainer/locals.tf:251:        static_configs:\n18786b5:terraform/portainer/locals.tf:263:      # TODO: ssh dockermaster, edit\n18786b5:terraform/portainer/locals.tf:272:        static_configs:\n18786b5:terraform/portainer/locals.tf:280:        static_configs:\n18786b5:terraform/portainer/locals.tf:287:        static_configs:\n18786b5:terraform/portainer/locals.tf:293:      # behind the same bearer token as the update-trigger API. Two\n18786b5:terraform/portainer/locals.tf:298:      # TODO: bearer token wiring \u2014 same pattern as MinIO. Token lives\n18786b5:terraform/portainer/locals.tf:300:      # use a bearer_token_file at /etc/prometheus/tokens/watchtower\n18786b5:terraform/portainer/locals.tf:304:        bearer_token_file: /etc/prometheus/tokens/watchtower\n18786b5:terraform/portainer/locals.tf:305:        static_configs:\n18786b5:terraform/portainer/locals.tf:314:      # /etc/prometheus/blackbox-targets/ via docker `configs:` (see\n18786b5:terraform/portainer/locals.tf:323:        file_sd_configs:\n18786b5:terraform/portainer/locals.tf:325:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:344:        file_sd_configs:\n18786b5:terraform/portainer/locals.tf:346:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:359:        file_sd_configs:\n18786b5:terraform/portainer/locals.tf:361:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:375:        file_sd_configs:\n18786b5:terraform/portainer/locals.tf:377:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:390:        file_sd_configs:\n18786b5:terraform/portainer/locals.tf:392:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:411:        static_configs:\n18786b5:terraform/portainer/locals.tf:414:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:426:      # to /etc/prometheus/tokens/ha_token via docker `configs:` (see\n18786b5:terraform/portainer/locals.tf:441:        static_configs:\n18786b5:terraform/portainer/locals.tf:445:        metric_relabel_configs:\n18786b5:terraform/portainer/locals.tf:460:        static_configs:\n18786b5:terraform/portainer/locals.tf:477:        static_configs:\n18786b5:terraform/portainer/locals.tf:488:        static_configs:\n18786b5:terraform/portainer/locals.tf:495:      # NOT accept the API bearer token. The /api/<v>/metrics/metrics\n18786b5:terraform/portainer/locals.tf:497:      # original `bearer_token_file` scrape can't be made to work\n18786b5:terraform/portainer/locals.tf:523:        file_sd_configs:\n18786b5:terraform/portainer/locals.tf:525:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:552:          static_configs:\n18786b5:terraform/portainer/locals.tf:557:    scrape_configs:\n18786b5:terraform/portainer/locals.tf:559:        static_configs:\n18786b5:terraform/portainer/locals.tf:566:        static_configs:\n18786b5:terraform/portainer/locals.tf:592:        static_configs:\n18786b5:terraform/portainer/locals.tf:597:        static_configs:\n18786b5:terraform/portainer/locals.tf:602:        static_configs:\n18786b5:terraform/portainer/locals.tf:625:        static_configs:\n18786b5:terraform/portainer/locals.tf:630:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:637:        static_configs:\n18786b5:terraform/portainer/locals.tf:651:        static_configs:\n18786b5:terraform/portainer/locals.tf:664:        static_configs:\n18786b5:terraform/portainer/locals.tf:675:        static_configs:\n18786b5:terraform/portainer/locals.tf:686:        static_configs:\n18786b5:terraform/portainer/locals.tf:693:      # TODO: bearer JWT setup \u2014 see replica-A comment.\n18786b5:terraform/portainer/locals.tf:696:        bearer_token_file: /etc/prometheus/tokens/minio_jwt\n18786b5:terraform/portainer/locals.tf:697:        static_configs:\n18786b5:terraform/portainer/locals.tf:706:        static_configs:\n18786b5:terraform/portainer/locals.tf:715:      # TODO: enable http.debug on host config.yml \u2014 see replica-A.\n18786b5:terraform/portainer/locals.tf:718:        static_configs:\n18786b5:terraform/portainer/locals.tf:725:        static_configs:\n18786b5:terraform/portainer/locals.tf:732:        static_configs:\n18786b5:terraform/portainer/locals.tf:737:      # TODO: bearer token wiring \u2014 see replica-A comment.\n18786b5:terraform/portainer/locals.tf:740:        bearer_token_file: /etc/prometheus/tokens/watchtower\n18786b5:terraform/portainer/locals.tf:741:        static_configs:\n18786b5:terraform/portainer/locals.tf:754:        file_sd_configs:\n18786b5:terraform/portainer/locals.tf:756:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:775:        file_sd_configs:\n18786b5:terraform/portainer/locals.tf:777:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:790:        file_sd_configs:\n18786b5:terraform/portainer/locals.tf:792:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:805:        file_sd_configs:\n18786b5:terraform/portainer/locals.tf:807:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:820:        file_sd_configs:\n18786b5:terraform/portainer/locals.tf:822:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:837:        static_configs:\n18786b5:terraform/portainer/locals.tf:840:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:859:        static_configs:\n18786b5:terraform/portainer/locals.tf:863:        metric_relabel_configs:\n18786b5:terraform/portainer/locals.tf:872:        static_configs:\n18786b5:terraform/portainer/locals.tf:886:        static_configs:\n18786b5:terraform/portainer/locals.tf:896:        static_configs:\n18786b5:terraform/portainer/locals.tf:909:        file_sd_configs:\n18786b5:terraform/portainer/locals.tf:911:        relabel_configs:\n18786b5:terraform/portainer/locals.tf:959:        email_configs:\n18786b5:terraform/portainer/locals.tf:964:        telegram_configs:\n18786b5:terraform/portainer/locals.tf:976:        email_configs:\n18786b5:terraform/portainer/locals.tf:981:        telegram_configs:\n18786b5:terraform/portainer/locals.tf:993:        email_configs:\n18786b5:terraform/portainer/locals.tf:998:        telegram_configs:\n18786b5:terraform/portainer/locals.tf:1150:  # /etc/prometheus/blackbox-targets/<name>.json via docker `configs:`\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:10:# via docker compose configs:.\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:24:configs:\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:31:  # Phase 3d \u2014 Home Assistant bearer token rendered from Vault.\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:33:  # `authorization.credentials_file`. This `configs:` block is the\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:37:  # bearer-token plumbings (minio_jwt, watchtower) gets the same\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:39:  # TODO: HA token wiring \u2014 migrate to Vault-agent sidecar once we\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:45:  # Phase 3a \u2014 Watchtower HTTP API bearer token rendered from Vault.\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:46:  # Mounted at /etc/prometheus/tokens/watchtower and consumed by the\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:47:  # `watchtower` scrape job (bearer_token_file in locals.tf). Same\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:49:  # `configs:` until a Vault-agent sidecar pattern is introduced.\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:52:  # Phase 3a \u2014 MinIO Prometheus bearer JWT rendered from Vault.\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:53:  # Mounted at /etc/prometheus/tokens/minio_jwt and consumed by the\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:54:  # `minio` scrape job (bearer_token_file in locals.tf). Generated via\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:57:  # m2 so a single JWT validates against both. Same `configs:` caveat\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:59:  minio_jwt:\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:60:    content: \"${minio_jwt}\"\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:61:  # Phase 3f \u2014 Rundeck API bearer token rendered from Vault. Mounted at\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:63:  # scrape job (bearer_token_file in locals.tf). Same wiring rationale\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:64:  # as ha_token / watchtower_token / minio_jwt above.\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:117:    configs:\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:125:        target: /etc/prometheus/tokens/watchtower\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:127:      - source: minio_jwt\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:128:        target: /etc/prometheus/tokens/minio_jwt\n18786b5:terraform/portainer/stacks/prometheus.yml.tftpl:196:    configs:\n"
+    },
+    {
+      "command": [
+        "git",
+        "ls-tree",
+        "-r",
+        "--name-only",
+        "18786b56395a9c43003022965ee224a748bee6dd",
+        "dockermaster/docker/compose/STATUS.md"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "git",
+        "grep",
+        "-n",
+        "inet-net-",
+        "18786b56395a9c43003022965ee224a748bee6dd",
+        "--",
+        "."
+      ],
+      "exit_code": 1,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--numstat",
+        "18786b56395a9c43003022965ee224a748bee6dd:hosts/_common/etc/vault/vault-auto-unseal.sh",
+        "18786b56395a9c43003022965ee224a748bee6dd:scripts/vault-auto-unseal/vault-auto-unseal.sh"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "3\t0\t{hosts/_common/etc/vault => scripts/vault-auto-unseal}/vault-auto-unseal.sh\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--numstat",
+        "18786b56395a9c43003022965ee224a748bee6dd:hosts/dockermaster/etc/systemd/network/10-server-net-shim.network",
+        "18786b56395a9c43003022965ee224a748bee6dd:dockermaster/host-network/dm/10-server-net-shim.network"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  ],
+  "ref": "18786b56395a9c43003022965ee224a748bee6dd",
+  "source": "parent recheck of peer suggestions against the fixed audited main commit"
+}

@@ -1,0 +1,7 @@
+collected_utc 2026-11-16T21:08:25+00:00
+candidate metrics: ['node_cpu_temperature_celsius', 'node_hwmon_chip_names', 'node_hwmon_temp_celsius', 'node_hwmon_temp_max_celsius', 'pfsense_dpinger_scrape_unixtime', 'pfsense_gateway_delay_seconds', 'pfsense_gateway_loss_ratio', 'pfsense_gateway_stddev_seconds', 'pfsense_ix0_crc_errs_total', 'pfsense_ix0_large_frame_loss_mean_percent', 'pfsense_ix0_large_frame_loss_percent', 'pfsense_ix0_local_faults_total', 'pfsense_ix0_remote_faults_total', 'pfsense_ix0_watchdog_blackout_gave_up', 'pfsense_ix0_watchdog_blackout_streak', 'pfsense_ix0_watchdog_bounces_total', 'pfsense_ix0_watchdog_consecutive_failures', 'pfsense_ix0_watchdog_disarmed', 'pfsense_ix0_watchdog_last_bounce_succeeded', 'pfsense_ix0_watchdog_last_bounce_timestamp_seconds', 'pfsense_ix0_watchdog_last_run_timestamp_seconds', 'pfsense_ix0_watchdog_paused', 'pfsense_ix0_watchdog_up', 'pfsense_link_flaps_total', 'pfsense_link_last_down_timestamp_seconds', 'pfsense_link_last_up_timestamp_seconds', 'pfsense_link_metrics_last_run_timestamp_seconds', 'pfsense_link_up', 'pfsense_sfp_rx_power_dbm', 'pfsense_sfp_temperature_celsius', 'pfsense_sfp_tx_bias_ma', 'pfsense_sfp_voltage_volts']
+cpu_busy_pct: r=0.827 n=231 mean_when_rf>100=3.85 (n=35) mean_when_rf<1=2.33 (n=153)
+load1: r=0.179 n=231 mean_when_rf>100=0.35 (n=35) mean_when_rf<1=0.28 (n=153)
+hwmon_temp_max_C no data
+cpu_temp_C: r=0.232 n=231 mean_when_rf>100=38.73 (n=35) mean_when_rf<1=37.66 (n=153)
+pf_states no data

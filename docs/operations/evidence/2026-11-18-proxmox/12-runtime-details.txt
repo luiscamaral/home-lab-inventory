@@ -1,0 +1,81 @@
+Collected UTC: 2026-11-18T17:04:39.874189+00:00
+Source: SSH proxmox, sudo read-only inspection
+Scope: Ceph public configuration, certificates, Pi-hole container OS
+Commands:
+
+date -u +%Y-%m-%dT%H:%M:%SZ
+python3 - <<'P'
+from pathlib import Path
+p=Path('/etc/pve/ceph.conf')
+print('CEPH_PUBLIC_CONFIG_FIELDS')
+if p.exists():
+ for line in p.read_text().splitlines():
+  if line.strip().startswith(('[','mon_host','mon host','public_network','cluster_network','public network','cluster network','osd_pool_default_size')):print(line)
+for d in ['/var/lib/ceph/mon','/var/lib/ceph/osd','/var/lib/ceph/mgr']:
+ print(d)
+ p=Path(d)
+ print([x.name for x in p.iterdir()] if p.exists() else 'ABSENT')
+P
+timeout 8 ceph -s 2>&1
+pvenode cert info --output-format json-pretty
+pct exec 10000 -- grep -E '^(PRETTY_NAME|VERSION_ID)=' /etc/os-release
+
+Exit: 0
+Output:
++ date -u +%Y-%m-%dT%H:%M:%SZ
+2026-11-18T17:04:36Z
++ python3 -
+CEPH_PUBLIC_CONFIG_FIELDS
+[global]
+	cluster_network = 192.168.7.10/20
+	osd_pool_default_size = 3
+	public_network = 192.168.7.10/20
+[client]
+/var/lib/ceph/mon
+[]
+/var/lib/ceph/osd
+[]
+/var/lib/ceph/mgr
+[]
++ timeout 8 ceph -s
+unable to get monitor info from DNS SRV with service name: ceph-mon
+2026-11-18T10:04:36.505-0700 7b0118ca56c0 -1 failed for service _ceph-mon._tcp
+2026-11-18T10:04:36.505-0700 7b0118ca56c0 -1 monclient: get_monmap_and_config cannot identify monitors to contact
+[errno 2] RADOS object not found (error connecting to the cluster)
++ pvenode cert info --output-format json-pretty
+[
+   {
+      "filename" : "pve-root-ca.pem",
+      "fingerprint" : "75:D9:36:2E:D3:15:87:C4:40:56:C9:5F:41:60:7F:A0:38:FF:B3:10:B4:93:4B:97:2F:98:3E:F1:76:E9:17:70",
+      "issuer" : "/CN=Proxmox Virtual Environment/OU=091f14df-9afa-4121-9485-26a027d0bee1/O=PVE Cluster Manager CA",
+      "notafter" : 2056841982,
+      "notbefore" : 1741481982,
+      "pem" : "-----BEGIN CERTIFICATE-----\nMIIFzTCCA7WgAwIBAgIUCm058E4OL6k2LGuI8kQclF/ljPQwDQYJKoZIhvcNAQEL\nBQAwdjEkMCIGA1UEAwwbUHJveG1veCBWaXJ0dWFsIEVudmlyb25tZW50MS0wKwYD\nVQQLDCQwOTFmMTRkZi05YWZhLTQxMjEtOTQ4NS0yNmEwMjdkMGJlZTExHzAdBgNV\nBAoMFlBWRSBDbHVzdGVyIE1hbmFnZXIgQ0EwHhcNMjUwMzA5MDA1OTQyWhcNMzUw\nMzA3MDA1OTQyWjB2MSQwIgYDVQQDDBtQcm94bW94IFZpcnR1YWwgRW52aXJvbm1l\nbnQxLTArBgNVBAsMJDA5MWYxNGRmLTlhZmEtNDEyMS05NDg1LTI2YTAyN2QwYmVl\nMTEfMB0GA1UECgwWUFZFIENsdXN0ZXIgTWFuYWdlciBDQTCCAiIwDQYJKoZIhvcN\nAQEBBQADggIPADCCAgoCggIBAMgXnPJisnpWihW+72wswm0e1wGch7WrPVVNqwS7\n97DWrjkKimAfXayS2OCRDB62us6DeHEnOUUrjSiaBx2qfG3pDWPAc21Lro1WolcJ\nbgxg/Aw8lP/z6ZLA6KaVvCsuaMLrUpKa/SZQ6DJVnaLQAA6BHnWEu3DgXo/EduzZ\njlY+2f5ptulZ86vSSxVb4Ag99WygE/8SoEiROkZ0XRpYhXGL2TpmvW2lYnbzAbE4\nCyngL418T6WdKPnud8g/iZBR4Fj1sJDqSFZBmfBQ2Q3jyeo9ExQB46Xh3wclOhTy\nmkC2q1BW7G5dZqVqXGVhynssFcxMXJ3h0u63AOyukzD+aEoJWD83EMSu5YKJjWb9\nxaTAyeV6QiEc5TiHTvnFs9Jl4B+3W/j/qxYh/U7pj5ALg3gXMRAVWHE5Y4c+RNxb\ns90/IsoB6T3ZPbZMwh7zjQGwSIIxs5Oep8krSk8ypUUV1FuYz7ZjA+xPACxPS71p\nbzfxnNR9UTYsTGHgk8WB8BKT791kWK6gozAlmqAP1+flPBz89B/o+qOxHxqntd1w\n2BHkFn4qMzTXgzXT6gcK0kiUx56SlbareYm3BQ9rvLC54vZfNad6t2ej+XN2aQnH\nzlZQKmywQRAjBD7rmf+pDWJ4rocN4oqDhW27YhHfjYGfYJcfOLtaLTiLplIdCy0a\nmY4BAgMBAAGjUzBRMB0GA1UdDgQWBBSCIVu460aRSB8pl99GBLYjti/LLDAfBgNV\nHSMEGDAWgBSCIVu460aRSB8pl99GBLYjti/LLDAPBgNVHRMBAf8EBTADAQH/MA0G\nCSqGSIb3DQEBCwUAA4ICAQCarfoA1pzFIIJc7mbHEx2XWjjFt3EuJAY+H+M41yLs\n8j+7RBrTnGRZFzzfcqX0V6eCucpI/RSiw0FP/2F3TgQ1y9zwY9sI6yyz2XG11t64\naRjmr4dqDDkooTam6CUdAqFFXN/aDkQu132Du2cqV8CdQ9JITJBwFK36/Zyun+Eo\nHKMWJa7mopJi0UmrwWUb/Wtl7gH4RWebwhj6hH+O2uz6oaj/4ZuDigMcgTbm0XXc\n1buR0jO+2VDdwSpc70zu8MXRzXt2OgB1tuHayc4ps+bKT2+KDXjWwp4Kms4jB6mc\nOZJ54sYxO+OrRhEZCAkHguybRzpyVun+O6MvzM8F2HJxVvrYz48gv5abgrMrAcIn\nrPtw8gNGw0iJ0JiycURPYDkQbdBKhhwyWtTzsGuvgCQ3/jMg0TkBxW6/bLWr5pOK\nlL0buGBUGumpnSIu5MXwObufHo8VSPxdQFZjVa1Tiga284TaD3Vn6FiGuSV/AaNi\n5z9AAfQ7FhBdQPJvseMcvQFpL+x1fcO+iO2VmUYOQiatSs1cOTdjY6M5AO23Lw0l\nBDFX4axOsT90w+sYqxKrUAaHucjfYz1ua27ngiU3NNxeYj9MSeD+op8EqYSAiOGW\nWXFkpAvE6k3aRStcrDjH3/ASgKJWTbFMGhjzxNTX1+RLal4ucVEoi39ei4mqOHrR\nkw==\n-----END CERTIFICATE-----\n",
+      "public-key-bits" : 4096,
+      "public-key-type" : "rsaEncryption",
+      "san" : [],
+      "subject" : "/CN=Proxmox Virtual Environment/OU=091f14df-9afa-4121-9485-26a027d0bee1/O=PVE Cluster Manager CA"
+   },
+   {
+      "filename" : "pve-ssl.pem",
+      "fingerprint" : "E6:55:11:EF:DB:8C:9E:36:92:28:FD:89:16:26:DE:18:1D:65:C1:66:FC:BE:87:16:E4:15:E5:F5:15:28:58:2D",
+      "issuer" : "/CN=Proxmox Virtual Environment/OU=091f14df-9afa-4121-9485-26a027d0bee1/O=PVE Cluster Manager CA",
+      "notafter" : 1804553982,
+      "notbefore" : 1741481982,
+      "pem" : "-----BEGIN CERTIFICATE-----\nMIIFEjCCAvqgAwIBAgIBATANBgkqhkiG9w0BAQsFADB2MSQwIgYDVQQDDBtQcm94\nbW94IFZpcnR1YWwgRW52aXJvbm1lbnQxLTArBgNVBAsMJDA5MWYxNGRmLTlhZmEt\nNDEyMS05NDg1LTI2YTAyN2QwYmVlMTEfMB0GA1UECgwWUFZFIENsdXN0ZXIgTWFu\nYWdlciBDQTAeFw0yNTAzMDkwMDU5NDJaFw0yNzAzMDkwMDU5NDJaMGUxGTAXBgNV\nBAsTEFBWRSBDbHVzdGVyIE5vZGUxJDAiBgNVBAoTG1Byb3htb3ggVmlydHVhbCBF\nbnZpcm9ubWVudDEiMCAGA1UEAxMZcHJveG1veC5ob21lLmxjYW1hcmFsLmNvbTCC\nASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJ74FkpMYFRx0cD3I28JW+S1\nHsbObDF8GX+Ex9b+7Yg7M+6tg2A+V4sEK4lY+CafFaCqKd5zDIF08vZMK/fazeQ0\n4DwicnfdxDpdNM6Y0u+mhGxIxRkqiMWMmDMsi/CeZXgubqsPh0x/W3WEBz9rpksO\nvlQV+YNCXuLK/251/GnvA4AZO3I93ZywzGBy4liYL0pos5P9Hc2C3vnK3Yam2lG1\nxg0qDAJ5e50gamYLbsLzVhIOCSt3Cl/oP63h66Lw4OFn2Ua4OwLBFPmVuLppaMKC\nR01bDPyPKDVcVwIi536V0PbPKy/TgNkcPo1VcdyCbX+brGPLGdfjAjBhBc3zFCMC\nAwEAAaOBuzCBuDAJBgNVHRMEAjAAMBMGA1UdJQQMMAoGCCsGAQUFBwMBMFYGA1Ud\nEQRPME2HBH8AAAGHEAAAAAAAAAAAAAAAAAAAAAGCCWxvY2FsaG9zdIcEwKgHC4IH\ncHJveG1veIIZcHJveG1veC5ob21lLmxjYW1hcmFsLmNvbTAdBgNVHQ4EFgQUt3lq\nXqLj2PTaFeCVkw8Mf1U1jaIwHwYDVR0jBBgwFoAUgiFbuOtGkUgfKZffRgS2I7Yv\nyywwDQYJKoZIhvcNAQELBQADggIBALI/EliW91k/hp60NznS/TsTfR3TCM1ub0kX\nZD8v6+/Xmdtp6yzGk5PeWs5Oxz98m4kH3Efdr/VAWxw2gzNYZC3gabj6AIhM2l3I\nGV9AdhTqdf9dr6GTO2gQ7BL1TmWShBL/qDuPhVLopeLX5b+Ge8/aK/LJVZGj/mTy\naqROfpqFBUe/sXPQEYFPMCcpl6zfdTQ/ijNvs7PeBrMvZtM6JwQ3iYha30+G7pYF\nkM2QjwwxlFk9PMZy23Zxz072KYT6J92z/EBe7mauTFTYGckL64AwU1WzppD+GC+5\n0B+V8rBhO/eKNlDeU9yeBwBhas23RGkhK/qpcXWLmlSoH+K0pErUhP61psebsaWE\nTHrvjDSsvXCdNBwaKnNH/iEP3u11hbNs8YYasjrr6wrEsw6102YXr04h3TNm0p/T\nfBGt81ImDFv5noSf1Qx6Q7XtTwY8Ey/58vl92M63gfm3ErcSz/cz3XIjjuxTANzN\naWsfudPKfqDJBwojExvxELi8hxKik/Ndvz8q1NSL2UxFfw1JwAOQAzrTPan30i0C\nO916cgogawXERX8zdrW11lCzgFsdOKtZEyvBe+3K+mRy0XqHlwV5Z/yZUZBVsfvJ\nakdM9CRGYJtV2SlCLGp1rzpnRGBFR+KEqI6IBFfAZjsbvSTPiL1KcgpytbF2U58K\nqVpdHwDR\n-----END CERTIFICATE-----\n",
+      "public-key-bits" : 2048,
+      "public-key-type" : "rsaEncryption",
+      "san" : [
+         "127.0.0.1",
+         "0000:0000:0000:0000:0000:0000:0000:0001",
+         "localhost",
+         "192.168.7.11",
+         "proxmox",
+         "proxmox.home.lcamaral.com"
+      ],
+      "subject" : "/OU=PVE Cluster Node/O=Proxmox Virtual Environment/CN=proxmox.home.lcamaral.com"
+   }
+]
++ pct exec 10000 -- grep -E '^(PRETTY_NAME|VERSION_ID)=' /etc/os-release
+PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"
+VERSION_ID="12"

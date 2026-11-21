@@ -1,0 +1,14 @@
+##### 2026-11-16T21:11:30Z 30s link_irq vs remote_faults
+21:11:30 link_irq=13411667 rf=34498874 lf=2987
+21:11:35 link_irq=13412869 rf=34504221 lf=2987
+21:11:40 link_irq=13414070 rf=34509403 lf=2987
+21:11:45 link_irq=13415270 rf=34514738 lf=2987
+21:11:50 link_irq=13416472 rf=34520230 lf=2987
+21:11:55 link_irq=13417674 rf=34525978 lf=2987
+21:12:00 link_irq=13418876 rf=34532202 lf=2987
+## dmidecode-ish system
+hw.model: Intel(R) Core(TM) i3-N305
+hw.ncpu: 8
+## pfsense ver
+26.07-RELEASE
+FreeBSD pfsense.admin.lcamaral.com 16.0-CURRENT FreeBSD 16.0-CURRENT #71 plus-RELENG_26_07-n256584-8183aef9d019: Fri Aug  7 21:32:32 UTC 2026     root@pfsense-build-release-amd64-1.eng.atx.netgate.com:/var/jenkins/workspace/pfSense-Plus-snapshots-26_07-main/obj/amd64/FFp9ankS/var/jenkins/workspace/pfSense-Plus-snapshots-26_07-main/sources/FreeBSD-src-plus-RELENG_26_07/amd64.amd64/sys/pfSense amd64

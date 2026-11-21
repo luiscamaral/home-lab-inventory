@@ -1,0 +1,101 @@
+== 2026-11-16T20:50:39Z sample
+	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>)
+	status: active
+dev.ix.0.mac_stats.remote_faults: 33067843
+dev.ix.0.mac_stats.local_faults: 2985
+dev.ix.0.mac_stats.crc_errs: 9
+Name    Mtu Network        Address                             Ipkts Ierrs Idrop        Ibytes       Opkts Oerrs        Obytes  Coll
+ix0    1500 <Link#1>       a8:b8:e0:03:70:35              1243932006    22     0 1033326014110  1113019604     0  790372834200     0
+ix0       - fe80::%ix0/64  fe80::aab8:e0ff:fe03:7035%ix0           0     -     -             0           1     -            96     -
+head: illegal line count -- 0
+== 2026-11-16T20:51:10Z sample
+	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>)
+	status: active
+dev.ix.0.mac_stats.remote_faults: 33093222
+dev.ix.0.mac_stats.local_faults: 2985
+dev.ix.0.mac_stats.crc_errs: 9
+Name    Mtu Network        Address                             Ipkts Ierrs Idrop        Ibytes       Opkts Oerrs        Obytes  Coll
+ix0    1500 <Link#1>       a8:b8:e0:03:70:35              1244005921    22     0 1033384247264  1113091539     0  790404390680     0
+ix0       - fe80::%ix0/64  fe80::aab8:e0ff:fe03:7035%ix0           0     -     -             0           1     -            96     -
+head: illegal line count -- 0
+== 2026-11-16T20:51:40Z sample
+	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>)
+	status: active
+dev.ix.0.mac_stats.remote_faults: 33118453
+dev.ix.0.mac_stats.local_faults: 2985
+dev.ix.0.mac_stats.crc_errs: 9
+Name    Mtu Network        Address                             Ipkts Ierrs Idrop        Ibytes       Opkts Oerrs        Obytes  Coll
+ix0    1500 <Link#1>       a8:b8:e0:03:70:35              1244085598    22     0 1033442270752  1113169648     0  790441000606     0
+ix0       - fe80::%ix0/64  fe80::aab8:e0ff:fe03:7035%ix0           0     -     -             0           1     -            96     -
+head: illegal line count -- 0
+== 2026-11-16T20:52:10Z sample
+	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>)
+	status: active
+dev.ix.0.mac_stats.remote_faults: 33142839
+dev.ix.0.mac_stats.local_faults: 2985
+dev.ix.0.mac_stats.crc_errs: 9
+Name    Mtu Network        Address                             Ipkts Ierrs Idrop        Ibytes       Opkts Oerrs        Obytes  Coll
+ix0    1500 <Link#1>       a8:b8:e0:03:70:35              1244177232    22     0 1033523557094  1113247072     0  790472449924     0
+ix0       - fe80::%ix0/64  fe80::aab8:e0ff:fe03:7035%ix0           0     -     -             0           1     -            96     -
+head: illegal line count -- 0
+== 2026-11-16T20:52:40Z sample
+	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>)
+	status: active
+dev.ix.0.mac_stats.remote_faults: 33168396
+dev.ix.0.mac_stats.local_faults: 2985
+dev.ix.0.mac_stats.crc_errs: 9
+Name    Mtu Network        Address                             Ipkts Ierrs Idrop        Ibytes       Opkts Oerrs        Obytes  Coll
+ix0    1500 <Link#1>       a8:b8:e0:03:70:35              1244264698    22     0 1033593245437  1113326869     0  790505054159     0
+ix0       - fe80::%ix0/64  fe80::aab8:e0ff:fe03:7035%ix0           0     -     -             0           1     -            96     -
+head: illegal line count -- 0
+== 2026-11-16T20:53:11Z sample
+	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>)
+	status: active
+dev.ix.0.mac_stats.remote_faults: 33194674
+dev.ix.0.mac_stats.local_faults: 2985
+dev.ix.0.mac_stats.crc_errs: 9
+Name    Mtu Network        Address                             Ipkts Ierrs Idrop        Ibytes       Opkts Oerrs        Obytes  Coll
+ix0    1500 <Link#1>       a8:b8:e0:03:70:35              1244341450    22     0 1033654666265  1113397400     0  790537642129     0
+ix0       - fe80::%ix0/64  fe80::aab8:e0ff:fe03:7035%ix0           0     -     -             0           1     -            96     -
+head: illegal line count -- 0
+== 2026-11-16T20:53:42Z sample
+	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>)
+	status: active
+dev.ix.0.mac_stats.remote_faults: 33223296
+dev.ix.0.mac_stats.local_faults: 2985
+dev.ix.0.mac_stats.crc_errs: 9
+Name    Mtu Network        Address                             Ipkts Ierrs Idrop        Ibytes       Opkts Oerrs        Obytes  Coll
+ix0    1500 <Link#1>       a8:b8:e0:03:70:35              1244489364    22     0 1033740829036  1113541242     0  790597694709     0
+ix0       - fe80::%ix0/64  fe80::aab8:e0ff:fe03:7035%ix0           0     -     -             0           1     -            96     -
+head: illegal line count -- 0
+== 2026-11-16T20:54:12Z sample
+	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>)
+	status: active
+dev.ix.0.mac_stats.remote_faults: 33251029
+dev.ix.0.mac_stats.local_faults: 2985
+dev.ix.0.mac_stats.crc_errs: 9
+Name    Mtu Network        Address                             Ipkts Ierrs Idrop        Ibytes       Opkts Oerrs        Obytes  Coll
+ix0    1500 <Link#1>       a8:b8:e0:03:70:35              1244577782    22     0 1033812156431  1113619578     0  790630873844     0
+ix0       - fe80::%ix0/64  fe80::aab8:e0ff:fe03:7035%ix0           0     -     -             0           1     -            96     -
+head: illegal line count -- 0
+== 2026-11-16T20:54:42Z sample
+	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>)
+	status: active
+dev.ix.0.mac_stats.remote_faults: 33279955
+dev.ix.0.mac_stats.local_faults: 2985
+dev.ix.0.mac_stats.crc_errs: 9
+Name    Mtu Network        Address                             Ipkts Ierrs Idrop        Ibytes       Opkts Oerrs        Obytes  Coll
+ix0    1500 <Link#1>       a8:b8:e0:03:70:35              1244666759    22     0 1033879262257  1113717366     0  790694999205     0
+ix0       - fe80::%ix0/64  fe80::aab8:e0ff:fe03:7035%ix0           0     -     -             0           1     -            96     -
+head: illegal line count -- 0
+== 2026-11-16T20:55:12Z sample
+	media: Ethernet autoselect (10Gbase-Twinax <full-duplex,rxpause,txpause>)
+	status: active
+dev.ix.0.mac_stats.remote_faults: 33307965
+dev.ix.0.mac_stats.local_faults: 2985
+dev.ix.0.mac_stats.crc_errs: 9
+Name    Mtu Network        Address                             Ipkts Ierrs Idrop        Ibytes       Opkts Oerrs        Obytes  Coll
+ix0    1500 <Link#1>       a8:b8:e0:03:70:35              1244756126    22     0 1033942261582  1113824842     0  790775792168     0
+ix0       - fe80::%ix0/64  fe80::aab8:e0ff:fe03:7035%ix0           0     -     -             0           1     -            96     -
+head: illegal line count -- 0
+DONE 2026-11-16T20:55:12Z

@@ -1,0 +1,15 @@
+Collected UTC: 2026-11-18T17:03:10.067232+00:00
+Source: SSH nas as lamaral, no sudo
+Scope: backup path ownership and readable NFS export options
+Command: date -u +%Y-%m-%dT%H:%M:%SZ; ls -ldn /volume2/shared /volume2/shared/80.Backups /volume2/shared/80.Backups/pve /volume2/shared/80.Backups/pve/dump; grep -F '/volume2/shared' /etc/exports
+Exit status: 2
+Output:
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+2026-11-18T17:03:10Z
+drwxr-xr-x 1 1027 65538   582 Mar  1  2025 /volume2/shared
+drwxr-xr-x 1 1027 65539   896 Aug 21 12:23 /volume2/shared/80.Backups
+drwx------ 1 1027 65538    64 Mar 12  2025 /volume2/shared/80.Backups/pve
+drwxr-xr-x 1 1027 65538 34126 Nov 16 01:24 /volume2/shared/80.Backups/pve/dump
+grep: /etc/exports: Permission denied

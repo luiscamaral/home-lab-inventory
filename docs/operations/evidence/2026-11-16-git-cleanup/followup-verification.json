@@ -1,0 +1,37 @@
+{
+  "collected_at": "2026-11-17T00:37:09.230335+00:00",
+  "duplicate_source_blobs": [
+    {
+      "blob": "e69145442a445196262dc6e040ee0e8e7b8fb6c5",
+      "bytes": 112,
+      "path": "hosts/dockermaster/etc/systemd/network/10-server-net-shim.network"
+    },
+    {
+      "blob": "e69145442a445196262dc6e040ee0e8e7b8fb6c5",
+      "bytes": 112,
+      "path": "dockermaster/host-network/dm/10-server-net-shim.network"
+    },
+    {
+      "blob": "6fea4046ddbdb69ad0d89527577c93c726ed1f8a",
+      "bytes": 3109,
+      "path": "hosts/_common/etc/vault/vault-auto-unseal.sh"
+    },
+    {
+      "blob": "f2e7721226f93e94f003724655e9943a2debbe4a",
+      "bytes": 3329,
+      "path": "scripts/vault-auto-unseal/vault-auto-unseal.sh"
+    }
+  ],
+  "evidence_files": 28,
+  "limits": "Source checks only; no unseal script contents read and no runtime commands executed.",
+  "method": "Reparse every cited evidence JSON; verify 15 evidence labels; count test paths and inspect Git blob IDs and byte counts",
+  "python_test_files": [
+    "tests/test_check_image_pins.py",
+    "tests/test_nomad_embedding_eval.py",
+    "tests/test_nomad_observability.py",
+    "tests/test_sync_nas_tuning.py",
+    "tests/test_sync_pfsense_dhcp_static_mappings.py",
+    "tests/test_zot_meta_backup.py"
+  ],
+  "source": "parent verification of follow-up report"
+}
