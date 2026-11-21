@@ -106,21 +106,29 @@ test("display redacts credentials and terminal control characters without losing
 test("approval IDs are exact, tied to frozen requests, and expire", () => {
   const queue = new ApprovalQueue();
   const input = { name: "Original" };
-  const { request } = queue.stage("off", input, TOKEN, 100);
-  assert.ok(request);
+  const first = queue.stage("off", input, TOKEN, 100).batch!;
   input.name = "Changed";
-  assert.equal(parseApproval(`Approve ${request.id.toLowerCase()}`)?.id, request.id);
-  assert.equal(parseApproval(`approve ${request.id} then turn off another light`), null);
-  assert.equal(parseApproval("yes"), null);
-  assert.match(queue.stage("on", input, TOKEN, 100).reason!, /already pending/);
-  assert.equal(queue.take("HA-00000000", 110), request.id === "HA-00000000" ? request : undefined);
-  assert.equal(queue.take(request.id, request.expiresAt), undefined);
-  const second = queue.stage("off", { secret: TOKEN }, TOKEN, 150);
-  assert.ok(!second.request);
-  const third = queue.stage("off", { name: "Original" }, TOKEN, 200).request!;
-  assert.equal(JSON.parse(queue.take(third.id, 210)!.args).name, "Original");
-  assert.equal(queue.take(third.id, 211), undefined);
-  assert.equal(JSON.parse(request.args).name, "Original");
+  assert.equal(parseApproval(`Approve All ${first.id.toLowerCase()}`)?.id, first.id);
+  assert.equal(parseApproval(`approve all ${first.id} then turn off another light`), null);
+  assert.equal(parseApproval(`approve ${first.id}`), null);
+  assert.equal(parseApproval("approve all"), null);
+  const second = queue.stage("on", input, TOKEN, 105).batch!;
+  assert.notEqual(second.id, first.id);
+  assert.equal(first.requests.length, 1);
+  assert.equal(second.requests.length, 2);
+  assert.equal(queue.take(first.id, 110), undefined);
+  assert.match(queue.stage("on", input, TOKEN, 110).reason!, /already staged/);
+  assert.equal(queue.current(110)?.id, second.id);
+  assert.equal(queue.take(second.id, second.expiresAt), undefined);
+  assert.equal(queue.stage("off", { secret: TOKEN }, TOKEN, 200_000).batch, undefined);
+  const third = queue.stage("off", { name: "Original" }, TOKEN, 200_000).batch!;
+  assert.equal(JSON.parse(queue.take(third.id, 200_010)!.requests[0].args).name, "Original");
+  assert.equal(queue.take(third.id, 200_011), undefined);
+  assert.equal(JSON.parse(second.requests[0].args).name, "Original");
+  for (let i = 0; i < 8; i++) assert.ok(queue.stage("on", { i }, TOKEN, 200_020).batch);
+  assert.match(queue.stage("on", { i: 8 }, TOKEN, 200_020).reason!, /limit/);
+  queue.clear();
+  assert.match(queue.stage("on", { name: "x".repeat(8192) }, TOKEN, 200_020).reason!, /limit/);
 });
 
 test("native and slash writes wait for a single matching human chat reply", async (t) => {
@@ -145,9 +153,12 @@ test("native and slash writes wait for a single matching human chat reply", asyn
     hasUI: true, mode: "tui", isProjectTrusted: () => true, isIdle: () => idle,
     ui: { notify: () => undefined },
   } as unknown as ExtensionContext;
-  t.mock.method(globalThis, "fetch", mockMcp(requests));
+  let failTool = "";
+  t.mock.method(globalThis, "fetch", mockMcp(requests, (rpc) => {
+    if (rpc.method === "tools/call" && rpc.params.name === failTool) return new Response(null, { status: 504 });
+  }));
   extension(pi);
-  assert.equal(commands.size, 7);
+  assert.equal(commands.size, 8);
   assert.equal(registrations.length, 0);
   const run = (name: string, args = "") => commands.get(name)!.handler(args, ctx);
   const gate = (name: string, context = ctx) => handlers.get("tool_call")!({ toolName: PREFIX + name, input: { name: "Test lamp" } }, context);
@@ -159,32 +170,47 @@ test("native and slash writes wait for a single matching human chat reply", asyn
   assert.equal((await gate("unknown")).block, true);
   const reply = (text: string, source = "interactive") => handlers.get("input")!({ text, source }, ctx);
   const callParams = () => requests.filter(({ method }) => method === "tools/call").map(({ params }) => params);
-  const currentId = () => /Type approve (HA-[A-F0-9]{8})/.exec(entries.at(-1)!)![1];
+  const currentId = () => /Type approve all (HA-BATCH-[A-F0-9]{8})/.exec(entries.at(-1)!)![1];
   assert.equal((await gate("intent__HassTurnOn", { ...ctx, mode: "rpc" })).block, true);
   assert.equal(entries.length, 0);
   assert.equal((await gate("intent__HassTurnOn")).block, true);
   assert.match(entries.at(-1)!, /"name": "Test lamp"/);
+  const oldId = currentId();
+  assert.equal((await gate("intent__HassTurnOff")).block, true);
   const id = currentId();
-  assert.match((await gate("intent__HassTurnOff")).reason, /already pending/);
-  assert.equal(await reply("yes"), undefined);
-  assert.equal((await reply(`approve ${id}`, "extension")).action, "handled");
-  assert.equal((await reply(`approve ${id}`, "rpc")).action, "handled");
+  assert.notEqual(id, oldId);
+  assert.match(entries.at(-1)!, /1\. intent__HassTurnOn[\s\S]+2\. intent__HassTurnOff/);
+  await run("ha-batch");
+  assert.equal(currentId(), id);
+  assert.equal(await reply("approve all"), undefined);
+  assert.equal((await reply(`approve all ${id}`, "extension")).action, "handled");
+  assert.equal((await reply(`approve all ${id}`, "rpc")).action, "handled");
+  await reply(`approve all ${oldId}`);
   idle = false;
-  await reply(`approve ${id}`);
+  await reply(`approve all ${id}`);
   idle = true;
   assert.deepEqual(callParams(), []);
-  await reply(`approve ${id}`);
+  await reply(`approve all ${id}`);
   assert.match(entries.at(-1)!, /completed\.\n\[redacted\]/);
-  await reply(`approve ${id}`);
-  assert.deepEqual(callParams(), [{ name: "intent__HassTurnOn", arguments: { name: "Test lamp" } }]);
+  await reply(`approve all ${id}`);
+  assert.deepEqual(callParams(), [
+    { name: "intent__HassTurnOn", arguments: { name: "Test lamp" } },
+    { name: "intent__HassTurnOff", arguments: { name: "Test lamp" } },
+  ]);
   await run("ha", 'off {"name":"Test lamp"}');
   await reply(`cancel ${currentId()}`);
   assert.match(entries.at(-1)!, /canceled\. Nothing sent/);
   await run("ha", 'template {"template":"{{ 2 + 2 }}"}');
   const templateId = currentId();
   handlers.get("session_tree")!();
-  await reply(`approve ${templateId}`);
-  assert.equal(callParams().length, 1);
+  await reply(`approve all ${templateId}`);
+  assert.equal(callParams().length, 2);
+  failTool = "intent__HassTurnOff";
+  await run("ha", 'off {"name":"Test lamp"}');
+  await run("ha", 'on {"name":"Test lamp"}');
+  await reply(`approve all ${currentId()}`);
+  assert.equal(callParams().length, 3);
+  assert.match(entries.at(-1)!, /stopped after 0\/2 confirmed successes/);
   await handlers.get("session_start")!();
   assert.deepEqual(removed, [SERVER]);
   assert.equal((await gate("homeassistant__GetLiveContext")).block, true);
