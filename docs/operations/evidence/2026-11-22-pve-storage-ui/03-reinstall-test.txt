@@ -1,0 +1,30 @@
+Captured UTC: 2026-11-22T14:48:58Z to 14:49:02Z
+Source: Herdr pane w5:p6 (pve-shell). Command: apt-get reinstall -y pve-manager (pre-merge test approved by the owner). A leftover background tail of the APT logs from the earlier Phase B session also printed into the pane; it was stopped afterwards.
+
+
+                                                                                                                                                               Setting up pve-manager (9.2.32) ...
+                                                                                                                                                     2026-11-22 07:48:58 trigproc pve-mods:all 2.2.3 <no
+                                                                                                               Preparing to unpack .../pve-manager_9.2.32_all.deb ...
+                                                                                          2026-11-22 07:48:43 status triggers-pending pve-mods:all 2.2.3
+                                                  Processing triggers for pve-mods (2.2.3) ...
+                             Processing triggers for pve-mods (2.2.3) ...
+                             Setting up pve-manager (9.2.32) ...
+                             Unpacking pve-manager (9.2.32) over (9.2.32) ...
+                         2026-11-22 07:49:01 status installed pve-mods:all 2.2.3
+[pve-mods]   applied 01-nodes-pm-sensors.patch
+[pve-mods]   applied 03-pvemanager-js-sensors.patch
+[pve-mods]   skip 02-nodes-pm-GPU-RRD-history.patch (condition gpu.gpu_history=1 not met)
+[pve-mods] Checking mod: node_info
+[pve-mods] Reloading pveproxy...
+[pve-mods] Web UI files changed. After this operation finishes, hard-refresh
+[pve-mods] your browser (Ctrl+F5 or Ctrl+Shift+R) to load the updated interface.
+active
+after: tag=1 pvemods=2 node_info=node_info=1
+before: tag=1 pvemods=2
+homelab-pve-ui: added the storage panel tag to /usr/share/pve-manager/index.html.tpl
+homelab-pve-ui: OK: tag present and current
+Log ended: 2026-11-22  07:49:02
+PRE4_REINSTALL 2026-11-22T14:48:41Z
+PRE4_REINSTALL_END
+Preparing to unpack .../pve-manager_9.2.32_all.deb ...
+pve-mods: pve-manager upgrade detected — re-applying patches.

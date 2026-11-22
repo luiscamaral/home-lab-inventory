@@ -1,0 +1,83 @@
+#!/bin/bash
+# Managed by the homelab inventory repo: hosts/proxmox/pve-ui/homelab-pve-ui
+#
+# Adds or removes one script tag in the Proxmox UI template. The tag loads
+# /pve2/js/homelab-storage.js after pvemanagerlib.js. A pve-manager update
+# replaces the template and drops the tag. The APT hook
+# /etc/apt/apt.conf.d/99homelab-pve-ui runs "apply" after every dpkg run, so
+# the tag comes back by itself. Safe to run any number of times.
+#
+# Usage: homelab-pve-ui apply|revert|check
+set -euo pipefail
+
+# The environment overrides exist for tests only.
+TEMPLATE=${HOMELAB_PVE_UI_TEMPLATE:-/usr/share/pve-manager/index.html.tpl}
+JS=${HOMELAB_PVE_UI_JS:-/usr/share/pve-manager/js/homelab-storage.js}
+RELOAD=${HOMELAB_PVE_UI_RELOAD:-systemctl reload-or-try-restart pveproxy.service}
+ANCHOR='src="/pve2/js/pvemanagerlib.js'
+MARK='data-homelab="storage"'
+
+log() { echo "homelab-pve-ui: $*"; }
+
+wanted_tag() {
+    local ver
+    ver=$(sha256sum "$JS" | cut -c1-12)
+    printf '    <script type="text/javascript" %s src="/pve2/js/homelab-storage.js?ver=%s"></script>' "$MARK" "$ver"
+}
+
+current_tag() { grep -F "$MARK" "$TEMPLATE" || true; }
+
+reload_ui() { $RELOAD; }
+
+apply() {
+    if [ ! -f "$JS" ]; then
+        log "missing $JS; nothing to load"
+        return 1
+    fi
+    if [ "$(grep -cF "$ANCHOR" "$TEMPLATE")" != 1 ]; then
+        log "anchor line not found exactly once in $TEMPLATE; template not changed"
+        return 1
+    fi
+    local want
+    want=$(wanted_tag)
+    if [ "$(current_tag)" = "$want" ]; then
+        return 0
+    fi
+    local tmp
+    tmp=$(mktemp "$TEMPLATE.XXXXXX")
+    grep -vF "$MARK" "$TEMPLATE" | awk -v anchor="$ANCHOR" -v tag="$want" \
+        'index($0, anchor) { print; print tag; next } { print }' > "$tmp"
+    chmod --reference="$TEMPLATE" "$tmp"
+    mv "$tmp" "$TEMPLATE"
+    log "added the storage panel tag to $TEMPLATE"
+    reload_ui
+}
+
+revert() {
+    if [ -z "$(current_tag)" ]; then
+        return 0
+    fi
+    local tmp
+    tmp=$(mktemp "$TEMPLATE.XXXXXX")
+    grep -vF "$MARK" "$TEMPLATE" > "$tmp"
+    chmod --reference="$TEMPLATE" "$tmp"
+    mv "$tmp" "$TEMPLATE"
+    log "removed the storage panel tag from $TEMPLATE"
+    reload_ui
+}
+
+check() {
+    if [ -f "$JS" ] && [ "$(current_tag)" = "$(wanted_tag)" ]; then
+        log "OK: tag present and current"
+        return 0
+    fi
+    log "NOT APPLIED: tag missing or out of date"
+    return 1
+}
+
+case "${1:-apply}" in
+    apply) apply ;;
+    revert) revert ;;
+    check) check ;;
+    *) echo "usage: $0 apply|revert|check" >&2; exit 2 ;;
+esac

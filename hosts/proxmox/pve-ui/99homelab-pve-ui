@@ -1,0 +1,4 @@
+// Managed by the homelab inventory repo: hosts/proxmox/pve-ui/99homelab-pve-ui
+// After every dpkg run, put back the storage panel tag in the Proxmox UI template.
+// A pve-manager update replaces the template. Errors never block APT.
+DPkg::Post-Invoke { "if [ -x /usr/local/sbin/homelab-pve-ui ]; then /usr/local/sbin/homelab-pve-ui apply || true; fi"; };

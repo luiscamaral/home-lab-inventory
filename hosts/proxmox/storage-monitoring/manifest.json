@@ -1,4 +1,10 @@
 {
+  "checks": [
+    [
+      "/usr/local/sbin/homelab-pve-ui",
+      "check"
+    ]
+  ],
   "enable": [
     "prometheus-node-exporter.service",
     "homelab-smart-array-collect.timer"
@@ -7,27 +13,65 @@
     {
       "dest": "/usr/local/sbin/homelab-smart-array-collect",
       "mode": "0755",
-      "src": "homelab-smart-array-collect"
+      "remove": true,
+      "src": "storage-monitoring/homelab-smart-array-collect"
     },
     {
       "dest": "/etc/systemd/system/homelab-smart-array-collect.service",
       "mode": "0644",
-      "src": "homelab-smart-array-collect.service"
+      "remove": true,
+      "src": "storage-monitoring/homelab-smart-array-collect.service"
     },
     {
       "dest": "/etc/systemd/system/homelab-smart-array-collect.timer",
       "mode": "0644",
-      "src": "homelab-smart-array-collect.timer"
+      "remove": true,
+      "src": "storage-monitoring/homelab-smart-array-collect.timer"
     },
     {
       "dest": "/etc/default/prometheus-node-exporter",
       "mode": "0644",
+      "remove": false,
       "restart": "prometheus-node-exporter.service",
-      "src": "prometheus-node-exporter.default"
+      "src": "storage-monitoring/prometheus-node-exporter.default"
+    },
+    {
+      "dest": "/usr/share/pve-manager/js/homelab-storage.js",
+      "mode": "0644",
+      "remove": true,
+      "src": "pve-ui/homelab-storage.js"
+    },
+    {
+      "dest": "/usr/local/sbin/homelab-pve-ui",
+      "mode": "0755",
+      "remove": true,
+      "src": "pve-ui/homelab-pve-ui"
+    },
+    {
+      "dest": "/etc/apt/apt.conf.d/99homelab-pve-ui",
+      "mode": "0644",
+      "remove": true,
+      "src": "pve-ui/99homelab-pve-ui"
     }
   ],
   "packages": [
     "prometheus-node-exporter"
+  ],
+  "post_apply": [
+    [
+      "/usr/local/sbin/homelab-pve-ui",
+      "apply"
+    ]
+  ],
+  "pre_remove": [
+    [
+      "/usr/local/sbin/homelab-pve-ui",
+      "revert"
+    ],
+    [
+      "/usr/local/sbin/homelab-smart-array-collect",
+      "--remove-notes"
+    ]
   ],
   "run_after_apply": "homelab-smart-array-collect.service"
 }

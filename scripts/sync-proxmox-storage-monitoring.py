@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Sync Smart Array monitoring on the Proxmox host from hosts/proxmox/storage-monitoring."""
+"""Sync Smart Array monitoring and the storage UI panel on the Proxmox host.
+
+Source: hosts/proxmox/storage-monitoring/manifest.json. File sources are relative to hosts/proxmox.
+"""
 
 import argparse
 import hashlib
@@ -8,9 +11,9 @@ import shlex
 import subprocess
 from pathlib import Path
 
-SOURCE = Path(__file__).resolve().parents[1] / "hosts/proxmox/storage-monitoring"
+HOSTS = Path(__file__).resolve().parents[1] / "hosts/proxmox"
+SOURCE = HOSTS / "storage-monitoring"
 SSH = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", "proxmox"]
-COLLECTOR = "/usr/local/sbin/homelab-smart-array-collect"
 METRICS_FILE = "/var/lib/prometheus/node-exporter/smart_array.prom"
 
 
@@ -23,7 +26,7 @@ def remote(*args, stdin=None, timeout=120, check=True):
 def file_changes(manifest):
     changed = []
     for item in manifest["files"]:
-        want = hashlib.sha256((SOURCE / item["src"]).read_bytes()).hexdigest()
+        want = hashlib.sha256((HOSTS / item["src"]).read_bytes()).hexdigest()
         live = remote("sh", "-c", f'stat -c %a {shlex.quote(item["dest"])} && sha256sum {shlex.quote(item["dest"])}',
                       check=False).stdout.split()
         if len(live) < 2 or live[1] != want or live[0] != item["mode"].lstrip("0"):
@@ -54,7 +57,10 @@ def plan(manifest):
         print(f"write {item['dest']} mode {item['mode']}")
     for unit in units:
         print(f"enable and start {unit}")
-    if not packages and not files and not units:
+    failed = [c for c in manifest.get("checks", []) if remote(*c, check=False).returncode]
+    for command in failed:
+        print(f"run {' '.join(manifest['post_apply'][0])} (check failed: {' '.join(command)})")
+    if not packages and not files and not units and not failed:
         print("No changes.")
     return packages, files, units
 
@@ -65,13 +71,15 @@ def apply(manifest):
         remote("apt-get", "install", "-y", "--no-install-recommends", *packages, timeout=600)
     for item in files:
         remote("install", "-D", "-m", item["mode"], "/dev/stdin", item["dest"],
-               stdin=(SOURCE / item["src"]).read_text())
+               stdin=(HOSTS / item["src"]).read_text())
     remote("systemctl", "daemon-reload")
     for unit in {item["restart"] for item in files if item.get("restart")}:
         remote("systemctl", "restart", unit)
     if units:
         remote("systemctl", "enable", "--now", *units)
     remote("systemctl", "start", manifest["run_after_apply"], timeout=330)
+    for command in manifest.get("post_apply", []):
+        print(remote(*command, timeout=120).stdout.strip())
     verify(manifest)
 
 
@@ -86,6 +94,9 @@ def verify(manifest):
     count = sum(1 for line in scrape.splitlines() if line.startswith("homelab_smart_array_physical_drive_ok{"))
     if count == 0:
         problems.append("node_exporter serves no homelab_smart_array_physical_drive_ok series")
+    for command in manifest.get("checks", []):
+        if remote(*command, check=False).returncode:
+            problems.append(f"check failed: {' '.join(command)}")
     if problems:
         raise ValueError("; ".join(problems))
     print(f"Verified. node_exporter serves {count} drive series.")
@@ -93,14 +104,15 @@ def verify(manifest):
 
 def remove(manifest):
     remote("systemctl", "disable", "--now", "homelab-smart-array-collect.timer", check=False)
-    remote(COLLECTOR, "--remove-notes", check=False)
+    for command in manifest.get("pre_remove", []):
+        remote(*command, check=False)
     for item in manifest["files"]:
-        if item["dest"].startswith(("/usr/local/", "/etc/systemd/system/homelab-")):
+        if item.get("remove"):
             remote("rm", "-f", item["dest"])
     remote("rm", "-f", METRICS_FILE)
     remote("systemctl", "daemon-reload")
-    print("Removed the collector, its timer, its metrics file and the Notes block. "
-          "prometheus-node-exporter stays installed.")
+    print("Removed the collector, its timer, the UI panel, the APT hook, the metrics file and the Notes block. "
+          "prometheus-node-exporter and its settings stay installed.")
 
 
 def main():
