@@ -1,0 +1,12 @@
+{
+  "files": {
+    "dump/vzdump-qemu-110-2025_03_10-14_37_45.log": 3877,
+    "dump/vzdump-qemu-110-2025_03_10-14_37_45.vma.zst": 2252184912,
+    "dump/vzdump-qemu-110-2025_03_10-14_37_45.vma.zst.notes": 7,
+    "template/iso/linuxmint-22.1-cinnamon-64bit.iso": 2980511744,
+    "template/iso/talos-v1.8.3-nocloud-amd64.img": 1306525696
+  },
+  "node": "proxmox",
+  "retired_vmid": 110,
+  "root_source": "/dev/mapper/pve-root"
+}
