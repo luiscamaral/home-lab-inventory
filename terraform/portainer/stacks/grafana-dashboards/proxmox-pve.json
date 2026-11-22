@@ -1935,6 +1935,7 @@
   },
   "timezone": "",
   "title": "Proxmox via Prometheus",
+  "uid": "proxmox-pve",
   "version": 4,
   "weekStart": ""
 }

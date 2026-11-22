@@ -1587,6 +1587,7 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "Pi-hole ver6 Stats",
+  "uid": "pihole-v6",
   "version": 23,
   "weekStart": ""
 }

@@ -812,5 +812,6 @@
   "timepicker": {},
   "timezone": "",
   "title": "Cadvisor exporter",
+  "uid": "cadvisor",
   "version": 1
 }

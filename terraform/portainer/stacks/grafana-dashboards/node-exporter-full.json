@@ -15492,6 +15492,7 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "Node Exporter Full",
+  "uid": "node-exporter-full",
   "version": 101,
   "weekStart": ""
 }
