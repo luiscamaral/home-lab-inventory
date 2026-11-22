@@ -1,0 +1,8 @@
+Collected UTC: 2026-11-22T08:13:18Z
+Source: SSH. Scope: last health-check output and recent logs of the two unhealthy containers. Read only. Secrets: none expected; output reviewed before saving.
+2026-11-22T01:12:32 1 wget: can't connect to remote host (127.0.0.1): Connection refused
+2026-11-22T01:13:02 1 wget: can't connect to remote host (127.0.0.1): Connection refused
+==
+2026-11-22T01:12:27 1 [ERROR] fs_cli.c:1699 main() Error Connecting []
+2026-11-22T01:12:57 1 [ERROR] fs_cli.c:1699 main() Error Connecting []
+health test: ["CMD-SHELL","fs_cli -p $ESL_PASSWORD -x status | grep -q ^UP"]

@@ -1,0 +1,37 @@
+Captured UTC: 2026-11-22T08:15:14Z
+Source: Herdr pane w5:p6 (pve-shell). Scope: B3 verification (package, config state, patched JS, sensors, API keys) and earlier A6 pane output.
+B3 2026-11-22T08:14:50Z
+lm-sensors      1:3.6.2-2
+pve-mods        2.2.3
+node_info=1
+enabled=1
+pvemanagerlib_PveMods_refs=2
+tg3-pci-0301
+Adapter: PCI adapter
+temp1:        +66.0°C  (high = +100.0°C, crit = +110.0°C)
+
+coretemp-isa-0000
+Adapter: ISA adapter
+Package id 0:  +50.0°C  (high = +85.0°C, crit = +95.0°C)
+Core 0:        +44.0°C  (high = +85.0°C, crit = +95.0°C)
+Core 1:        +45.0°C  (high = +85.0°C, crit = +95.0°C)
+Core 2:        +42.0°C  (high = +85.0°C, crit = +95.0°C)
+Core 3:        +48.0°C  (high = +85.0°C, crit = +95.0°C)
+Core 4:        +46.0°C  (high = +85.0°C, crit = +95.0°C)
+Core 8:        +47.0°C  (high = +85.0°C, crit = +95.0°C)
+Core 9:        +43.0°C  (high = +85.0°C, crit = +95.0°C)
+Core 10:       +45.0°C  (high = +85.0°C, crit = +95.0°C)
+Core 11:       +50.0°C  (high = +85.0°C, crit = +95.0°C)
+Core 12:       +48.0°C  (high = +85.0°C, crit = +95.0°C)
+
+acpitz-acpi-0
+Adapter: ACPI interface
+API keys: ['PveMods_SensorInfo', 'PveMods_Version', 'PveMods_graphicsInfo', 'PveMods_storageHealth', 'PveMods_systemInfo', 'PveMods_upsInfo']
+PveMods_SensorInfo {'cpu': True, 'display_zero_speed_fans': False, 'enhanced_sensors': {'acpitz-acpi-0': {'Adapter': 'ACPI interface', 'temp1': {'input': {'quantity': 'temperature', 'unit': 'C', 'value': 8.3}}}, 'coretemp-isa-0000': {'Adapter': 'ISA adapter', 'cpu_model': 'Intel(R) Xeon(R) CPU E5-2680 v2 @ 2.80GHz', '
+PveMods_Version 2.2.3
+PveMods_graphicsInfo {'enable_fans': False, 'enable_gpu': False}
+PveMods_storageHealth {'disabled': True}
+PveMods_systemInfo {}
+PveMods_upsInfo {'disabled': True}
+B3_END
+root@proxmox:~#

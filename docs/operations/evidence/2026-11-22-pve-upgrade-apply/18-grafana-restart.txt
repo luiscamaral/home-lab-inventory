@@ -1,0 +1,7 @@
+Collected UTC: 2026-11-22T13:49:33Z
+Source: SSH dockermaster and nas. Scope: Grafana log lines around its 11:40:18 UTC restart; NAS load (retry after a failed SSH connect). Read only.
+Error: ✗ failed to initialize alerting because multiorg alertmanager manager failed to warm up: context deadline exceeded
+-- last lines before restart:
+Error: ✗ failed to initialize alerting because multiorg alertmanager manager failed to warm up: context deadline exceeded
+==
+ 06:49:36 up 20 days, 22:09,  0 users,  load average: 1.59, 1.77, 2.26 [IO: 0.31, 0.49, 1.12 CPU: 1.28, 1.27, 1.12]

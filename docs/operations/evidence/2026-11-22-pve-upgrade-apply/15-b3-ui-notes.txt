@@ -1,0 +1,5 @@
+Collected UTC: 2026-11-22T13:47:27Z
+Source: Firefox (owner logged in) at https://192.168.7.11:8006 node Summary, screenshot 14-b3-node-summary.png; SSH proxmox pvenode task log for the VM 121 start.
+Observed in UI: header shows 9.2.32; CPU Thermal State lists two Xeon E5-2680 v2 packages (min 36 / avg 40.9 / max 43 C and min 49 / avg 51 / max 53 C, 10 sensors each); RAM Temperatures N/A; System Fans N/A; System block shows kernel 7.0.14-30-pve, Legacy BIOS, pve-manager 9.2.32, Sensor Mod Version 2.2.3, Information empty.
+VM 121 start task warning (task log):
+WARN: no efidisk configured! Using temporary efivars disk.

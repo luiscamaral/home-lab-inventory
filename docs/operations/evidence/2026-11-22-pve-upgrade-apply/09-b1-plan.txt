@@ -1,0 +1,5 @@
+Collected UTC: 2026-11-22T08:13:52Z
+Source: clean main 6eb512a (includes #181); SSH proxmox. Scope: B1 read-only plan.
+dpkg-query: no packages found matching pve-mods
+pve-manager 9.2.32; pve-mods installed: no; target 2.2.3
+Config files to write: ['/etc/pve-mods/pve-mods.conf', '/etc/pve-mods/conf.d/node_info.conf']

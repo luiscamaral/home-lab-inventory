@@ -1,0 +1,41 @@
+Collected UTC: 2026-11-22T14:03:51Z
+Source: clean main 711b1f4; SSH proxmox. Scope: plan, apply startup, add VM 121 efidisk0 with clean shutdown and start, final plan.
++ ./scripts/sync-proxmox-guest-config.py
+qemu 100 startup: 'up=180' -> 'order=4,up=180'
+lxc 10000 startup: 'order=1' -> 'order=1,up=30'
+qemu 120 startup: 'up=30' -> 'order=5,up=300'
+qemu 121 startup: 'order=2' -> 'order=3,up=60'
+qemu 122 startup: 'up=120' -> 'order=6,up=120'
+qemu 123 startup: 'up=30' -> 'order=7,up=30'
+qemu 124 startup: 'order=1,up=30' -> 'order=2,up=300'
+qemu 121 efidisk0: add thin-pool-ssd:1,efitype=4m,pre-enrolled-keys=0 (needs a VM shutdown and start)
++ ./scripts/sync-proxmox-guest-config.py --apply --efidisk
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Sum of all thin volume sizes (<1.87 TiB) exceeds the size of thin pool ssd_vg/thin-pool and the size of whole volume group (<1.77 TiB).
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+QEMU guest agent is not running
+qemu 100 startup: 'up=180' -> 'order=4,up=180'
+lxc 10000 startup: 'order=1' -> 'order=1,up=30'
+qemu 120 startup: 'up=30' -> 'order=5,up=300'
+qemu 121 startup: 'order=2' -> 'order=3,up=60'
+qemu 122 startup: 'up=120' -> 'order=6,up=120'
+qemu 123 startup: 'up=30' -> 'order=7,up=30'
+qemu 124 startup: 'order=1,up=30' -> 'order=2,up=300'
+qemu 121 efidisk0: add thin-pool-ssd:1,efitype=4m,pre-enrolled-keys=0 (needs a VM shutdown and start)
+Startup settings verified for 7 guests.
+Shutting down VM 121 cleanly (timeout 180 s).
+VM 121 is running with efidisk0: thin-pool-ssd:vm-121-disk-1,efitype=4m,pre-enrolled-keys=0,size=4M
++ ./scripts/sync-proxmox-guest-config.py
+No changes.
++ set +x
+End UTC: 2026-11-22T14:07:11Z

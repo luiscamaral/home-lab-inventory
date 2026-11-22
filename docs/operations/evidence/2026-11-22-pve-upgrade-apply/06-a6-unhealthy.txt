@@ -1,0 +1,6 @@
+Collected UTC: 2026-11-22T08:13:08Z
+Source: this Mac via SSH. Scope: names and health of unhealthy containers after VM restart. Read only.
+== dockermaster
+grafana-grafana-1 | Up 4 minutes (unhealthy)
+== dockerserver-2
+freeswitch | Up 6 minutes (unhealthy)

@@ -1,0 +1,18 @@
+Collected UTC: 2026-11-22T14:07:17Z
+Source: this Mac and SSH proxmox. Scope: Home Assistant HTTP, VM 121 uptime and boot log signs, startup config readback. Read only.
++ curl -sk -o /dev/null -w 'HA http %{http_code}\n' --max-time 8 http://192.168.16.2:8123/
+HA http 000
++ ssh -o BatchMode=yes proxmox 'sudo -n qm status 121 --verbose | grep -E "^(status|uptime|qmpstatus):"; sudo -n qm config 121 | grep -E "^(bios|efidisk0|startup):"; for id in 100 120 121 122 123 124; do echo "$id $(sudo -n qm config $id | grep ^startup:)"; done; echo "10000 $(sudo -n pct config 10000 | grep ^startup:)"'
+qmpstatus: running
+status: running
+uptime: 57
+bios: ovmf
+efidisk0: thin-pool-ssd:vm-121-disk-1,efitype=4m,pre-enrolled-keys=0,size=4M
+startup: order=3,up=60
+100 startup: order=4,up=180
+120 startup: order=5,up=300
+121 startup: order=3,up=60
+122 startup: order=6,up=120
+123 startup: order=7,up=30
+124 startup: order=2,up=300
+10000 startup: order=1,up=30

@@ -1,0 +1,21 @@
+Collected UTC: 2026-11-22T08:12:04Z
+Source: this Mac. Scope: DNS answer from Pi-hole CT 10000, Docker on dockermaster, dockerserver-1, dockerserver-2, and Proxmox web UI HTTP status. Read only.
++ dig +time=3 +tries=1 @192.168.100.254 hermes.lab.home +short
+192.168.100.244
++ dig +time=3 +tries=1 @192.168.100.254 github.com +short
++ head -2
+140.82.114.3
++ for h in dockermaster dockerserver-1 dockerserver-2
++ ssh -o BatchMode=yes -o ConnectTimeout=6 dockermaster 'echo "$(hostname) up $(cut -d. -f1 /proc/uptime)s; containers running=$(docker ps -q | wc -l), unhealthy=$(docker ps -q --filter health=unhealthy | wc -l), restarting=$(docker ps -q --filter status=restarting | wc -l)"'
++ grep -v -iE 'post-quantum|store now|openssh.com/pq'
+dockermaster up 204s; containers running=24, unhealthy=1, restarting=0
++ for h in dockermaster dockerserver-1 dockerserver-2
++ ssh -o BatchMode=yes -o ConnectTimeout=6 dockerserver-1 'echo "$(hostname) up $(cut -d. -f1 /proc/uptime)s; containers running=$(docker ps -q | wc -l), unhealthy=$(docker ps -q --filter health=unhealthy | wc -l), restarting=$(docker ps -q --filter status=restarting | wc -l)"'
++ grep -v -iE 'post-quantum|store now|openssh.com/pq'
+dockerserver-1 up 56s; containers running=26, unhealthy=0, restarting=0
++ for h in dockermaster dockerserver-1 dockerserver-2
++ ssh -o BatchMode=yes -o ConnectTimeout=6 dockerserver-2 'echo "$(hostname) up $(cut -d. -f1 /proc/uptime)s; containers running=$(docker ps -q | wc -l), unhealthy=$(docker ps -q --filter health=unhealthy | wc -l), restarting=$(docker ps -q --filter status=restarting | wc -l)"'
++ grep -v -iE 'post-quantum|store now|openssh.com/pq'
+dockerserver-2 up 425s; containers running=25, unhealthy=1, restarting=0
++ curl -sk -o /dev/null -w 'pve web UI HTTP %{http_code}\n' --max-time 8 https://192.168.7.11:8006/
+pve web UI HTTP 200

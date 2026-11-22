@@ -1,0 +1,13 @@
+Collected UTC: 2026-11-22T08:13:34Z
+Source: SSH. Scope: last log lines and restart counts of grafana-grafana-1 and freeswitch. Read only.
+restarts=0 started=2026-11-22T08:08:57.278387934Z
+logger=accesscontrol.service t=2026-11-22T08:09:21.469722921Z level=info msg="Starting migration to remove deprecated permissions" migration=removeDeprecatedPermissions
+logger=accesscontrol.service t=2026-11-22T08:09:22.177816044Z level=info msg="Completed migration to remove deprecated permissions" migration=removeDeprecatedPermissions totalRemoved=0 duration=708.095282ms
+logger=plugin.store t=2026-11-22T08:09:22.178331927Z level=info msg="Loading plugins..."
+logger=plugins.registration t=2026-11-22T08:12:16.970862469Z level=info msg="Plugin registered" pluginId=grafana-exploretraces-app
+==
+restarts=0 started=2026-11-22T08:06:50.602287198Z
+[m[35m2026-11-22 07:54:10.668097 28.07% [WARNING] switch_core_state_machine.c:684 e76cdcd1-824e-4684-abc6-61a9fa7226c9 sofia/internal/101113638130122@136.38.130.122 Abandoned
+ERROR: Failed to set SCHED_FIFO scheduler (Function not implemented)
+ERROR: Failed to set SCHED_OTHER scheduler (Function not implemented)
+2026-11-22 08:07:29.685540 0.00% [INFO] switch_event.c:714 Activate Eventing Engine.
