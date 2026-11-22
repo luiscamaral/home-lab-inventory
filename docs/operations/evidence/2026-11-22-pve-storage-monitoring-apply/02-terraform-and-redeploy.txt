@@ -1,0 +1,8 @@
+Collected UTC: 2026-11-22T14:43:20Z
+Source: clean main 934367a (PR #185 merge) on this Mac; Terraform with the shared state; Portainer API; Prometheus and Thanos HTTP APIs.
+14:40 UTC state backup: terraform.tfstate.1795358424.backup (not in git).
+terraform plan -target=portainer_stack.prometheus -target=portainer_stack.prometheus_2: Plan: 0 to add, 2 to change, 0 to destroy.
+terraform apply of that saved plan: Apply complete! Resources: 0 added, 2 changed, 0 destroyed. Re-plan: No changes.
+Prometheus-1 (192.168.59.19) still had 5 node targets after the apply. The provider does not recreate containers on configs-only changes.
+scripts/portainer-redeploy.py prometheus at 14:40:50 UTC: stop ok, start ok. 14:41:39 UTC node targets: ds-2, dockermaster, nas, pfsense, proxmox, ds-1 all up.
+scripts/portainer-redeploy.py prometheus-2 at 14:41:45 UTC: stop ok, start ok. 14:42:41 UTC node targets on 192.168.4.237: all 6 up, including proxmox.
