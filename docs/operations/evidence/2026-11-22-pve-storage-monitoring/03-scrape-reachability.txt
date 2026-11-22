@@ -1,0 +1,12 @@
+Collected UTC: 2026-11-22T14:34:50Z
+Source: this Mac and dockerserver-1 (Prometheus host network). Scope: scrape reachability of 192.168.7.11:9100 and textfile errors. Read only.
++ curl -s --max-time 8 http://192.168.7.11:9100/metrics
++ grep -E '^homelab_smart_array_(capacitor_ok|no_battery|collector_last)|^node_textfile_scrape_error|^node_textfile_mtime_seconds'
+homelab_smart_array_capacitor_ok{model="Smart Array P420i",slot="0"} 0
+homelab_smart_array_collector_last_success_timestamp_seconds 1.795358064e+09
+homelab_smart_array_no_battery_write_cache_enabled{model="Smart Array P420i",slot="0"} 1
+node_textfile_mtime_seconds{file="/var/lib/prometheus/node-exporter/smart_array.prom"} 1.795358064e+09
+node_textfile_scrape_error 0
++ ssh -o BatchMode=yes dockerserver-1 'curl -s -o /dev/null -w "from ds-1: HTTP %{http_code}\n" --max-time 8 http://192.168.7.11:9100/metrics'
++ grep -v -iE 'post-quantum|store now|openssh.com/pq'
+from ds-1: HTTP 200

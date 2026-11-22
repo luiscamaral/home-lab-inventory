@@ -1,0 +1,62 @@
+Collected UTC: 2026-11-22T14:35:10Z
+Source: SSH proxmox. Command: sudo -n /usr/local/sbin/homelab-smart-array-collect --print. Scope: read-only re-run after the pre-merge install; the first read-only run (14:33:18 UTC, /tmp copy) printed the same series but its pane scrollback was cleared. HELP and TYPE lines omitted; JSON comment cut at 230 characters.
+homelab_smart_array_controller_ok{slot="0",model="Smart Array P420i"} 1
+homelab_smart_array_cache_ok{slot="0",model="Smart Array P420i"} 1
+homelab_smart_array_capacitor_ok{slot="0",model="Smart Array P420i"} 0
+homelab_smart_array_no_battery_write_cache_enabled{slot="0",model="Smart Array P420i"} 1
+homelab_smart_array_logical_drive_ok{slot="0",volume="1",raid="5",size="1.86 TB"} 1
+homelab_smart_array_logical_drive_ok{slot="0",volume="2",raid="5",size="1.09 TB"} 1
+homelab_smart_array_physical_drive_ok{slot="0",bay="1I:1:1",type="SATA SSD",size="1 TB",role="data",volume="1",model="SPCC Solid State Disk"} 1
+homelab_smart_array_physical_drive_ok{slot="0",bay="1I:1:2",type="SATA SSD",size="1 TB",role="data",volume="1",model="SPCC Solid State Disk"} 1
+homelab_smart_array_physical_drive_ok{slot="0",bay="1I:1:3",type="SATA SSD",size="1 TB",role="data",volume="1",model="SPCC Solid State Disk"} 1
+homelab_smart_array_physical_drive_ok{slot="0",bay="2I:1:5",type="SAS HDD",size="600 GB",role="data",volume="2",model="HP EG0600FBDSR"} 1
+homelab_smart_array_physical_drive_ok{slot="0",bay="2I:1:6",type="SAS HDD",size="600 GB",role="data",volume="2",model="SEAGATE ST9600205SS"} 1
+homelab_smart_array_physical_drive_ok{slot="0",bay="2I:1:7",type="SAS HDD",size="600 GB",role="data",volume="2",model="HP EG0600FBDSR"} 1
+homelab_smart_array_physical_drive_ok{slot="0",bay="2I:1:8",type="SAS HDD",size="600 GB",role="spare",model="HP EG0600FBLSH"} 1
+homelab_smart_array_physical_drive_ok{slot="0",bay="1I:1:4",type="SAS HDD",size="600 GB",role="unassigned",model="HP EG0600FBLSH"} 1
+homelab_smart_array_physical_drive_temperature_celsius{slot="0",bay="1I:1:1"} 38
+homelab_smart_array_physical_drive_temperature_celsius{slot="0",bay="1I:1:2"} 33
+homelab_smart_array_physical_drive_temperature_celsius{slot="0",bay="1I:1:3"} 38
+homelab_smart_array_physical_drive_temperature_celsius{slot="0",bay="2I:1:5"} 35
+homelab_smart_array_physical_drive_temperature_celsius{slot="0",bay="2I:1:6"} 35
+homelab_smart_array_physical_drive_temperature_celsius{slot="0",bay="2I:1:7"} 34
+homelab_smart_array_physical_drive_temperature_celsius{slot="0",bay="2I:1:8"} 34
+homelab_smart_array_physical_drive_temperature_celsius{slot="0",bay="1I:1:4"} 34
+homelab_smart_array_physical_drive_smart_passed{slot="0",bay="1I:1:1"} 1
+homelab_smart_array_physical_drive_smart_passed{slot="0",bay="1I:1:2"} 1
+homelab_smart_array_physical_drive_smart_passed{slot="0",bay="1I:1:3"} 1
+homelab_smart_array_physical_drive_smart_passed{slot="0",bay="2I:1:5"} 1
+homelab_smart_array_physical_drive_smart_passed{slot="0",bay="2I:1:6"} 1
+homelab_smart_array_physical_drive_smart_passed{slot="0",bay="2I:1:7"} 1
+homelab_smart_array_physical_drive_smart_passed{slot="0",bay="2I:1:8"} 1
+homelab_smart_array_physical_drive_smart_passed{slot="0",bay="1I:1:4"} 1
+homelab_smart_array_ssd_life_left_percent{slot="0",bay="1I:1:1"} 100
+homelab_smart_array_ssd_life_left_percent{slot="0",bay="1I:1:2"} 100
+homelab_smart_array_ssd_life_left_percent{slot="0",bay="1I:1:3"} 100
+homelab_smart_array_collector_last_success_timestamp_seconds 1795358124
+
+<!-- homelab-smart-array:begin -->
+### Storage: Smart Array P420i
+
+Updated 2026-11-22 14:35 UTC by `homelab-smart-array-collect`. The repo manages this block. Edits here are overwritten.
+
+Controller: OK (OK). Cache: OK (OK). Capacitor: **Problem** (Failed (Replace Batteries)). Write cache without capacitor: Enabled.
+
+| Volume | RAID | Size | Status |
+| --- | --- | --- | --- |
+| 1 | 5 | 1.86 TB | OK |
+| 2 | 5 | 1.09 TB | OK |
+
+| Bay | Volume | Type | Size | Role | Status | Temp | SMART | SSD life |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1I:1:1 | 1 | SATA SSD | 1 TB | data | OK | 38 °C | Passed | 100 % |
+| 1I:1:2 | 1 | SATA SSD | 1 TB | data | OK | 33 °C | Passed | 100 % |
+| 1I:1:3 | 1 | SATA SSD | 1 TB | data | OK | 38 °C | Passed | 100 % |
+| 2I:1:5 | 2 | SAS HDD | 600 GB | data | OK | 35 °C | Passed | - |
+| 2I:1:6 | 2 | SAS HDD | 600 GB | data | OK | 35 °C | Passed | - |
+| 2I:1:7 | 2 | SAS HDD | 600 GB | data | OK | 34 °C | Passed | - |
+| 2I:1:8 | - | SAS HDD | 600 GB | spare | OK | 34 °C | Passed | - |
+| 1I:1:4 | - | SAS HDD | 600 GB | unassigned | OK | 34 °C | Passed | - |
+
+<!-- homelab-smart-array-json {"slot":"0","time":1795358124.2930486,"controller":{"model":"Smart Array P420i","controller":"OK","cache":"OK","capacitor":"Failed (Replace Batteries)","nbwc":true},"volumes":[{"id":"1","size":"1.86 T
+<!-- homelab-smart-array:end -->
