@@ -1,0 +1,6 @@
+Collected UTC: 2026-11-22T07:27:18Z
+Source: GitHub release Meliox/PVE-mods v2.2.3 downloaded to this Mac. Scope: published checksum against local hash.
++ cat SHA256SUMS
+c2964cb9fe029d7fa409011104e5dadb76d3a442a752fa364cec86510b365749  ../pve-mods_2.2.3_all.deb
++ shasum -a 256 pve-mods_2.2.3_all.deb
+c2964cb9fe029d7fa409011104e5dadb76d3a442a752fa364cec86510b365749  pve-mods_2.2.3_all.deb

@@ -1,0 +1,14 @@
+Collected UTC: 2026-11-22T07:25:40Z
+Source: Herdr pane w5:p6 (pve-shell), root on proxmox. Scope: add-on dependencies, sensor drivers, existing pve-mods config. Read only.
+Command: dpkg-query for lm-sensors smartmontools patch librrds-perl libcap2-bin; sensors; lsmod filter; ls /etc/pve-mods
+SENS_CHK_BEGIN
+2026-11-22T07:25:40Z
+libcap2-bin 1:2.75-10+b8 install ok installed
+librrds-perl 1.7.2-4.2+pve4 install ok installed
+lm-sensors  unknown ok not-installed
+patch  unknown ok not-installed
+smartmontools 7.4-pve1 install ok installed
+coretemp               20480  0
+hpilo                  20480  0
+ls: cannot access '/etc/pve-mods': No such file or directory
+SENS_CHK_DONE

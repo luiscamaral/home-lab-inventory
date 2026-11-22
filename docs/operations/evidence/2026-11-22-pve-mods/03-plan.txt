@@ -1,0 +1,18 @@
+Collected UTC: 2026-11-22T07:27:18Z
+Source: feature worktree; SSH proxmox. Scope: unit tests (mocked), ruff, read-only plan.
++ PYTHONDONTWRITEBYTECODE=1
++ python3 -m unittest discover -s tests -p test_proxmox_pve_mods.py
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.006s
+
+OK
++ uvx ruff check --no-cache scripts/sync-proxmox-pve-mods.py tests/test_proxmox_pve_mods.py
+All checks passed!
++ ./scripts/sync-proxmox-pve-mods.py
+dpkg-query: no packages found matching pve-mods
+cat: /etc/pve-mods/pve-mods.conf: No such file or directory
+cat: /etc/pve-mods/conf.d/node_info.conf: No such file or directory
+pve-manager 9.1.7; pve-mods installed: no; target 2.2.3
+Config files to write: ['/etc/pve-mods/pve-mods.conf', '/etc/pve-mods/conf.d/node_info.conf']
+BLOCKED: pve-mods 2.2.3 needs pve-manager 9.2+.

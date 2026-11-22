@@ -1,0 +1,9 @@
+{
+  "apt_packages": [
+    "lm-sensors"
+  ],
+  "deb_sha256": "c2964cb9fe029d7fa409011104e5dadb76d3a442a752fa364cec86510b365749",
+  "deb_url": "https://github.com/Meliox/PVE-mods/releases/download/v2.2.3/pve-mods_2.2.3_all.deb",
+  "min_pve_manager": "9.2",
+  "version": "2.2.3"
+}
