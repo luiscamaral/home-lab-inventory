@@ -1,0 +1,17 @@
+{
+  "disk": "thin-pool-ssd:vm-100-disk-0",
+  "keep": [
+    "pre-omada-v6-20260618",
+    "pre-omada-6-3-0-111-20261116",
+    "pre-ubuntu-22-04-20261116",
+    "pre-ubuntu-24-04-20261116"
+  ],
+  "name": "omada-controller",
+  "node": "proxmox",
+  "snapshot": "Pre-ansible",
+  "snapshot_epoch": 1742851918,
+  "snapshot_lv": "snap_vm-100-disk-0_Pre-ansible",
+  "state_lv": "vm-100-state-Pre-ansible",
+  "vg": "ssd_vg",
+  "vmid": 100
+}
