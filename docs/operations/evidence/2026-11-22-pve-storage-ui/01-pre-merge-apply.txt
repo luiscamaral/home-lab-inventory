@@ -1,0 +1,17 @@
+Collected UTC: 2026-11-22T14:46:35Z
+Source: feature branch feat/pve-storage-ui at f66adb6, pre-merge test approved by the owner on 2026-11-22. SSH proxmox.
++ ./scripts/sync-proxmox-storage-monitoring.py --apply
+env: ‘/usr/local/sbin/homelab-pve-ui’: No such file or directory
+write /usr/share/pve-manager/js/homelab-storage.js mode 0644
+write /usr/local/sbin/homelab-pve-ui mode 0755
+write /etc/apt/apt.conf.d/99homelab-pve-ui mode 0644
+run /usr/local/sbin/homelab-pve-ui apply (check failed: /usr/local/sbin/homelab-pve-ui check)
+homelab-pve-ui: added the storage panel tag to /usr/share/pve-manager/index.html.tpl
+Verified. node_exporter serves 8 drive series.
++ ./scripts/sync-proxmox-storage-monitoring.py
+No changes.
++ ssh -o BatchMode=yes proxmox 'grep -n -B1 homelab /usr/share/pve-manager/index.html.tpl; sudo -n /usr/local/sbin/homelab-pve-ui check'
+55-    <script type="text/javascript" src="/pve2/js/pvemanagerlib.js?ver=[% version %]"></script>
+56:    <script type="text/javascript" data-homelab="storage" src="/pve2/js/homelab-storage.js?ver=18a4a161b437"></script>
+homelab-pve-ui: OK: tag present and current
++ set +x
