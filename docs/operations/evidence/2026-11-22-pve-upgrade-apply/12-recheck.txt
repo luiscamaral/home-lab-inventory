@@ -1,0 +1,6 @@
+Collected UTC: 2026-11-22T08:15:14Z
+Source: SSH. Scope: recheck container health and Pi-hole DNS after Phase B. Read only.
+grafana-grafana-1 | Up 6 minutes (unhealthy)
+freeswitch | Up 8 minutes (unhealthy)
+2026-11-22 08:07:29.685540 0.00% [INFO] switch_event.c:714 Activate Eventing Engine.
+140.82.114.3

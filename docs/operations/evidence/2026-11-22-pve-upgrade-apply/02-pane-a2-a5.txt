@@ -1,0 +1,18 @@
+Captured UTC: 2026-11-22T07:53:53Z
+Source: Herdr pane w5:p6 (pve-shell), root SSH session on proxmox. Scope: A2 recheck, A4 /etc backup and upgrade log, A4 verification, A5 pre-reboot boot check. Pane scrollback copied as shown.
+A5_PRE 2026-11-22T07:53:40Z
+Manually selected kernels:
+None.
+
+Automatically selected kernels:
+6.17.13-21-pve
+6.17.13-2-pve
+7.0.14-30-pve
+GRUB_DEFAULT=0
+110: Proxmox VE GNU/Linux
+129: Proxmox VE GNU/Linux, with Linux 7.0.14-30-pve
+147: Proxmox VE GNU/Linux, with Linux 7.0.14-30-pve (recovery mode)
+        linux   /boot/vmlinuz-7.0.14-30-pve root=/dev/mapper/pve-root ro  video=vesafb:ywrap,mtrr initrd=initrd.magic quiet
+ 00:53:40 up 48 days, 15:39,  1 user,  load average: 5.85, 6.90, 6.93
+A5_PRE_END
+root@proxmox:~#

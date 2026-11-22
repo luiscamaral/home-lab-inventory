@@ -1,0 +1,18 @@
+Collected UTC: 2026-11-22T08:14:01Z
+Source: clean main 6eb512a; SSH proxmox. Scope: B2 apply: download and hash check, apt install lm-sensors and pve-mods 2.2.3, write config, apply patches, verify.
+dpkg-query: no packages found matching pve-mods
+debconf: unable to initialize frontend: Dialog
+debconf: (Dialog frontend will not work on a dumb terminal, an emacs shell buffer, or without a controlling terminal.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+N: Ignoring file 'debian.sources.bak.20260409' in directory '/etc/apt/sources.list.d/' as it has an invalid filename extension
+pve-manager 9.2.32; pve-mods installed: no; target 2.2.3
+Config files to write: ['/etc/pve-mods/pve-mods.conf', '/etc/pve-mods/conf.d/node_info.conf']
+node_info is enabled and its patches are applied. Reload the browser page.
+exit=0
+End UTC: 2026-11-22T08:14:39Z

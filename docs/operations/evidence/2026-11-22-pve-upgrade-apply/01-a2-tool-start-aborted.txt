@@ -1,0 +1,3 @@
+Collected UTC: 2026-11-22T07:34:09Z
+Source: clean main 6eb512a; SSH proxmox. Scope: A2 apt-get update, download only, then pre-check.
+W: https://downloads.linux.hpe.com/SDR/repo/mcp/dists/bookworm/current/Release.gpg: Policy will reject signature within a year, see --audit for details

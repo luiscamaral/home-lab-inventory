@@ -20,16 +20,16 @@ On 2026-11-22, the owner chose to go ahead with these risks:
 | Step | Task | Tool or command | Approval | Status |
 | --- | --- | --- | --- | --- |
 | A0 | Merge the upgrade tool, PR #180 | GitHub | No | Done |
-| A1 | Run the read-only pre-check | `scripts/proxmox-upgrade.py` | No | Ready |
-| A2 | Download the packages only | `scripts/proxmox-upgrade.py --download` | Yes | Ready |
-| A3 | Agree on a downtime window | Owner | Yes | Open |
-| A4 | Save `/etc` and install the packages | `scripts/proxmox-upgrade.py --apply` | Yes | Ready |
-| A5 | Reboot into kernel 7.0.14-30 | `reboot` in the `pve-shell` pane | Yes | Ready |
-| A6 | Check the host and guests | Checks below | No | Ready |
-| B0 | Merge the add-on tool and config, PR #181 | GitHub | No | Done after CI passes |
-| B1 | Run the read-only add-on plan | `scripts/sync-proxmox-pve-mods.py` | No | Ready after A6 |
-| B2 | Install and patch the UI | `scripts/sync-proxmox-pve-mods.py --apply` | Yes | Ready after B1 |
-| B3 | Check the node Summary page | Browser and checks below | No | Ready after B2 |
+| A1 | Run the read-only pre-check | `scripts/proxmox-upgrade.py` | No | Done |
+| A2 | Download the packages only | `scripts/proxmox-upgrade.py --download` | Yes | Done 07:43 UTC |
+| A3 | Agree on a downtime window | Owner | Yes | Done, approved for now |
+| A4 | Save `/etc` and install the packages | Same commands, run in the `pve-shell` pane | Yes | Done 07:53 UTC |
+| A5 | Reboot into kernel 7.0.14-30 | `reboot` in the `pve-shell` pane | Yes | Done 07:54 UTC |
+| A6 | Check the host and guests | Checks below | No | Done, 2 containers stalled on NFS |
+| B0 | Merge the add-on tool and config, PR #181 | GitHub | No | Done |
+| B1 | Run the read-only add-on plan | `scripts/sync-proxmox-pve-mods.py` | No | Done |
+| B2 | Install and patch the UI | `scripts/sync-proxmox-pve-mods.py --apply` | Yes | Done 08:14 UTC |
+| B3 | Check the node Summary page | Browser and checks below | No | API checked, browser open |
 
 ## Phase A: upgrade
 

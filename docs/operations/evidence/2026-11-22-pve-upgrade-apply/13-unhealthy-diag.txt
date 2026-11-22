@@ -1,0 +1,9 @@
+Collected UTC: 2026-11-22T08:15:33Z
+Source: SSH. Scope: latest Grafana log lines; FreeSWITCH process state and ESL port. Read only.
+PID                 STAT                ELAPSED             %CPU                COMMAND
+2474                Ssl                 06:37               0.5                 grafana
+tnas:/volume2/servers/dockermaster  4.0T  1.8T  2.3T  45% /nfs/dockermaster
+==
+PID                 STAT                ELAPSED             %CPU                WCHAN                  COMMAND
+3254                Dsl                 08:56               0.0                 rpc_wait_bit_killabl   freeswitch
+no-8021-listener
