@@ -81,6 +81,8 @@ locals {
             labels: { instance: nas }
           - targets: [192.168.4.1:9100]
             labels: { instance: pfsense }
+          - targets: [192.168.7.11:9100]
+            labels: { instance: proxmox }
 
       # ── wifi-probe — ESP32-C5 per-room WiFi probes via OTLP collector ──
       # Probes PUSH OTLP/HTTP to the otel-collector (192.168.59.46:4318); it
@@ -599,6 +601,8 @@ locals {
             labels: { instance: nas }
           - targets: [192.168.4.1:9100]
             labels: { instance: pfsense }
+          - targets: [192.168.7.11:9100]
+            labels: { instance: proxmox }
 
       # ── wifi-probe — ESP32-C5 per-room WiFi probes via OTLP collector ──
       # Probes PUSH OTLP/HTTP to the otel-collector (192.168.59.46:4318); it

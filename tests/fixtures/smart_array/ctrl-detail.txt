@@ -1,0 +1,59 @@
+
+Smart Array P420i in Slot 0 (Embedded)
+   Bus Interface: PCI
+   Slot: 0
+   Serial Number: REDACTED
+   Cache Serial Number: REDACTED
+   RAID 6 Status: Enabled
+   Controller Status: OK
+   Hardware Revision: B
+   Firmware Version: 8.32
+   Firmware Supports Online Firmware Activation: False
+   Rebuild Priority: Low
+   Expand Priority: Medium
+   Surface Scan Delay: 15 secs
+   Surface Scan Mode: Idle
+   Parallel Surface Scan Supported: No
+   Queue Depth: Automatic
+   Monitor and Performance Delay: 60  min
+   Elevator Sort: Enabled
+   Degraded Performance Optimization: Disabled
+   Inconsistency Repair Policy: Disabled
+   Wait for Cache Room: Disabled
+   Surface Analysis Inconsistency Notification: Disabled
+   Post Prompt Timeout: 0 secs
+   Cache Board Present: True
+   Cache Status: OK
+   Cache Ratio: 25% Read / 75% Write
+   Drive Write Cache: Enabled
+   Total Cache Size: 0.5
+   Total Cache Memory Available: 0.3
+   Battery Backed Cache Size: 0.3
+   No-Battery Write Cache: Enabled
+   Cache Backup Power Source: Capacitors
+   Battery/Capacitor Count: 1
+   Battery/Capacitor Status: Failed (Replace Batteries)
+   SATA NCQ Supported: True
+   Spare Activation Mode: Activate on physical drive failure (default)
+   Controller Temperature (C): 67
+   Cache Module Temperature (C): 38
+   Capacitor Temperature  (C): 30
+   Number of Ports: 2 Internal only
+   Encryption: Not Set
+   Driver Name: hpsa
+   Driver Version: 3.4.20
+   WWN REDACTED
+   Driver Supports SSD Smart Path: True
+   PCI Address (Domain:Bus:Device.Function): 0000:02:00.0
+   Port Max Phy Rate Limiting Supported: False
+   Host Serial Number: REDACTED
+   Sanitize Erase Supported: False
+   Primary Boot Volume: None
+   Secondary Boot Volume: None
+   SPDM Supports Get Slot Certificate Chain: no
+   SPDM Supports Get Controller Info       : no
+   SPDM Supports Get Slot Info             : no
+   SPDM Supports Set Import Certificate    : no
+   SPDM Supports Set Invalidate Slot       : no
+   Surface Scan Completion Supported: False
+   Persistent Event Log Policy Change Supported: False
