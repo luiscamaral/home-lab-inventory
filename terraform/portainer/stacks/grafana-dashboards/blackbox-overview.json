@@ -886,5 +886,6 @@
   "timepicker": {},
   "timezone": "",
   "title": "Blackbox Exporter (HTTP prober)",
+  "uid": "blackbox-overview",
   "version": 15
 }

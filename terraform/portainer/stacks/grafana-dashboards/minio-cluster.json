@@ -3638,6 +3638,7 @@
   },
   "timezone": "",
   "title": "MinIO Dashboard",
+  "uid": "minio-cluster",
   "version": 54,
   "weekStart": ""
 }

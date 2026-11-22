@@ -143,6 +143,8 @@ services:
       GF_AUTH_GENERIC_OAUTH_LOGIN_ATTRIBUTE_PATH: preferred_username
       GF_AUTH_GENERIC_OAUTH_NAME_ATTRIBUTE_PATH: name
       GF_AUTH_GENERIC_OAUTH_EMAIL_ATTRIBUTE_PATH: email
+      # Home page: the glass panel built by scripts/build-glass-panel.py.
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/homelab-glass.json
       GF_LOG_MODE: console
       GF_LOG_LEVEL: info
       GF_INSTALL_PLUGINS: ""

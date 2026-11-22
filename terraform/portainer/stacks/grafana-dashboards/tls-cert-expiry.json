@@ -109,5 +109,6 @@
   },
   "timezone": "browser",
   "title": "TLS Cert Expiry",
+  "uid": "tls-cert-expiry",
   "version": 1
 }

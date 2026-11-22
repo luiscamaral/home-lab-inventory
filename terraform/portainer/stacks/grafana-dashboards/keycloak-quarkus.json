@@ -3333,6 +3333,7 @@
   "timepicker": {},
   "timezone": "browser",
   "title": "KeyCloak Metrics",
+  "uid": "keycloak-quarkus",
   "version": 7,
   "weekStart": ""
 }
