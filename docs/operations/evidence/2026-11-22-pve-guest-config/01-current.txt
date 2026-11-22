@@ -1,0 +1,33 @@
+Captured UTC: 2026-11-22T13:56:59Z
+Source: Herdr pane w5:p6 (pve-shell). Scope: onboot and startup for every guest, VM 121 config (smbios1, vmgenid, net, description and meta lines omitted). Read only.
+G_READ 2026-11-22T13:56:59Z
+qm 100: name: omada-controller onboot: 1 startup: up=180
+qm 101: name: tiny
+qm 111: name: rootmaster
+qm 120: name: dockermaster onboot: 1 startup: up=30
+qm 121: name: ha onboot: 1 startup: order=2
+qm 122: name: unifi-controller onboot: 1 startup: up=120
+qm 123: name: dockerserver-1 onboot: 1 startup: up=30
+qm 124: name: dockerserver-2 onboot: 1 startup: order=1,up=30
+qm 130: name: lab-router
+ct 9000: hostname: tmpl-debian-devops onboot: 1
+ct 10000: hostname: pihole onboot: 1 startup: order=1
+ct 10020: hostname: hermes onboot: 0
+--- vm 121
+agent: 1
+bios: ovmf
+boot: order=scsi0
+cores: 4
+cpu: host
+memory: 16384
+name: ha
+numa: 0
+onboot: 1
+ostype: l26
+parent: pre-resize-20251222
+scsi0: thin-pool-ssd:vm-121-disk-0,iothread=1,size=64G
+scsihw: virtio-scsi-single
+sockets: 1
+startup: order=2
+status: running
+G_READ_END
