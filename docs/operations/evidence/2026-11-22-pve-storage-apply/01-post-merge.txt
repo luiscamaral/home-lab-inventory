@@ -1,0 +1,26 @@
+Collected UTC: 2026-11-22T14:53Z to 15:11:32Z
+Source: clean main 3179da1 (after #186 and #187) and 3e2410b (after #188) on this Mac. Terraform with the shared state
+(backup taken first, not in git), Portainer API, Prometheus, Alertmanager and Grafana HTTP APIs, SSH proxmox.
+
+Terraform, targets portainer_stack.prometheus, portainer_stack.prometheus_2, portainer_stack.grafana:
+- Plan: 0 to add, 3 to change, 0 to destroy.
+- Plan JSON diff of stack_file_content: grafana +905 lines, -0 (the new dashboard); prometheus and prometheus_2
+  +114 lines, -0 each (the smart-array rule group). No other attribute changed.
+- Apply complete! Resources: 0 added, 3 changed, 0 destroyed.
+- First re-plan: Plan: 0 to add, 1 to change. Two later re-plans: No changes. The single change did not repeat; its
+  cause was not identified.
+
+Redeploys (scripts/portainer-redeploy.py, one at a time):
+- prometheus 14:54:17 UTC: smart-array group loaded, up{instance="proxmox"} = 1 at 14:54:46.
+- prometheus-2 14:54:46 UTC: smart-array group loaded, up{instance="proxmox"} = 1 at 14:55:21.
+- grafana 14:55:45 UTC: /api/dashboards/uid/proxmox-smart-array -> "Proxmox storage (Smart Array)", folder Homelab,
+  9 panels, at 14:59:10.
+
+Sync tool from 3e2410b at 14:59:49 UTC: No changes. homelab-pve-ui check: OK. Timer and node_exporter active.
+APT hook present.
+
+Alerts:
+- 14:59:22 UTC: SmartArrayCapacitorFailed and SmartArrayWriteCacheWithoutCapacitor pending on both Prometheus
+  instances; the other 7 smart-array rules inactive, health ok.
+- 15:10:03 UTC: both firing on prometheus-1; pending on prometheus-2 (rules loaded 1 minute later).
+- 15:11:32 UTC: Alertmanager 192.168.59.27 has both alerts active from replica A and replica B, receiver email-warning.
