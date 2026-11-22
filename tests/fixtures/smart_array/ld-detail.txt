@@ -1,0 +1,47 @@
+
+Smart Array P420i in Slot 0 (Embedded)
+
+   Array A
+
+      Logical Drive: 1
+         Size: 1.86 TB
+         Fault Tolerance: 5
+         Heads: 255
+         Sectors Per Track: 63
+         Cylinders: 65535
+         Strip Size: 256 KB
+         Full Stripe Size: 512 KB
+         Status: OK
+         Unrecoverable Media Errors: None
+         Caching:  Disabled
+         Parity Initialization Status: Initialization Completed
+         Last Surface Scan Completed: False
+         Unique Identifier: REDACTED
+         Disk Name: REDACTED
+         Mount Points: None
+         Logical Drive Label: REDACTED
+         Drive Type: Data
+         LD Acceleration Method: Smart Path
+
+
+   Array B
+
+      Logical Drive: 2
+         Size: 1.09 TB
+         Fault Tolerance: 5
+         Heads: 255
+         Sectors Per Track: 32
+         Cylinders: 65535
+         Strip Size: 256 KB
+         Full Stripe Size: 512 KB
+         Status: OK
+         Unrecoverable Media Errors: None
+         Caching:  Enabled
+         Parity Initialization Status: Initialization Completed
+         Last Surface Scan Completed: False
+         Unique Identifier: REDACTED
+         Disk Name: REDACTED
+         Mount Points: None
+         Logical Drive Label: REDACTED
+         Drive Type: Data
+         LD Acceleration Method: Controller Cache

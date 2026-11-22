@@ -1,0 +1,46 @@
+Collected UTC: 2026-11-22T14:33:48Z
+Source: feature branch feat/pve-storage-collector at 1d52440, pre-merge test approved by the owner on 2026-11-22. SSH proxmox.
++ ./scripts/sync-proxmox-storage-monitoring.py
+dpkg-query: no packages found matching prometheus-node-exporter
+stat: cannot statx '/usr/local/sbin/homelab-smart-array-collect': No such file or directory
+stat: cannot statx '/etc/systemd/system/homelab-smart-array-collect.service': No such file or directory
+stat: cannot statx '/etc/systemd/system/homelab-smart-array-collect.timer': No such file or directory
+stat: cannot statx '/etc/default/prometheus-node-exporter': No such file or directory
+install package prometheus-node-exporter (no recommends)
+write /usr/local/sbin/homelab-smart-array-collect mode 0755
+write /etc/systemd/system/homelab-smart-array-collect.service mode 0644
+write /etc/systemd/system/homelab-smart-array-collect.timer mode 0644
+write /etc/default/prometheus-node-exporter mode 0644
+enable and start prometheus-node-exporter.service
+enable and start homelab-smart-array-collect.timer
++ ./scripts/sync-proxmox-storage-monitoring.py --apply
+dpkg-query: no packages found matching prometheus-node-exporter
+stat: cannot statx '/usr/local/sbin/homelab-smart-array-collect': No such file or directory
+stat: cannot statx '/etc/systemd/system/homelab-smart-array-collect.service': No such file or directory
+stat: cannot statx '/etc/systemd/system/homelab-smart-array-collect.timer': No such file or directory
+stat: cannot statx '/etc/default/prometheus-node-exporter': No such file or directory
+debconf: unable to initialize frontend: Dialog
+debconf: (Dialog frontend will not work on a dumb terminal, an emacs shell buffer, or without a controlling terminal.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+debconf: unable to initialize frontend: Teletype
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Noninteractive
+N: Ignoring file 'debian.sources.bak.20260409' in directory '/etc/apt/sources.list.d/' as it has an invalid filename extension
+Synchronizing state of prometheus-node-exporter.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable prometheus-node-exporter
+Created symlink '/etc/systemd/system/timers.target.wants/homelab-smart-array-collect.timer' -> '/etc/systemd/system/homelab-smart-array-collect.timer'.
+install package prometheus-node-exporter (no recommends)
+write /usr/local/sbin/homelab-smart-array-collect mode 0755
+write /etc/systemd/system/homelab-smart-array-collect.service mode 0644
+write /etc/systemd/system/homelab-smart-array-collect.timer mode 0644
+write /etc/default/prometheus-node-exporter mode 0644
+enable and start prometheus-node-exporter.service
+enable and start homelab-smart-array-collect.timer
+Verified. node_exporter serves 8 drive series.
++ ./scripts/sync-proxmox-storage-monitoring.py
+No changes.
++ set +x
+End UTC: 2026-11-22T14:34:40Z

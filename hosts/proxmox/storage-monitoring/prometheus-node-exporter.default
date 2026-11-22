@@ -1,0 +1,3 @@
+# Managed by the homelab inventory repo: hosts/proxmox/storage-monitoring
+# The textfile collector reads smart_array.prom written by homelab-smart-array-collect.
+ARGS="--collector.textfile.directory=/var/lib/prometheus/node-exporter"

@@ -1,0 +1,113 @@
+{
+  "device": {
+    "info_name": "/dev/sda [cciss_disk_03] [SCSI]",
+    "name": "/dev/sda",
+    "protocol": "SCSI",
+    "type": "cciss"
+  },
+  "device_type": {
+    "name": "disk",
+    "scsi_terminology": "Peripheral Device Type [PDT]",
+    "scsi_value": 0
+  },
+  "form_factor": {
+    "name": "2.5 inches",
+    "scsi_value": 3
+  },
+  "json_format_version": [
+    1,
+    0
+  ],
+  "local_time": {
+    "asctime": "Sun Nov 22 07:30:12 2026 MST",
+    "time_t": 1795357812
+  },
+  "logical_block_size": 512,
+  "logical_unit_id": "REDACTED",
+  "model_name": "HP EG0600FBLSH",
+  "power_on_time": {
+    "hours": 44906,
+    "minutes": 53
+  },
+  "rotation_rate": 10000,
+  "scsi_error_counter_log": {
+    "read": {
+      "correction_algorithm_invocations": 0,
+      "errors_corrected_by_eccdelayed": 40,
+      "errors_corrected_by_eccfast": 0,
+      "errors_corrected_by_rereads_rewrites": 0,
+      "gigabytes_processed": "3230493.742",
+      "total_errors_corrected": 2517564118,
+      "total_uncorrected_errors": 4
+    },
+    "verify": {
+      "correction_algorithm_invocations": 0,
+      "errors_corrected_by_eccdelayed": 0,
+      "errors_corrected_by_eccfast": 0,
+      "errors_corrected_by_rereads_rewrites": 0,
+      "gigabytes_processed": "0.000",
+      "total_errors_corrected": 40503,
+      "total_uncorrected_errors": 0
+    },
+    "write": {
+      "correction_algorithm_invocations": 0,
+      "errors_corrected_by_eccdelayed": 0,
+      "errors_corrected_by_eccfast": 0,
+      "errors_corrected_by_rereads_rewrites": 0,
+      "gigabytes_processed": "179043.662",
+      "total_errors_corrected": 3,
+      "total_uncorrected_errors": 7
+    }
+  },
+  "scsi_grown_defect_list": 9,
+  "scsi_model_name": "HP EG0600FBLSH",
+  "scsi_product": "EG0600FBLSH",
+  "scsi_revision": "HPD5",
+  "scsi_start_stop_cycle_counter": {
+    "accumulated_load_unload_cycles": 129,
+    "accumulated_start_stop_cycles": 129,
+    "specified_cycle_count_over_device_lifetime": 10000,
+    "specified_load_unload_count_over_device_lifetime": 300000,
+    "week_of_manufacture": "50",
+    "year_of_manufacture": "2011"
+  },
+  "scsi_transport_protocol": {
+    "name": "SAS (SPL-4)",
+    "value": 6
+  },
+  "scsi_vendor": "HP",
+  "scsi_version": "SPC-3",
+  "seagate_farm_log": {
+    "supported": false
+  },
+  "serial_number": "SERIAL-8",
+  "smart_status": {
+    "passed": true
+  },
+  "smart_support": {
+    "available": true,
+    "enabled": true
+  },
+  "smartctl": {
+    "build_info": "(local build)",
+    "exit_status": 0,
+    "platform_info": "x86_64-linux-7.0.14-30-pve",
+    "pre_release": false,
+    "svn_revision": "5714",
+    "version": [
+      7,
+      5
+    ]
+  },
+  "temperature": {
+    "current": 34,
+    "drive_trip": 65
+  },
+  "temperature_warning": {
+    "enabled": true
+  },
+  "user_capacity": {
+    "blocks": 1172123568,
+    "bytes": 600127266816
+  }
+}

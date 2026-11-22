@@ -1,0 +1,230 @@
+
+Smart Array P420i in Slot 0 (Embedded)
+
+   Array A
+
+      physicaldrive 1I:1:1
+         Port: 1I
+         Box: 1
+         Bay: 1
+         Status: OK
+         Drive Type: Data Drive
+         Interface Type: Solid State SATA
+         Size: 1 TB
+         Drive exposed to OS: False
+         Logical/Physical Block Size: 512/512
+         Firmware Revision: X1113A0
+         Serial Number: SERIAL-1
+         WWID: REDACTED
+         Model: ATA     SPCC Solid State
+         SATA NCQ Capable: True
+         SATA NCQ Enabled: True
+         Current Temperature (C): 38
+         Maximum Temperature (C): 38
+         SSD Smart Trip Wearout: Not Supported
+         PHY Count: 1
+         PHY Transfer Rate: 6.0Gbps
+         PHY Physical Link Rate: Unknown
+         PHY Maximum Link Rate: Unknown
+         Drive Authentication Status: OK
+         Carrier Application Version: 11
+         Carrier Bootloader Version: 6
+         Sanitize Erase Supported: True
+         Unrestricted Sanitize Supported: True
+         Shingled Magnetic Recording Support: None
+
+      physicaldrive 1I:1:2
+         Port: 1I
+         Box: 1
+         Bay: 2
+         Status: OK
+         Drive Type: Data Drive
+         Interface Type: Solid State SATA
+         Size: 1 TB
+         Drive exposed to OS: False
+         Logical/Physical Block Size: 512/512
+         Firmware Revision: SBFM61.5
+         Serial Number: SERIAL-2
+         WWID: REDACTED
+         Model: ATA     SPCC Solid State
+         SATA NCQ Capable: True
+         SATA NCQ Enabled: True
+         SSD Smart Trip Wearout: Not Supported
+         PHY Count: 1
+         PHY Transfer Rate: 6.0Gbps
+         PHY Physical Link Rate: Unknown
+         PHY Maximum Link Rate: Unknown
+         Drive Authentication Status: OK
+         Carrier Application Version: 11
+         Carrier Bootloader Version: 6
+         Sanitize Erase Supported: False
+         Shingled Magnetic Recording Support: None
+
+      physicaldrive 1I:1:3
+         Port: 1I
+         Box: 1
+         Bay: 3
+         Status: OK
+         Drive Type: Data Drive
+         Interface Type: Solid State SATA
+         Size: 1 TB
+         Drive exposed to OS: False
+         Logical/Physical Block Size: 512/512
+         Firmware Revision: X1113A0
+         Serial Number: SERIAL-3
+         WWID: REDACTED
+         Model: ATA     SPCC Solid State
+         SATA NCQ Capable: True
+         SATA NCQ Enabled: True
+         Current Temperature (C): 38
+         Maximum Temperature (C): 38
+         SSD Smart Trip Wearout: Not Supported
+         PHY Count: 1
+         PHY Transfer Rate: 6.0Gbps
+         PHY Physical Link Rate: Unknown
+         PHY Maximum Link Rate: Unknown
+         Drive Authentication Status: OK
+         Carrier Application Version: 11
+         Carrier Bootloader Version: 6
+         Sanitize Erase Supported: True
+         Unrestricted Sanitize Supported: True
+         Shingled Magnetic Recording Support: None
+
+
+   Array B
+
+      physicaldrive 2I:1:5
+         Port: 2I
+         Box: 1
+         Bay: 5
+         Status: OK
+         Drive Type: Data Drive
+         Interface Type: SAS
+         Size: 600 GB
+         Drive exposed to OS: False
+         Logical/Physical Block Size: 512/512
+         Rotational Speed: 10000
+         Firmware Revision: HPD6
+         Serial Number: SERIAL-4
+         WWID: REDACTED
+         Model: HP      EG0600FBDSR
+         Current Temperature (C): 35
+         Maximum Temperature (C): 47
+         PHY Count: 2
+         PHY Transfer Rate: 6.0Gbps, Unknown
+         PHY Physical Link Rate: Unknown, Unknown
+         PHY Maximum Link Rate: Unknown, Unknown
+         Drive Authentication Status: OK
+         Carrier Application Version: 11
+         Carrier Bootloader Version: 6
+         Sanitize Erase Supported: False
+         Shingled Magnetic Recording Support: None
+
+      physicaldrive 2I:1:6
+         Port: 2I
+         Box: 1
+         Bay: 6
+         Status: OK
+         Drive Type: Data Drive
+         Interface Type: SAS
+         Size: 600 GB
+         Drive exposed to OS: False
+         Logical/Physical Block Size: 512/512
+         Rotational Speed: 10000
+         Firmware Revision: 0002
+         Serial Number: SERIAL-5
+         WWID: REDACTED
+         Model: SEAGATE ST9600205SS
+         PHY Count: 2
+         PHY Transfer Rate: 6.0Gbps, Unknown
+         PHY Physical Link Rate: Unknown, Unknown
+         PHY Maximum Link Rate: Unknown, Unknown
+         Drive Authentication Status: OK
+         Carrier Application Version: 11
+         Carrier Bootloader Version: 6
+         Sanitize Erase Supported: False
+         Shingled Magnetic Recording Support: None
+
+      physicaldrive 2I:1:7
+         Port: 2I
+         Box: 1
+         Bay: 7
+         Status: OK
+         Drive Type: Data Drive
+         Interface Type: SAS
+         Size: 600 GB
+         Drive exposed to OS: False
+         Logical/Physical Block Size: 512/512
+         Rotational Speed: 10000
+         Firmware Revision: HPD4
+         Serial Number: SERIAL-6
+         WWID: REDACTED
+         Model: HP      EG0600FBDSR
+         Current Temperature (C): 34
+         Maximum Temperature (C): 41
+         PHY Count: 2
+         PHY Transfer Rate: 6.0Gbps, Unknown
+         PHY Physical Link Rate: Unknown, Unknown
+         PHY Maximum Link Rate: Unknown, Unknown
+         Drive Authentication Status: OK
+         Carrier Application Version: 11
+         Carrier Bootloader Version: 6
+         Sanitize Erase Supported: False
+         Shingled Magnetic Recording Support: None
+
+      physicaldrive 2I:1:8
+         Port: 2I
+         Box: 1
+         Bay: 8
+         Status: OK
+         Drive Type: Spare Drive
+         Interface Type: SAS
+         Size: 600 GB
+         Drive exposed to OS: False
+         Logical/Physical Block Size: 512/512
+         Rotational Speed: 10000
+         Firmware Revision: HPD6
+         Serial Number: SERIAL-7
+         WWID: REDACTED
+         Model: HP      EG0600FBLSH
+         Current Temperature (C): 34
+         Maximum Temperature (C): 56
+         PHY Count: 2
+         PHY Transfer Rate: 6.0Gbps, Unknown
+         PHY Physical Link Rate: Unknown, Unknown
+         PHY Maximum Link Rate: Unknown, Unknown
+         Drive Authentication Status: OK
+         Carrier Application Version: 11
+         Carrier Bootloader Version: 6
+         Sanitize Erase Supported: False
+         Shingled Magnetic Recording Support: None
+
+
+   Unassigned
+
+      physicaldrive 1I:1:4
+         Port: 1I
+         Box: 1
+         Bay: 4
+         Status: OK
+         Drive Type: Unassigned Drive
+         Interface Type: SAS
+         Size: 600 GB
+         Drive exposed to OS: False
+         Logical/Physical Block Size: 512/512
+         Rotational Speed: 10000
+         Firmware Revision: HPD5
+         Serial Number: SERIAL-8
+         WWID: REDACTED
+         Model: HP      EG0600FBLSH
+         Current Temperature (C): 34
+         Maximum Temperature (C): 57
+         PHY Count: 2
+         PHY Transfer Rate: 6.0Gbps, Unknown
+         PHY Physical Link Rate: Unknown, Unknown
+         PHY Maximum Link Rate: Unknown, Unknown
+         Drive Authentication Status: OK
+         Carrier Application Version: 11
+         Carrier Bootloader Version: 6
+         Sanitize Erase Supported: False
+         Shingled Magnetic Recording Support: None

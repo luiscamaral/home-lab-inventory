@@ -1,0 +1,271 @@
+#!/usr/bin/env python3
+"""Read HP Smart Array and drive SMART health. Write Prometheus metrics and a node Notes block.
+
+Managed by the homelab inventory repo (hosts/proxmox/storage-monitoring). Read-only towards the
+controller and drives. Writes only the textfile metrics file and the marked block in the node Notes.
+"""
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import tempfile
+import time
+from datetime import datetime, timezone
+
+BEGIN = "<!-- homelab-smart-array:begin -->"
+END = "<!-- homelab-smart-array:end -->"
+JSON_TAG = "homelab-smart-array-json"
+PREFIX = "homelab_smart_array"
+ATA_LIFE_ATTRIBUTES = (231, 177, 233, 169, 202)
+
+
+def run(cmd, timeout=60):
+    env = dict(os.environ, LC_ALL="C")
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env, check=False).stdout
+
+
+def field(text, name):
+    match = re.search(rf"^\s*{re.escape(name)}:\s*(.+?)\s*$", text, re.MULTILINE)
+    return match.group(1) if match else None
+
+
+def parse_controller(text):
+    capacitor = field(text, "Battery/Capacitor Status") or "Unknown"
+    return {
+        "model": (text.strip().splitlines() or [""])[0].split(" in Slot")[0].strip(),
+        "controller": field(text, "Controller Status") or "Unknown",
+        "cache": field(text, "Cache Status") or "Unknown",
+        "capacitor": capacitor,
+        "nbwc": (field(text, "No-Battery Write Cache") or "").lower() == "enabled",
+    }
+
+
+def parse_config(text):
+    volumes, drives = [], []
+    array = None
+    for line in text.splitlines():
+        line = line.strip()
+        if line.startswith("Array "):
+            array = line.split()[1]
+        elif line.startswith("Unassigned"):
+            array = None
+        elif line.startswith("logicaldrive "):
+            match = re.match(r"logicaldrive (\d+) \(([^,]+), RAID ([^,]+), ([^)]+)\)", line)
+            if match:
+                volumes.append({"id": match[1], "size": match[2], "raid": match[3],
+                                "status": match[4], "array": array})
+        elif line.startswith("physicaldrive "):
+            match = re.match(r"physicaldrive (\S+) \(([^)]*)\)", line)
+            if match:
+                parts = [p.strip() for p in match[2].split(",")]
+                spare = "spare" in parts
+                drives.append({"bay": match[1], "type": parts[1], "size": parts[2], "status": parts[3],
+                               "array": array,
+                               "role": "spare" if spare else ("data" if array else "unassigned")})
+    for drive in drives:
+        volume = next((v for v in volumes if v["array"] == drive["array"]), None)
+        drive["volume"] = volume["id"] if volume and drive["role"] == "data" else None
+    return volumes, drives
+
+
+def parse_drive_details(text):
+    details = {}
+    for block in re.split(r"^\s*physicaldrive ", text, flags=re.MULTILINE)[1:]:
+        bay = block.split()[0]
+        temp = field(block, "Current Temperature (C)")
+        details[bay] = {"serial": field(block, "Serial Number"), "model": field(block, "Model"),
+                        "temp": int(temp) if temp and temp.isdigit() else None}
+    return details
+
+
+def ssd_life_left(smart):
+    nvme = smart.get("nvme_smart_health_information_log", {})
+    if "percentage_used" in nvme:
+        return max(0, 100 - nvme["percentage_used"])
+    if "scsi_percentage_used_endurance_indicator" in smart:
+        return max(0, 100 - smart["scsi_percentage_used_endurance_indicator"])
+    table = {a["id"]: a for a in smart.get("ata_smart_attributes", {}).get("table", [])}
+    for attr in ATA_LIFE_ATTRIBUTES:
+        if attr in table:
+            return table[attr]["value"]
+    return None
+
+
+def summarize_smart(smart):
+    return {"serial": (smart.get("serial_number") or "").strip(),
+            "model": smart.get("model_name") or smart.get("scsi_model_name"),
+            "temp": smart.get("temperature", {}).get("current"),
+            "passed": smart.get("smart_status", {}).get("passed"),
+            "life": ssd_life_left(smart) if smart.get("rotation_rate", 1) == 0 else None}
+
+
+def read_smart(device, count):
+    found = {}
+    for index in range(count):
+        try:
+            smart = json.loads(run(["smartctl", "-a", "-j", "-d", f"cciss,{index}", device]))
+        except ValueError:
+            continue
+        summary = summarize_smart(smart)
+        if summary["serial"]:
+            found[summary["serial"]] = summary
+    return found
+
+
+def merge(drives, details, smart):
+    for drive in drives:
+        detail = details.get(drive["bay"], {})
+        info = smart.get((detail.get("serial") or "").strip(), {})
+        drive["model"] = info.get("model") or detail.get("model")
+        drive["temp"] = info.get("temp") if info.get("temp") is not None else detail.get("temp")
+        drive["smart_passed"] = info.get("passed")
+        drive["ssd_life_left"] = info.get("life")
+    return drives
+
+
+def label_text(labels):
+    def esc(value):
+        return str(value).replace("\\", "\\\\").replace('"', '\\"')
+    return ",".join(f'{k}="{esc(v)}"' for k, v in labels.items() if v is not None)
+
+
+def metrics(state):
+    out = []
+
+    def gauge(name, help_text, rows):
+        out.append(f"# HELP {PREFIX}_{name} {help_text}")
+        out.append(f"# TYPE {PREFIX}_{name} gauge")
+        for labels, value in rows:
+            out.append(f"{PREFIX}_{name}{{{label_text(labels)}}} {value}" if labels
+                       else f"{PREFIX}_{name} {value}")
+
+    ctrl = state["controller"]
+    slot = {"slot": state["slot"], "model": ctrl["model"]}
+    gauge("controller_ok", "1 if the controller status is OK.", [(slot, int(ctrl["controller"] == "OK"))])
+    gauge("cache_ok", "1 if the cache status is OK.", [(slot, int(ctrl["cache"] == "OK"))])
+    gauge("capacitor_ok", "1 if the cache battery or capacitor status is OK.",
+          [(slot, int(ctrl["capacitor"] == "OK"))])
+    gauge("no_battery_write_cache_enabled", "1 if write cache stays on without a working battery.",
+          [(slot, int(ctrl["nbwc"]))])
+    gauge("logical_drive_ok", "1 if the logical drive status is OK.",
+          [({"slot": state["slot"], "volume": v["id"], "raid": v["raid"], "size": v["size"]},
+            int(v["status"] == "OK")) for v in state["volumes"]])
+    drive_rows, temp_rows, smart_rows, life_rows = [], [], [], []
+    for d in state["drives"]:
+        labels = {"slot": state["slot"], "bay": d["bay"], "type": d["type"], "size": d["size"],
+                  "role": d["role"], "volume": d["volume"], "model": d["model"]}
+        drive_rows.append((labels, int(d["status"] == "OK")))
+        short = {"slot": state["slot"], "bay": d["bay"]}
+        if d["temp"] is not None:
+            temp_rows.append((short, d["temp"]))
+        if d["smart_passed"] is not None:
+            smart_rows.append((short, int(d["smart_passed"])))
+        if d["ssd_life_left"] is not None:
+            life_rows.append((short, d["ssd_life_left"]))
+    gauge("physical_drive_ok", "1 if the physical drive status is OK.", drive_rows)
+    gauge("physical_drive_temperature_celsius", "Current drive temperature.", temp_rows)
+    gauge("physical_drive_smart_passed", "1 if the drive SMART self-assessment passed.", smart_rows)
+    gauge("ssd_life_left_percent", "Remaining SSD life reported by SMART.", life_rows)
+    gauge("collector_last_success_timestamp_seconds", "Unix time of the last good run.",
+          [(None, int(state["time"]))])
+    return "\n".join(out) + "\n"
+
+
+def mark(ok):
+    return "OK" if ok else "**Problem**"
+
+
+def notes_block(state):
+    ctrl = state["controller"]
+    stamp = datetime.fromtimestamp(state["time"], timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    lines = [BEGIN, f"### Storage: {ctrl['model']}", "",
+             (f"Updated {stamp} by `homelab-smart-array-collect`. The repo manages this block. "
+              "Edits here are overwritten."), "",
+             (f"Controller: {mark(ctrl['controller'] == 'OK')} ({ctrl['controller']}). "
+              f"Cache: {mark(ctrl['cache'] == 'OK')} ({ctrl['cache']}). "
+              f"Capacitor: {mark(ctrl['capacitor'] == 'OK')} ({ctrl['capacitor']}). "
+              f"Write cache without capacitor: {'Enabled' if ctrl['nbwc'] else 'Disabled'}."), "",
+             "| Volume | RAID | Size | Status |", "| --- | --- | --- | --- |"]
+    lines += [f"| {v['id']} | {v['raid']} | {v['size']} | {mark(v['status'] == 'OK')} |"
+              for v in state["volumes"]]
+    lines += ["", "| Bay | Volume | Type | Size | Role | Status | Temp | SMART | SSD life |",
+              "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+    for d in state["drives"]:
+        smart = "-" if d["smart_passed"] is None else ("Passed" if d["smart_passed"] else "**Failed**")
+        temp = "-" if d["temp"] is None else f"{d['temp']} °C"
+        life = "-" if d["ssd_life_left"] is None else f"{d['ssd_life_left']} %"
+        lines.append(f"| {d['bay']} | {d['volume'] or '-'} | {d['type']} | {d['size']} | {d['role']} | "
+                     f"{mark(d['status'] == 'OK')} | {temp} | {smart} | {life} |")
+    public = {k: state[k] for k in ("slot", "time", "controller", "volumes", "drives")}
+    lines += ["", f"<!-- {JSON_TAG} {json.dumps(public, separators=(',', ':'))} -->", END]
+    return "\n".join(lines)
+
+
+def replace_block(notes, block):
+    notes = notes or ""
+    pattern = re.compile(re.escape(BEGIN) + ".*?" + re.escape(END), re.DOTALL)
+    if not block:
+        return pattern.sub("", notes).strip()
+    if pattern.search(notes):
+        return pattern.sub(lambda _: block, notes, count=1)
+    return f"{notes.rstrip()}\n\n{block}" if notes.strip() else block
+
+
+def collect(slot, device, smart_count):
+    controller = parse_controller(run(["ssacli", "ctrl", f"slot={slot}", "show", "detail"]))
+    volumes, drives = parse_config(run(["ssacli", "ctrl", f"slot={slot}", "show", "config"]))
+    if not volumes or not drives:
+        raise RuntimeError("ssacli returned no volumes or drives")
+    details = parse_drive_details(run(["ssacli", "ctrl", f"slot={slot}", "pd", "all", "show", "detail"]))
+    drives = merge(drives, details, read_smart(device, smart_count))
+    for drive in drives:
+        drive.pop("array", None)
+    for volume in volumes:
+        volume.pop("array", None)
+    return {"slot": slot, "time": time.time(), "controller": controller, "volumes": volumes, "drives": drives}
+
+
+def write_metrics(directory, text):
+    fd, tmp = tempfile.mkstemp(dir=directory, prefix=".smart_array.")
+    with os.fdopen(fd, "w") as handle:
+        handle.write(text)
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, os.path.join(directory, "smart_array.prom"))
+
+
+def update_notes(node, block):
+    config = json.loads(run(["pvesh", "get", f"/nodes/{node}/config", "--output-format", "json"]) or "{}")
+    current = config.get("description", "")
+    updated = replace_block(current, block)
+    if updated != current:
+        subprocess.run(["pvesh", "set", f"/nodes/{node}/config", "--description", updated], check=True,
+                       capture_output=True, timeout=60)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--slot", default="0")
+    parser.add_argument("--device", default="/dev/sda", help="Any block device on the controller")
+    parser.add_argument("--smart-count", type=int, default=16, help="cciss indexes to probe")
+    parser.add_argument("--textfile-dir", default="/var/lib/prometheus/node-exporter")
+    parser.add_argument("--node", default=os.uname().nodename)
+    parser.add_argument("--print", action="store_true", help="Print metrics and the Notes block. Write nothing.")
+    parser.add_argument("--remove-notes", action="store_true", help="Remove the managed Notes block and exit.")
+    args = parser.parse_args()
+    if args.remove_notes:
+        update_notes(args.node, "")
+        return
+    state = collect(args.slot, args.device, args.smart_count)
+    text, block = metrics(state), notes_block(state)
+    if args.print:
+        print(text)
+        print(block)
+        return
+    write_metrics(args.textfile_dir, text)
+    update_notes(args.node, block)
+
+
+if __name__ == "__main__":
+    main()

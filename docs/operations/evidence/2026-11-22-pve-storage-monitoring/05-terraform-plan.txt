@@ -1,0 +1,5 @@
+Collected UTC: 2026-11-22T14:36:08Z
+Source: terraform plan (read only, -lock=false) against the shared state, targets portainer_stack.prometheus and portainer_stack.prometheus_2.
+Feature branch 1d52440: Plan: 0 to add, 2 to change, 0 to destroy (stack_file_content is a sensitive value).
+Clean main 711b1f4, same targets: No changes. Your infrastructure matches the configuration.
+Conclusion: the only change is this PR (target 192.168.7.11:9100, instance proxmox, in both scrape configs).

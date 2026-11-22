@@ -1,0 +1,156 @@
+{
+  "device": {
+    "info_name": "/dev/sda [cciss_disk_05] [SCSI]",
+    "name": "/dev/sda",
+    "protocol": "SCSI",
+    "type": "cciss"
+  },
+  "device_type": {
+    "name": "disk",
+    "scsi_terminology": "Peripheral Device Type [PDT]",
+    "scsi_value": 0
+  },
+  "form_factor": {
+    "name": "2.5 inches",
+    "scsi_value": 3
+  },
+  "json_format_version": [
+    1,
+    0
+  ],
+  "local_time": {
+    "asctime": "Sun Nov 22 07:30:15 2026 MST",
+    "time_t": 1795357815
+  },
+  "logical_block_size": 512,
+  "logical_unit_id": "REDACTED",
+  "model_name": "SEAGATE ST9600205SS",
+  "power_on_time": {
+    "hours": 58096,
+    "minutes": 31
+  },
+  "rotation_rate": 10000,
+  "scsi_error_counter_log": {
+    "read": {
+      "correction_algorithm_invocations": 0,
+      "errors_corrected_by_eccdelayed": 0,
+      "errors_corrected_by_eccfast": 3520540551,
+      "errors_corrected_by_rereads_rewrites": 0,
+      "gigabytes_processed": "406687.963",
+      "total_errors_corrected": 3520540551,
+      "total_uncorrected_errors": 0
+    },
+    "verify": {
+      "correction_algorithm_invocations": 0,
+      "errors_corrected_by_eccdelayed": 0,
+      "errors_corrected_by_eccfast": 80795,
+      "errors_corrected_by_rereads_rewrites": 0,
+      "gigabytes_processed": "0.000",
+      "total_errors_corrected": 80795,
+      "total_uncorrected_errors": 0
+    },
+    "write": {
+      "correction_algorithm_invocations": 0,
+      "errors_corrected_by_eccdelayed": 0,
+      "errors_corrected_by_eccfast": 0,
+      "errors_corrected_by_rereads_rewrites": 0,
+      "gigabytes_processed": "61652.145",
+      "total_errors_corrected": 0,
+      "total_uncorrected_errors": 0
+    }
+  },
+  "scsi_extended_self_test_seconds": 5040,
+  "scsi_grown_defect_list": 169,
+  "scsi_model_name": "SEAGATE ST9600205SS",
+  "scsi_product": "ST9600205SS",
+  "scsi_revision": "0002",
+  "scsi_self_test_0": {
+    "code": {
+      "string": "Background short",
+      "value": 1
+    },
+    "power_on_time": {
+      "aka": "accumulated_power_on_hours",
+      "hours": 8486
+    },
+    "result": {
+      "string": "Completed",
+      "value": 0
+    }
+  },
+  "scsi_self_test_1": {
+    "code": {
+      "string": "Background short",
+      "value": 1
+    },
+    "power_on_time": {
+      "aka": "accumulated_power_on_hours",
+      "hours": 8486
+    },
+    "result": {
+      "string": "Completed",
+      "value": 0
+    }
+  },
+  "scsi_self_test_2": {
+    "code": {
+      "string": "Background short",
+      "value": 1
+    },
+    "power_on_time": {
+      "aka": "accumulated_power_on_hours",
+      "hours": 8486
+    },
+    "result": {
+      "string": "Completed",
+      "value": 0
+    }
+  },
+  "scsi_start_stop_cycle_counter": {
+    "accumulated_load_unload_cycles": 95,
+    "accumulated_start_stop_cycles": 95,
+    "specified_cycle_count_over_device_lifetime": 10000,
+    "specified_load_unload_count_over_device_lifetime": 300000,
+    "week_of_manufacture": "19",
+    "year_of_manufacture": "2012"
+  },
+  "scsi_transport_protocol": {
+    "name": "SAS (SPL-4)",
+    "value": 6
+  },
+  "scsi_vendor": "SEAGATE",
+  "scsi_version": "SPC-4",
+  "seagate_farm_log": {
+    "supported": false
+  },
+  "serial_number": "SERIAL-5",
+  "smart_status": {
+    "passed": true
+  },
+  "smart_support": {
+    "available": true,
+    "enabled": true
+  },
+  "smartctl": {
+    "build_info": "(local build)",
+    "exit_status": 0,
+    "platform_info": "x86_64-linux-7.0.14-30-pve",
+    "pre_release": false,
+    "svn_revision": "5714",
+    "version": [
+      7,
+      5
+    ]
+  },
+  "temperature": {
+    "current": 35,
+    "drive_trip": 68
+  },
+  "temperature_warning": {
+    "enabled": true
+  },
+  "user_capacity": {
+    "blocks": 1172123568,
+    "bytes": 600127266816
+  }
+}

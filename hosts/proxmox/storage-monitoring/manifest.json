@@ -1,0 +1,33 @@
+{
+  "enable": [
+    "prometheus-node-exporter.service",
+    "homelab-smart-array-collect.timer"
+  ],
+  "files": [
+    {
+      "dest": "/usr/local/sbin/homelab-smart-array-collect",
+      "mode": "0755",
+      "src": "homelab-smart-array-collect"
+    },
+    {
+      "dest": "/etc/systemd/system/homelab-smart-array-collect.service",
+      "mode": "0644",
+      "src": "homelab-smart-array-collect.service"
+    },
+    {
+      "dest": "/etc/systemd/system/homelab-smart-array-collect.timer",
+      "mode": "0644",
+      "src": "homelab-smart-array-collect.timer"
+    },
+    {
+      "dest": "/etc/default/prometheus-node-exporter",
+      "mode": "0644",
+      "restart": "prometheus-node-exporter.service",
+      "src": "prometheus-node-exporter.default"
+    }
+  ],
+  "packages": [
+    "prometheus-node-exporter"
+  ],
+  "run_after_apply": "homelab-smart-array-collect.service"
+}
