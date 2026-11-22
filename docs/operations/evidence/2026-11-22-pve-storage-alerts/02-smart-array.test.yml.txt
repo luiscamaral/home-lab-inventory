@@ -1,0 +1,39 @@
+# Rules come from prometheus_rules_yml in terraform/portainer/locals.tf, rendered with $$ replaced by $.
+rule_files: [rules.yml]
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'homelab_smart_array_capacitor_ok{instance="proxmox",job="node",slot="0",model="Smart Array P420i"}'
+        values: '0x50'
+      - series: 'homelab_smart_array_no_battery_write_cache_enabled{instance="proxmox",job="node",slot="0",model="Smart Array P420i"}'
+        values: '1x50'
+      - series: 'homelab_smart_array_logical_drive_ok{instance="proxmox",job="node",slot="0",volume="1",raid="5",size="1.86 TB"}'
+        values: '1x50'
+      - series: 'homelab_smart_array_collector_last_success_timestamp_seconds{instance="proxmox",job="node"}'
+        values: '0x50'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: SmartArrayCapacitorFailed
+        exp_alerts:
+          - exp_labels: {severity: warning, category: storage, instance: proxmox, job: node, slot: "0", model: Smart Array P420i}
+            exp_annotations:
+              summary: "proxmox Smart Array P420i cache capacitor failed"
+              description: "The cache battery or capacitor on proxmox does not\nreport OK. Read the live state: ssacli ctrl slot=0 show status.\nReplace the capacitor pack. See the node Notes block in Proxmox.\n"
+      - eval_time: 20m
+        alertname: SmartArrayWriteCacheWithoutCapacitor
+        exp_alerts:
+          - exp_labels: {severity: warning, category: storage, instance: proxmox, job: node, slot: "0", model: Smart Array P420i}
+            exp_annotations:
+              summary: "proxmox write cache is on without a working capacitor"
+              description: "No-Battery Write Cache is Enabled while the capacitor has failed.\nA power cut can lose cached writes and corrupt data on the RAID\nvolumes. Replace the capacitor, or turn this setting off with ssacli.\n"
+      - eval_time: 20m
+        alertname: SmartArrayLogicalDriveNotOK
+        exp_alerts: []
+      - eval_time: 45m
+        alertname: SmartArrayCollectorStale
+        exp_alerts:
+          - exp_labels: {severity: warning, category: storage, instance: proxmox, job: node}
+            exp_annotations:
+              summary: "Smart Array collector on proxmox has no fresh data"
+              description: "The collector has not finished a run for 30 minutes, or node_exporter\non proxmox is down. Check: systemctl status homelab-smart-array-collect.timer\nand journalctl -u homelab-smart-array-collect on the Proxmox host.\n"

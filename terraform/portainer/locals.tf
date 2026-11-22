@@ -2020,5 +2020,119 @@ locals {
                 (a 10G link to the AP switch) was 3.6/s on 2026-11-16 and 47/s on
                 2026-11-21: that link is a separate fault nobody has traced yet.
                 Counters: switch24a dashboard, panel "Te1/0/27 input errors /s".
+
+      # 2026-11-22: HP Smart Array P420i on the Proxmox host. The collector
+      # hosts/proxmox/storage-monitoring/homelab-smart-array-collect writes
+      # these series through the node_exporter textfile collector every 5m.
+      - name: smart-array
+        interval: 1m
+        rules:
+          - alert: SmartArrayCapacitorFailed
+            expr: homelab_smart_array_capacitor_ok == 0
+            for: 15m
+            labels:
+              severity: warning
+              category: storage
+            annotations:
+              summary: "{{ $$labels.instance }} {{ $$labels.model }} cache capacitor failed"
+              description: |
+                The cache battery or capacitor on {{ $$labels.instance }} does not
+                report OK. Read the live state: ssacli ctrl slot={{ $$labels.slot }} show status.
+                Replace the capacitor pack. See the node Notes block in Proxmox.
+          - alert: SmartArrayWriteCacheWithoutCapacitor
+            expr: |
+              homelab_smart_array_capacitor_ok == 0
+              and on (instance, slot) homelab_smart_array_no_battery_write_cache_enabled == 1
+            for: 15m
+            labels:
+              severity: warning
+              category: storage
+            annotations:
+              summary: "{{ $$labels.instance }} write cache is on without a working capacitor"
+              description: |
+                No-Battery Write Cache is Enabled while the capacitor has failed.
+                A power cut can lose cached writes and corrupt data on the RAID
+                volumes. Replace the capacitor, or turn this setting off with ssacli.
+          - alert: SmartArrayControllerNotOK
+            expr: homelab_smart_array_controller_ok == 0 or homelab_smart_array_cache_ok == 0
+            for: 5m
+            labels:
+              severity: critical
+              category: storage
+            annotations:
+              summary: "{{ $$labels.instance }} Smart Array controller or cache not OK"
+              description: |
+                ssacli reports the controller or cache status is not OK on
+                {{ $$labels.instance }}. Run: ssacli ctrl slot={{ $$labels.slot }} show detail.
+          - alert: SmartArrayLogicalDriveNotOK
+            expr: homelab_smart_array_logical_drive_ok == 0
+            for: 5m
+            labels:
+              severity: critical
+              category: storage
+            annotations:
+              summary: "{{ $$labels.instance }} RAID {{ $$labels.raid }} volume {{ $$labels.volume }} not OK"
+              description: |
+                Logical drive {{ $$labels.volume }} ({{ $$labels.size }}) is degraded,
+                rebuilding or failed. Run: ssacli ctrl slot={{ $$labels.slot }} ld all show detail.
+          - alert: SmartArrayPhysicalDriveNotOK
+            expr: homelab_smart_array_physical_drive_ok == 0
+            for: 5m
+            labels:
+              severity: critical
+              category: storage
+            annotations:
+              summary: "{{ $$labels.instance }} drive {{ $$labels.bay }} not OK"
+              description: |
+                Drive {{ $$labels.bay }} ({{ $$labels.model }}, {{ $$labels.type }},
+                role {{ $$labels.role }}) does not report OK. Run:
+                ssacli ctrl slot={{ $$labels.slot }} pd {{ $$labels.bay }} show detail.
+          - alert: SmartArrayDriveSmartFailed
+            expr: homelab_smart_array_physical_drive_smart_passed == 0
+            for: 15m
+            labels:
+              severity: warning
+              category: storage
+            annotations:
+              summary: "{{ $$labels.instance }} drive {{ $$labels.bay }} failed its SMART check"
+              description: |
+                smartctl reports a failed self-assessment for drive {{ $$labels.bay }}.
+                The controller can still call it OK. Plan a replacement.
+          - alert: SmartArraySSDWearHigh
+            expr: homelab_smart_array_ssd_life_left_percent < 20
+            for: 1h
+            labels:
+              severity: warning
+              category: storage
+            annotations:
+              summary: "{{ $$labels.instance }} SSD {{ $$labels.bay }} has {{ $$value }}% life left"
+              description: |
+                SMART reports {{ $$value }}% remaining life for SSD {{ $$labels.bay }}.
+                Budget SSDs can report this value badly. Compare with smartctl -a.
+          - alert: SmartArrayDriveHot
+            expr: homelab_smart_array_physical_drive_temperature_celsius > 55
+            for: 15m
+            labels:
+              severity: warning
+              category: storage
+            annotations:
+              summary: "{{ $$labels.instance }} drive {{ $$labels.bay }} at {{ $$value }} C"
+              description: |
+                Drive {{ $$labels.bay }} stayed above 55 C for 15 minutes.
+                Check server fans and airflow.
+          - alert: SmartArrayCollectorStale
+            expr: |
+              time() - homelab_smart_array_collector_last_success_timestamp_seconds > 1800
+              or absent(homelab_smart_array_collector_last_success_timestamp_seconds{instance="proxmox"})
+            for: 10m
+            labels:
+              severity: warning
+              category: storage
+            annotations:
+              summary: "Smart Array collector on proxmox has no fresh data"
+              description: |
+                The collector has not finished a run for 30 minutes, or node_exporter
+                on proxmox is down. Check: systemctl status homelab-smart-array-collect.timer
+                and journalctl -u homelab-smart-array-collect on the Proxmox host.
   EOT
 }

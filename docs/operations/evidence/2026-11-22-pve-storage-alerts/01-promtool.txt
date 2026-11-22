@@ -1,0 +1,14 @@
+Collected UTC: 2026-11-22T14:38:54Z
+Source: promtool 3.16.0 (mise aqua:prometheus/prometheus) on this Mac. Rules rendered from prometheus_rules_yml with $$ replaced by $. Live metrics from http://192.168.7.11:9100/metrics (installed in the step 1 pre-merge test).
++ promtool check rules rules.yml
+Checking /tmp/inv-rules.yml
+  SUCCESS: 47 rules found
+
++ promtool test rules smart-array.test.yml
+Processing test file: /tmp/inv-smart-array.test.yml
+  SUCCESS
+
++ promtool check metrics < live homelab_smart_array series (54 lines)
+rc=0
++ terraform plan -target=portainer_stack.prometheus -target=portainer_stack.prometheus_2 (read only, -lock=false)
+This branch: Plan: 0 to add, 2 to change, 0 to destroy. Clean main 711b1f4 earlier today: No changes.
