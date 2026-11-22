@@ -1,0 +1,9 @@
+Collected UTC: 2026-11-22T06:46:09Z
+Source: clean merged main and SSH proxmox. Scope: start one backup of CT 10000 to pve-backups without pruning.
++ ssh -o BatchMode=yes -o ConnectTimeout=5 proxmox 'sudo -n pvesh get /nodes/proxmox/tasks --source active --typefilter vzdump --output-format json'
++ python3 -c 'import json,sys; r=json.load(sys.stdin); print(r); sys.exit(bool(r))'
+[]
++ ./scripts/sync-proxmox-backup-job.py --test-backup
+Command '['ssh', '-o', 'BatchMode=yes', '-o', 'ConnectTimeout=8', 'proxmox', 'sudo -n pvesh create /nodes/proxmox/vzdump --vmid 10000 --storage pve-backups --mode snapshot --compress zstd --tmpdir /var/tmp --remove 0 --notification-mode notification-system --output-format json']' timed out after 45 seconds
+If a request failed, read the live job and task list before retrying.
+backup-9ce15dc0-ddc7 tmpdir: '/var/tmp' -> '/var/tmp'; storage stays pve-backups

@@ -48,14 +48,18 @@ class BackupJobTest(unittest.TestCase):
         self.sync({**self.manifest, "tmpdir": None}, apply=True)
         self.api.assert_has_calls([call("set", self.endpoint, "--delete", "tmpdir")])
 
-    def test_backup_uses_nas_without_pruning(self):
-        self.api.side_effect = [{**self.job, "tmpdir": "/var/tmp"}, "UPID:test"]
-        self.sync(self.manifest, test_backup=True)
-        self.api.assert_has_calls([call(
-            "create", "/nodes/proxmox/vzdump", "--vmid", "10000", "--storage", "pve-backups",
-            "--mode", "snapshot", "--compress", "zstd", "--tmpdir", "/var/tmp",
-            "--remove", "0", "--notification-mode", "notification-system",
-        )])
+    def test_backup_runs_outside_ssh_and_does_not_prune(self):
+        self.api.return_value = {**self.job, "tmpdir": "/var/tmp"}
+        worker = Mock()
+        with patch.dict(self.sync.__globals__, remote=worker):
+            self.sync(self.manifest, test_backup=True)
+        self.api.assert_called_once_with("get", self.endpoint)
+        worker.assert_called_once_with(
+            "/usr/bin/systemd-run", "--unit=pve-pihole-backup-check", "--collect",
+            "--property=Type=exec", "--", "/usr/bin/vzdump", "10000", "--storage",
+            "pve-backups", "--mode", "snapshot", "--compress", "zstd", "--tmpdir",
+            "/var/tmp", "--remove", "0", "--notification-mode", "notification-system",
+        )
 
 
 if __name__ == "__main__":

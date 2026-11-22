@@ -1,0 +1,18 @@
+Collected UTC: 2026-11-22T06:47:07Z
+Source: SSH proxmox, sudo -n. Scope: read back backup task and CT status after local API wait timed out. Do not resubmit.
++ pvesh get /nodes/proxmox/tasks --source all --typefilter vzdump --limit 6 --output-format json
+[{"endtime":1795330025,"id":"10000","node":"proxmox","pid":3619645,"pstart":419952400,"starttime":1795329976,"status":"broken pipe ","type":"vzdump","upid":"UPID:proxmox:00373B3D:1907F710:6B028FB8:vzdump:10000:root@pam:","user":"root@pam"},{"endtime":1795076075,"id":"","node":"proxmox","pid":2293851,"pstart":394115679,"starttime":1795071608,"status":"job errors","type":"vzdump","upid":"UPID:proxmox:0023005B:177DBA5F:6AFE9E78:vzdump::root@pam:","user":"root@pam"},{"endtime":1794817468,"id":"","node":"proxmox","pid":948479,"pstart":368195325,"starttime":1794812405,"status":"job errors","type":"vzdump","upid":"UPID:proxmox:000E78FF:15F236FD:6AFAA9F5:vzdump::root@pam:","user":"root@pam"},{"endtime":1794470974,"id":"","node":"proxmox","pid":3344465,"pstart":333635888,"starttime":1794466810,"status":"job errors","type":"vzdump","upid":"UPID:proxmox:00330851:13E2E130:6AF563FA:vzdump::root@pam:","user":"root@pam"},{"endtime":1794211809,"id":"","node":"proxmox","pid":1987397,"pstart":307715227,"starttime":1794207604,"status":"job errors","type":"vzdump","upid":"UPID:proxmox:001E5345:12575C9B:6AF16F74:vzdump::root@pam:","user":"root@pam"},{"endtime":1793866246,"id":"","node":"proxmox","pid":161719,"pstart":273155033,"starttime":1793862002,"status":"job errors","type":"vzdump","upid":"UPID:proxmox:000277B7:104803D9:6AEC2972:vzdump::root@pam:","user":"root@pam"}]
++ test -r /var/log/vzdump/lxc-10000.log
++ tail -30 /var/log/vzdump/lxc-10000.log
+2026-11-21 23:46:18 INFO: Starting Backup of VM 10000 (lxc)
+2026-11-21 23:46:18 INFO: status = running
+2026-11-21 23:46:18 INFO: CT Name: pihole
+2026-11-21 23:46:18 INFO: including mount point rootfs ('/') in backup
+2026-11-21 23:46:18 INFO: backup mode: snapshot
+2026-11-21 23:46:18 INFO: ionice priority: 7
+2026-11-21 23:46:18 INFO: create storage snapshot 'vzdump'
+2026-11-21 23:46:19 INFO: creating vzdump archive '/mnt/pve/pve-backups/dump/vzdump-lxc-10000-2026_11_21-23_46_16.tar.zst'
+2026-11-21 23:47:05 INFO: Total bytes written: 3457966080 (3.3GiB, 72MiB/s)
++ python3 -c 'import json,sys; r=json.load(sys.stdin); print({k:r[k] for k in ("status","uptime","pid") if k in r})'
++ pvesh get /nodes/proxmox/lxc/10000/status/current --output-format json
+{'status': 'running', 'uptime': 4199467, 'pid': 2343}

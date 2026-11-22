@@ -1,0 +1,119 @@
+Collected UTC: 2026-11-22T06:47:47Z
+Source: SSH proxmox, sudo -n. Scope: native backup snapshot lifecycle, CT state, timed-out workspace, command detach features. Read only.
++ grep -n -A20 -B6 -E 'snapshot_delete|snapshot_create|sub cleanup' /usr/share/perl5/PVE/VZDump/LXC.pm
+185-        if ($conf->{snapshots} && $conf->{snapshots}->{vzdump}) {
+186-            $self->loginfo("found old vzdump snapshot (force removal)");
+187-            PVE::LXC::Config->lock_config(
+188-                $vmid,
+189-                sub {
+190-                    $self->unlock_vm($vmid);
+191:                    PVE::LXC::Config->snapshot_delete($vmid, 'vzdump', 1);
+192-                    $self->lock_vm($vmid);
+193-                },
+194-            );
+195-        }
+196-
+197-        my $rootdir = $default_mount_point;
+198-        mkpath $rootdir;
+199-        &$check_mountpoint_empty($rootdir);
+200-
+201-        # set snapshot_count (freezes CT if snapshot_count > 1)
+202-        $task->{snapshot_count} = scalar(@$volids);
+203-    } elsif ($mode eq 'stop') {
+204-        my $rootdir = $default_mount_point;
+205-        mkpath $rootdir;
+206-        &$check_mountpoint_empty($rootdir);
+207-    } elsif ($mode eq 'suspend') {
+208-        my $pid = PVE::LXC::find_lxc_pid($vmid);
+209-        foreach my $disk (@$disks) {
+210-            $disk->{dir} = "/proc/$pid/root$disk->{mp}";
+211-        }
+--
+242-
+243-    # todo: freeze/unfreeze if we have more than one volid
+244-    PVE::LXC::Config->lock_config(
+245-        $vmid,
+246-        sub {
+247-            $self->unlock_vm($vmid);
+248:            PVE::LXC::Config->snapshot_create($vmid, 'vzdump', 0, "vzdump backup snapshot");
+249-            $self->lock_vm($vmid);
+250-        },
+251-    );
+252-    $task->{cleanup}->{remove_snapshot} = 1;
+253-
+254-    # reload config
+255-    my $conf = $self->{vmlist}->{$vmid} = PVE::LXC::Config->load_config($vmid);
+256-    die "unable to read vzdump snapshot config - internal error"
+257-        if !($conf->{snapshots} && $conf->{snapshots}->{vzdump});
+258-
+259-    my $disks = $task->{disks};
+260-    my $volids = $task->{volids};
+261-
+262-    my $rootdir = $default_mount_point;
+263-    my $storage_cfg = $self->{storecfg};
+264-
+265-    PVE::Storage::activate_volumes($storage_cfg, $volids, 'vzdump');
+266-    foreach my $disk (@$disks) {
+267-        $disk->{dir} = "${rootdir}$disk->{mp}";
+268-        PVE::LXC::mountpoint_mount(
+--
+559-            push @{ $cmd->[-1] }, \(">" . PVE::Tools::shellquote($filename));
+560-            $self->cmd($cmd);
+561-        }
+562-    }
+563-}
+564-
+565:sub cleanup {
+566-    my ($self, $task, $vmid) = @_;
+567-
+568-    my $conf = PVE::LXC::Config->load_config($vmid);
+569-
+570-    if ($task->{mode} ne 'suspend') {
+571-        my $disks = $task->{disks};
+572-        foreach my $disk (reverse @$disks) {
+573-            PVE::Tools::run_command(['umount', '-l', '-d', $disk->{dir}]) if $disk->{dir};
+574-        }
+575-    }
+576-
+577-    if ($task->{cleanup}->{remove_snapshot}) {
+578-        my $lock_obtained;
+579-        my $do_delete = sub {
+580-            $lock_obtained = 1;
+581-            $self->loginfo("cleanup temporary 'vzdump' snapshot");
+582:            PVE::LXC::Config->snapshot_delete($vmid, 'vzdump', 0);
+583-        };
+584-
+585-        eval {
+586-            eval { PVE::GuestHelpers::guest_migration_lock($vmid, 1, $do_delete); };
+587-            if (my $err = $@) {
+588-                die $err if $lock_obtained;
+589-
+590-                $self->loginfo("waiting for active replication or other operation..");
+591-                PVE::GuestHelpers::guest_migration_lock($vmid, 600, $do_delete);
+592-            }
+593-        };
+594-        # will be cleaned up by next backup run anyway
+595-        warn "snapshot 'vzdump' was not (fully) removed - $@" if $@;
+596-    }
+597-}
+598-
+599-1;
++ head -52
++ pvesh help create --verbose
+USAGE: pvesh create <api_path> [OPTIONS] [FORMAT_OPTIONS]
+
+  Call API POST on <api_path>.
+
+  <api_path> <string>
+	     API path.
+
+  --noproxy  <boolean>
+	     Disable automatic proxying.
+
+
++ find /var/tmp -maxdepth 1 -type d -name 'vzdumptmp*_10000' -printf '%f %U:%G %m\n'
+vzdumptmp3619645_10000 0:0 755
++ findmnt --mountpoint /mnt/vzsnap0
++ lvs --noheadings -o lv_name,origin,lv_attr ssd_vg
++ awk /snap_vm-10000-disk-0_vzdump/
+  snap_vm-10000-disk-0_vzdump                     vm-10000-disk-0 Vri-a-tz-k

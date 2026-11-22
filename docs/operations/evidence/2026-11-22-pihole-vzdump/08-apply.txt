@@ -1,0 +1,13 @@
+Collected UTC: 2026-11-22T06:45:49Z
+Source: clean merged main and SSH proxmox. Scope: backup job dry run, one option update and readback.
+++ git rev-parse HEAD
++ test c6d02fe3f33fc9746e204278a47e31644367ad68 = c6d02fe3f33fc9746e204278a47e31644367ad68
+++ git status --porcelain
++ test -z ''
++ ./scripts/sync-proxmox-backup-job.py
+backup-9ce15dc0-ddc7 tmpdir: None -> '/var/tmp'; storage stays pve-backups
++ ./scripts/sync-proxmox-backup-job.py --apply
+backup-9ce15dc0-ddc7 tmpdir: None -> '/var/tmp'; storage stays pve-backups
+Verified the saved job. No other job settings changed.
++ ./scripts/sync-proxmox-backup-job.py
+backup-9ce15dc0-ddc7 tmpdir: '/var/tmp' -> '/var/tmp'; storage stays pve-backups
