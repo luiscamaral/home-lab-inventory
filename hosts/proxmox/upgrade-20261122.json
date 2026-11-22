@@ -1,0 +1,9 @@
+{
+  "current_kernel": "6.17.13-2-pve",
+  "min_root_free_gib": 8,
+  "packages": {
+    "proxmox-kernel-7.0.14-30-pve-signed": "7.0.14-30",
+    "pve-manager": "9.2.32"
+  },
+  "unit": "pve-upgrade-20261122"
+}

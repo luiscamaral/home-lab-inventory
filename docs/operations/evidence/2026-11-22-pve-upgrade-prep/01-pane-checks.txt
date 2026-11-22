@@ -1,0 +1,13 @@
+Collected UTC: 2026-11-22T07:22:11Z
+Source: Herdr pane w5:p6 (pve-shell), root SSH session on proxmox. Scope: read-only pre-upgrade checks with cached APT lists.
+PVE_UPG_PREP_BEGIN
+2026-11-22T07:22:11Z
+pve-manager/9.1.7/16b139a017452f16 (running kernel: 6.17.13-2-pve)
+287 upgraded, 8 newly installed, 0 to remove and 0 not upgraded.
+Inst pve-manager [9.1.7] (9.2.32 Proxmox Debian Repository:stable [all]) []
+Inst proxmox-kernel-7.0.14-30-pve-signed (7.0.14-30 Proxmox Debian Repository:stable [amd64])
+audit=0 holds=0
+  21G
+[]
+1
+PVE_UPG_PREP_END
