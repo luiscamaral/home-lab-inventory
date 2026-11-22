@@ -1,0 +1,20 @@
+Collected UTC: 2026-11-22T13:59:05Z
+Source: feature worktree; SSH proxmox. Scope: unit tests (mocked), ruff, read-only plan.
++ PYTHONDONTWRITEBYTECODE=1
++ python3 -m unittest discover -s tests -p test_proxmox_guest_config.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.007s
+
+OK
++ uvx ruff check --no-cache scripts/sync-proxmox-guest-config.py tests/test_proxmox_guest_config.py
+All checks passed!
++ ./scripts/sync-proxmox-guest-config.py
+qemu 100 startup: 'up=180' -> 'order=4,up=180'
+lxc 10000 startup: 'order=1' -> 'order=1,up=30'
+qemu 120 startup: 'up=30' -> 'order=5,up=300'
+qemu 121 startup: 'order=2' -> 'order=3,up=60'
+qemu 122 startup: 'up=120' -> 'order=6,up=120'
+qemu 123 startup: 'up=30' -> 'order=7,up=30'
+qemu 124 startup: 'order=1,up=30' -> 'order=2,up=300'
+qemu 121 efidisk0: add thin-pool-ssd:1,efitype=4m,pre-enrolled-keys=0 (needs a VM shutdown and start)

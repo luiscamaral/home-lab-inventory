@@ -1,0 +1,43 @@
+{
+  "efidisks": {
+    "121": "thin-pool-ssd:1,efitype=4m,pre-enrolled-keys=0"
+  },
+  "guests": {
+    "100": {
+      "name": "omada-controller",
+      "startup": "order=4,up=180",
+      "type": "qemu"
+    },
+    "10000": {
+      "name": "pihole",
+      "startup": "order=1,up=30",
+      "type": "lxc"
+    },
+    "120": {
+      "name": "dockermaster",
+      "startup": "order=5,up=300",
+      "type": "qemu"
+    },
+    "121": {
+      "name": "ha",
+      "startup": "order=3,up=60",
+      "type": "qemu"
+    },
+    "122": {
+      "name": "unifi-controller",
+      "startup": "order=6,up=120",
+      "type": "qemu"
+    },
+    "123": {
+      "name": "dockerserver-1",
+      "startup": "order=7,up=30",
+      "type": "qemu"
+    },
+    "124": {
+      "name": "dockerserver-2",
+      "startup": "order=2,up=300",
+      "type": "qemu"
+    }
+  },
+  "node": "proxmox"
+}
