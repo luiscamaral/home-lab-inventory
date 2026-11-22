@@ -1,0 +1,89 @@
+Collected UTC: 2026-11-22T15:39:17Z
+Source: Prometheus-1 http://192.168.59.19:9090 (query, tsdb status, rules) and Alertmanager 192.168.59.27. Read only, light queries.
+
+# samples per scrape, by job
+node                 11401
+cadvisor              9146
+thanos                4739
+home-assistant        4607
+prometheus            3709
+postgres              2447
+keycloak              2415
+snmp-pfsense          1811
+vault                 1382
+alertmanager          1182
+snmp-switch24a         728
+wifi-probe             645
+cloudflared            566
+pve                    511
+blackbox-rproxy        370
+pihole                 321
+zot                    261
+minio                  181
+registry               131
+karma                   92
+blackbox-http           89
+blackbox-ssl            66
+blackbox-icmp           63
+nginx                   57
+watchtower              49
+blackbox-dns            48
+otel-collector          38
+blackbox-tcp            35
+zot-meta-backup          0
+
+# head series: 48405
+
+# node instances, uptime days
+  dockermaster 0.3
+  ds-1 0.3
+  ds-2 0.3
+  pfsense 5.7
+  nas 21.0
+  proxmox 0.3
+
+# cadvisor hosts, named containers
+  dockermaster 24
+  ds-2 25
+  ds-1 26
+
+# pve guests by type and running state
+  {'type': 'qemu'} 9
+  {'type': 'lxc'} 3
+  running: ['7']
+
+# blackbox targets by job
+  blackbox-http 4
+  blackbox-rproxy 17
+  blackbox-tcp 5
+  blackbox-icmp 7
+  blackbox-dns 4
+  blackbox-ssl 6
+  wifi-probe 24
+
+# alert rule groups: 8 groups, 47 rules
+  pfsense-network: 14 rules; firing: ['Ix0AutoBounceFailed', 'Ix0WatchdogDisarmed']
+  pihole-exporters: 2 rules; firing: []
+  rproxy-endpoints: 2 rules; firing: ['RProxyEndpointDown', 'RProxyEndpointSlow']
+  smart-array: 9 rules; firing: ['SmartArrayCapacitorFailed', 'SmartArrayWriteCacheWithoutCapacitor']
+  switch24a: 5 rules; firing: ['Switch24aTenGigInputErrors']
+  tls-certificates: 3 rules; firing: []
+  wifi-probes: 7 rules; firing: ['WifiProbeStale']
+  zot: 5 rules; firing: ['ZotMetaBackupDown']
+
+# Alertmanager active alerts: 32 (A and B replicas both counted)
+   ('Ix0AutoBounceFailed', 'critical', 'pfsense')
+   ('Ix0WatchdogDisarmed', 'critical', 'pfsense')
+   ('PrometheusScrapeFailureSustained', 'warning', 'minio-2')
+   ('PrometheusScrapeFailureSustained', 'warning', 'zot-1')
+   ('RProxyEndpointDown', 'warning', 'https://kolibri.d.lcamaral.com')
+   ('RProxyEndpointDown', 'warning', 'https://rustdesk-relay.home.lcamaral.com')
+   ('RProxyEndpointDown', 'warning', 'https://rustdesk.home.lcamaral.com')
+   ('RProxyEndpointSlow', 'info', 'https://kolibri.d.lcamaral.com')
+   ('SmartArrayCapacitorFailed', 'warning', 'proxmox')
+   ('SmartArrayWriteCacheWithoutCapacitor', 'warning', 'proxmox')
+   ('Switch24aTenGigInputErrors', 'warning', 'switch24a')
+   ('ThanosBucketUploadsStalled', 'critical', 'thanos-sidecar-1')
+   ('ThanosBucketUploadsStalled', 'critical', 'thanos-sidecar-2')
+   ('WifiProbeStale', 'warning', 'HOME-OFFICE-WIFI-PROBE')
+   ('ZotMetaBackupDown', 'warning', 'zot-1')

@@ -1,0 +1,33 @@
+Collected UTC: 2026-11-22T15:42:32Z
+Source: repo terraform/portainer/stacks (grafana.yml.tftpl, grafana-dashboards*/*.json) at origin/main, and unauthenticated GET https://grafana.cf.lcamaral.com/api/health.
+Note: GET /api/datasources as admin returned HTTP 403 at 15:39:34 UTC, so data sources come from the provisioning file.
+Grafana health: {"database":"ok","version":"13.0.1","commit":"a100054f"}
+# provisioned data sources
+        - name: Thanos
+          uid: thanos
+          type: prometheus
+          url: http://192.168.59.26:10902
+        - name: homelab
+          type: file
+        - name: observability
+          type: file
+# dashboards (folder | title | uid | panels)
+Homelab | Blackbox Exporter (HTTP prober) | None | 3
+Homelab | Cadvisor exporter | None | 10
+Homelab | Home Assistant | home-assistant-stats | 9
+Homelab | 🌐 Internet & Network — Overview | internet-network-overview | 33
+Homelab | KeyCloak Metrics | None | 40
+Homelab | MinIO Dashboard | None | 37
+Homelab | Node Exporter Full | None | 31
+Homelab | pfSense WAN Quality | pfsense-wan-quality | 8
+Homelab | pfSense | pfsense-availability | 18
+Homelab | Pi-hole ver6 Stats | None | 12
+Homelab | Proxmox via Prometheus | None | 14
+Homelab | Proxmox storage (Smart Array) | proxmox-smart-array | 9
+Homelab | switch24a — Core Switch Ports | switch24a | 18
+Homelab | TLS Cert Expiry | None | 2
+Homelab | Hashicorp Vault | None | 28
+Homelab | 📡 WiFi Probes — Household Coverage | wifi-probes-overview | 35
+Observability | Thanos & Prometheus Infrastructure | thanos-prometheus-infra | 21
+# home dashboard setting
+0
