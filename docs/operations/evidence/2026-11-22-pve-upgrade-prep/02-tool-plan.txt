@@ -1,0 +1,15 @@
+Collected UTC: 2026-11-22T07:22:51Z
+Source: feature worktree; SSH proxmox. Scope: unit tests (mocked, no host calls), ruff, read-only tool plan.
++ PYTHONDONTWRITEBYTECODE=1
++ python3 -m unittest discover -s tests -p test_proxmox_upgrade.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.006s
+
+OK
++ uvx ruff check --no-cache scripts/proxmox-upgrade.py tests/test_proxmox_upgrade.py
+All checks passed!
++ ./scripts/proxmox-upgrade.py
+pve-manager/9.1.7/16b139a017452f16 (running kernel: 6.17.13-2-pve)
+287 upgraded, 8 newly installed, 0 to remove and 0 not upgraded.
+All pre-upgrade checks passed.
