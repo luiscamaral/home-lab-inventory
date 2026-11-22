@@ -1,0 +1,27 @@
+Collected UTC: 2026-11-22T06:48:41Z
+Source: feature worktree and SSH proxmox. Scope: test command unit mock and read-only live plan.
++ PYTHONDONTWRITEBYTECODE=1
++ python3 -m unittest discover -s tests -p test_proxmox_backup_job.py -v
+test_apply_changes_only_scratch_and_reads_back (test_proxmox_backup_job.BackupJobTest.test_apply_changes_only_scratch_and_reads_back) ... ok
+test_apply_refuses_storage_drift (test_proxmox_backup_job.BackupJobTest.test_apply_refuses_storage_drift) ... ok
+test_apply_stops_if_readback_is_wrong (test_proxmox_backup_job.BackupJobTest.test_apply_stops_if_readback_is_wrong) ... ok
+test_backup_runs_outside_ssh_and_does_not_prune (test_proxmox_backup_job.BackupJobTest.test_backup_runs_outside_ssh_and_does_not_prune) ... ok
+test_null_setting_removes_only_scratch (test_proxmox_backup_job.BackupJobTest.test_null_setting_removes_only_scratch) ... ok
+test_plan_does_not_write (test_proxmox_backup_job.BackupJobTest.test_plan_does_not_write) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.006s
+
+OK
+backup-9ce15dc0-ddc7 tmpdir: None -> '/var/tmp'; storage stays pve-backups
+Verified the saved job. No other job settings changed.
+backup-9ce15dc0-ddc7 tmpdir: None -> '/var/tmp'; storage stays pve-backups
+backup-9ce15dc0-ddc7 tmpdir: '/var/tmp' -> '/var/tmp'; storage stays pve-backups
+Backup started. Check pve-pihole-backup-check.service and the Proxmox task before retrying.
+backup-9ce15dc0-ddc7 tmpdir: '/var/tmp' -> None; storage stays pve-backups
+Verified the saved job. No other job settings changed.
+backup-9ce15dc0-ddc7 tmpdir: None -> '/var/tmp'; storage stays pve-backups
++ uvx ruff check --no-cache scripts/sync-proxmox-backup-job.py tests/test_proxmox_backup_job.py
+All checks passed!
++ ./scripts/sync-proxmox-backup-job.py
+backup-9ce15dc0-ddc7 tmpdir: '/var/tmp' -> '/var/tmp'; storage stays pve-backups

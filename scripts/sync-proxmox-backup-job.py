@@ -9,11 +9,16 @@ from pathlib import Path
 
 MANIFEST = Path(__file__).resolve().parents[1] / "hosts/proxmox/backup-job.json"
 SSH = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", "proxmox"]
+TEST_UNIT = "pve-pihole-backup-check"
+
+
+def remote(*args):
+    command = shlex.join(["sudo", "-n", *args])
+    return subprocess.run([*SSH, command], check=True, stdout=subprocess.PIPE, text=True, timeout=45)
 
 
 def api(*args):
-    command = shlex.join(["sudo", "-n", "pvesh", *args, "--output-format", "json"])
-    result = subprocess.run([*SSH, command], check=True, stdout=subprocess.PIPE, text=True, timeout=45)
+    result = remote("pvesh", *args, "--output-format", "json")
     return json.loads(result.stdout) if result.stdout.strip() else None
 
 
@@ -51,15 +56,13 @@ def sync(manifest, apply=False, test_backup=False):
 
 
 def start_test_backup(job, scratch, guest):
-    endpoint = f"/nodes/{job['node']}/vzdump"
-    task = api(
-        "create", endpoint, "--vmid", guest, "--storage", job["storage"],
-        "--mode", "snapshot", "--compress", job["compress"],
-        "--tmpdir", scratch, "--remove", "0", "--notification-mode", job["notification-mode"],
+    remote(
+        "/usr/bin/systemd-run", f"--unit={TEST_UNIT}", "--collect", "--property=Type=exec",
+        "--", "/usr/bin/vzdump", guest, "--storage", job["storage"], "--mode", "snapshot",
+        "--compress", job["compress"], "--tmpdir", scratch, "--remove", "0",
+        "--notification-mode", job["notification-mode"],
     )
-    if not isinstance(task, str) or not task.startswith("UPID:"):
-        raise ValueError("No task ID returned. Check Proxmox tasks before retrying.")
-    print(task)
+    print(f"Backup started. Check {TEST_UNIT}.service and the Proxmox task before retrying.")
 
 
 def main():

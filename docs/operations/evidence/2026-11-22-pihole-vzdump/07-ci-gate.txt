@@ -1,0 +1,10 @@
+Collected UTC: 2026-11-22T06:45:33.083127+00:00
+Source: GitHub PR #178 checks and main branch protection. Scope: required CI checks for the reviewed commit.
+Commands: gh api repos/luiscamaral/home-lab-inventory/branches/main/protection/required_status_checks; gh pr checks 178 --json name,bucket,state,link
+Commit Message Validation SUCCESS https://github.com/luiscamaral/home-lab-inventory/actions/runs/44994850041/job/137123563121
+Pre-commit Validation SUCCESS https://github.com/luiscamaral/home-lab-inventory/actions/runs/44994850041/job/137123563216
+Docker Build Validation SUCCESS https://github.com/luiscamaral/home-lab-inventory/actions/runs/44994850041/job/137123563354
+Lint Validation (yaml) SUCCESS https://github.com/luiscamaral/home-lab-inventory/actions/runs/44994850041/job/137123563367
+Lint Validation (markdown) SUCCESS https://github.com/luiscamaral/home-lab-inventory/actions/runs/44994850041/job/137123563293
+Hadolint SUCCESS https://github.com/luiscamaral/home-lab-inventory/runs/137123594827
+Security Gate SUCCESS https://github.com/luiscamaral/home-lab-inventory/actions/runs/44994850029/job/137124333631

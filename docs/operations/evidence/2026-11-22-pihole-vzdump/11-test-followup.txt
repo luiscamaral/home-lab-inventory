@@ -1,0 +1,54 @@
+Collected UTC: 2026-11-22T06:47:26Z
+Source: SSH proxmox, sudo -n. Scope: task log, archive inventory, CT locks and snapshot, native CLI wait controls. Read only.
++ pvenode task log UPID:proxmox:00373B3D:1907F710:6B028FB8:vzdump:10000:root@pam:
+INFO: starting new backup job: vzdump 10000 --node proxmox --mode snapshot --notification-mode notification-system --remove 0 --compress zstd --storage pve-backups --tmpdir /var/tmp
+INFO: Starting Backup of VM 10000 (lxc)
+INFO: Backup started at 2026-11-21 23:46:18
+INFO: status = running
+INFO: CT Name: pihole
+INFO: including mount point rootfs ('/') in backup
+INFO: backup mode: snapshot
+INFO: ionice priority: 7
+INFO: create storage snapshot 'vzdump'
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: You have not turned on protection against thin pools running out of space.
+  WARNING: Set activation/thin_pool_autoextend_threshold below 100 to trigger automatic extension of thin pools before they get full.
+  Logical volume "snap_vm-10000-disk-0_vzdump" created.
+  WARNING: Sum of all thin volume sizes (1.87 TiB) exceeds the size of thin pool ssd_vg/thin-pool and the size of whole volume group (<1.77 TiB).
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-120-disk-2 maps 208184803328 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+  WARNING: Thin volume ssd_vg/vm-123-disk-0 maps 210453397504 while the size is only 128849018880.
+INFO: creating vzdump archive '/mnt/pve/pve-backups/dump/vzdump-lxc-10000-2026_11_21-23_46_16.tar.zst'
+TASK ERROR: broken pipe
++ pvesh get /nodes/proxmox/tasks --source active --typefilter vzdump --output-format json
+[]
++ pct config 10000
++ grep -E '^(lock:|unprivileged:)'
+unprivileged: 1
++ pct listsnapshot 10000
+`-> vzdump                      2026-11-21 23:46:18     vzdump backup snapshot
+ `-> current                                            You are here!
++ timeout 8 pvesm list pve-backups --vmid 10000 --content backup
+Volid Format  Type      Size VMID
++ timeout 8 find /mnt/pve/pve-backups/dump -maxdepth 1 -name 'vzdump-lxc-10000-2026_11_21-23_46_16*' -printf '%f %s bytes\n'
+vzdump-lxc-10000-2026_11_21-23_46_16.tar.dat 1122828288 bytes
++ grep -nE 'watch_task|upid|fork_worker|foreground' /usr/share/perl5/PVE/CLI/pvesh.pm /usr/share/perl5/PVE/API2/VZDump.pm /usr/share/perl5/PVE/CLI/vzdump.pm
+/usr/share/perl5/PVE/CLI/pvesh.pm:35:            # we use this when starting task in CLI (suppress printing upid)
+/usr/share/perl5/PVE/API2/VZDump.pm:129:            my $upid = shift;
+/usr/share/perl5/PVE/API2/VZDump.pm:139:                $vzdump->getlock($upid); # only one process allowed
+/usr/share/perl5/PVE/API2/VZDump.pm:177:        return $rpcenv->fork_worker('vzdump', $taskid, $user, $worker);
+/usr/share/perl5/PVE/CLI/vzdump.pm:23:        my $upid = shift;
+/usr/share/perl5/PVE/CLI/vzdump.pm:24:        exit(0) if $upid eq 'OK';
+/usr/share/perl5/PVE/CLI/vzdump.pm:25:        my $status = PVE::Tools::upid_read_status($upid);
+/usr/share/perl5/PVE/CLI/vzdump.pm:26:        exit(PVE::Tools::upid_status_is_error($status) ? -1 : 0);
++ systemd-run --version
++ head -1
+systemd 257 (257.9-1~deb13u1)
