@@ -1,0 +1,49 @@
+Collected UTC: 2026-11-22T06:36:55Z
+Source: SSH proxmox, sudo -n. Scope: backup job, CT ID mapping, mount and path access. Read only.
+Commands: findmnt -n -o SOURCE,TARGET,FSTYPE,OPTIONS -T /mnt/pve/pve-backups; pvesh get /cluster/backup --output-format json (selected fields); pct config 10000 (selected fields); grep for active tmpdir, dumpdir and storage in /etc/vzdump.conf; namei -lom /mnt/pve/pve-backups/dump; stat -c '%a %u:%g %n' on mount and dump; lxc-usernsexec -m u:0:100000:65536 -m g:0:100000:65536 -- sh (test -x on the printed paths); read /var/log/vzdump/lxc-10000.log and search the installed backup code for tmpdir references.
+proxmox
+192.168.2.50:/volume2/shared/80.Backups/pve /mnt/pve/pve-backups nfs4 rw,relatime,vers=4.1,rsize=131072,wsize=131072,namlen=255,hard,fatal_neterrors=none,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=192.168.7.10,local_lock=none,addr=192.168.2.50
+{'enabled': 1, 'id': 'backup-9ce15dc0-ddc7', 'mode': 'snapshot', 'prune-backups': {'keep-daily': '1', 'keep-weekly': '1'}, 'schedule': 'mon,thu 00:00', 'storage': 'pve-backups', 'vmid': '122,121,120,124,123,100,10000'}
+rootfs: thin-pool-ssd:vm-10000-disk-0,size=8G
+unprivileged: 1
+f: /mnt/pve/pve-backups/dump
+drwxr-xr-x root    root  /
+drwxr-xr-x root    root  mnt
+drwxr-xr-x root    root  pve
+drwx------ lamaral 65538 pve-backups
+drwxr-xr-x lamaral 65538 dump
+700 1027:65538 /mnt/pve/pve-backups
+755 1027:65538 /mnt/pve/pve-backups/dump
+search status /mnt/pve/pve-backups: 1
+search status /mnt/pve/pve-backups/dump: 1
+search status /var/tmp: 0
+2026-11-19 01:14:26 INFO: creating vzdump archive '/mnt/pve/pve-backups/dump/vzdump-lxc-10000-2026_11_19-01_14_25.tar.zst'
+2026-11-19 01:14:26 INFO: tar: /mnt/pve/pve-backups/dump/vzdump-lxc-10000-2026_11_19-01_14_25.tmp: Cannot open: Permission denied
+/usr/share/perl5/PVE/VZDump.pm:626:    $opts->{tmpdir} =~ s|/+$|| if ($opts->{tmpdir});
+/usr/share/perl5/PVE/VZDump.pm:714:    if ($opts->{tmpdir} && !-d $opts->{tmpdir}) {
+/usr/share/perl5/PVE/VZDump.pm:715:        $add_error->("tmpdir '$opts->{tmpdir}' does not exist");
+/usr/share/perl5/PVE/VZDump.pm:1022:        if ($opts->{tmpdir}) {
+/usr/share/perl5/PVE/VZDump.pm:1023:            $task->{tmpdir} = "$opts->{tmpdir}/vzdumptmp${pid}_$vmid/";
+/usr/share/perl5/PVE/VZDump.pm:1025:            $task->{tmpdir} = "/var/tmp/vzdumptmp${pid}_$vmid";
+/usr/share/perl5/PVE/VZDump.pm:1033:                $task->{tmpdir} = "$opts->{dumpdir}/$basename.tmp";
+/usr/share/perl5/PVE/VZDump.pm:1035:                $task->{tmpdir} = "/var/tmp/vzdumptmp${pid}_$vmid";
+/usr/share/perl5/PVE/VZDump.pm:1039:                        . "using $task->{tmpdir} for temporary files",
+/usr/share/perl5/PVE/VZDump.pm:1045:        rmtree $task->{tmpdir};
+/usr/share/perl5/PVE/VZDump.pm:1046:        mkdir $task->{tmpdir};
+/usr/share/perl5/PVE/VZDump.pm:1047:        -d $task->{tmpdir}
+/usr/share/perl5/PVE/VZDump.pm:1048:            || die "unable to create temporary directory '$task->{tmpdir}'";
+/usr/share/perl5/PVE/VZDump.pm:1332:    eval { rmtree $task->{tmpdir} if $task->{tmpdir} && -d $task->{tmpdir}; };
+/usr/share/perl5/PVE/VZDump/LXC.pm:212:        $task->{snapdir} = $task->{tmpdir};
+/usr/share/perl5/PVE/VZDump/LXC.pm:282:                . " support, consider configuring a local tmpdir via"
+/usr/share/perl5/PVE/VZDump/LXC.pm:336:    my $tmpdir = $task->{tmpdir};
+/usr/share/perl5/PVE/VZDump/LXC.pm:338:    mkpath "$tmpdir/etc/vzdump/";
+/usr/share/perl5/PVE/VZDump/LXC.pm:341:        "$tmpdir/etc/vzdump/pct.conf",
+/usr/share/perl5/PVE/VZDump/LXC.pm:346:    my $fwconftmp = "$tmpdir/etc/vzdump/pct.fw";
+/usr/share/perl5/PVE/VZDump/LXC.pm:349:        # fixme: do not store pct.conf and fw.conf into $tmpdir
+/usr/share/perl5/PVE/VZDump/LXC.pm:399:    my $tmpdir = $task->{tmpdir};
+/usr/share/perl5/PVE/VZDump/LXC.pm:421:        my $guest_config = PVE::Tools::file_get_contents("$tmpdir/etc/vzdump/pct.conf");
+/usr/share/perl5/PVE/VZDump/LXC.pm:422:        my $firewall_file = "$tmpdir/etc/vzdump/pct.fw";
+/usr/share/perl5/PVE/VZDump/LXC.pm:448:        push @$param, "pct.conf:$tmpdir/etc/vzdump/pct.conf";
+/usr/share/perl5/PVE/VZDump/LXC.pm:450:        my $fw_conf = "$tmpdir/etc/vzdump/pct.fw";
+/usr/share/perl5/PVE/VZDump/LXC.pm:512:        #if ($snapdir eq $task->{tmpdir} && $snapdir =~ m|^$opts->{dumpdir}/|) {
+/usr/share/perl5/PVE/VZDump/LXC.pm:518:        push @$tar, "--directory=$tmpdir", './etc/vzdump/pct.conf';

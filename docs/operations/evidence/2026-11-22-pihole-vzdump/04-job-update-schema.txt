@@ -1,0 +1,24 @@
+Collected UTC: 2026-11-22T06:37:37Z
+Source: SSH proxmox, sudo -n. Scope: job read, update and rollback schema. Read only.
++ pvesh get /cluster/backup/backup-9ce15dc0-ddc7 --output-format json
+{"compress":"zstd","enabled":1,"fleecing":{"enabled":0},"id":"backup-9ce15dc0-ddc7","mode":"snapshot","node":"proxmox","notes-template":"{{guestname}}","notification-mode":"notification-system","prune-backups":{"keep-daily":"1","keep-weekly":"1"},"repeat-missed":1,"schedule":"mon,thu 00:00","storage":"pve-backups","type":"vzdump","vmid":"122,121,120,124,123,100,10000"}
++ pvesh usage /cluster/backup/backup-9ce15dc0-ddc7 --command set --verbose
++ grep -Ei -A2 '^[[:space:]]+--(delete|digest|tmpdir) '
+  --delete   <string>
+	     A list of settings you want to delete.
+
+--
+  --tmpdir   <string>
+	     Store temporary files to specified directory.
+
++ pvesh usage /nodes/proxmox/vzdump --command create --verbose
++ grep -Ei -A2 '^[[:space:]]+--(tmpdir|vmid|remove) '
+  --remove   <boolean>	 (default=1)
+	     Prune older backups according to 'prune-backups'.
+
+--
+  --tmpdir   <string>
+	     Store temporary files to specified directory.
+
+  --vmid     <string>
+	     The ID of the guest system you want to backup.

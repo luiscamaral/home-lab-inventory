@@ -1,0 +1,25 @@
+{
+  "job": {
+    "compress": "zstd",
+    "enabled": 1,
+    "fleecing": {
+      "enabled": 0
+    },
+    "id": "backup-9ce15dc0-ddc7",
+    "mode": "snapshot",
+    "node": "proxmox",
+    "notes-template": "{{guestname}}",
+    "notification-mode": "notification-system",
+    "prune-backups": {
+      "keep-daily": "1",
+      "keep-weekly": "1"
+    },
+    "repeat-missed": 1,
+    "schedule": "mon,thu 00:00",
+    "storage": "pve-backups",
+    "type": "vzdump",
+    "vmid": "122,121,120,124,123,100,10000"
+  },
+  "test_guest": "10000",
+  "tmpdir": "/var/tmp"
+}
