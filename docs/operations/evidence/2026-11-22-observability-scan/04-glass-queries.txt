@@ -1,0 +1,45 @@
+Collected UTC: 2026-11-22T15:41:05Z
+Source: Thanos query http://192.168.59.26:10902 (dedup on). Each candidate tile query, instant. Read only.
+ok    alerts_firing_by_severity [3] ['severity=critical:4', 'severity=warning:13', 'severity=info:1']
+ok    alerts_firing_list [15] ['alertname=Ix0AutoBounceFailed,instance=pfsense,severity=crit:1', 'alertname=Ix0WatchdogDisarmed,instance=pfsense,severity=crit:1', 'alertname=PrometheusScrapeFailureSustained,instance=minio-2,:1', 'alertname=PrometheusScrapeFailureSustained,instance=zot-1,se:1', 'alertname=RProxyEndpointDown,instance=https://kolibri.d.lcam:1', 'alertname=RProxyEndpointDown,instance=https://rustdesk-relay:1']
+ok    targets_down [1] ['2']
+ok    targets_down_list [2] ['instance=minio-2,job=minio:0', 'instance=zot-1,job=zot-meta-backup:0']
+ok    wan_loss [2] ['gateway=WAN1_DHCP:0', 'gateway=WAN2_DHCP:0']
+ok    wan_delay_ms [2] ['gateway=WAN1_DHCP:14.3', 'gateway=WAN2_DHCP:0.72']
+ok    dns_ok_ratio [1] ['1']
+ok    endpoints_ok [1] ['14']
+ok    endpoints_total [1] ['17']
+ok    tls_min_days [1] ['47.7']
+ok    tunnel_connections [1] ['11']
+ok    pihole_up [1] ['3']
+ok    vault_unsealed [1] ['1']
+ok    keycloak_up [1] ['2']
+ok    pg_up [1] ['3']
+ok    minio_health [1] ['1']
+ok    minio_drives_offline [1] ['0']
+ok    thanos_upload_age_h [5] ['instance=thanos-compact:4.99e+05', 'instance=thanos-rule:4.99e+05', 'instance=thanos-sidecar-1:4.99e+05', 'instance=thanos-sidecar-2:4.99e+05', 'instance=thanos-store-gw:4.99e+05']
+ok    guests_onboot_not_running [1] ['1']
+ok    guests_running [1] ['7']
+ok    guests_not_backed_up [1] ['5']
+ok    node_cpu_busy [6] ['instance=dockermaster:0.253', 'instance=ds-1:0.148', 'instance=ds-2:0.615', 'instance=nas:0.218', 'instance=pfsense:0.0277', 'instance=proxmox:0.241']
+ok    node_mem_used [5] ['cluster=homelab,instance=dockermaster,job=node,region=local:0.139', 'cluster=homelab,instance=ds-1,job=node,region=local:0.223', 'cluster=homelab,instance=ds-2,job=node,region=local:0.11', 'cluster=homelab,instance=nas,job=node,region=local:0.402', 'cluster=homelab,instance=proxmox,job=node,region=local:0.192']
+ok    node_root_used [6] ['cluster=homelab,device=/dev/mapper/pve-root,fstype=ext4,inst:0.511', 'cluster=homelab,device=/dev/md0,fstype=ext4,instance=nas,job:0.785', 'cluster=homelab,device=/dev/sda2,fstype=ext4,instance=docker:0.408', 'cluster=homelab,device=/dev/sda2,fstype=ext4,instance=ds-1,j:0.697', 'cluster=homelab,device=/dev/sda2,fstype=ext4,instance=ds-2,j:0.78', 'cluster=homelab,device=pfSense/ROOT/quick-20260411175824,fst:0.00312']
+ok    node_recent_reboot_h [6] ['cluster=homelab,instance=dockermaster,job=node,region=local:7.54', 'cluster=homelab,instance=ds-1,job=node,region=local:7.5', 'cluster=homelab,instance=ds-2,job=node,region=local:7.6', 'cluster=homelab,instance=nas,job=node,region=local:504', 'cluster=homelab,instance=pfsense,job=node,region=local:136', 'cluster=homelab,instance=proxmox,job=node,region=local:7.62']
+ok    pve_storage_used [6] ['cluster=homelab,id=storage/proxmox/hdd-pool,instance=192.168:0', 'cluster=homelab,id=storage/proxmox/local,instance=192.168.7.:0.459', 'cluster=homelab,id=storage/proxmox/local-lvm,instance=192.16:0', 'cluster=homelab,id=storage/proxmox/pve-backups,instance=192.:0.977', 'cluster=homelab,id=storage/proxmox/pve-servers-shared,instan:0.977', 'cluster=homelab,id=storage/proxmox/thin-pool-ssd,instance=19:0.423']
+EMPTY nas_volume_used [0] []
+ok    containers_per_host [3] ['instance=ds-1:26', 'instance=ds-2:25', 'instance=dockermaster:24']
+ok    containers_recent_start [3] ['instance=ds-1:0', 'instance=ds-2:0', 'instance=dockermaster:0']
+ok    smart_array_capacitor [1] ['0']
+ok    smart_array_drives_bad [1] ['0']
+ok    switch_ports_up [1] ['15']
+ok    switch_input_errors [1] ['59.8']
+ok    wifi_probe_stale [1] ['4']
+ok    wifi_probe_success [1] ['1']
+ok    ha_entities_unavailable [1] ['325']
+ok    prom_head_series [3] ['instance=prometheus-1:4.85e+04', 'instance=prometheus-2:4.71e+04', 'instance=thanos-rule:10']
+empty or error: 1
+  lxc/10020 hermes
+  lxc/9000 tmpl-debian-devops template
+  qemu/101 tiny
+  qemu/111 rootmaster
+  qemu/130 lab-router
