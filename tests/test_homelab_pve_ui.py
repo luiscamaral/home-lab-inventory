@@ -49,7 +49,7 @@ class HomelabPveUiTest(unittest.TestCase):
 
     def test_js_change_updates_the_version_in_place(self):
         self.run_ui("apply")
-        old = [line for line in self.template.read_text().splitlines() if MARK in line][0]
+        old = next(line for line in self.template.read_text().splitlines() if MARK in line)
         self.js.write_text(self.js.read_text() + "// change\n")
         self.assertEqual(self.run_ui("check").returncode, 1)
         self.run_ui("apply")
