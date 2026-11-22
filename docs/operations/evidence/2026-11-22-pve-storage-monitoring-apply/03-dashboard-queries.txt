@@ -1,0 +1,14 @@
+Collected UTC: 2026-11-22T14:43:20Z
+Source: Thanos query API http://192.168.59.26:10902 (Grafana datasource uid thanos). Each dashboard expression with $instance=proxmox, instant query. Read only.
+Controller [A] homelab_smart_array_controller_ok{instance="proxmox"}: 1 series, values ['1']
+Cache [A] homelab_smart_array_cache_ok{instance="proxmox"}: 1 series, values ['1']
+Capacitor [A] homelab_smart_array_capacitor_ok{instance="proxmox"}: 1 series, values ['0']
+Write cache without capacitor [A] homelab_smart_array_no_battery_write_cache_enabled{instance="proxmox"}: 1 series, values ['1']
+Data age [A] time() - homelab_smart_array_collector_last_success_timestamp_seconds{instance="proxmox"}: 1 series, values ['194.16400003433228']
+RAID volumes [A] homelab_smart_array_logical_drive_ok{instance="proxmox"}: 2 series, values ['1']
+Drives [A] homelab_smart_array_physical_drive_ok{instance="proxmox"}: 8 series, values ['1']
+Drives [B] homelab_smart_array_physical_drive_temperature_celsius{instance="proxmox"}: 8 series, values ['33', '34', '35', '38']
+Drives [C] homelab_smart_array_physical_drive_smart_passed{instance="proxmox"}: 8 series, values ['1']
+Drives [D] homelab_smart_array_ssd_life_left_percent{instance="proxmox"}: 3 series, values ['100']
+Drive temperature [A] homelab_smart_array_physical_drive_temperature_celsius{instance="proxmox"}: 8 series, values ['33', '34', '35', '38']
+SSD life left [A] homelab_smart_array_ssd_life_left_percent{instance="proxmox"}: 3 series, values ['100']

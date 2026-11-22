@@ -1,0 +1,3 @@
+Collected UTC: 2026-11-22T14:40:15Z
+Source: clean main 934367ab66e7d8a2e990c38379750f0be57e2ca4; SSH proxmox. Scope: post-merge plan of sync-proxmox-storage-monitoring.py.
+No changes.
