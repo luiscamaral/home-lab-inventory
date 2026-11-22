@@ -1,0 +1,14 @@
+Collected UTC: 2026-11-22T13:49:21Z
+Source: SSH dockermaster, dockerserver-2, nas (no sudo). Scope: Grafana restart history, dockerserver-2 vCPU count and top CPU users, NAS load. Read only.
+created=2026-11-19T07:34:22.711960695Z started=2026-11-22T11:40:18.464918683Z restarts=1 policy=unless-stopped
+grafana
+==
+10
+%CPU     ELAPSED COMMAND
+ 414    02:30:45 llama-server
+53.8       00:00 systemd
+15.8    05:42:42 node_exporter
+10.0    03:24:02 cadvisor
+ 6.3    05:43:38 dockerd
+==
+ssh: connect to host nas port 22: Undefined error: 0

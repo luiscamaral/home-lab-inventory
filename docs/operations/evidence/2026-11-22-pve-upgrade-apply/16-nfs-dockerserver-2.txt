@@ -1,0 +1,30 @@
+Collected UTC: 2026-11-22T13:49:09Z
+Source: SSH dockerserver-2, sudo -n where needed. Scope: container health, NFS mounts and client counters, D-state tasks, kernel NFS messages since boot. Read only.
++zsh:1> uptime
+ 06:49:10 up  5:43,  1 user,  load average: 23.93, 24.22, 24.34
++zsh:1> docker ps --filter 'health=unhealthy' --format '{{.Names}} | {{.Status}}'
++zsh:1> docker ps --filter 'name=grafana' --filter 'name=freeswitch' --format '{{.Names}} | {{.Status}}'
+freeswitch | Up 6 hours (healthy)
++zsh:1> findmnt -t nfs,nfs4 -o TARGET,SOURCE,OPTIONS
++zsh:1> cut -c1-260
+TARGET            SOURCE                                           OPTIONS
+/nfs/calibre      tnas:/volume2/shared/02.Books/032.eBooks/calibre rw,relatime,vers=4.1,rsize=131072,wsize=131072,namlen=255,hard,proto=tcp,timeo=60,retrans=5,sec=sys,clientaddr=192.168.48.46,local_lock=none,addr=192.168.2.50
+/nfs/dockermaster tnas:/volume2/servers/dockermaster               rw,relatime,vers=4.1,rsize=131072,wsize=131072,namlen=255,hard,proto=tcp,timeo=60,retrans=5,sec=sys,clientaddr=192.168.48.46,local_lock=none,addr=192.168.2.50
++zsh:1> nfsstat -c -3
++zsh:1> head -4
+Client rpc stats:
+calls      retrans    authrefrsh
+560131     0          559981
+
++zsh:1> grep -E '^(xprt|retrans)' /proc/self/mountstats
++zsh:1> head
++zsh:1> awk '/^device .* nfs/{dev=$2} /xprt:/{print dev, $0}' /proc/self/mountstats
++zsh:1> cut -c1-200
+tnas:/volume2/shared/02.Books/032.eBooks/calibre 	xprt:	tcp 0 0 2 0 0 560544 560443 65 57152408 0 35 889922 7285255
+tnas:/volume2/servers/dockermaster 	xprt:	tcp 0 0 2 0 0 560544 560443 65 57152408 0 35 889922 7285255
++zsh:1> ps -eo pid,stat,etime,wchan:24,comm
++zsh:1> awk '$2 ~ /D/'
+ 564526 Ds         00:00 rpc_wait_bit_killable    containerd-root
++zsh:1> sudo -n dmesg -T
++zsh:1> grep -iE 'nfs|rpc|lockd'
++zsh:1> tail -8

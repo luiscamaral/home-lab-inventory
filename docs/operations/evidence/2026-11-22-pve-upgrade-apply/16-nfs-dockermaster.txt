@@ -1,0 +1,31 @@
+Collected UTC: 2026-11-22T13:49:06Z
+Source: SSH dockermaster, sudo -n where needed. Scope: container health, NFS mounts and client counters, D-state tasks, kernel NFS messages since boot. Read only.
++zsh:1> uptime
+ 06:49:08 up  5:40,  1 user,  load average: 3.42, 3.26, 3.56
++zsh:1> docker ps --filter 'health=unhealthy' --format '{{.Names}} | {{.Status}}'
++zsh:1> docker ps --filter 'name=grafana' --filter 'name=freeswitch' --format '{{.Names}} | {{.Status}}'
+grafana-grafana-1 | Up 2 hours (healthy)
++zsh:1> findmnt -t nfs,nfs4 -o TARGET,SOURCE,OPTIONS
++zsh:1> cut -c1-260
+TARGET                                             SOURCE                                                 OPTIONS
+/nfs/calibre                                       tnas:/volume2/shared/02.Books/032.eBooks/calibre       rw,relatime,vers=4.1,rsize=131072,wsize=131072,namlen=255,hard,proto=tcp,timeo=60,retrans=5,sec=sys,clientaddr=192.168.48.44,local_lock=none,addr=192.168.
+/nfs/dockermaster                                  tnas:/volume2/servers/dockermaster                     rw,relatime,vers=4.1,rsize=131072,wsize=131072,namlen=255,hard,proto=tcp,timeo=60,retrans=5,sec=sys,clientaddr=192.168.48.44,local_lock=none,addr=192.168.
+/var/lib/docker/volumes/grafana_grafana_data/_data tnas:/volume2/servers/dockermaster/docker/grafana/data rw,relatime,vers=4.1,rsize=131072,wsize=131072,namlen=255,hard,proto=tcp,timeo=60,retrans=5,sec=sys,clientaddr=192.168.48.44,local_lock=none,addr=192.168.
++zsh:1> nfsstat -c -3
+Client rpc stats:
+calls      retrans    authrefrsh
+96098      0          96050
+
++zsh:1> head -4
++zsh:1> grep -E '^(xprt|retrans)' /proc/self/mountstats
++zsh:1> head
++zsh:1> awk '/^device .* nfs/{dev=$2} /xprt:/{print dev, $0}' /proc/self/mountstats
++zsh:1> cut -c1-200
+tnas:/volume2/servers/dockermaster 	xprt:	tcp 0 0 2 0 0 96156 96144 12 1794618 0 32 25292 595717
+tnas:/volume2/shared/02.Books/032.eBooks/calibre 	xprt:	tcp 0 0 2 0 0 96156 96144 12 1794618 0 32 25292 595717
+tnas:/volume2/servers/dockermaster/docker/grafana/data 	xprt:	tcp 0 0 2 0 0 96156 96144 12 1794618 0 32 25292 595717
++zsh:1> ps -eo pid,stat,etime,wchan:24,comm
++zsh:1> awk '$2 ~ /D/'
++zsh:1> sudo -n dmesg -T
++zsh:1> grep -iE 'nfs|rpc|lockd'
++zsh:1> tail -8
