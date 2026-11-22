@@ -1,0 +1,9 @@
+Collected UTC: 2026-11-22T06:36:55Z
+Source: SSH nas, no sudo. Scope: path owner and mode, export visibility. Read only.
+Commands: ls -ldn on the listed paths; test -r /etc/exports; showmount -e localhost filtered for the exact export or connection errors (no match).
+nas
+drwxr-xr-x 1 1027 65538   582 Mar  1  2025 /volume2/shared
+drwxr-xr-x 1 1027 65539   896 Aug 21 12:23 /volume2/shared/80.Backups
+drwx------ 1 1027 65538    64 Mar 12  2025 /volume2/shared/80.Backups/pve
+drwxr-xr-x 1 1027 65538 34206 Nov 19 01:14 /volume2/shared/80.Backups/pve/dump
+NAS user cannot read /etc/exports

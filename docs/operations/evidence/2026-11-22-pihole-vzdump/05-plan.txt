@@ -1,0 +1,25 @@
+2026-11-22T06:38:45Z
+Source: feature worktree and SSH proxmox. Scope: local tests and read-only plan.
++ PYTHONDONTWRITEBYTECODE=1
++ python3 -m unittest discover -s tests -p test_proxmox_backup_job.py -v
+test_apply_changes_only_scratch_and_reads_back (test_proxmox_backup_job.BackupJobTest.test_apply_changes_only_scratch_and_reads_back) ... ok
+test_apply_refuses_storage_drift (test_proxmox_backup_job.BackupJobTest.test_apply_refuses_storage_drift) ... ok
+test_apply_stops_if_readback_is_wrong (test_proxmox_backup_job.BackupJobTest.test_apply_stops_if_readback_is_wrong) ... ok
+test_backup_uses_nas_without_pruning (test_proxmox_backup_job.BackupJobTest.test_backup_uses_nas_without_pruning) ... ok
+test_null_setting_removes_only_scratch (test_proxmox_backup_job.BackupJobTest.test_null_setting_removes_only_scratch) ... ok
+test_plan_does_not_write (test_proxmox_backup_job.BackupJobTest.test_plan_does_not_write) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.005s
+
+OK
+backup-9ce15dc0-ddc7 tmpdir: None -> '/var/tmp'; storage stays pve-backups
+Verified the saved job. No other job settings changed.
+backup-9ce15dc0-ddc7 tmpdir: None -> '/var/tmp'; storage stays pve-backups
+backup-9ce15dc0-ddc7 tmpdir: '/var/tmp' -> '/var/tmp'; storage stays pve-backups
+UPID:test
+backup-9ce15dc0-ddc7 tmpdir: '/var/tmp' -> None; storage stays pve-backups
+Verified the saved job. No other job settings changed.
+backup-9ce15dc0-ddc7 tmpdir: None -> '/var/tmp'; storage stays pve-backups
++ ./scripts/sync-proxmox-backup-job.py
+backup-9ce15dc0-ddc7 tmpdir: None -> '/var/tmp'; storage stays pve-backups
