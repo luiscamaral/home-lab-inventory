@@ -63,7 +63,7 @@ jobs:
 
       # Cache Gitleaks database for faster subsequent runs
       - name: Cache Gitleaks database
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.gitleaks
           key: gitleaks-db-${{ runner.os }}-${{ hashFiles('**/*.toml', '.gitleaks.toml') }}
@@ -222,7 +222,7 @@ jobs:
 
       # Cache Trivy database for faster subsequent runs
       - name: Cache Trivy database
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/trivy
           key: trivy-db-${{ runner.os }}-${{ hashFiles('**/*.dockerfile', '**/Dockerfile') }}
@@ -384,7 +384,7 @@ jobs:
 
       # Cache dependency databases
       - name: Cache dependency scan data
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/trivy

@@ -250,7 +250,7 @@ jobs:
       - name: Cache Docker layers
         # @v3 was flagged by actionlint as "too old to run on GitHub
         # Actions"; @v4 is the current major.
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ matrix.name }}-${{ github.sha }}

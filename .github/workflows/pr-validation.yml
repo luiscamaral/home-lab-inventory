@@ -59,7 +59,7 @@ jobs:
 
       # Cache for various linting tools
       - name: Cache linting tools
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/markdownlint
@@ -232,7 +232,7 @@ jobs:
 
       # Cache pre-commit environments
       - name: Cache pre-commit
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ runner.os }}-${{ hashFiles('**/.pre-commit-config.yaml') }}
@@ -311,7 +311,7 @@ jobs:
           npm install -g @commitlint/cli @commitlint/config-conventional
 
       - name: Cache commitlint
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.npm/_cacache
           key: commitlint-${{ runner.os }}-${{ hashFiles('**/.commitlintrc.json', '**/package.json') }}
@@ -427,7 +427,7 @@ jobs:
 
       # Cache Docker layers
       - name: Cache Docker layers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /tmp/.buildx-cache
           key: docker-validation-${{ runner.os }}-${{ github.sha }}
