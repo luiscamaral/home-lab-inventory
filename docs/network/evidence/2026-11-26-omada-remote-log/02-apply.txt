@@ -1,0 +1,9 @@
+Collected UTC: 2026-11-26T23:40Z to 23:42Z
+Source: clean main d925c7e (PR #199), scripts/sync-omada-site-settings.py; NAS archive omada-controller.admin.lcamaral.com
+(temporary copy with WAL, read with sqlite3, deleted).
+
+- 23:40:22 UTC plan: LAHome remoteLog host 192.168.1.50 -> 192.168.32.50. --apply: "Written and verified". Re-plan: No changes.
+- pfSense plan from the same main (includes #198): No changes.
+- NAS archive: new row 2026-11-26 23:40:27 UTC from 192.168.32.40: "Site Remote Logging configured successfully." 32 rows in total.
+- Not verified: which NAS address received that row. A read-only pfctl -ss search for states to 192.168.1.50:514 timed out
+  after 30 s and was not repeated. The next switch event will show the path.
