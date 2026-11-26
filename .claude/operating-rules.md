@@ -34,15 +34,30 @@ No step may be skipped or reordered.
    - Run `terraform init` in the apply checkout so it uses the **committed**
      `.terraform.lock.hcl`. Never symlink or borrow another checkout's `.terraform`, which
      may hold different provider versions than the ones that wrote the shared state.
-6. **Verify + record.** Check the live result, then post the evidence as a PR comment
-   (the plan shows "No changes", health checks, and so on).
+6. **Verify + record.** Check the live result. Commit the evidence to your local branch.
+   Post a short summary as a comment on the PR, for example a plan with "No changes" or
+   health checks.
 
 **Prohibited:** applying anything (`terraform apply`, `scripts/sync-*.py --apply`,
 `scripts/portainer-redeploy.py`, API or SSH changes) before its PR is merged. Also
 prohibited: leaving applied changes unmerged, and merging with red checks.
 "Apply" covers every tool in the table in section 2, not only Terraform.
 
-**Docs-only or rule-only changes** still go through steps 1–4 (no apply step).
+### When to open a PR
+
+The local clone is the repo. A commit on a local branch (in a worktree) saves work and
+evidence. That commit is enough for the evidence rule. It needs no PR.
+
+A PR is only the way to change `main`. Open one when one of these is true:
+
+- The change will be applied to live infrastructure with any tool from section 2.
+- The change edits a declarative source, a script, a rule, or a doc that must be on `main`.
+
+Do not open a PR that holds only evidence or notes. Commit them on your local branch.
+Then add them to the next PR for the same work, or to one docs PR when the work item ends.
+Never push to `main` directly. Keep the local branches (section 10 and the branch rules).
+
+Docs-only and rule-only changes that go to `main` follow steps 1–4 (no apply step).
 
 **Emergency exception (break-glass):** only when the user explicitly approves *that specific*
 out-of-order action in the current session (e.g. an outage fix). Afterwards, open the PR in

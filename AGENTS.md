@@ -12,11 +12,15 @@ All AI agents (Claude Code, pi, Codex, Devin, sub-agents) must follow
 4. Wait until all required CI checks pass, then squash-merge.
 5. Apply **only** from a clean checkout of merged `main`, and only the diff this PR
    introduced. Use `-target` and report any other drift.
-6. Verify the live result and post the evidence on the PR.
+6. Verify the live result. Commit the evidence locally and post a summary on the PR.
 
 Never apply from a feature branch, and never change live infrastructure before the merge.
-Docs-only changes still need a PR. The only exception is break-glass with explicit user
-approval, followed by a `post-hoc` PR in the same session.
+The local clone is the repo. A local commit saves work and evidence, with no PR. Open a PR only
+to change `main`: for anything you will apply, and for sources, scripts, rules or docs that must
+be on `main`. Never open a PR that holds only evidence. Add it to the next PR for the same work.
+
+The only exception to the order above is break-glass with explicit user approval, followed by a
+`post-hoc` PR in the same session.
 
 ## Parked projects
 
