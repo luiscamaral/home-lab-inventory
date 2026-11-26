@@ -1,0 +1,23 @@
+# pfSense remote syslog. Applied by scripts/sync-pfsense-syslog.py.
+# Only the keys below are managed. Local log settings stay as they are.
+#
+# Target: the NAS Log Center (syslog-ng, UDP 514) on its ADMIN address.
+# Source: the pfSense ADMIN interface (lan = igc3, 192.168.32.33). This path
+# does not use the ix0 trunk, so logs still arrive when ix0 fails.
+# Received logs land in /volume2/Backups/LogsArchive/<host>/ on the NAS.
+enable: true
+remoteserver: 192.168.32.50:514
+remoteserver2: ""
+remoteserver3: ""
+sourceip: lan
+ipproto: ipv4
+# Categories sent to the NAS. logall stays off: on 2026-11-26 pfSense wrote about 38,000
+# lines an hour, mostly resolver (22,000) and filter (10,000). Those stay local only.
+logall: false
+system: true     # kernel (link up/down), system events, ix0 watchdog via logger
+dpinger: true    # gateway monitor (WAN loss and delay)
+routing: true
+auth: true
+filter: false
+resolver: false
+dhcp: false

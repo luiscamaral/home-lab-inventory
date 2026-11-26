@@ -1,0 +1,15 @@
+Collected UTC: 2026-11-26T23:20:04Z
+Source: SSH pfSense over the ADMIN path, PHP config_get_path (read only), /etc/inc/syslog.inc, /var/log line counts; SSH nas ip addr. Plan of scripts/sync-pfsense-syslog.py on this branch.
+NAS addresses: eth0 192.168.0.50/20, bond0.1 192.168.32.50/26 (ADMIN), bond0.10 192.168.1.50/20, eth4.10 192.168.2.50/20.
+pfSense interfaces: lan=igc3 ADMIN 192.168.32.33; opt2=ix0.10 HOME; opt3=ix0.28 SRVAN; opt4=ix0.105 GUEST; opt5=ix0.205 IoT.
+Live syslog before: remoteserver, remoteserver2, remoteserver3 and sourceip empty; enable not set; logall not set.
+Local log lines in the 60 min before 22:59 UTC: filter 10002, system 227, dhcpd 2704, resolver 22372, gateways 409, routing 3197.
+ix0 watchdog logs with: logger -t ix0-watchdog -p daemon.notice (forwarded by the system category: daemon.{level}).
+Plan:
+syslog/remoteserver: '' -> '192.168.32.50:514'
+syslog/sourceip: '' -> 'lan'
+syslog/enable: False -> True
+syslog/system: False -> True
+syslog/dpinger: False -> True
+syslog/routing: False -> True
+syslog/auth: False -> True
