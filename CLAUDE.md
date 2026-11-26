@@ -5,10 +5,12 @@
 - **RULE #1 — PR → merge → apply from `main`.** Mandatory for every AI agent and every session.
   Branch from `origin/main` → commit → PR → all required CI checks green → squash-merge →
   apply **only from a clean checkout of merged `main`**, applying only this PR's diff
-  (`-target`; report any other drift) → verify and post evidence on the PR. Never apply from
-  a feature branch and never change live infra before merge. Docs-only changes still need
-  a PR. Break-glass only with explicit user approval, followed by a `post-hoc` PR in the
-  same session.
+  (`-target`; report any other drift) → verify, commit the evidence locally, and post a
+  summary on the PR. Never apply from a feature branch and never change live infra before
+  merge. The local clone is the repo: a local commit saves evidence with no PR. Open a PR only
+  to change `main` (anything you apply, and sources, scripts, rules or docs for `main`). Never
+  open an evidence-only PR. Break-glass only with explicit user approval, followed by a
+  `post-hoc` PR in the same session.
 - **IaC only — and IaC is NOT only Terraform.** Portainer/Cloudflare/Vault → `terraform/`;
   **pfSense + hosts → `pfsense/*.yml` + `pfsense/scripts/` applied via `scripts/sync-*.py`**;
   Rundeck → `rundeck/jobs/` **(NOT IMPLEMENTED — verified 2026-08-18: Rundeck runs on ds-1 but no
