@@ -44,8 +44,9 @@ require_once("config.inc");
 require_once("system.inc");
 require_once("syslog.inc");
 $want = json_decode(base64_decode("%s"), true);
-if ($want["enable"] && !is_valid_syslog_server($want["remoteserver"])) {
-    fwrite(STDERR, "invalid remoteserver\n"); exit(2);
+$parts = explode(":", $want["remoteserver"]);
+if ($want["enable"] && !(count($parts) == 2 && is_ipaddrv4($parts[0]) && is_port($parts[1]))) {
+    fwrite(STDERR, "invalid remoteserver, expected IPv4:port\n"); exit(2);
 }
 if (!array_key_exists($want["sourceip"], config_get_path("interfaces", []))) {
     fwrite(STDERR, "unknown sourceip interface\n"); exit(2);
@@ -59,12 +60,32 @@ echo "written", PHP_EOL;
 """
 
 
+# Every PHP function WRITE_PHP calls. The plan checks they exist on the live pfSense.
+# is_valid_syslog_server is not listed: it lives only in the GUI page, not in an include.
+WRITE_FUNCTIONS = ("config_get_path", "config_set_path", "is_ipaddrv4", "is_port", "write_config",
+                   "system_sshguard_stop", "system_syslogd_start")
+
+PREFLIGHT_PHP = r"""
+require_once("config.inc");
+require_once("system.inc");
+require_once("syslog.inc");
+foreach (%s as $f) { if (!function_exists($f)) { echo $f, PHP_EOL; } }
+"""
+
+
 def php(code, timeout=60):
     result = subprocess.run([*ADMIN_SSH, "php"], input=code.join(("<?php\n", "\n")), text=True,
                             capture_output=True, timeout=timeout, check=False)
     if result.returncode:
-        raise RuntimeError(f"PHP on pfSense failed ({result.returncode}): {result.stderr.strip()}")
+        detail = (result.stderr.strip() or result.stdout.strip())[-500:]
+        raise RuntimeError(f"PHP on pfSense failed ({result.returncode}): {detail}")
     return result.stdout.strip()
+
+
+def preflight():
+    missing = php(PREFLIGHT_PHP % f"json_decode('{json.dumps(WRITE_FUNCTIONS)}', true)").split()
+    if missing:
+        raise RuntimeError(f"pfSense lacks PHP functions the write needs: {missing}. No changes made.")
 
 
 def desired():
@@ -116,6 +137,7 @@ def main():
             send_test()
             return
         want = desired()
+        preflight()
         changes = diff(live(), want)
         for key, (old, new) in changes.items():
             print(f"syslog/{key}: {old!r} -> {new!r}")

@@ -1,0 +1,14 @@
+Collected UTC: 2026-11-26T23:28Z to 23:33Z
+Source: clean main 7375fc2 (PR #196), scripts/sync-pfsense-syslog.py --apply; then read-only SSH to pfSense over ADMIN.
+
+- 23:28:23 UTC --apply: "PHP on pfSense failed (255)" with empty stderr. The write was not retried.
+- Live readback after the failure: plan still shows all 7 changes. /etc/syslog.conf has 0 remote lines.
+  Config revision unchanged: "Services: Acme: Storing signed certificate" at 2026-11-26T03:16-07:00. Nothing was written.
+- Cause: function_exists("is_valid_syslog_server") = no after requiring config.inc, system.inc and syslog.inc.
+  The function is defined only in /usr/local/www/status_logs_settings.php. PHP stopped with a fatal error before write_config.
+- Seen at the same time, not caused by the run (the script stops sshguard only after write_config): no sshguard process.
+  When it stopped is not known.
+
+Fix in this PR: validate host:port with is_ipaddrv4 and is_port; a read-only preflight in every plan checks that each
+PHP function the write calls exists; PHP stdout is included in the error when stderr is empty.
+Preflight checked against live pfSense: passes. With an extra fake function name it fails with "No changes made".
