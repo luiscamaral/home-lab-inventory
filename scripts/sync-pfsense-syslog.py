@@ -27,6 +27,7 @@ SOURCE = Path(__file__).resolve().parents[1] / "pfsense/syslog.yml"
 # pfSense's SSH host key is stored under the HOME address, so HostKeyAlias keeps strict checking.
 ADMIN_SSH = ["ssh", "-o", "HostName=192.168.32.33", "-o", "HostKeyAlias=[192.168.4.1]:3220",
              "-o", "BatchMode=yes", "-o", "ConnectTimeout=8", "pfsense"]
+GENERATED_CONF = "/var/etc/syslog.d/pfSense.conf"
 STRING_KEYS = ("remoteserver", "remoteserver2", "remoteserver3", "sourceip", "ipproto")
 BOOL_KEYS = ("enable", "logall", "system", "dpinger", "routing", "auth", "filter", "resolver", "dhcp")
 
@@ -112,11 +113,12 @@ def apply(want):
     left = diff(live(), want)
     if left:
         raise RuntimeError(f"Readback differs after the write: {left}. Do not retry; inspect the live config.")
-    conf = subprocess.run([*ADMIN_SSH, "grep", "-c", "@" + want["remoteserver"].split(":")[0], "/etc/syslog.conf"],
+    # /etc/syslog.conf only includes /var/etc/syslog.d. pfSense writes the remote rules there.
+    conf = subprocess.run([*ADMIN_SSH, "grep", "-c", "@" + want["remoteserver"], GENERATED_CONF],
                           capture_output=True, text=True, timeout=30, check=False).stdout.strip()
     if want["enable"] and conf in ("", "0"):
-        raise RuntimeError("syslogd config has no line for the remote server")
-    print(f"Verified: config matches, /etc/syslog.conf has {conf} remote lines.")
+        raise RuntimeError(f"{GENERATED_CONF} has no line for the remote server")
+    print(f"Verified: config matches, {GENERATED_CONF} has {conf} remote lines.")
 
 
 def send_test():

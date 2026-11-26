@@ -1,0 +1,16 @@
+Collected UTC: 2026-11-26T23:33Z to 23:36Z
+Source: clean main 204183b (PR #197), scripts/sync-pfsense-syslog.py; SSH pfSense (ADMIN, read only after the apply);
+NAS LogCenter archive /volume2/Backups/LogsArchive/pfsense.admin.lcamaral.com (temporary copy read with sqlite3, deleted).
+
+- 23:33:09 UTC --apply printed "written". Config readback matched. The script's own file check then failed: it read
+  /etc/syslog.conf, which only includes /var/etc/syslog.d. The write was not repeated.
+- Config revision: "(system): syslog: remote logging set by scripts/sync-pfsense-syslog.py".
+- syslogd now runs with "-b 192.168.32.33" (ADMIN source). /var/etc/syslog.d/pfSense.conf has 5 lines with
+  @192.168.32.50:514 (auth, *.err, *.*, *.*, system set with daemon.notice).
+- Plan after the apply: No changes.
+- --test sent tag homelab-syslog-test-3c59c671ad64. The NAS archive has it at 2026-11-26 23:33:35 UTC from
+  192.168.32.33, host pfsense.admin.lcamaral.com. First 45 s: 44 rows; programs sshd-session 34, kernel 3, sshguard 2,
+  nginx 2, syslogd 1, ix0-watchdog 1.
+- sshguard: no process seen at 23:32 UTC before the apply; it logs again after the syslogd restart.
+
+This PR: the script checks /var/etc/syslog.d/pfSense.conf instead. Its plan against live pfSense: No changes.
