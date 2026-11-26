@@ -1,0 +1,18 @@
+Collected UTC: 2026-11-26T23:36:29Z
+Source: Omada controller 6.3.0.111 internal API at https://192.168.32.40:8043 (login from Vault, not recorded; GET only),
+NAS LogCenter archive omada-controller.admin.lcamaral.com (temporary copy, deleted), SSH nas ip addr.
+
+- Site LAHome (67d0de640d1b793fe5702c04) remoteLog: {"enable": true, "host": "192.168.1.50", "port": 514, "moreClientLog": false}.
+- 192.168.1.50 is the NAS on bond0.10 (HOME). The controller is on ADMIN (192.168.32.40), so this path crosses pfSense
+  and the ix0 trunk. The NAS also has 192.168.32.50 on bond0.1 (ADMIN), the same subnet as the controller.
+- Controller rows in the NAS archive: 31 since 2026-06-19. Since 2026-11-16 only "[switch:54-AF-97-A6-99-71] was connected"
+  (11-16, 11-17 x4, 11-20, 11-22, 11-24, 11-26 13:46 UTC). No "disconnected" rows arrived.
+- Site alert setting: {"enable": false, "delayEnable": true, "delay": 60}. Event types DEV_DISCONN, DEV_RECONN, OSW_STP_FWD
+  and alert PHYSICAL_PORT_CONNECTION are enabled.
+- The Vault entry secret/homelab/omada-controller has url https://192.168.32.55:8043, which no longer answers.
+  The controller answers on 192.168.32.40. The manifest uses .40; the Vault entry is not changed here.
+
+Hypothesis, not proven: disconnect events are sent while ix0 is failing and get lost on the HOME path.
+
+Plan of scripts/sync-omada-site-settings.py on this branch:
+LAHome remoteLog: {"enable": true, "host": "192.168.1.50", "port": 514, "moreClientLog": false} -> {"enable": true, "host": "192.168.32.50", "moreClientLog": false, "port": 514}

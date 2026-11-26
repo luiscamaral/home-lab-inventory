@@ -1,0 +1,13 @@
+{
+  "controller": "https://192.168.32.40:8043",
+  "settings": {
+    "remoteLog": {
+      "enable": true,
+      "host": "192.168.32.50",
+      "moreClientLog": false,
+      "port": 514
+    }
+  },
+  "site": "LAHome",
+  "vault_path": "secret/homelab/omada-controller"
+}
