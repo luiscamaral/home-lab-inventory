@@ -1,0 +1,22 @@
+# pfSense security settings. Applied by scripts/sync-pfsense-security.py.
+# Evidence: docs/operations/evidence/2026-11-22-net-check/18 to 21 (FreeSWITCH container compromise, 2026-11-27).
+
+# UPnP and NAT-PMP (miniupnpd package). It was on for lan, opt2 (HOME), opt3 (SRVAN) and opt5 (IoT),
+# so any device there could open ports on the firewall. Off: only the master "enable" flag is managed.
+upnp:
+  enable: false
+
+# Addresses linked to the FreeSWITCH compromise. Two floating quick block rules drop traffic to and from them
+# on every WAN and internal interface. Cloudflare R2 download hosts are not listed: their addresses are shared.
+blocklist:
+  alias: IOC_FREESWITCH_2026_11
+  descr: FreeSWITCH compromise indicators (2026-11-27)
+  interfaces: [wan, opt1, lan, opt2, opt3, opt4, opt5]
+  trackers: {to: 1795580001, from: 1795580002}
+  addresses:
+    - {ip: 77.239.124.117, note: likely command and control, RocketCloud FR}
+    - {ip: 188.165.209.25, note: SIP calls into the external profile, OVH FR}
+    - {ip: 188.165.228.60, note: SIP user guessing, OVH FR}
+    - {ip: 103.224.245.53, note: SIP user guessing, WEBWERKS IN}
+    - {ip: 106.55.151.217, note: Monero pool in the miner config, TencentCloud CN}
+    - {ip: 205.172.58.170, note: gulf.moneroocean.stream Monero pool, HOSTKEY US}

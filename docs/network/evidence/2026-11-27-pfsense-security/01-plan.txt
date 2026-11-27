@@ -1,0 +1,8 @@
+Collected UTC: 2026-11-27T06:48:59Z
+Source: SSH pfSense over ADMIN (PHP config reads). Plan of scripts/sync-pfsense-security.py on this branch.
+Live before: miniupnpd enable=on, enable_upnp=on, enable_natpmp=on, iface_array lan,opt2,opt3,opt5; process not running (2026-11-27 06:38 and 06:49 UTC). 109 filter rules, 11 floating. No alias IOC_FREESWITCH_2026_11.
+Plan:
+alias IOC_FREESWITCH_2026_11: '(missing)' -> '77.239.124.117 188.165.209.25 188.165.228.60 103.224.245.53 106.55.151.217 205.172.58.170'
+floating rule 1795580001: add (Block traffic to IOC_FREESWITCH_2026_11)
+floating rule 1795580002: add (Block traffic from IOC_FREESWITCH_2026_11)
+miniupnpd enable: True -> False
