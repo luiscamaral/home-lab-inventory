@@ -1,0 +1,12 @@
+<include>
+  <gateway name="callcentric.com">
+    <param name="realm" value="sip.callcentric.net"/>
+    <param name="proxy" value="sip.callcentric.net"/>
+    <param name="username" value="${s.cc_username}"/>
+    <param name="password" value="${s.cc_password}"/>
+    <param name="expire-seconds" value="1800"/>
+    <param name="register" value="true"/>
+    <param name="retry-seconds" value="30"/>
+    <param name="ping" value="25"/>
+  </gateway>
+</include>
