@@ -1,0 +1,7 @@
+# pfSense firewall limits (System > Advanced > Firewall & NAT). Applied by scripts/sync-pfsense-firewall-limits.py.
+# Only the keys below are managed.
+#
+# maximumstates: pf state table size. Empty in the config means the pfSense default, which was 1,609,000 on this host
+# (pfctl -sm, 16 GB RAM). On 2026-11-27 at 03:58 UTC the table held 1,471,325 states (91%) 34 minutes after a reboot,
+# with 469,642 insert failures. Doubled to 3,218,000 (about 3.2 GB at roughly 1 KB per state).
+maximumstates: 3218000
