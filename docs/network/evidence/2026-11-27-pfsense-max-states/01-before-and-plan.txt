@@ -1,0 +1,14 @@
+Collected UTC: 2026-11-27T03:59:14Z
+Source: SSH pfSense over ADMIN: uptime, PHP config_get_path, pfctl -sm, pfctl -si. Read only. Then the plan of scripts/sync-pfsense-firewall-limits.py.
+ 8:59PM  up 35 mins, 1 user, load averages: 0.81, 0.53, 0.56
+states        hard limit  1609000
+  current entries                  1483897
+  inserts                          2243612         1086.0/s
+  removals                          759784          367.8/s
+  memory                            469642          227.3/s
+  state-limit                            0            0.0/s
+16876249088
+Earlier read at 2026-11-27T03:57:58Z (uptime 34 min): current entries 1471325, inserts 1043.8/s, removals 304.1/s, memory 469642 (236.1/s), states hard limit 1609000, system/maximumstates empty.
+Plan:
+pf states hard limit now: 1609000
+system/maximumstates: '' -> '3218000'
