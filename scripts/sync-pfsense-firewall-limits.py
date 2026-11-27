@@ -18,6 +18,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import yaml
@@ -101,7 +102,13 @@ def main():
         left = {k: v for k, v in want.items() if live().get(k) != v}
         if left:
             raise RuntimeError(f"Readback differs after the write: {left}. Do not retry; inspect the live config.")
+        # filter_configure() only queues the reload (check_reload_status), so poll pf for up to 60 s.
         limit = states_hard_limit()
+        for _ in range(12):
+            if limit == int(want["maximumstates"]):
+                break
+            time.sleep(5)
+            limit = states_hard_limit()
         if limit != int(want["maximumstates"]):
             raise RuntimeError(f"pfctl -sm shows {limit}, expected {want['maximumstates']}. Do not retry; inspect pf.")
         print(f"Verified: config matches, pf states hard limit {limit}.")

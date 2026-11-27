@@ -1,0 +1,14 @@
+Collected UTC: 2026-11-27T04:03Z to 04:05Z
+Source: clean main ae57cee (PR #202), scripts/sync-pfsense-firewall-limits.py; SSH pfSense over ADMIN (read only between runs).
+
+- 04:03:27 UTC --apply: SSH failed with "Read from remote host 192.168.32.33: Operation timed out". Not resent.
+- 04:03:53 read: maximumstates empty, states hard limit 1609000, last revision "Creating restore point before upgrade"
+  (owner, 2026-11-26 19:48 MST). Nothing was written. Seen at the same time: current entries 51954 (1483897 at 03:59),
+  removals 2764659 (759784 at 03:59). Not caused by this change; cause not known. pfSense uptime 40 min (owner upgrade and reboot).
+- 04:04:08 --apply again: "written, filter_configure=NULL". Readback maximumstates=3218000, revision
+  "(system): firewall limits set by scripts/sync-pfsense-firewall-limits.py". The script's pf check ran at once and saw
+  1609000: filter_configure only queues the reload.
+- 04:04:36 read: states hard limit 3218000; /tmp/rules.debug (21:04:11 MST) has "set limit states 3218000" and
+  "set limit src-nodes 3218000"; check_reload_status "Reloading filter" at 21:04:09 MST.
+- Plan from main after the apply: No changes.
+This PR: the script polls pfctl -sm for up to 60 s before it reports a mismatch.
