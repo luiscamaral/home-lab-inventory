@@ -7,7 +7,8 @@ networks:
 
 services:
   freeswitch:
-    image: ghcr.io/patrickbaus/freeswitch-docker
+    # Pinned 2026-11-27: same digest as before; the compromise lived in the container layer, not the image.
+    image: ghcr.io/patrickbaus/freeswitch-docker@sha256:9fae8124caa79d3436e3622ad572f25f9091196949a90c3468af662a0755bfcc
     container_name: freeswitch
     hostname: freeswitch
     networks:
@@ -18,15 +19,16 @@ services:
     volumes:
       - /nfs/dockermaster/docker/freeswitch/config:/etc/freeswitch
       - /nfs/dockermaster/docker/freeswitch/logs:/var/log/freeswitch
+    # Repo-managed files (terraform/portainer/stacks/freeswitch/), rendered with secrets from Vault
+    # secret/homelab/freeswitch. They replace the NFS copies, which hold the old, exposed secrets.
+    configs:
+%{ for name, _ in fs_files ~}
+      - source: fs_${replace(replace(name, "/", "_"), ".", "_")}
+        target: /etc/freeswitch/${name}
+        mode: 0644
+%{ endfor ~}
     environment:
-      ESL_PASSWORD: ${ESL_PASSWORD}
-      FS_DEFAULT_PASSWORD: DISABLED_USE_PER_EXT
-      EXT_1001_PASS: ${EXT_1001_PASS}
-      EXT_1002_PASS: ${EXT_1002_PASS}
-      EXT_1003_PASS: ${EXT_1003_PASS}
-      CC_USERNAME: ${CC_USERNAME}
-      CC_PASSWORD: ${CC_PASSWORD}
-      CC_DID: ${CC_DID}
+      ESL_PASSWORD: $${ESL_PASSWORD}
     restart: unless-stopped
     # The upstream image bakes in a HEALTHCHECK that runs
     # `fs_cli -x status` with no password flag (defaults to ClueCon).
@@ -53,3 +55,10 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M
+
+configs:
+%{ for name, content in fs_files ~}
+  fs_${replace(replace(name, "/", "_"), ".", "_")}:
+    content: |
+      ${indent(6, replace(content, "$", "$$"))}
+%{ endfor ~}

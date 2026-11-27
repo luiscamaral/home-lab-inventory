@@ -906,47 +906,29 @@ resource "portainer_stack" "minio_2" {
 # FreeSWITCH VoIP/SIP Server → dockerserver-2
 # SIP credentials from Vault
 # ──────────────────────────────────────────────
+# FreeSWITCH: the XML files that hold secrets, and modules.conf.xml (mod_xml_rpc off), live in
+# stacks/freeswitch/ and get their secrets from Vault secret/homelab/freeswitch. The stack mounts them
+# over the NFS config. Rebuilt after the 2026-11-27 compromise.
+locals {
+  freeswitch_files = {
+    for f in fileset("${path.module}/stacks/freeswitch", "**/*.xml") :
+    f => templatefile("${path.module}/stacks/freeswitch/${f}", { s = data.vault_kv_secret_v2.freeswitch.data })
+  }
+}
+
 resource "portainer_stack" "freeswitch" {
   name            = "freeswitch"
   endpoint_id     = var.ds2_endpoint_id
   deployment_type = "standalone"
   method          = "string"
 
-  stack_file_content = file("${path.module}/stacks/freeswitch.yml")
+  stack_file_content = templatefile("${path.module}/stacks/freeswitch.yml.tftpl", {
+    fs_files = local.freeswitch_files
+  })
 
   env {
     name  = "ESL_PASSWORD"
     value = data.vault_kv_secret_v2.freeswitch.data["esl_password"]
-  }
-
-  env {
-    name  = "EXT_1001_PASS"
-    value = data.vault_kv_secret_v2.freeswitch.data["ext_1001_pass"]
-  }
-
-  env {
-    name  = "EXT_1002_PASS"
-    value = data.vault_kv_secret_v2.freeswitch.data["ext_1002_pass"]
-  }
-
-  env {
-    name  = "EXT_1003_PASS"
-    value = data.vault_kv_secret_v2.freeswitch.data["ext_1003_pass"]
-  }
-
-  env {
-    name  = "CC_USERNAME"
-    value = data.vault_kv_secret_v2.freeswitch.data["cc_username"]
-  }
-
-  env {
-    name  = "CC_PASSWORD"
-    value = data.vault_kv_secret_v2.freeswitch.data["cc_password"]
-  }
-
-  env {
-    name  = "CC_DID"
-    value = data.vault_kv_secret_v2.freeswitch.data["cc_did"]
   }
 }
 

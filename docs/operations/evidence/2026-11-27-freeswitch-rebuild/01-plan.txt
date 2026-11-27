@@ -1,0 +1,25 @@
+Collected UTC: 2026-11-27T07:35Z
+Source: NAS copy of the FreeSWITCH config (read only, temporary copies deleted), Vault metadata (key names only),
+terraform plan -target=portainer_stack.freeswitch (JSON read in a private temp file, deleted).
+
+Before:
+- FreeSWITCH used none of the Vault env vars in its XML. Secrets were literals in NFS files: event_socket password,
+  vars.xml default_password (used by 15 extensions: 1004, 1006-1019) and default_provider_password (the word "password"),
+  own passwords for 1000-1003 and 1005, voicemail PINs equal to the extension numbers, the Callcentric gateway login.
+- mod_xml_rpc loaded with the default login; event socket on 0.0.0.0 (ACL loopback.auto).
+
+Done before this PR:
+- Forensic image on dockerserver-2: forensics/freeswitch-compromised:2026-11-27 (a7ac4e65c103, 673 MB), 07:29 UTC.
+- Vault secret/homelab/freeswitch version 2 (07:30:30 UTC): new random esl_password, default_password,
+  default_provider_password, ext_{1000,1001,1002,1003,1005}_pass (24 chars) and ext_*_vm (6 digits).
+  cc_username, cc_password, cc_did unchanged: the Callcentric password must change at the provider first.
+  Version 1 is kept for rollback.
+
+Template check: after the placeholders, no former secret value is in the 9 templates (per-file counts match the
+original non-secret text; the only matches are extension numbers and the word "password" in placeholder names).
+
+Plan (portainer_stack.freeswitch, update in place; changes active, env, stack_file_content):
+- image pinned: ghcr.io/patrickbaus/freeswitch-docker@sha256:9fae8124... (same digest as before)
+- env: ESL_PASSWORD only (health check)
+- 9 config mounts over the NFS copies; all parse as XML; $${...} and ${...} references unchanged
+- event socket listen-ip 127.0.0.1; mod_xml_rpc not loaded
